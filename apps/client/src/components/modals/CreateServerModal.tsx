@@ -69,7 +69,7 @@ export const CreateServerModal = ({ onClose, onCreated }: CreateServerModalProps
               </div>
            </div>
 
-           {/* Input */}
+        {/* Input */}
            <div>
              <label className="text-xs font-bold text-gray-400 uppercase mb-1 block">Server Name</label>
              <input 
@@ -78,7 +78,8 @@ export const CreateServerModal = ({ onClose, onCreated }: CreateServerModalProps
                value={name}
                onChange={(e) => setName(e.target.value)}
                placeholder="Mein cooler Server"
-               className="w-full bg-dark-400 text-white p-2.5 rounded border-none focus:ring-2 focus:ring-primary outline-none"
+               // HIER IST DIE ÄNDERUNG: "no-drag" am Ende hinzugefügt
+               className="w-full bg-dark-400 text-white p-2.5 rounded border-none focus:ring-2 focus:ring-primary outline-none no-drag"
              />
            </div>
         </form>

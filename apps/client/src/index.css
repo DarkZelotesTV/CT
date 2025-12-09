@@ -31,3 +31,8 @@ body {
 .drag-region button {
   -webkit-app-region: no-drag;
 }
+/* Erlaubt Interaktion in ziehbaren Bereichen */
+.no-drag {
+  -webkit-app-region: no-drag;
+  cursor: text; /* Damit der Mauszeiger korrekt aussieht */
+}

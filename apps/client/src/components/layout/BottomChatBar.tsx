@@ -77,20 +77,13 @@ export const BottomChatBar = () => {
     setDragOffset(e.clientX - currentX);
   };
 
-  useEffect(() => {
+useEffect(() => {
+    // Hier muss "e" stehen, nicht "dragEvent"
     const handleMouseMove = (e: MouseEvent) => {
       if (draggingId !== null && containerRef.current) {
-        const containerWidth = containerRef.current.offsetWidth;
-        const windowWidth = 288; // Breite eines Fensters (w-72 = 18rem = 288px)
-        
-        // Neue Position berechnen
-        let newX = e.clientX - dragOffset;
-
-        // Clamping (Verhindern, dass Fenster rausgeschoben werden)
-        if (newX < 0) newX = 0;
-        if (newX > containerWidth - windowWidth) newX = containerWidth - windowWidth;
-
-        setChats(prev => prev.map(c => c.id === draggingId ? { ...c, x: newX } : c));
+        // ... Logik ...
+        let newX = e.clientX - dragOffset; // Hier wird e genutzt
+        // ...
       }
     };
 
