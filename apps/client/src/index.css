@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #313338;
+  color: white;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Keine Scrollbars am Rand */
+  font-family: 'gg sans', 'Noto Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+/* Scrollbar Styling (Damit es clean aussieht) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background-color: #2b2d31; 
+}
+::-webkit-scrollbar-thumb {
+  background-color: #1a1b1e; 
+  border-radius: 4px;
+}
+/* Erlaubt das Ziehen des Fensters am Header */
+.drag-region {
+  -webkit-app-region: drag;
+}
+/* Verhindert Ziehen auf Buttons im Header */
+.drag-region button {
+  -webkit-app-region: no-drag;
+}
