@@ -193,4 +193,30 @@ router.get('/channels/:channelId/messages', authenticateToken, async (req, res) 
   }
 });
 
+// CHANNEL CONTENT UPDATE (Für Web-Channels)
+router.put('/channels/:channelId/content', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const { content } = req.body;
+    const channelId = req.params.channelId;
+    const userId = req.user!.id;
+
+    const channel = await Channel.findByPk(channelId);
+    if (!channel) return res.status(404).json({ error: "Kanal nicht gefunden" });
+
+    // Check: Ist User der Owner? (Später: Admin Rolle)
+    const server = await Server.findByPk(channel.server_id);
+    if (server?.owner_id !== userId) {
+        return res.status(403).json({ error: "Nur der Owner darf Webseiten bearbeiten" });
+    }
+
+    // Speichern
+    channel.content = content;
+    await channel.save();
+
+    res.json(channel);
+  } catch (err) {
+    res.status(500).json({ error: "Konnte Inhalt nicht speichern" });
+  }
+});
+
 export default router;

@@ -1,19 +1,19 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { X, Loader2, Hash, Volume2 } from 'lucide-react';
+import { X, Loader2, Hash, Volume2, Globe } from 'lucide-react';
 import { getServerUrl } from '../../utils/apiConfig';
 import classNames from 'classnames';
 
 interface CreateChannelModalProps {
   serverId: number;
-  defaultType?: 'text' | 'voice'; // Damit wir wissen, ob wir Text oder Voice vorauswählen
+  defaultType?: 'text' | 'voice' | 'web';
   onClose: () => void;
   onCreated: () => void;
 }
 
 export const CreateChannelModal = ({ serverId, defaultType = 'text', onClose, onCreated }: CreateChannelModalProps) => {
   const [name, setName] = useState('');
-  const [type, setType] = useState<'text' | 'voice'>(defaultType);
+  const [type, setType] = useState<'text' | 'voice' | 'web'>(defaultType);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -23,18 +23,17 @@ export const CreateChannelModal = ({ serverId, defaultType = 'text', onClose, on
     setLoading(true);
     try {
       const token = localStorage.getItem('clover_token');
-      // POST an dein Backend
       await axios.post(
         `${getServerUrl()}/api/servers/${serverId}/channels`, 
         { name, type },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      onCreated(); // Liste im Hintergrund neu laden
-      onClose();   // Fenster zu
+      onCreated();
+      onClose();
     } catch (err) {
       console.error(err);
-      alert("Fehler beim Erstellen. Bist du der Owner?");
+      alert("Fehler beim Erstellen.");
     } finally {
       setLoading(false);
     }
@@ -42,7 +41,7 @@ export const CreateChannelModal = ({ serverId, defaultType = 'text', onClose, on
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] flex items-center justify-center animate-in fade-in duration-200">
-      <div className="bg-dark-200 w-full max-w-md rounded-lg shadow-2xl border border-dark-400 overflow-hidden transform scale-100">
+      <div className="bg-dark-200 w-full max-w-md rounded-lg shadow-2xl border border-dark-400 overflow-hidden transform scale-100 no-drag">
         
         {/* Header */}
         <div className="p-6 pb-2 flex justify-between items-center">
@@ -52,7 +51,7 @@ export const CreateChannelModal = ({ serverId, defaultType = 'text', onClose, on
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
            
-           {/* Typ Auswahl (Radio Buttons Style) */}
+           {/* Typ Auswahl */}
            <div className="space-y-2">
               <label className="text-xs font-bold text-gray-400 uppercase">Kanaltyp</label>
               
@@ -91,20 +90,40 @@ export const CreateChannelModal = ({ serverId, defaultType = 'text', onClose, on
                     {type === 'voice' && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
                  </div>
               </div>
+
+              {/* Web Option (NEU) */}
+              <div 
+                onClick={() => setType('web')}
+                className={classNames(
+                  "flex items-center p-3 rounded cursor-pointer border hover:bg-dark-300 transition-colors",
+                  type === 'web' ? "bg-dark-300 border-dark-400" : "bg-transparent border-transparent"
+                )}
+              >
+                 <Globe size={24} className="text-gray-400 mr-3" />
+                 <div className="flex-1">
+                    <div className="text-white font-bold">Webseite</div>
+                    <div className="text-xs text-gray-400">Eine HTML Startseite für deinen Server.</div>
+                 </div>
+                 <div className={classNames("w-5 h-5 rounded-full border-2 flex items-center justify-center", type === 'web' ? "border-white" : "border-gray-500")}>
+                    {type === 'web' && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+                 </div>
+              </div>
            </div>
 
            {/* Name Input */}
            <div>
              <label className="text-xs font-bold text-gray-400 uppercase mb-2 block">Kanalname</label>
              <div className="bg-dark-400 flex items-center px-3 rounded border border-transparent focus-within:border-primary">
-                {type === 'text' ? <Hash size={16} className="text-gray-400 mr-2"/> : <Volume2 size={16} className="text-gray-400 mr-2"/>}
+                {type === 'text' ? <Hash size={16} className="text-gray-400 mr-2"/> : 
+                 type === 'voice' ? <Volume2 size={16} className="text-gray-400 mr-2"/> :
+                 <Globe size={16} className="text-gray-400 mr-2"/>}
                 <input 
                   autoFocus
                   type="text" 
                   value={name}
-                  onChange={(e) => setName(e.target.value.toLowerCase().replace(/\s+/g, '-'))} // Discord style: klein-und-mit-strichen
+                  onChange={(e) => setName(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
                   placeholder="neuer-kanal"
-                  className="w-full bg-transparent text-white py-2.5 outline-none font-medium"
+                  className="w-full bg-transparent text-white py-2.5 outline-none font-medium no-drag"
                 />
              </div>
            </div>
