@@ -7,6 +7,7 @@ import { sequelize } from './config/database';
 // Routen Importe
 import authRoutes from './routes/auth';
 import dataRoutes from './routes/data';
+import friendsRoutes from './routes/friends';
 import livekitRoutes from './routes/livekit'; // WICHTIG: Sicherstellen, dass diese Datei existiert!
 
 // Models Importe (für Socket Logik)
@@ -42,6 +43,7 @@ const io = new Server(httpServer, {
 app.use('/api/auth', authRoutes);       // Login/Register
 app.use('/api', dataRoutes);            // Server, Channels, Messages, Members
 app.use('/api/livekit', livekitRoutes); // Voice/Video Tokens
+app.use('/api', friendsRoutes);
 
 // ==========================================
 // 4. ECHTZEIT LOGIK (Socket.io)

@@ -4,6 +4,7 @@ import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe } from 
 import { getServerUrl } from '../../utils/apiConfig';
 import { CreateChannelModal } from '../modals/CreateChannelModal';
 import { UserBottomBar } from './UserBottomBar';
+import { ServerSettingsModal } from '../modals/ServerSettingsModal'; // NEU: Import
 
 // Typen
 interface Channel {
@@ -34,8 +35,9 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel }: C
   // UI State
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
   
-  // STATE FÜR CREATE MODAL
+  // STATE FÜR MODALS
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false); // NEU
   const [createType, setCreateType] = useState<'text' | 'voice' | 'web'>('text');
 
   // Daten laden
@@ -78,7 +80,6 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel }: C
 
   // Kanal Renderer
   const renderChannel = (c: Channel) => {
-    // Icon Wahl
     const Icon = c.type === 'web' ? Globe : c.type === 'voice' ? Volume2 : Hash;
     
     return (
@@ -105,8 +106,11 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel }: C
     <>
       <div className="w-60 bg-dark-200 flex flex-col h-full border-r border-dark-300">
         
-        {/* 1. HEADER */}
-        <div className="h-12 border-b border-dark-400 flex items-center px-4 font-bold text-white shadow-sm hover:bg-dark-300 cursor-pointer justify-between transition-colors flex-shrink-0">
+        {/* 1. HEADER - Jetzt mit Settings Click Handler */}
+        <div 
+          onClick={() => setShowSettingsModal(true)} 
+          className="h-12 border-b border-dark-400 flex items-center px-4 font-bold text-white shadow-sm hover:bg-dark-300 cursor-pointer justify-between transition-colors flex-shrink-0"
+        >
           <span className="truncate">{serverName}</span>
           <Settings size={16} /> 
         </div>
@@ -129,7 +133,6 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel }: C
                      <span>{cat.name}</span>
                  </div>
                  
-                 {/* HIER IST DAS PLUS ICON WIEDER */}
                  <Plus 
                     size={14} 
                     className="opacity-0 group-hover:opacity-100 hover:text-white transition-opacity" 
@@ -160,13 +163,21 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel }: C
 
       </div>
 
-      {/* 4. MODAL */}
+      {/* 4. MODALS */}
       {showCreateModal && (
         <CreateChannelModal 
             serverId={serverId} 
             defaultType={createType}
             onClose={() => setShowCreateModal(false)} 
             onCreated={fetchData} 
+        />
+      )}
+
+      {/* NEU: Server Settings Modal */}
+      {showSettingsModal && (
+        <ServerSettingsModal
+            serverId={serverId}
+            onClose={() => setShowSettingsModal(false)}
         />
       )}
     </>

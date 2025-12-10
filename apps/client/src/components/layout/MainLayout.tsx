@@ -11,7 +11,8 @@ import { ChannelSidebar } from './ChannelSidebar';
 // Views
 import { DashboardSidebar } from '../dashboard/DashboardSidebar';
 import { FriendListStage } from '../dashboard/FriendListStage';
-import { WebChannelView } from '../server/WebChannelView'; // Importieren!
+import { WebChannelView } from '../server/WebChannelView';
+import { VoiceChannelView } from '../server/VoiceChannelView'; // NEU: Import
 
 interface Channel {
   id: number;
@@ -22,7 +23,6 @@ interface Channel {
 export const MainLayout = () => {
   const [showLeftSidebar, setShowLeftSidebar] = useState(true);
   const [showRightSidebar, setShowRightSidebar] = useState(true);
-  const [showStageSettings, setShowStageSettings] = useState(false);
   
   const [selectedServerId, setSelectedServerId] = useState<number | null>(null);
   const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
@@ -32,7 +32,6 @@ export const MainLayout = () => {
   const handleServerSelect = (id: number | null) => {
       setSelectedServerId(id);
       setActiveChannel(null); 
-      setShowStageSettings(false);
   };
 
   return (
@@ -81,39 +80,21 @@ export const MainLayout = () => {
         {selectedServerId ? (
             
             // --- SERVER MODUS ---
-            
+            // Prüfen welcher Kanaltyp aktiv ist
             activeChannel?.type === 'web' ? (
                 // A) WEB KANAL
                 <WebChannelView channelId={activeChannel.id} channelName={activeChannel.name} />
+            ) : activeChannel?.type === 'voice' ? (
+                // B) VOICE KANAL (NEU)
+                <VoiceChannelView channelId={activeChannel.id} channelName={activeChannel.name} />
             ) : (
-                // B) VOICE / STAGE ANSICHT (Default)
+                // C) LEERE STAGE ANSICHT (Default)
                 <div className="flex-1 flex items-center justify-center relative z-0">
                     <div className="absolute inset-0 opacity-5" style={{backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '24px 24px'}}></div>
                     
-                    {/* Settings Icon */}
-                    <div className="absolute top-4 right-4 z-20">
-                        <button onClick={() => setShowStageSettings(!showStageSettings)} className="p-2 bg-black/40 text-gray-400 hover:text-white rounded hover:bg-black/60 transition-colors"><Settings size={20} /></button>
-                        {showStageSettings && (
-                            <div className="absolute top-10 right-0 w-48 bg-dark-200 border border-dark-400 shadow-xl rounded p-1 text-sm text-gray-300 animate-in fade-in zoom-in-95 duration-100">
-                                <div className="p-2 hover:bg-dark-300 rounded cursor-pointer">Video Einstellungen</div>
-                                <div className="p-2 hover:bg-dark-300 rounded cursor-pointer">Audio Einstellungen</div>
-                                <div className="h-px bg-dark-400 my-1"></div>
-                                <div className="p-2 hover:bg-red-500/10 text-red-400 hover:text-red-300 rounded cursor-pointer font-bold">Trennen</div>
-                            </div>
-                        )}
-                    </div>
-
                     <div className="text-center">
-                        <h2 className="text-2xl font-bold text-gray-300 mb-2">
-                           {activeChannel?.type === 'voice' ? `🔊 ${activeChannel.name}` : 'Stage Area'}
-                        </h2>
-                        <p className="text-gray-500 mb-8">
-                           {activeChannel?.type === 'voice' ? 'Verbunden. Mikrofon offen.' : 'Wähle einen Voice-Channel links'}
-                        </p>
-                        <div className="w-64 h-64 border-2 border-dashed border-gray-600 rounded-full mx-auto flex items-center justify-center text-gray-500 relative">
-                             <span className="text-sm">3D Audio Radar</span>
-                             {activeChannel?.type === 'voice' && <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-green-500 rounded-full shadow-[0_0_15px_rgba(34,197,94,0.6)] animate-pulse"></div>}
-                        </div>
+                        <h2 className="text-2xl font-bold text-gray-300 mb-2">Stage Area</h2>
+                        <p className="text-gray-500">Wähle einen Voice-Kanal links.</p>
                     </div>
                 </div>
             )

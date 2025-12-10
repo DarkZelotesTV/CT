@@ -4,6 +4,7 @@ import { Channel } from './Channel';
 import { Message } from './Message';
 import { ServerMember } from './ServerMember';
 import { Category } from './Category';
+import { Friendship } from './Friendship';
 
 // Beziehungen definieren
 
@@ -38,5 +39,9 @@ Category.belongsTo(Server, { foreignKey: 'server_id', as: 'server' });
 Category.hasMany(Channel, { foreignKey: 'category_id', as: 'channels' });
 Channel.belongsTo(Category, { foreignKey: 'category_id', as: 'category' });
 
-export { User, Server, Channel, Message, ServerMember, Category };
+// User <-> Friendship
+User.hasMany(Friendship, { foreignKey: 'requester_id', as: 'sentRequests' });
+User.hasMany(Friendship, { foreignKey: 'addressee_id', as: 'receivedRequests' });
+
+export { User, Server, Channel, Message, ServerMember, Category, Friendship };
 
