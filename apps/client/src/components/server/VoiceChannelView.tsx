@@ -7,7 +7,6 @@ import {
   useTracks,
   RoomAudioRenderer,
   ControlBar,
-  DisconnectButton
 } from '@livekit/components-react';
 import { Track } from 'livekit-client';
 import '@livekit/components-styles';
@@ -24,10 +23,13 @@ export const VoiceChannelView = ({ channelId, channelName }: VoiceChannelViewPro
   const [token, setToken] = useState('');
 
   useEffect(() => {
+    // Wenn wir den Channel wechseln, Token zurücksetzen, damit neu geladen wird
+    setToken('');
+    
     const fetchToken = async () => {
       try {
         const auth = localStorage.getItem('clover_token');
-        // Wir nutzen den Namen des Channels als Room-Name (eindeutiger wäre channelId)
+        // Wir nutzen den Namen des Channels als Room-Name (sollte eigentlich channelId sein in Prod)
         const roomName = `channel_${channelId}`;
         
         const res = await axios.get(`${getServerUrl()}/api/livekit/token?room=${roomName}`, {
@@ -43,8 +45,10 @@ export const VoiceChannelView = ({ channelId, channelName }: VoiceChannelViewPro
 
   if (!token) {
     return (
-      <div className="flex-1 bg-dark-400 flex items-center justify-center text-gray-400">
-        <Loader2 className="animate-spin mr-2" /> Verbinde mit Audio-Server...
+      <div className="flex-1 bg-dark-100 flex flex-col items-center justify-center text-gray-400">
+        <Loader2 className="animate-spin mb-4" size={32} />
+        <h3 className="text-white font-bold">Verbinde mit "{channelName}"...</h3>
+        <p className="text-sm">Bitte stelle sicher, dass der LiveKit Server läuft.</p>
       </div>
     );
   }
@@ -54,12 +58,13 @@ export const VoiceChannelView = ({ channelId, channelName }: VoiceChannelViewPro
       video={false} // Startet ohne Kamera
       audio={true}  // Startet mit Mikrofon an
       token={token}
-      serverUrl={import.meta.env.VITE_LIVEKIT_URL || "ws://localhost:7880"} // Deine LiveKit URL
+      // Falls VITE_LIVEKIT_URL nicht gesetzt ist, Fallback auf localhost
+      serverUrl={import.meta.env.VITE_LIVEKIT_URL || "ws://localhost:7880"} 
       data-lk-theme="default"
-      style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#111214' }}
+      style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#313338' }}
       onDisconnected={() => setToken('')}
     >
-      {/* Das Grid zeigt alle Teilnehmer (Video oder Avatar) */}
+      {/* Das Grid zeigt alle Teilnehmer */}
       <div className="flex-1 p-4 overflow-hidden relative">
          <MyVideoGrid />
       </div>
@@ -71,7 +76,7 @@ export const VoiceChannelView = ({ channelId, channelName }: VoiceChannelViewPro
   );
 };
 
-// Hilfskomponente für das Layout
+// Hilfskomponente für das Layout der Teilnehmer
 function MyVideoGrid() {
   const tracks = useTracks(
     [

@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe } from 'lucide-react';
+import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, Shield } from 'lucide-react';
 import { getServerUrl } from '../../utils/apiConfig';
 import { CreateChannelModal } from '../modals/CreateChannelModal';
 import { UserBottomBar } from './UserBottomBar';
-import { ServerSettingsModal } from '../modals/ServerSettingsModal'; // NEU: Import
+import { ServerSettingsModal } from '../modals/ServerSettingsModal';
 
-// Typen
 interface Channel {
   id: number;
   name: string;
@@ -27,75 +26,75 @@ interface ChannelSidebarProps {
 }
 
 export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel }: ChannelSidebarProps) => {
-  // Daten State
   const [categories, setCategories] = useState<Category[]>([]);
   const [uncategorized, setUncategorized] = useState<Channel[]>([]);
-  const [serverName, setServerName] = useState('Laden...');
+  const [serverName, setServerName] = useState('Server');
   
-  // UI State
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
-  
-  // STATE FÜR MODALS
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false); // NEU
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [createType, setCreateType] = useState<'text' | 'voice' | 'web'>('text');
 
-  // Daten laden
   const fetchData = useCallback(async () => {
     if (!serverId) return;
     try {
       const token = localStorage.getItem('clover_token');
-      
-      // 1. Server Name
-      const srvRes = await axios.get(`${getServerUrl()}/api/servers`, { 
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const srvRes = await axios.get(`${getServerUrl()}/api/servers`, { headers: { Authorization: `Bearer ${token}` } });
       const current = srvRes.data.find((s: any) => s.id === serverId);
       if (current) setServerName(current.name);
 
-      // 2. Struktur
       const structRes = await axios.get(`${getServerUrl()}/api/servers/${serverId}/structure`, {
           headers: { Authorization: `Bearer ${token}` }
       });
       setCategories(structRes.data.categories);
       setUncategorized(structRes.data.uncategorized);
-
-    } catch (err) {
-      console.error("Fehler beim Laden der Kanäle:", err);
-    }
+    } catch (err) { console.error(err); }
   }, [serverId]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Toggles
-  const toggleCategory = (id: number) => {
-    setCollapsed(prev => ({ ...prev, [id]: !prev[id] }));
-  };
+  const toggleCategory = (id: number) => setCollapsed(prev => ({ ...prev, [id]: !prev[id] }));
+  const openCreate = (type: any) => { setCreateType(type); setShowCreateModal(true); };
 
-  // Modal öffnen Helper
-  const openCreate = (type: 'text' | 'voice' | 'web') => {
-    setCreateType(type);
-    setShowCreateModal(true);
-  };
-
-  // Kanal Renderer
-  const renderChannel = (c: Channel) => {
+  // Render Channel Item (TeamSpeak Style: Compact, High Contrast Selection)
+  const renderChannel = (c: Channel, isInsideCategory = false) => {
     const Icon = c.type === 'web' ? Globe : c.type === 'voice' ? Volume2 : Hash;
+    const isActive = activeChannelId === c.id;
     
     return (
       <div 
         key={c.id} 
         onClick={() => onSelectChannel(c)}
-        className={`flex items-center px-2 py-1.5 mx-2 rounded cursor-pointer group transition-colors mb-0.5
-          ${activeChannelId === c.id ? 'bg-dark-300 text-white' : 'text-gray-400 hover:bg-dark-300 hover:text-gray-200'}
+        className={`
+            relative flex items-center px-2 py-1 mb-[1px] cursor-pointer group select-none
+            ${isActive 
+                ? 'bg-ts-accent/20 text-blue-400 border-l-2 border-blue-500' 
+                : 'text-gray-400 hover:bg-ts-hover hover:text-gray-200 border-l-2 border-transparent'}
+            transition-all duration-100 ease-out
+            ${isInsideCategory ? 'ml-4' : 'mx-2 rounded-sm'}
         `}
       >
-        {c.custom_icon ? (
-          <span className="mr-2 text-lg w-[20px] text-center">{c.custom_icon}</span>
-        ) : (
-          <Icon size={18} className="text-gray-500 mr-1.5" />
+        {/* Verbindungslinie für Tree-View-Feeling */}
+        {isInsideCategory && (
+            <div className="absolute left-[-10px] top-0 bottom-0 w-[1px] bg-ts-border group-hover:bg-ts-border/80"></div>
         )}
-        <span className="font-medium truncate flex-1">{c.name}</span>
+        
+        {c.custom_icon ? (
+          <span className="mr-2 text-sm w-[18px] text-center">{c.custom_icon}</span>
+        ) : (
+          <Icon size={16} className={`mr-2 ${isActive ? 'text-blue-400' : 'text-gray-500 group-hover:text-gray-400'}`} />
+        )}
+        
+        <span className={`text-sm truncate flex-1 font-medium ${isActive ? 'text-white shadow-glow' : ''}`}>
+            {c.name}
+        </span>
+
+        {/* Tech-Badge bei Voice (z.B. User Count dummy) */}
+        {c.type === 'voice' && (
+            <span className="text-[10px] font-mono text-gray-600 bg-ts-base px-1 rounded border border-ts-border opacity-0 group-hover:opacity-100 transition-opacity">
+                0
+            </span>
+        )}
       </div>
     );
   };
@@ -104,66 +103,74 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel }: C
 
   return (
     <>
-      <div className="w-60 bg-dark-200 flex flex-col h-full border-r border-dark-300">
+      <div className="w-64 bg-ts-surface flex flex-col h-full border-r border-ts-border relative shadow-xl">
         
-        {/* 1. HEADER - Jetzt mit Settings Click Handler */}
+        {/* HEADER: Technischer Look mit Gradient */}
         <div 
           onClick={() => setShowSettingsModal(true)} 
-          className="h-12 border-b border-dark-400 flex items-center px-4 font-bold text-white shadow-sm hover:bg-dark-300 cursor-pointer justify-between transition-colors flex-shrink-0"
+          className="h-14 tech-border flex items-center px-4 cursor-pointer hover:bg-ts-hover transition-colors bg-gradient-to-r from-ts-surface to-ts-base"
         >
-          <span className="truncate">{serverName}</span>
-          <Settings size={16} /> 
+          <div className="flex-1 overflow-hidden">
+             <div className="font-bold text-white text-sm uppercase tracking-wide truncate">{serverName}</div>
+             <div className="text-[10px] text-green-500 flex items-center gap-1 font-mono mt-0.5">
+                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                ONLINE
+             </div>
+          </div>
+          <Settings size={18} className="text-gray-500 hover:text-white transition-colors" /> 
         </div>
 
-        {/* 2. LISTE */}
-        <div className="flex-1 overflow-y-auto pt-3 custom-scrollbar">
+        {/* CHANNEL LISTE */}
+        <div className="flex-1 overflow-y-auto pt-4 pb-2 px-2 custom-scrollbar">
           
-          {/* Unkategorisierte */}
-          {uncategorized.map(renderChannel)}
+          {uncategorized.map(c => renderChannel(c, false))}
 
-          {/* Kategorien */}
           {categories.map(cat => (
-            <div key={cat.id} className="mt-4">
+            <div key={cat.id} className="mt-4 relative">
+              {/* Category Header */}
               <div 
-                className="px-2 flex items-center justify-between group text-gray-400 hover:text-gray-200 cursor-pointer mb-1"
+                className="flex items-center justify-between group text-gray-500 hover:text-gray-300 cursor-pointer mb-1 pl-1"
                 onClick={() => toggleCategory(cat.id)}
               >
-                 <div className="text-xs font-bold uppercase flex items-center gap-0.5 hover:text-white transition-colors">
-                     {collapsed[cat.id] ? <ChevronRight size={12}/> : <ChevronDown size={12}/>}
-                     <span>{cat.name}</span>
+                 <div className="flex items-center gap-1">
+                     {collapsed[cat.id] ? <ChevronRight size={10}/> : <ChevronDown size={10}/>}
+                     <span className="text-[11px] font-bold uppercase tracking-wider font-mono">{cat.name}</span>
                  </div>
-                 
                  <Plus 
                     size={14} 
-                    className="opacity-0 group-hover:opacity-100 hover:text-white transition-opacity" 
+                    className="opacity-0 group-hover:opacity-100 hover:text-white transition-opacity mr-2" 
                     onClick={(e) => { e.stopPropagation(); openCreate('text'); }} 
-                    title="Kanal erstellen"
                  />
               </div>
-              {!collapsed[cat.id] && cat.channels.map(renderChannel)}
+              
+              {/* Category Content mit Indentation Line */}
+              {!collapsed[cat.id] && (
+                  <div className="relative border-l border-ts-border/50 ml-2 pl-0 space-y-0.5">
+                      {cat.channels.map(c => renderChannel(c, true))}
+                  </div>
+              )}
             </div>
           ))}
 
-          {/* Fallback Button für leere Server */}
           {categories.length === 0 && uncategorized.length === 0 && (
-             <div className="p-4 text-center mt-4">
-                <p className="text-gray-500 text-xs mb-2">Noch keine Kanäle hier.</p>
-                <button 
-                  onClick={() => openCreate('text')}
-                  className="text-xs bg-dark-400 hover:bg-green-600 text-white px-3 py-2 rounded transition-colors w-full"
-                >
-                  Ersten Kanal erstellen
-                </button>
+             <div className="p-6 text-center opacity-50">
+                <div className="border border-dashed border-gray-600 rounded p-4">
+                    <p className="text-xs text-gray-400 mb-3">Server ist leer.</p>
+                    <button onClick={() => openCreate('text')} className="text-xs bg-ts-accent/20 text-blue-400 hover:text-white px-3 py-1.5 rounded transition-all">
+                        Kanal erstellen
+                    </button>
+                </div>
              </div>
           )}
         </div>
         
-        {/* 3. USER FOOTER */}
-        <UserBottomBar />
+        {/* USER FOOTER: Docked at bottom, tech style */}
+        <div className="tech-border border-t bg-ts-base/50 p-0">
+             <UserBottomBar />
+        </div>
 
       </div>
 
-      {/* 4. MODALS */}
       {showCreateModal && (
         <CreateChannelModal 
             serverId={serverId} 
@@ -173,7 +180,6 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel }: C
         />
       )}
 
-      {/* NEU: Server Settings Modal */}
       {showSettingsModal && (
         <ServerSettingsModal
             serverId={serverId}

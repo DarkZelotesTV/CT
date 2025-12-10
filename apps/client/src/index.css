@@ -1,38 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-  background-color: #313338;
-  color: white;
-  margin: 0;
-  padding: 0;
-  overflow: hidden; /* Keine Scrollbars am Rand */
-  font-family: 'gg sans', 'Noto Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+@layer base {
+  body {
+    @apply bg-ts-base text-gray-200 font-sans overflow-hidden antialiased;
+  }
+
+  /* TeamSpeak Style: Eckigere, dünnere Scrollbars */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-ts-surface; 
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-ts-border rounded-sm; 
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500; 
+  }
 }
 
-/* Scrollbar Styling (Damit es clean aussieht) */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-::-webkit-scrollbar-track {
-  background-color: #2b2d31; 
-}
-::-webkit-scrollbar-thumb {
-  background-color: #1a1b1e; 
-  border-radius: 4px;
-}
-/* Erlaubt das Ziehen des Fensters am Header */
-.drag-region {
-  -webkit-app-region: drag;
-}
-/* Verhindert Ziehen auf Buttons im Header */
-.drag-region button {
-  -webkit-app-region: no-drag;
-}
-/* Erlaubt Interaktion in ziehbaren Bereichen */
-.no-drag {
-  -webkit-app-region: no-drag;
-  cursor: text; /* Damit der Mauszeiger korrekt aussieht */
+@layer components {
+  /* Utility für Glas-Effekte, aber dunkler/technischer */
+  .glass-panel {
+    @apply bg-ts-panel/90 backdrop-blur-md border border-ts-border shadow-panel;
+  }
+  
+  .tech-border {
+    @apply border-b border-ts-border box-border;
+  }
 }

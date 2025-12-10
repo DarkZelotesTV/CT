@@ -4,24 +4,42 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
-theme: {
+  theme: {
     extend: {
-// In deiner tailwind.config.js unter theme.extend.colors
-colors: {
-  command: {
-    base: '#030304',    // Fast schwarz, sehr tief
-    surface: '#09090b', // Sekundärer Hintergrund
-    panel: '#121215',   // Panels/Karten
-    border: '#27272a',  // Subtile Ränder (Zinc-800)
-    accent: '#06b6d4',  // Cyan-500 (Edler als reines Cyan)
-    accentGlow: 'rgba(6, 182, 212, 0.15)', // Schein
-    text: '#e4e4e7',    // Zinc-200 (Besser lesbar als reines Weiß)
-    muted: '#a1a1aa',   // Zinc-400
-  }
-},
       fontFamily: {
-        hud: ['"Share Tech Mono"', 'monospace'], // Empfohlene Schriftart (Google Fonts)
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'monospace'], // Für technische Details (IDs, Ping)
       },
+      colors: {
+        // TeamSpeak 5 Inspired Palette (Kühl, Technisch, Deep)
+        ts: {
+          base: '#09090b',      // Fast schwarz (Hintergrund Main)
+          surface: '#121317',   // Sidebar Hintergrund
+          panel: '#1a1b21',     // Karten / Modals
+          hover: '#272832',     // Hover State
+          border: '#2e303e',    // Subtile Ränder
+          accent: '#3b82f6',    // TS Blue (Primary)
+          accentHover: '#2563eb',
+          voice: '#10b981',     // TS Voice Activation Green
+        }
+      },
+      backgroundImage: {
+        'gradient-ts': 'linear-gradient(to bottom right, #121317, #09090b)',
+        'gradient-glow': 'radial-gradient(circle at center, rgba(59, 130, 246, 0.15), transparent 70%)',
+      },
+      boxShadow: {
+        'glow': '0 0 20px rgba(59, 130, 246, 0.15)',
+        'panel': '0 8px 32px rgba(0, 0, 0, 0.4)',
+      },
+      animation: {
+        'in': 'animate-in 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+      },
+      keyframes: {
+        'animate-in': {
+          '0%': { opacity: 0, transform: 'translateY(5px)' },
+          '100%': { opacity: 1, transform: 'translateY(0)' },
+        },
+      }
     },
   },
   plugins: [],

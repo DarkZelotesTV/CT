@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import classNames from 'classnames';
-import { ChevronLeft, ChevronRight, Settings } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Layout Components
 import { ServerRail } from './ServerRail';
@@ -12,7 +12,7 @@ import { ChannelSidebar } from './ChannelSidebar';
 import { DashboardSidebar } from '../dashboard/DashboardSidebar';
 import { FriendListStage } from '../dashboard/FriendListStage';
 import { WebChannelView } from '../server/WebChannelView';
-import { VoiceChannelView } from '../server/VoiceChannelView'; // NEU: Import
+import { VoiceChannelView } from '../server/VoiceChannelView';
 
 interface Channel {
   id: number;
@@ -35,19 +35,19 @@ export const MainLayout = () => {
   };
 
   return (
-    <div className="flex h-screen w-screen bg-dark-100 font-sans select-none overflow-hidden relative">
+    <div className="flex h-screen w-screen bg-ts-base font-sans select-none overflow-hidden relative text-gray-200">
       
       {/* 1. SERVER LEISTE */}
-      <div className="w-[72px] flex-shrink-0 z-50 relative border-r border-dark-400 bg-dark-400">
+      <div className="w-[72px] flex-shrink-0 z-50 relative border-r border-ts-border bg-ts-base">
         <ServerRail 
             selectedServerId={selectedServerId} 
             onSelectServer={handleServerSelect} 
         />
       </div>
 
-      {/* 2. SIDEBAR */}
-      <div className={classNames("transition-all duration-300 ease-in-out relative flex flex-shrink-0 z-40 bg-dark-200", showLeftSidebar ? "w-60 border-r border-dark-400" : "w-0 overflow-hidden border-none")}> 
-        <div className="w-60 h-full">
+      {/* 2. SIDEBAR (Links) */}
+      <div className={classNames("transition-all duration-300 ease-in-out relative flex flex-shrink-0 z-40 bg-ts-surface", showLeftSidebar ? "w-64 border-r border-ts-border" : "w-0 overflow-hidden border-none")}> 
+        <div className="w-64 h-full">
            {selectedServerId ? (
                <ChannelSidebar 
                   serverId={selectedServerId}
@@ -57,7 +57,7 @@ export const MainLayout = () => {
                           // Voice & Web ersetzen die Stage/Mitte
                           setActiveChannel(channel);
                       } else {
-                          // Text öffnet unten ein Fenster
+                          // Text öffnet unten ein Fenster (Overlay)
                           if (chatBarRef.current) {
                               chatBarRef.current.openChat(channel.id, channel.name);
                           }
@@ -70,12 +70,17 @@ export const MainLayout = () => {
         </div>
       </div>
 
-      <button onClick={() => setShowLeftSidebar(!showLeftSidebar)} className="absolute top-1/2 z-50 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-red-600 transition-all hover:scale-110" style={{ left: showLeftSidebar ? '300px' : '62px' }}>
-        {showLeftSidebar ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+      {/* Toggle Button Links (TeamSpeak Style: Klein & Technisch) */}
+      <button 
+        onClick={() => setShowLeftSidebar(!showLeftSidebar)} 
+        className="absolute top-1/2 z-50 w-5 h-12 bg-ts-panel border border-ts-border rounded-r-md flex items-center justify-center text-gray-400 hover:text-white hover:bg-ts-hover transition-all shadow-lg transform -translate-y-1/2" 
+        style={{ left: showLeftSidebar ? '328px' : '71px' }} // 72px (Rail) + 256px (Sidebar) = 328px
+      >
+        {showLeftSidebar ? <ChevronLeft size={12} /> : <ChevronRight size={12} />}
       </button>
 
       {/* 3. MAIN SCREEN */}
-      <div className="flex-1 flex flex-col min-w-0 relative bg-dark-100 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 relative bg-ts-base overflow-hidden">
         
         {selectedServerId ? (
             
@@ -85,16 +90,19 @@ export const MainLayout = () => {
                 // A) WEB KANAL
                 <WebChannelView channelId={activeChannel.id} channelName={activeChannel.name} />
             ) : activeChannel?.type === 'voice' ? (
-                // B) VOICE KANAL (NEU)
+                // B) VOICE KANAL
                 <VoiceChannelView channelId={activeChannel.id} channelName={activeChannel.name} />
             ) : (
                 // C) LEERE STAGE ANSICHT (Default)
                 <div className="flex-1 flex items-center justify-center relative z-0">
-                    <div className="absolute inset-0 opacity-5" style={{backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '24px 24px'}}></div>
+                    <div className="absolute inset-0 opacity-[0.03]" style={{backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '30px 30px'}}></div>
                     
-                    <div className="text-center">
-                        <h2 className="text-2xl font-bold text-gray-300 mb-2">Stage Area</h2>
-                        <p className="text-gray-500">Wähle einen Voice-Kanal links.</p>
+                    <div className="text-center p-8 glass-panel rounded-xl">
+                        <div className="mb-4 text-ts-accent opacity-80 mx-auto w-12 h-12 flex items-center justify-center bg-ts-accent/10 rounded-full">
+                           <div className="w-3 h-3 bg-current rounded-full animate-pulse"></div>
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-200 mb-2 font-mono tracking-tight">System Bereit</h2>
+                        <p className="text-gray-500 text-sm">Wähle einen Kanal aus der Liste, um zu beginnen.</p>
                     </div>
                 </div>
             )
@@ -106,7 +114,7 @@ export const MainLayout = () => {
             </div>
         )}
 
-        {/* CHAT LEISTE */}
+        {/* CHAT LEISTE (Overlay unten) */}
         <BottomChatBar ref={chatBarRef} />
 
       </div>
@@ -114,13 +122,19 @@ export const MainLayout = () => {
       {/* 4. RECHTE SIDEBAR */}
       {selectedServerId && (
         <>
-            <div className={classNames("transition-all duration-300 ease-in-out relative flex flex-shrink-0 bg-dark-200 z-40 border-l border-dark-400", showRightSidebar ? "w-60" : "w-0 overflow-hidden")}>
+            <div className={classNames("transition-all duration-300 ease-in-out relative flex flex-shrink-0 bg-ts-surface z-40 border-l border-ts-border", showRightSidebar ? "w-60" : "w-0 overflow-hidden")}>
                 <div className="w-60 h-full">
                     <MemberSidebar serverId={selectedServerId} />
                 </div>
             </div>
-            <button onClick={() => setShowRightSidebar(!showRightSidebar)} className="absolute top-1/2 z-50 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-red-600 transition-all hover:scale-110" style={{ right: showRightSidebar ? '225px' : '10px' }}>
-                {showRightSidebar ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+            
+            {/* Toggle Button Rechts */}
+            <button 
+                onClick={() => setShowRightSidebar(!showRightSidebar)} 
+                className="absolute top-1/2 z-50 w-5 h-12 bg-ts-panel border border-ts-border rounded-l-md flex items-center justify-center text-gray-400 hover:text-white hover:bg-ts-hover transition-all shadow-lg transform -translate-y-1/2" 
+                style={{ right: showRightSidebar ? '240px' : '0' }}
+            >
+                {showRightSidebar ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
             </button>
         </>
       )}
