@@ -4,7 +4,6 @@ import { Hash, Bell, Pin, Users, Search, Plus, Gift, Sticker, Smile, Send, Loade
 import { getServerUrl } from '../../utils/apiConfig';
 import { useSocket } from '../../context/SocketContext';
 
-// Typen für Nachrichten
 interface Message {
   id: number;
   content: string;
@@ -26,14 +25,14 @@ export const ChatChannelView = ({ channelId, channelName }: ChatChannelViewProps
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
   
-  // Refs für Auto-Scroll und Socket
   const scrollRef = useRef<HTMLDivElement>(null);
   const { socket } = useSocket();
 
-  // 1. Nachrichten laden (History) & Socket Room beitreten
+  // --- API LOGIC: Nachrichten Laden ---
   useEffect(() => {
     const fetchMessages = async () => {
       setLoading(true);
+      setMessages([]); // Reset bei Channel-Wechsel
       try {
         const token = localStorage.getItem('clover_token');
         const res = await axios.get(`${getServerUrl()}/api/channels/${channelId}/messages`, {
@@ -41,59 +40,38 @@ export const ChatChannelView = ({ channelId, channelName }: ChatChannelViewProps
         });
         setMessages(res.data);
       } catch (err) {
-        console.error("Fehler beim Laden der Nachrichten:", err);
+        console.error("Chat Error:", err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchMessages();
-
-    // Dem Socket-Raum beitreten
-    if (socket) {
-      socket.emit('join_channel', channelId);
-    }
+    if (socket) socket.emit('join_channel', channelId);
 
   }, [channelId, socket]);
 
-  // 2. Auf neue Nachrichten hören (Realtime)
+  // --- SOCKET LOGIC: Neue Nachricht ---
   useEffect(() => {
     if (!socket) return;
-
-    const handleNewMessage = (newMessage: Message) => {
-      // Prüfen ob Nachricht für diesen Channel ist (Sicherheitshalber)
-      // (Hier vereinfacht, da wir eh nur Messages für diesen Raum empfangen sollten)
-      setMessages((prev) => [...prev, newMessage]);
+    const handleMsg = (newMsg: Message) => {
+        // Optional: Check if msg.channel_id === channelId
+        setMessages((prev) => [...prev, newMsg]);
     };
-
-    socket.on('receive_message', handleNewMessage);
-
-    return () => {
-      socket.off('receive_message', handleNewMessage);
-    };
+    socket.on('receive_message', handleMsg);
+    return () => { socket.off('receive_message', handleMsg); };
   }, [socket, channelId]);
 
-  // 3. Auto-Scroll nach unten bei neuen Nachrichten
+  // Auto-Scroll
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
 
-  // 4. Nachricht senden
   const sendMessage = async () => {
     if (!inputText.trim() || !socket) return;
-
     const user = JSON.parse(localStorage.getItem('clover_user') || '{}');
-    
-    // An Socket Server senden
-    socket.emit('send_message', {
-      content: inputText,
-      channelId: channelId,
-      userId: user.id
-    });
-
-    setInputText(''); // Input leeren
+    socket.emit('send_message', { content: inputText, channelId, userId: user.id });
+    setInputText('');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -103,80 +81,82 @@ export const ChatChannelView = ({ channelId, channelName }: ChatChannelViewProps
     }
   };
 
-  // Helper für Zeitformatierung
-  const formatTime = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
   return (
-    <div className="flex-1 flex flex-col bg-dark-100 relative z-0 h-full">
+    <div className="flex-1 flex flex-col h-full bg-transparent relative">
       
-      {/* Header */}
-      <div className="h-12 border-b border-dark-400 flex items-center px-4 shadow-sm bg-dark-100 flex-shrink-0">
-        <Hash className="text-gray-400 mr-2" size={20} />
-        <span className="font-bold text-white mr-4">{channelName}</span>
+      {/* HEADER */}
+      <div className="h-12 border-b border-white/5 flex items-center px-4 bg-white/[0.02] backdrop-blur-md flex-shrink-0 justify-between">
+        <div className="flex items-center text-white">
+           <Hash className="text-gray-500 mr-2" size={20} />
+           <span className="font-bold tracking-tight">{channelName}</span>
+        </div>
         
-        {/* Header Icons */}
-        <div className="ml-auto flex items-center gap-4 text-gray-400">
-            <Bell size={20} className="hover:text-gray-200 cursor-pointer" />
-            <Pin size={20} className="hover:text-gray-200 cursor-pointer" />
-            <Users size={20} className="hover:text-gray-200 cursor-pointer" />
+        <div className="flex items-center gap-4 text-gray-400">
+            <Bell size={18} className="hover:text-white cursor-pointer transition-colors" />
+            <Pin size={18} className="hover:text-white cursor-pointer transition-colors" />
+            <Users size={18} className="hover:text-white cursor-pointer transition-colors block lg:hidden" />
             <div className="relative hidden md:block">
-                <input type="text" placeholder="Suchen" className="bg-dark-400 text-sm px-2 py-1 rounded w-32 transition-all focus:w-48 outline-none text-white" />
-                <Search size={14} className="absolute right-2 top-1.5" />
+                <input type="text" placeholder="Suchen" className="bg-black/20 text-xs px-2 py-1.5 rounded w-32 focus:w-48 outline-none text-white transition-all border border-transparent focus:border-white/10" />
+                <Search size={12} className="absolute right-2 top-2 text-gray-500" />
             </div>
         </div>
       </div>
       
-      {/* Nachrichten Bereich */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar flex flex-col">
+      {/* MESSAGES AREA */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
+         {loading && <div className="flex justify-center py-10"><Loader2 className="animate-spin text-primary" /></div>}
          
-         {/* Welcome Banner (scrollt weg wenn viele Nachrichten da sind) */}
-         {!loading && messages.length < 10 && (
-           <div className="mt-auto mb-8">
-              <div className="w-16 h-16 bg-dark-300 rounded-full flex items-center justify-center mb-4">
-                  <Hash size={40} className="text-white" />
-              </div>
-              <h1 className="text-3xl font-bold text-white mb-2">Willkommen in #{channelName}!</h1>
-              <p className="text-gray-400">Das ist der Anfang des Kanals.</p>
-           </div>
-         )}
-
-         {loading && (
-           <div className="flex justify-center mt-10"><Loader2 className="animate-spin text-primary" /></div>
-         )}
-
-         {/* Messages List */}
-         {messages.map((msg) => (
-            <div key={msg.id} className="group flex gap-4 hover:bg-dark-200/30 p-1 -mx-2 rounded pr-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
-                <div className="w-10 h-10 rounded-full bg-dark-300 flex-shrink-0 mt-0.5 overflow-hidden">
-                    {msg.sender.avatar_url ? (
-                      <img src={msg.sender.avatar_url} alt={msg.sender.username} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-indigo-500 text-white font-bold">
-                        {msg.sender.username.substring(0, 2).toUpperCase()}
-                      </div>
-                    )}
+         {!loading && messages.length === 0 && (
+            <div className="mt-10 px-4">
+                <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
+                    <Hash size={32} className="text-white/50" />
                 </div>
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 align-baseline">
-                        <span className="text-white font-medium hover:underline cursor-pointer">{msg.sender.username}</span>
-                        <span className="text-xs text-gray-400 ml-1">{formatTime(msg.createdAt)}</span>
-                    </div>
-                    <p className="text-gray-300 text-[15px] leading-relaxed break-words whitespace-pre-wrap">
-                        {msg.content}
-                    </p>
-                </div>
+                <h1 className="text-3xl font-bold text-white mb-2">Willkommen in #{channelName}!</h1>
+                <p className="text-gray-400">Dies ist der Beginn deiner Legende.</p>
             </div>
-         ))}
+         )}
+
+         {messages.map((msg, i) => {
+             const isSameSender = i > 0 && messages[i-1].sender.id === msg.sender.id;
+             return (
+                <div key={msg.id} className={`group flex gap-4 hover:bg-white/[0.02] px-2 py-0.5 -mx-2 rounded transition-colors ${!isSameSender ? 'mt-4' : ''}`}>
+                    {!isSameSender ? (
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex-shrink-0 overflow-hidden cursor-pointer shadow-lg hover:scale-105 transition-transform mt-0.5">
+                            {msg.sender.avatar_url ? (
+                                <img src={msg.sender.avatar_url} className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-white font-bold text-sm">
+                                    {msg.sender.username[0].toUpperCase()}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="w-10 flex-shrink-0 text-[10px] text-gray-600 opacity-0 group-hover:opacity-100 text-right pt-1 select-none">
+                            {new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        </div>
+                    )}
+
+                    <div className="flex-1 min-w-0">
+                        {!isSameSender && (
+                            <div className="flex items-center gap-2 mb-0.5">
+                                <span className="text-white font-medium hover:underline cursor-pointer">{msg.sender.username}</span>
+                                <span className="text-[10px] text-gray-500">{new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                            </div>
+                        )}
+                        <p className={`text-gray-300 text-[15px] leading-relaxed whitespace-pre-wrap ${!isSameSender ? '' : ''}`}>
+                            {msg.content}
+                        </p>
+                    </div>
+                </div>
+             );
+         })}
       </div>
 
-      {/* Input Bereich */}
+      {/* INPUT AREA */}
       <div className="px-4 pb-6 pt-2 flex-shrink-0">
-          <div className="bg-dark-300 rounded-lg p-2.5 flex items-center gap-3 relative focus-within:ring-1 focus-within:ring-primary/50 transition-all">
-              <button className="bg-gray-400/20 text-gray-400 hover:text-white p-1 rounded-full transition-colors">
-                  <Plus size={16} />
+          <div className="bg-white/5 rounded-xl p-2 flex items-center gap-2 relative focus-within:bg-white/10 transition-colors shadow-inner ring-1 ring-white/5 focus-within:ring-primary/50">
+              <button className="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-white/10 transition-colors">
+                  <Plus size={20} />
               </button>
 
               <input 
@@ -185,16 +165,15 @@ export const ChatChannelView = ({ channelId, channelName }: ChatChannelViewProps
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={`Nachricht an #${channelName}`} 
-                className="bg-transparent flex-1 outline-none text-white text-sm placeholder-gray-500 h-full py-1 no-drag" 
+                className="bg-transparent flex-1 outline-none text-white text-sm placeholder-gray-500 h-full py-2 no-drag" 
               />
 
-              <div className="flex gap-3 text-gray-400 items-center">
-                  <Gift size={20} className="hover:text-white cursor-pointer" />
-                  <Sticker size={20} className="hover:text-white cursor-pointer" />
-                  <Smile size={20} className="hover:text-white cursor-pointer" />
-                  {/* Send Button wenn Text da ist */}
+              <div className="flex gap-1 text-gray-400 pr-1">
+                  <button className="p-1.5 hover:text-white hover:bg-white/10 rounded-md transition-all"><Gift size={20}/></button>
+                  <button className="p-1.5 hover:text-white hover:bg-white/10 rounded-md transition-all"><Sticker size={20}/></button>
+                  <button className="p-1.5 hover:text-white hover:bg-white/10 rounded-md transition-all"><Smile size={20}/></button>
                   {inputText.length > 0 && (
-                     <button onClick={sendMessage} className="text-primary hover:text-white transition-colors">
+                     <button onClick={sendMessage} className="p-1.5 text-primary hover:bg-primary/20 rounded-md transition-all animate-in zoom-in">
                         <Send size={20} />
                      </button>
                   )}

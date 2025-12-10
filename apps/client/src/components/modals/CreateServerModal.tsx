@@ -1,11 +1,12 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom'; // WICHTIG: Import für das Portal
 import axios from 'axios';
 import { X, Loader2, Upload } from 'lucide-react';
 import { getServerUrl } from '../../utils/apiConfig';
 
 interface CreateServerModalProps {
   onClose: () => void;
-  onCreated: () => void; // Sagt der Eltern-Komponente: "Lad die Liste neu!"
+  onCreated: () => void;
 }
 
 export const CreateServerModal = ({ onClose, onCreated }: CreateServerModalProps) => {
@@ -19,16 +20,13 @@ export const CreateServerModal = ({ onClose, onCreated }: CreateServerModalProps
     setLoading(true);
     try {
       const token = localStorage.getItem('clover_token');
-      
-      // POST Anfrage an dein Backend
       await axios.post(
         `${getServerUrl()}/api/servers`, 
         { name },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      onCreated(); // Liste aktualisieren
-      onClose();   // Fenster schließen
+      onCreated();
+      onClose();
     } catch (err) {
       console.error(err);
       alert("Fehler beim Erstellen des Servers");
@@ -37,72 +35,73 @@ export const CreateServerModal = ({ onClose, onCreated }: CreateServerModalProps
     }
   };
 
-  return (
-    // Overlay (Dunkler Hintergrund)
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] flex items-center justify-center animate-in fade-in duration-200">
+  // Wir nutzen createPortal(JSX, document.body), damit das Fenster 
+  // aus der kleinen Sidebar "ausbricht" und mittig auf dem Bildschirm landet.
+  return createPortal(
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center animate-in fade-in duration-200 p-4">
       
+      {/* Klick auf Hintergrund schließt das Modal */}
+      <div className="absolute inset-0" onClick={onClose}></div>
+
       {/* Modal Card */}
-      <div className="bg-dark-200 w-full max-w-md rounded-lg shadow-2xl border border-dark-400 overflow-hidden transform transition-all scale-100">
+      <div className="bg-[#111214] w-full max-w-md rounded-2xl shadow-2xl border border-white/10 overflow-hidden transform transition-all scale-100 relative z-10">
         
         {/* Header */}
         <div className="p-6 text-center relative">
            <button 
              onClick={onClose}
-             className="absolute top-4 right-4 text-gray-400 hover:text-white"
+             className="absolute top-4 right-4 text-gray-400 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors"
            >
-             <X size={24} />
+             <X size={20} />
            </button>
-           <h2 className="text-2xl font-bold text-white">Erstelle deinen Server</h2>
+           <h2 className="text-2xl font-bold text-white tracking-tight">Neuer Server</h2>
            <p className="text-gray-400 mt-2 text-sm">
-             Dein neuer Raum für Talks und Chats. Gib ihm einen Namen.
+             Erschaffe einen neuen Ort für deine Community.
            </p>
         </div>
 
         {/* Body */}
-        <form onSubmit={handleSubmit} className="p-6 pt-0 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 pt-2 space-y-6">
            
-           {/* Upload Placeholder (Nur Optik für MVP) */}
-           <div className="flex justify-center mb-4">
-              <div className="w-20 h-20 rounded-full border-2 border-dashed border-gray-500 flex flex-col items-center justify-center text-gray-500 hover:border-white hover:text-white cursor-pointer transition-colors">
-                  <Upload size={20} />
-                  <span className="text-[10px] mt-1 font-bold uppercase">Icon</span>
+           {/* Icon Upload Placeholder */}
+           <div className="flex justify-center">
+              <div className="w-24 h-24 rounded-full bg-white/5 border-2 border-dashed border-white/20 flex flex-col items-center justify-center text-gray-400 hover:border-indigo-500 hover:text-indigo-400 cursor-pointer transition-all group">
+                  <Upload size={24} className="group-hover:scale-110 transition-transform mb-1" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider">Icon</span>
               </div>
            </div>
 
-        {/* Input */}
-           <div>
-             <label className="text-xs font-bold text-gray-400 uppercase mb-1 block">Server Name</label>
+           {/* Input */}
+           <div className="space-y-2">
+             <label className="text-xs font-bold text-gray-400 uppercase ml-1">Server Name</label>
              <input 
                autoFocus
                type="text" 
                value={name}
                onChange={(e) => setName(e.target.value)}
-               placeholder="Mein cooler Server"
-               // HIER IST DIE ÄNDERUNG: "no-drag" am Ende hinzugefügt
-               className="w-full bg-dark-400 text-white p-2.5 rounded border-none focus:ring-2 focus:ring-primary outline-none no-drag"
+               placeholder="Mein epischer Server"
+               className="w-full bg-black/30 text-white p-3 rounded-xl border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-600 font-medium"
              />
            </div>
+
+           <button 
+             type="submit"
+             disabled={loading || !name.trim()}
+             className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-bold shadow-lg shadow-indigo-900/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+           >
+             {loading ? <Loader2 className="animate-spin" size={18} /> : 'Server erstellen'}
+           </button>
         </form>
 
-        {/* Footer */}
-        <div className="bg-dark-300 p-4 flex justify-between items-center">
-           <button 
-             onClick={onClose}
-             className="text-white hover:underline text-sm font-medium px-4"
-           >
-             Zurück
-           </button>
-           <button 
-             onClick={handleSubmit}
-             disabled={loading || !name.trim()}
-             className="bg-primary hover:bg-indigo-500 text-white px-6 py-2 rounded font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-           >
-             {loading && <Loader2 className="animate-spin" size={16} />}
-             Erstellen
-           </button>
+        {/* Footer Hint */}
+        <div className="bg-white/[0.02] p-3 text-center border-t border-white/5">
+           <p className="text-[11px] text-gray-500">
+              Durch das Erstellen stimmst du den <span className="text-indigo-400 cursor-pointer hover:underline">Community Guidelines</span> zu.
+           </p>
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body // Das Ziel des Portals
   );
 };

@@ -2,13 +2,11 @@ import { useState, useRef } from 'react';
 import classNames from 'classnames';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-// Layout Components
 import { ServerRail } from './ServerRail';
 import { BottomChatBar, BottomChatBarRef } from './BottomChatBar';
 import { MemberSidebar } from './MemberSidebar';
 import { ChannelSidebar } from './ChannelSidebar';
 
-// Views
 import { DashboardSidebar } from '../dashboard/DashboardSidebar';
 import { FriendListStage } from '../dashboard/FriendListStage';
 import { WebChannelView } from '../server/WebChannelView';
@@ -35,33 +33,33 @@ export const MainLayout = () => {
   };
 
   return (
-    <div className="flex h-screen w-screen bg-ts-base font-sans select-none overflow-hidden relative text-gray-200">
+    <div className="flex h-screen w-screen overflow-hidden relative bg-[#050507] text-gray-200 font-sans">
       
-      {/* 1. SERVER LEISTE */}
-      <div className="w-[72px] flex-shrink-0 z-50 relative border-r border-ts-border bg-ts-base">
-        <ServerRail 
-            selectedServerId={selectedServerId} 
-            onSelectServer={handleServerSelect} 
-        />
+      {/* 1. SERVER RAIL (Schwebend Links) */}
+      <div className="w-[80px] flex-shrink-0 z-50 flex flex-col items-center py-3 h-full">
+         <div className="w-full h-full bg-[#0a0a0c]/80 backdrop-blur-xl rounded-2xl border border-white/5 ml-3 shadow-2xl">
+            <ServerRail 
+                selectedServerId={selectedServerId} 
+                onSelectServer={handleServerSelect} 
+            />
+         </div>
       </div>
 
-      {/* 2. SIDEBAR (Links) */}
-      <div className={classNames("transition-all duration-300 ease-in-out relative flex flex-shrink-0 z-40 bg-ts-surface", showLeftSidebar ? "w-64 border-r border-ts-border" : "w-0 overflow-hidden border-none")}> 
-        <div className="w-64 h-full">
+      {/* 2. CHANNEL SIDEBAR (Links) */}
+      <div 
+        className={classNames(
+          "transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] relative z-40 h-full py-3 pl-3", 
+          showLeftSidebar ? "w-64 opacity-100 translate-x-0" : "w-0 opacity-0 -translate-x-10 pl-0"
+        )}
+      > 
+        <div className="w-full h-full bg-[#0e0e11]/60 backdrop-blur-xl rounded-2xl border border-white/5 overflow-hidden">
            {selectedServerId ? (
                <ChannelSidebar 
                   serverId={selectedServerId}
                   activeChannelId={activeChannel?.id || null} 
                   onSelectChannel={(channel) => {
-                      if (channel.type === 'voice' || channel.type === 'web') {
-                          // Voice & Web ersetzen die Stage/Mitte
-                          setActiveChannel(channel);
-                      } else {
-                          // Text öffnet unten ein Fenster (Overlay)
-                          if (chatBarRef.current) {
-                              chatBarRef.current.openChat(channel.id, channel.name);
-                          }
-                      }
+                      if (channel.type === 'voice' || channel.type === 'web') setActiveChannel(channel);
+                      else chatBarRef.current?.openChat(channel.id, channel.name);
                   }}
                />
            ) : (
@@ -70,73 +68,69 @@ export const MainLayout = () => {
         </div>
       </div>
 
-      {/* Toggle Button Links (TeamSpeak Style: Klein & Technisch) */}
-      <button 
-        onClick={() => setShowLeftSidebar(!showLeftSidebar)} 
-        className="absolute top-1/2 z-50 w-5 h-12 bg-ts-panel border border-ts-border rounded-r-md flex items-center justify-center text-gray-400 hover:text-white hover:bg-ts-hover transition-all shadow-lg transform -translate-y-1/2" 
-        style={{ left: showLeftSidebar ? '328px' : '71px' }} // 72px (Rail) + 256px (Sidebar) = 328px
-      >
-        {showLeftSidebar ? <ChevronLeft size={12} /> : <ChevronRight size={12} />}
-      </button>
-
-      {/* 3. MAIN SCREEN */}
-      <div className="flex-1 flex flex-col min-w-0 relative bg-ts-base overflow-hidden">
+      {/* 3. HAUPT-BÜHNE (Mitte, Zentriert) */}
+      <div className="flex-1 flex flex-col min-w-0 relative h-full py-3 px-3 overflow-hidden">
         
-        {selectedServerId ? (
+        {/* Toggle Button LINKS (Mittig am Rand des Fensters) */}
+        <button 
+           onClick={() => setShowLeftSidebar(!showLeftSidebar)} 
+           className="absolute left-3 top-1/2 -translate-y-1/2 z-50 w-6 h-12 bg-black/50 hover:bg-indigo-600 rounded-r-xl backdrop-blur-md flex items-center justify-center text-white/50 hover:text-white transition-all cursor-pointer shadow-lg"
+        >
+          {showLeftSidebar ? <ChevronLeft size={16}/> : <ChevronRight size={16}/>}
+        </button>
+
+        {/* Das eigentliche Fenster */}
+        <div className="flex-1 bg-[#09090b] rounded-2xl border border-white/5 relative overflow-hidden shadow-2xl">
             
-            // --- SERVER MODUS ---
-            // Prüfen welcher Kanaltyp aktiv ist
-            activeChannel?.type === 'web' ? (
-                // A) WEB KANAL
-                <WebChannelView channelId={activeChannel.id} channelName={activeChannel.name} />
-            ) : activeChannel?.type === 'voice' ? (
-                // B) VOICE KANAL
-                <VoiceChannelView channelId={activeChannel.id} channelName={activeChannel.name} />
-            ) : (
-                // C) LEERE STAGE ANSICHT (Default)
-                <div className="flex-1 flex items-center justify-center relative z-0">
-                    <div className="absolute inset-0 opacity-[0.03]" style={{backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '30px 30px'}}></div>
-                    
-                    <div className="text-center p-8 glass-panel rounded-xl">
-                        <div className="mb-4 text-ts-accent opacity-80 mx-auto w-12 h-12 flex items-center justify-center bg-ts-accent/10 rounded-full">
-                           <div className="w-3 h-3 bg-current rounded-full animate-pulse"></div>
+            {selectedServerId ? (
+                activeChannel?.type === 'web' ? (
+                    <WebChannelView channelId={activeChannel.id} channelName={activeChannel.name} />
+                ) : activeChannel?.type === 'voice' ? (
+                    <VoiceChannelView channelId={activeChannel.id} channelName={activeChannel.name} />
+                ) : (
+                    <div className="flex-1 flex items-center justify-center h-full relative">
+                        {/* Hintergrund Gitter */}
+                        <div className="absolute inset-0 opacity-[0.03]" style={{backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '24px 24px'}}></div>
+                        
+                        <div className="text-center p-12 bg-white/[0.02] rounded-3xl border border-white/5 backdrop-blur-sm">
+                            <h2 className="text-2xl font-bold text-white mb-2">Stage Area</h2>
+                            <p className="text-gray-500 text-sm">Wähle einen Kanal links.</p>
                         </div>
-                        <h2 className="text-2xl font-bold text-gray-200 mb-2 font-mono tracking-tight">System Bereit</h2>
-                        <p className="text-gray-500 text-sm">Wähle einen Kanal aus der Liste, um zu beginnen.</p>
                     </div>
+                )
+            ) : (
+                <div className="flex-1 relative h-full">
+                    <FriendListStage />
                 </div>
-            )
+            )}
 
-        ) : (
-            // --- DASHBOARD MODUS ---
-            <div className="flex-1 relative z-0 h-full">
-                <FriendListStage />
-            </div>
+            <BottomChatBar ref={chatBarRef} />
+        </div>
+
+        {/* Toggle Button RECHTS (Mittig am Rand) */}
+        {selectedServerId && (
+            <button 
+                onClick={() => setShowRightSidebar(!showRightSidebar)} 
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-50 w-6 h-12 bg-black/50 hover:bg-indigo-600 rounded-l-xl backdrop-blur-md flex items-center justify-center text-white/50 hover:text-white transition-all cursor-pointer shadow-lg"
+            >
+              {showRightSidebar ? <ChevronRight size={16}/> : <ChevronLeft size={16}/>}
+            </button>
         )}
-
-        {/* CHAT LEISTE (Overlay unten) */}
-        <BottomChatBar ref={chatBarRef} />
 
       </div>
 
-      {/* 4. RECHTE SIDEBAR */}
+      {/* 4. MEMBER SIDEBAR (Rechts) */}
       {selectedServerId && (
-        <>
-            <div className={classNames("transition-all duration-300 ease-in-out relative flex flex-shrink-0 bg-ts-surface z-40 border-l border-ts-border", showRightSidebar ? "w-60" : "w-0 overflow-hidden")}>
-                <div className="w-60 h-full">
-                    <MemberSidebar serverId={selectedServerId} />
-                </div>
+        <div 
+          className={classNames(
+            "transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] relative z-40 h-full py-3 pr-3", 
+            showRightSidebar ? "w-64 opacity-100 translate-x-0" : "w-0 opacity-0 translate-x-10 pr-0"
+          )}
+        >
+            <div className="w-full h-full bg-[#0e0e11]/80 backdrop-blur-xl rounded-2xl border border-white/5 overflow-hidden">
+                <MemberSidebar serverId={selectedServerId} />
             </div>
-            
-            {/* Toggle Button Rechts */}
-            <button 
-                onClick={() => setShowRightSidebar(!showRightSidebar)} 
-                className="absolute top-1/2 z-50 w-5 h-12 bg-ts-panel border border-ts-border rounded-l-md flex items-center justify-center text-gray-400 hover:text-white hover:bg-ts-hover transition-all shadow-lg transform -translate-y-1/2" 
-                style={{ right: showRightSidebar ? '240px' : '0' }}
-            >
-                {showRightSidebar ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
-            </button>
-        </>
+        </div>
       )}
 
     </div>

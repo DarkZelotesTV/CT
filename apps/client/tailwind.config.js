@@ -7,38 +7,32 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['"JetBrains Mono"', 'monospace'], // Für technische Details (IDs, Ping)
+        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
       },
       colors: {
-        // TeamSpeak 5 Inspired Palette (Kühl, Technisch, Deep)
-        ts: {
-          base: '#09090b',      // Fast schwarz (Hintergrund Main)
-          surface: '#121317',   // Sidebar Hintergrund
-          panel: '#1a1b21',     // Karten / Modals
-          hover: '#272832',     // Hover State
-          border: '#2e303e',    // Subtile Ränder
-          accent: '#3b82f6',    // TS Blue (Primary)
-          accentHover: '#2563eb',
-          voice: '#10b981',     // TS Voice Activation Green
-        }
+        // Modernes "Deep Space" Thema
+        background: '#050507', 
+        glass: {
+          100: 'rgba(255, 255, 255, 0.03)',
+          200: 'rgba(255, 255, 255, 0.07)',
+          300: 'rgba(255, 255, 255, 0.12)',
+          border: 'rgba(255, 255, 255, 0.08)',
+        },
+        primary: {
+          DEFAULT: '#6366f1', // Indigo
+          glow: 'rgba(99, 102, 241, 0.5)',
+        },
+        success: '#10b981',
       },
-      backgroundImage: {
-        'gradient-ts': 'linear-gradient(to bottom right, #121317, #09090b)',
-        'gradient-glow': 'radial-gradient(circle at center, rgba(59, 130, 246, 0.15), transparent 70%)',
+      backdropBlur: {
+        xs: '2px',
       },
       boxShadow: {
-        'glow': '0 0 20px rgba(59, 130, 246, 0.15)',
-        'panel': '0 8px 32px rgba(0, 0, 0, 0.4)',
+        'glass': '0 4px 30px rgba(0, 0, 0, 0.1)',
+        'neon': '0 0 20px rgba(99, 102, 241, 0.4)',
       },
-      animation: {
-        'in': 'animate-in 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-      },
-      keyframes: {
-        'animate-in': {
-          '0%': { opacity: 0, transform: 'translateY(5px)' },
-          '100%': { opacity: 1, transform: 'translateY(0)' },
-        },
+      backgroundImage: {
+        'aurora': 'radial-gradient(circle at 50% 0%, rgba(99,102,241,0.15) 0%, transparent 50%), radial-gradient(circle at 0% 0%, rgba(16,185,129,0.1) 0%, transparent 30%)',
       }
     },
   },

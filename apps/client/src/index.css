@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,32 +6,26 @@
 
 @layer base {
   body {
-    @apply bg-ts-base text-gray-200 font-sans overflow-hidden antialiased;
+    /* Sicherer Fallback-Hintergrund */
+    background-color: #050507; 
+    color: #e4e4e7;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
   }
 
-  /* TeamSpeak Style: Eckigere, dünnere Scrollbars */
+  /* Scrollbars komplett unsichtbar machen */
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    @apply bg-ts-surface; 
-  }
-  ::-webkit-scrollbar-thumb {
-    @apply bg-ts-border rounded-sm; 
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-500; 
+    width: 0px; 
+    height: 0px;
+    background: transparent;
   }
 }
 
-@layer components {
-  /* Utility für Glas-Effekte, aber dunkler/technischer */
-  .glass-panel {
-    @apply bg-ts-panel/90 backdrop-blur-md border border-ts-border shadow-panel;
-  }
-  
-  .tech-border {
-    @apply border-b border-ts-border box-border;
-  }
+/* Hilfsklasse falls du doch mal eine Leiste brauchst */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
 }
