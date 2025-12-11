@@ -1,15 +1,13 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App.tsx';
-import './index.css';
-import { SocketProvider } from './context/SocketContext'; // Importieren
+import ReactDOM from 'react-dom/client'
+import App from './App.tsx'
+import './index.css'
+import { SocketProvider } from './context/SocketContext.tsx'
+import { VoiceProvider } from './context/VoiceProvider'; // NEU: Import aus der neuen Datei
 
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  // StrictMode macht bei Sockets manchmal Probleme (doppelte Verbindungen im Dev), 
-  // kann man aber drin lassen oder rausnehmen.
-  // <React.StrictMode> 
+ReactDOM.createRoot(document.getElementById('root')!).render(
     <SocketProvider>
-       <App />
+      <VoiceProvider> 
+        <App />
+      </VoiceProvider>
     </SocketProvider>
-  // </React.StrictMode>,
-);
+)
