@@ -2,9 +2,10 @@ version: "3.9"
 
 services:
   # 1. LiveKit Server (Audio/Video)
-  livekit:
+livekit:
     image: livekit/livekit-server:latest
-    command: --config /livekit.yaml
+    # HIER ist die Änderung: Wir fügen --node-ip 127.0.0.1 hinzu
+    command: --config /livekit.yaml --node-ip 127.0.0.1
     depends_on:
       - redis
     ports:

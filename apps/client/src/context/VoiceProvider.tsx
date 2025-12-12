@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { Room, RoomEvent } from 'livekit-client';
 import axios from 'axios';
-import { getServerUrl } from '../utils/apiConfig';
+import { getServerUrl, getLiveKitConfig } from '../utils/apiConfig';
 import { VoiceContext, VoiceContextType } from './voice-state';
 
 export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
@@ -12,13 +12,10 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
   const [connectionState, setConnectionState] = useState<VoiceContextType['connectionState']>('disconnected');
   const [error, setError] = useState<string | null>(null);
 
-  // WICHTIG: Ref verhindert, dass React Effekte (Strict Mode) die Verbindung doppelt aufbauen
   const isConnecting = useRef(false);
 
   const disconnect = useCallback(async () => {
-    // Sperre aufheben, falls wir gerade verbinden
     isConnecting.current = false;
-
     if (activeRoom) {
       await activeRoom.disconnect();
     }
@@ -30,31 +27,22 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
   }, [activeRoom]);
 
   const connectToChannel = useCallback(async (channelId: number, channelName: string) => {
-    // 1. Abbruchbedingungen prüfen
-    if (activeChannelId === channelId && connectionState === 'connected') {
-      console.log("Bereits mit diesem Channel verbunden.");
-      return;
-    }
-    if (isConnecting.current) {
-      console.log("Verbindung wird bereits aufgebaut - breche ab.");
-      return;
-    }
+    if (activeChannelId === channelId && connectionState === 'connected') return;
+    if (isConnecting.current) return;
 
-    // Falls wir in einem anderen Raum sind -> sauber trennen
     if (activeRoom) {
       await activeRoom.disconnect();
     }
 
-    // 2. Lock setzen und State updaten
     isConnecting.current = true;
     setConnectionState('connecting');
     setError(null);
 
     try {
+      const lkConfig = getLiveKitConfig(); // Config laden
       const auth = localStorage.getItem('clover_token');
       const roomName = `channel_${channelId}`;
       
-      // Token vom Server holen
       const res = await axios.get(`${getServerUrl()}/api/livekit/token?room=${roomName}`, {
         headers: { Authorization: `Bearer ${auth}` }
       });
@@ -62,22 +50,18 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       const newToken = res.data.token;
       setToken(newToken);
 
-      // Raum-Instanz erstellen
+      // Room Instanz mit den konfigurierten ICE-Servern erstellen
       const room = new Room({
          adaptiveStream: true,
          dynacast: true,
          publishDefaults: {
             simulcast: true,
          },
-         rtcConfig: {
-            // Im lokalen Docker Netzwerk ist dies oft nötig
-            iceServers: [], 
-         }
+         // Hier werden jetzt die Google STUN Server oder deine eigenen verwendet
+         rtcConfig: lkConfig.connectOptions.rtcConfig 
       });
 
-      // Event Listener registrieren
       room.on(RoomEvent.Disconnected, () => {
-          console.log("Room disconnected");
           setConnectionState('disconnected');
           setActiveRoom(null);
           setActiveChannelId(null);
@@ -86,7 +70,6 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       });
       
       room.on(RoomEvent.Connected, () => {
-          console.log("Room connected successfully!");
           setConnectionState('connected');
           isConnecting.current = false;
       });
@@ -94,11 +77,9 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       room.on(RoomEvent.Reconnecting, () => setConnectionState('reconnecting'));
       room.on(RoomEvent.Reconnected, () => setConnectionState('connected'));
 
-      // 3. Tatsächliche Verbindung aufbauen
-      const wsUrl = import.meta.env.VITE_LIVEKIT_URL || "ws://localhost:7880";
-      await room.connect(wsUrl, newToken);
+      // Verbinden mit der sicheren URL
+      await room.connect(lkConfig.serverUrl, newToken);
       
-      // State erst setzen, wenn Verbindung steht
       setActiveRoom(room);
       setActiveChannelId(channelId);
       setActiveChannelName(channelName);

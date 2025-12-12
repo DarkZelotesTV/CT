@@ -1,12 +1,15 @@
 import { LiveKitRoom, VideoConference, ControlBar } from '@livekit/components-react';
 import { useVoice } from '../../context/voice-state';
 import { Loader2 } from 'lucide-react';
-import '@livekit/components-styles'; // CSS Styles sind essenziell!
+import { getLiveKitConfig } from '../../utils/apiConfig';
+import '@livekit/components-styles';
 
 export const VoiceChannelView = ({ channelId, channelName }: { channelId: number; channelName: string }) => {
+  // Wir holen ALLES aus dem Context, kein eigenes Token-Fetching mehr hier!
   const { connectionState, activeChannelId, activeRoom, token } = useVoice();
+  const lkConfig = getLiveKitConfig();
 
-  // Solange wir verbinden oder kein Raum da ist -> Ladebildschirm
+  // Warten bis der Provider verbunden hat
   if (connectionState !== 'connected' || activeChannelId !== channelId || !activeRoom || !token) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-transparent text-gray-500 h-full">
@@ -18,14 +21,11 @@ export const VoiceChannelView = ({ channelId, channelName }: { channelId: number
 
   return (
     <div className="w-full h-full relative flex flex-col bg-gray-900" style={{ minHeight: '400px' }}>
-      {/* connect={false} -> WICHTIG: LiveKitRoom soll nicht selbst verbinden.
-        room={activeRoom} -> Wir übergeben unseren manuell erstellten Raum.
-      */}
       <LiveKitRoom
         token={token}
-        serverUrl={import.meta.env.VITE_LIVEKIT_URL || "ws://localhost:7880"}
+        serverUrl={lkConfig.serverUrl}
         room={activeRoom}
-        connect={false} 
+        connect={false} // WICHTIG: Der Provider hat schon connected!
         data-lk-theme="default"
         style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
       >

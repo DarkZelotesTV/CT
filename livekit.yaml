@@ -4,16 +4,21 @@ bind_addresses:
 
 rtc:
     tcp_port: 7881
+    # Port-Bereich passend zur docker-compose.yml
     port_range_start: 50000
-    port_range_end: 60000
+    port_range_end: 50020
+    
+    # Auto-Discovery ausschalten, da wir die IP manuell via Docker setzen
     use_external_ip: false
+    
+    # Erlaubt localhost-Verbindungen (wichtig für lokale Entwicklung)
     enable_loopback_candidate: true
 
-    # HIER IST DER FIX: Wir zwingen den Server, keine STUN-Server zu senden
+    # Keine externen STUN-Server nutzen
     stun_servers: []
 
 redis:
     address: redis:6379
-
+    
 keys:
-    devkey: secret
+    2Bjj9y1F9rs4BGTmbIyA5HQR: secret
