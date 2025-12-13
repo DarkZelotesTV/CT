@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { Room, RoomEvent } from 'livekit-client';
-import axios from 'axios';
-import { getServerUrl, getLiveKitConfig } from '../utils/apiConfig';
+import { getLiveKitConfig } from '../utils/apiConfig';
 import { VoiceContext, VoiceContextType } from './voice-state';
+import { apiFetch } from '../api/http';
 
 export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
   const [activeRoom, setActiveRoom] = useState<Room | null>(null);
@@ -43,14 +43,10 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
 
     try {
       const lkConfig = getLiveKitConfig(); // Config laden
-      const auth = localStorage.getItem('clover_token');
       const roomName = `channel_${channelId}`;
-      
-      const res = await axios.get(`${getServerUrl()}/api/livekit/token?room=${roomName}`, {
-        headers: { Authorization: `Bearer ${auth}` }
-      });
-      
-      const newToken = res.data.token;
+
+      const res = await apiFetch<{ token: string }>(`/api/livekit/token?room=${roomName}`);
+      const newToken = res.token;
       setToken(newToken);
 
       // Room Instanz mit den konfigurierten ICE-Servern erstellen

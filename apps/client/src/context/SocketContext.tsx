@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { getServerUrl } from '../utils/apiConfig';
+import { getServerPassword, getServerUrl } from '../utils/apiConfig';
+import { computeFingerprint, signMessage } from '../auth/identity';
 
 interface SocketContextType {
   socket: Socket | null;
@@ -16,27 +17,43 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('clover_token');
-    if (!token) return;
+    const rawIdentity = localStorage.getItem('ct.identity.v1');
+    if (!rawIdentity) return;
 
-    const socketInstance = io(getServerUrl(), {
-      auth: { token }, // server verifies JWT and derives userId
-    });
+    const identity = JSON.parse(rawIdentity);
+    const setupSocket = async () => {
+      const { signatureB64, timestamp } = await signMessage(identity, 'handshake');
+      const socketInstance = io(getServerUrl(), {
+        auth: {
+          fingerprint: computeFingerprint(identity),
+          publicKey: identity.publicKeyB64,
+          displayName: identity.displayName ?? null,
+          serverPassword: getServerPassword(),
+          signature: signatureB64,
+          timestamp,
+        },
+      });
 
-    socketInstance.on('connect', () => {
-      console.log("Socket verbunden:", socketInstance.id);
-      setIsConnected(true);
-    });
+      socketInstance.on('connect', () => {
+        console.log("Socket verbunden:", socketInstance.id);
+        setIsConnected(true);
+      });
 
-    socketInstance.on('disconnect', () => {
-      console.log("Socket getrennt.");
-      setIsConnected(false);
-    });
+      socketInstance.on('disconnect', () => {
+        console.log("Socket getrennt.");
+        setIsConnected(false);
+      });
 
-    setSocket(socketInstance);
+      setSocket(socketInstance);
 
+      return () => {
+        socketInstance.disconnect();
+      };
+    };
+
+    const teardown = setupSocket();
     return () => {
-      socketInstance.disconnect();
+      teardown.then((cleanup) => cleanup && cleanup()).catch(() => {});
     };
   }, []);
 

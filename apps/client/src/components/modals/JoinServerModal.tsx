@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import axios from 'axios';
 import { X, Loader2, Compass } from 'lucide-react';
-import { getServerUrl } from '../../utils/apiConfig';
+import { apiFetch } from '../../api/http';
 
 interface JoinServerModalProps {
   onClose: () => void;
@@ -19,13 +18,11 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
     setError('');
 
     try {
-      const token = localStorage.getItem('clover_token');
       // Wir nutzen die ID als Invite Code für das MVP
-      await axios.post(
-        `${getServerUrl()}/api/servers/join`, 
-        { serverId: inviteCode },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await apiFetch('/api/servers/join', {
+        method: 'POST',
+        body: JSON.stringify({ serverId: inviteCode })
+      });
       
       onJoined();
       onClose();

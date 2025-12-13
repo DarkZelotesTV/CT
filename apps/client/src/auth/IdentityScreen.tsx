@@ -8,10 +8,11 @@ import {
   saveIdentity,
   type IdentityFile,
 } from "./identity";
-import { identityLogin } from "./identityApi";
+import { performHandshake } from "./identityApi";
+import { getServerPassword, getServerUrl, setServerPassword, setServerUrl } from "../utils/apiConfig";
 
 type Props = {
-  onAuthed: (token: string, user: { id: number; username?: string | null; displayName: string | null; fingerprint: string }) => void;
+  onAuthed: (user: { id: number; username?: string | null; displayName: string | null; fingerprint: string }) => void;
 };
 
 export function IdentityScreen({ onAuthed }: Props) {
@@ -19,6 +20,8 @@ export function IdentityScreen({ onAuthed }: Props) {
   const [displayName, setDisplayName] = useState(identity?.displayName ?? "");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [serverHost, setServerHost] = useState<string>(getServerUrl());
+  const [serverPassword, setPassword] = useState<string>(getServerPassword());
 
   const fp = useMemo(() => (identity ? computeFingerprint(identity) : null), [identity]);
 
@@ -58,11 +61,15 @@ export function IdentityScreen({ onAuthed }: Props) {
       const updated: IdentityFile = { ...identity, displayName: displayName || undefined };
       saveIdentity(updated);
       setIdentity(updated);
+      setServerUrl(serverHost);
+      setServerPassword(serverPassword);
 
-      const { token, user } = await identityLogin(updated);
+      const { user } = await performHandshake(updated, serverPassword);
 
-      // No direct storage here — IdentityGate handles storage & state.
-      onAuthed(token, user);
+      onAuthed({
+        ...user,
+        username: user.displayName ?? user.username ?? `user_${user.id}`,
+      });
     } catch (e: any) {
       setErr(e?.message ?? "Login fehlgeschlagen");
     } finally {
@@ -75,6 +82,7 @@ export function IdentityScreen({ onAuthed }: Props) {
     localStorage.removeItem("clover_token");
     localStorage.removeItem("clover_user");
     localStorage.removeItem("ct.jwt");
+    localStorage.removeItem("clover_server_password");
     setIdentity(null);
     setDisplayName("");
   }
@@ -86,6 +94,23 @@ export function IdentityScreen({ onAuthed }: Props) {
         <p className="text-sm text-gray-400 mb-6">
           Keine E-Mail, kein Passwort. Deine Identität ist ein lokaler Schlüssel (wie TS3).
         </p>
+
+        <label className="block text-sm text-gray-300 mb-2">Server Adresse</label>
+        <input
+          className="w-full rounded-xl bg-black/40 border border-white/10 p-3 mb-4 outline-none"
+          value={serverHost}
+          onChange={(e) => setServerHost(e.target.value)}
+          placeholder="http://localhost:3001"
+        />
+
+        <label className="block text-sm text-gray-300 mb-2">Server Passwort (optional)
+        </label>
+        <input
+          className="w-full rounded-xl bg-black/40 border border-white/10 p-3 mb-4 outline-none"
+          value={serverPassword}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Leer lassen wenn keins"
+        />
 
         <label className="block text-sm text-gray-300 mb-2">Anzeigename (optional)</label>
         <input

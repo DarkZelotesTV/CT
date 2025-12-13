@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { Server, Channel, Message, User, ServerMember, Category } from '../models';
-import { authenticateToken, AuthRequest } from '../middleware/authMiddleware';
+import { authenticateRequest, AuthRequest } from '../middleware/authMiddleware';
 
 const router = Router();
 
@@ -9,7 +9,7 @@ const router = Router();
 // ==========================================
 
 // 1. Alle Server laden (MVP: Alle existierenden)
-router.get('/servers', authenticateToken, async (req: AuthRequest, res) => {
+router.get('/servers', authenticateRequest, async (req: AuthRequest, res) => {
   try {
     // Später: Nur Server laden, wo User Mitglied ist via ServerMember
     const servers = await Server.findAll();
@@ -20,7 +20,7 @@ router.get('/servers', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // 2. Server erstellen
-router.post('/servers', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/servers', authenticateRequest, async (req: AuthRequest, res) => {
   try {
     const { name } = req.body;
     const server = await Server.create({
@@ -43,7 +43,7 @@ router.post('/servers', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // 3. Server beitreten
-router.post('/servers/join', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/servers/join', authenticateRequest, async (req: AuthRequest, res) => {
   try {
     const { serverId } = req.body;
     const userId = req.user!.id;
@@ -67,7 +67,7 @@ router.post('/servers/join', authenticateToken, async (req: AuthRequest, res) =>
 // ==========================================
 
 // 4. Komplette Server-Struktur laden (Kategorien + Kanäle)
-router.get('/servers/:serverId/structure', authenticateToken, async (req, res) => {
+router.get('/servers/:serverId/structure', authenticateRequest, async (req, res) => {
   try {
     const { serverId } = req.params;
 
@@ -96,7 +96,7 @@ router.get('/servers/:serverId/structure', authenticateToken, async (req, res) =
 });
 
 // 5. Kanal erstellen (Nur Owner)
-router.post('/servers/:serverId/channels', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/servers/:serverId/channels', authenticateRequest, async (req: AuthRequest, res) => {
   try {
     const { name, type, categoryId, customIcon } = req.body;
     const serverId = req.params.serverId;
@@ -125,7 +125,7 @@ router.post('/servers/:serverId/channels', authenticateToken, async (req: AuthRe
 });
 
 // 6. Kategorie erstellen (Nur Owner)
-router.post('/servers/:serverId/categories', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/servers/:serverId/categories', authenticateRequest, async (req: AuthRequest, res) => {
   try {
     const { name } = req.body;
     const serverId = req.params.serverId;
@@ -151,7 +151,7 @@ router.post('/servers/:serverId/categories', authenticateToken, async (req: Auth
 // ==========================================
 
 // 7. Mitgliederliste laden
-router.get('/servers/:serverId/members', authenticateToken, async (req, res) => {
+router.get('/servers/:serverId/members', authenticateRequest, async (req, res) => {
   try {
     const { serverId } = req.params;
     const members = await ServerMember.findAll({
@@ -179,7 +179,7 @@ router.get('/servers/:serverId/members', authenticateToken, async (req, res) => 
 });
 
 // 8. Nachrichten laden (History)
-router.get('/channels/:channelId/messages', authenticateToken, async (req, res) => {
+router.get('/channels/:channelId/messages', authenticateRequest, async (req, res) => {
   try {
     const messages = await Message.findAll({
       where: { channel_id: req.params.channelId },
@@ -194,7 +194,7 @@ router.get('/channels/:channelId/messages', authenticateToken, async (req, res) 
 });
 
 // CHANNEL CONTENT UPDATE (Für Web-Channels)
-router.put('/channels/:channelId/content', authenticateToken, async (req: AuthRequest, res) => {
+router.put('/channels/:channelId/content', authenticateRequest, async (req: AuthRequest, res) => {
   try {
     const { content } = req.body;
     const channelId = req.params.channelId;

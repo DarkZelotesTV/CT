@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { User, Shield, Crown } from 'lucide-react';
-import { getServerUrl } from '../../utils/apiConfig';
+import { apiFetch } from '../../api/http';
 
 interface Member {
   userId: number;
@@ -22,11 +21,8 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
     const fetchMembers = async () => {
       setLoading(true);
       try {
-        const token = localStorage.getItem('clover_token');
-        const res = await axios.get(`${getServerUrl()}/api/servers/${serverId}/members`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        setMembers(res.data);
+        const res = await apiFetch<Member[]>(`/api/servers/${serverId}/members`);
+        setMembers(res);
       } catch (err) {
         console.error("Fehler beim Laden der Member:", err);
       } finally {

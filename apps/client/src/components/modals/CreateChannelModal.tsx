@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import axios from 'axios';
 import { X, Loader2, Hash, Volume2, Globe } from 'lucide-react';
-import { getServerUrl } from '../../utils/apiConfig';
+import { apiFetch } from '../../api/http';
 import classNames from 'classnames';
 
 interface CreateChannelModalProps {
@@ -22,12 +21,10 @@ export const CreateChannelModal = ({ serverId, defaultType = 'text', onClose, on
 
     setLoading(true);
     try {
-      const token = localStorage.getItem('clover_token');
-      await axios.post(
-        `${getServerUrl()}/api/servers/${serverId}/channels`, 
-        { name, type },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await apiFetch(`/api/servers/${serverId}/channels`, {
+        method: 'POST',
+        body: JSON.stringify({ name, type })
+      });
 
       onCreated();
       onClose();

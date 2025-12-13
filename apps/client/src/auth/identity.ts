@@ -1,5 +1,6 @@
 import * as ed from "@noble/ed25519";
 import { sha256 } from "@noble/hashes/sha2.js";
+import * as ed from "@noble/ed25519";
 
 
 export type IdentityFile = {
@@ -80,6 +81,15 @@ export async function signNonce(id: IdentityFile, nonceB64: string): Promise<str
   const nonce = b64ToU8(nonceB64);
   const sig = await ed.signAsync(nonce, seed);
   return u8ToB64(sig);
+}
+
+export async function signMessage(id: IdentityFile, message: string): Promise<{ signatureB64: string; timestamp: number }>
+{
+  const { seed } = identityToKeys(id);
+  const timestamp = Date.now();
+  const data = new TextEncoder().encode(`handshake:${timestamp}`);
+  const sig = await ed.signAsync(data, seed);
+  return { signatureB64: u8ToB64(sig), timestamp };
 }
 
 export function computeFingerprint(id: IdentityFile): string {

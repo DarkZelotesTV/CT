@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom'; // WICHTIG: Import für das Portal
-import axios from 'axios';
 import { X, Loader2, Upload } from 'lucide-react';
-import { getServerUrl } from '../../utils/apiConfig';
+import { apiFetch } from '../../api/http';
 
 interface CreateServerModalProps {
   onClose: () => void;
@@ -19,12 +18,10 @@ export const CreateServerModal = ({ onClose, onCreated }: CreateServerModalProps
 
     setLoading(true);
     try {
-      const token = localStorage.getItem('clover_token');
-      await axios.post(
-        `${getServerUrl()}/api/servers`, 
-        { name },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await apiFetch('/api/servers', {
+        method: 'POST',
+        body: JSON.stringify({ name })
+      });
       onCreated();
       onClose();
     } catch (err) {

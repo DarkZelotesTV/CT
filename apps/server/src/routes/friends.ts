@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import { Op } from 'sequelize';
 import { User, Friendship } from '../models';
-import { authenticateToken, AuthRequest } from '../middleware/authMiddleware';
+import { authenticateRequest, AuthRequest } from '../middleware/authMiddleware';
 
 const router = Router();
 
 // Alle Freunde laden
-router.get('/friends', authenticateToken, async (req: AuthRequest, res) => {
+router.get('/friends', authenticateRequest, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
   try {
     const friends = await Friendship.findAll({
@@ -31,7 +31,7 @@ router.get('/friends', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Freundschaftsanfrage senden
-router.post('/friends/request', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/friends/request', authenticateRequest, async (req: AuthRequest, res) => {
   const { username } = req.body;
   const requesterId = req.user!.id;
 

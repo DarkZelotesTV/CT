@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
 import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, PhoneOff } from 'lucide-react';
-import { getServerUrl } from '../../utils/apiConfig';
+import { apiFetch } from '../../api/http';
 import { CreateChannelModal } from '../modals/CreateChannelModal';
 import { UserBottomBar } from './UserBottomBar';
 import { ServerSettingsModal } from '../modals/ServerSettingsModal';
@@ -27,13 +26,12 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel }: C
   const fetchData = useCallback(async () => {
     if (!serverId) return;
     try {
-      const token = localStorage.getItem('clover_token');
-      const srvRes = await axios.get(`${getServerUrl()}/api/servers`, { headers: { Authorization: `Bearer ${token}` } });
-      const current = srvRes.data.find((s: any) => s.id === serverId);
+      const srvRes = await apiFetch<any[]>(`/api/servers`);
+      const current = srvRes.find((s: any) => s.id === serverId);
       if (current) setServerName(current.name);
-      const structRes = await axios.get(`${getServerUrl()}/api/servers/${serverId}/structure`, { headers: { Authorization: `Bearer ${token}` } });
-      setCategories(structRes.data.categories);
-      setUncategorized(structRes.data.uncategorized);
+      const structRes = await apiFetch<{ categories: Category[]; uncategorized: Channel[] }>(`/api/servers/${serverId}/structure`);
+      setCategories(structRes.categories);
+      setUncategorized(structRes.uncategorized);
     } catch(e) {}
   }, [serverId]);
   useEffect(() => { fetchData(); }, [fetchData]);

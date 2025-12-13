@@ -1,4 +1,5 @@
 export const DEFAULT_SERVER = 'http://localhost:3001';
+const SERVER_PASSWORD_KEY = 'clover_server_password';
 
 export const getServerUrl = (): string => {
   let url = localStorage.getItem('clover_server_url') || DEFAULT_SERVER;
@@ -7,6 +8,14 @@ export const getServerUrl = (): string => {
 
 export const setServerUrl = (url: string) => {
   localStorage.setItem('clover_server_url', url);
+};
+
+export const getServerPassword = (): string => {
+  return localStorage.getItem(SERVER_PASSWORD_KEY) || '';
+};
+
+export const setServerPassword = (password: string) => {
+  localStorage.setItem(SERVER_PASSWORD_KEY, password);
 };
 
 // --- LiveKit Configuration ---

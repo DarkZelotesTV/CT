@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { Globe, Edit, Save, X } from 'lucide-react';
-import { getServerUrl } from '../../utils/apiConfig';
+import { apiFetch } from '../../api/http';
 
 interface WebChannelViewProps {
   channelId: number;
@@ -18,12 +17,11 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
   useEffect(() => {
     // Wir nutzen hier den structure endpoint oder laden den channel einzeln neu
     // Einfachheitshalber laden wir die Channel-Liste neu, da dort 'content' jetzt drin sein sollte
-    // ODER wir bauen einen GET endpoint. 
+    // ODER wir bauen einen GET endpoint.
     // Trick: Wir nutzen den structure endpoint im Parent, der übergibt den Content eigentlich nicht.
     // Sauberer Weg: Fetch content.
     const fetchContent = async () => {
         try {
-            const token = localStorage.getItem('clover_token');
             // Wir "missbrauchen" kurz den Structure Endpoint oder laden Kanäle neu
             // BESSER: Wir holen den Content direkt. Da wir keinen GET /channel/:id haben,
             // bauen wir das Feature einfach direkt hier ein:
@@ -43,10 +41,8 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
   // Speichern
   const handleSave = async () => {
     try {
-        const token = localStorage.getItem('clover_token');
-        await axios.put(`${getServerUrl()}/api/channels/${channelId}/content`, 
-            { content: editValue }, 
-            { headers: { Authorization: `Bearer ${token}` } }
+        await apiFetch(`/api/channels/${channelId}/content`,
+            { method: 'PUT', body: JSON.stringify({ content: editValue }) }
         );
         setHtmlContent(editValue);
         setIsEditing(false);
