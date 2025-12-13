@@ -1,118 +1,152 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
-import path from 'path';
-import Database from 'better-sqlite3';
+import { app, BrowserWindow, ipcMain, shell } from "electron";
+import path from "path";
+import fs from "fs";
 
-// Pfad zur Datenbank (AppData/Roaming/...)
-const userDataPath = app.getPath('userData');
-const dbPath = path.join(userDataPath, 'local-chat.db');
+const isDev = !app.isPackaged;
 
-// Wir definieren win global, damit wir es referenzieren können, falls nötig
-let win: BrowserWindow | null;
+// Bei Vite+Electron wird das oft gesetzt, ansonsten fallback:
+const DEV_SERVER_URL =
+  process.env.VITE_DEV_SERVER_URL ||
+  process.env.ELECTRON_RENDERER_URL ||
+  "http://localhost:5173/";
 
-// --- DATENBANK & IPC SETUP ---
-try {
-  // 1. Verbindung zur SQLite DB
-  const db = new Database(dbPath);
-  
-  // Tabelle erstellen
-  db.exec("CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY, content TEXT)");
+const PRELOAD_PATH = path.join(__dirname, "preload.cjs");
 
-  // 2. IPC Handler für die Datenbank
-  ipcMain.handle('db:save-message', (_event, content) => {
-    const stmt = db.prepare('INSERT INTO messages (content) VALUES (?)');
-    const info = stmt.run(content);
-    return info.lastInsertRowid;
-  });
+// Renderer dist liegt typischerweise eine Ebene über dist-electron.
+// Passe das an, falls dein Output anders ist.
+const RENDERER_DIST = path.join(__dirname, "..", "dist");
+const INDEX_HTML = path.join(RENDERER_DIST, "index.html");
 
-  ipcMain.handle('db:get-messages', () => {
-    const stmt = db.prepare('SELECT * FROM messages');
-    return stmt.all();
-  });
+let mainWindow: BrowserWindow | null = null;
 
-  // 3. IPC Handler für NEUE FENSTER (Pop-out Chat)
-  ipcMain.handle('win:open-chat', (_event, chatId, chatName) => {
-    // Neues Fenster erstellen
-    const chatWin = new BrowserWindow({
-      width: 400,
-      height: 600,
-      minWidth: 320,
-      minHeight: 400,
-      title: `Chat mit ${chatName}`,
-      autoHideMenuBar: true, // Menüleiste ausblenden (Windows/Linux)
-      webPreferences: {
-        nodeIntegration: false,
-        contextIsolation: true,
-        // Wir nutzen denselben Preload wie das Hauptfenster
-        preload: path.join(__dirname, 'preload.cjs'),
-      },
-    });
+/**
+ * Simple JSON Store als Ersatz für SQLite (Settings/Cache).
+ * Liegt unter: %APPDATA%/<AppName>/local-store.json
+ */
+const STORE_PATH = (() => {
+  try {
+    return path.join(app.getPath("userData"), "local-store.json");
+  } catch {
+    return path.join(__dirname, "local-store.json");
+  }
+})();
 
-    // --- Handler: Chat wieder andocken ---
-  ipcMain.handle('win:dock-chat', (event, chatId, chatName) => {
-    // 1. Das Fenster finden, das den Befehl gesendet hat (das Popout)
-    const senderWin = BrowserWindow.fromWebContents(event.sender);
-    
-    // 2. Signal an das Hauptfenster senden ('win' ist unsere globale Variable für das Main Window)
-    if (win) {
-      win.webContents.send('chat-docked-back', chatId, chatName);
-    }
-
-    // 3. Das Popout Fenster schließen
-    if (senderWin && !senderWin.isDestroyed()) {
-      senderWin.close();
-    }
-  });
-
-    // Die URL zusammenbauen
-    // Im Dev-Modus: http://localhost:5173/#/popout/123?name=Anna
-    // In Production: file://.../index.html#/popout/123?name=Anna
-    const popupUrl = process.env.VITE_DEV_SERVER_URL
-      ? `${process.env.VITE_DEV_SERVER_URL}/#/popout/${chatId}?name=${encodeURIComponent(chatName)}`
-      : `file://${path.join(__dirname, '../dist/index.html')}#/popout/${chatId}?name=${encodeURIComponent(chatName)}`;
-
-    chatWin.loadURL(popupUrl);
-  });
-
-} catch (error) {
-  console.error("Initialisierungs-Fehler:", error);
+function readStore(): Record<string, any> {
+  try {
+    if (!fs.existsSync(STORE_PATH)) return {};
+    const raw = fs.readFileSync(STORE_PATH, "utf-8");
+    const obj = JSON.parse(raw);
+    return obj && typeof obj === "object" ? obj : {};
+  } catch {
+    return {};
+  }
 }
 
-// --- HAUPTFENSTER SETUP ---
-
-// Vite Environment Variablen (für Production Build Pfade)
-process.env.DIST = path.join(__dirname, '../dist');
-process.env.VITE_PUBLIC = app.isPackaged ? process.env.DIST : path.join(process.env.DIST, '../public');
+function writeStore(data: Record<string, any>) {
+  try {
+    fs.mkdirSync(path.dirname(STORE_PATH), { recursive: true });
+    fs.writeFileSync(STORE_PATH, JSON.stringify(data, null, 2), "utf-8");
+  } catch (e) {
+    console.warn("[store] write failed:", e);
+  }
+}
 
 function createWindow() {
-  win = new BrowserWindow({
-    width: 1400,
-    height: 900,
+  mainWindow = new BrowserWindow({
+    width: 1280,
+    height: 800,
+    minWidth: 960,
+    minHeight: 600,
+    backgroundColor: "#050507",
+    show: false,
     webPreferences: {
-      nodeIntegration: false,
+      preload: PRELOAD_PATH,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.cjs'),
+      nodeIntegration: false,
+      sandbox: false,
     },
   });
 
-  // URL laden
-  if (process.env.VITE_DEV_SERVER_URL) {
-    win.loadURL(process.env.VITE_DEV_SERVER_URL);
+  mainWindow.once("ready-to-show", () => mainWindow?.show());
+
+  // Externe Links im Default Browser öffnen
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url).catch(() => {});
+    return { action: "deny" };
+  });
+
+  mainWindow.webContents.on("will-navigate", (event, url) => {
+    const isHttp = url.startsWith("http://") || url.startsWith("https://");
+    const isMail = url.startsWith("mailto:");
+    if ((isHttp || isMail) && !url.startsWith(DEV_SERVER_URL)) {
+      event.preventDefault();
+      shell.openExternal(url).catch(() => {});
+    }
+  });
+
+  if (isDev) {
+    mainWindow.loadURL(DEV_SERVER_URL).catch((e) => {
+      console.error("[electron] failed to load dev url:", DEV_SERVER_URL, e);
+    });
+    mainWindow.webContents.openDevTools({ mode: "detach" });
   } else {
-    win.loadFile(path.join(process.env.DIST, 'index.html'));
+    mainWindow.loadFile(INDEX_HTML).catch((e) => {
+      console.error("[electron] failed to load index.html:", INDEX_HTML, e);
+    });
   }
 }
 
-// App Lifecycle
-app.whenReady().then(createWindow);
+function registerIpc() {
+  // JSON Store APIs (als Ersatz für SQLite)
+  ipcMain.handle("store:get", async (_event, key: string, fallback: any = null) => {
+    const s = readStore();
+    return Object.prototype.hasOwnProperty.call(s, key) ? s[key] : fallback;
+  });
 
-app.on('window-all-closed', () => {
-  win = null;
-  // Auf Mac schließt man die App gewöhnlich nicht komplett, auf Windows schon
-  if (process.platform !== 'darwin') app.quit();
-});
+  ipcMain.handle("store:set", async (_event, key: string, value: any) => {
+    const s = readStore();
+    s[key] = value;
+    writeStore(s);
+    return true;
+  });
 
-app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
+  ipcMain.handle("store:delete", async (_event, key: string) => {
+    const s = readStore();
+    delete s[key];
+    writeStore(s);
+    return true;
+  });
+
+  ipcMain.handle("app:getPath", async (_event, name: string) => {
+    try {
+      return app.getPath(name as any);
+    } catch {
+      return null;
+    }
+  });
+}
+
+// Single instance lock (optional, aber nice)
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    if (!mainWindow) return;
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
+  });
+
+  app.whenReady().then(() => {
+    registerIpc();
     createWindow();
-  }
+
+    app.on("activate", () => {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    });
+  });
+}
+
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") app.quit();
 });

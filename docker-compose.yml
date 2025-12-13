@@ -1,22 +1,19 @@
 version: "3.9"
 
 services:
-  # 1. LiveKit Server (Audio/Video)
-livekit:
-    image: livekit/livekit-server:latest
-    # HIER ist die Änderung: Wir fügen --node-ip 127.0.0.1 hinzu
-    command: --config /livekit.yaml --node-ip 127.0.0.1
+  livekit:
+    image: livekit/livekit-server:v1.9.4
+    command: --config /etc/livekit.yaml
     depends_on:
       - redis
     ports:
-      - "7880:7880"
-      - "7881:7881"
-      - "50000-50020:50000-50020/udp"
+      - "7880:7880"                   # HTTP/WS signaling
+      - "7881:7881"                   # ICE/TCP fallback
+      - "50000-50020:50000-50020/udp" # ICE/UDP media
     volumes:
-      - ./livekit.yaml:/livekit.yaml
+      - ./livekit.yaml:/etc/livekit.yaml:ro
     restart: unless-stopped
 
-  # 2. Redis (Benötigt von LiveKit)
   redis:
     image: redis:7-alpine
     command: redis-server --save 60 1 --loglevel warning
@@ -26,7 +23,6 @@ livekit:
       - redis_data:/data
     restart: unless-stopped
 
-  # 3. MySQL Datenbank (Für deine App-Daten)
   mysql:
     image: mysql:8.0
     command: --default-authentication-plugin=mysql_native_password
@@ -40,6 +36,20 @@ livekit:
     volumes:
       - mysql_data:/var/lib/mysql
     restart: unless-stopped
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    depends_on:
+      - mysql
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: rootpassword
+    restart: unless-stopped
+
 
 volumes:
   redis_data:

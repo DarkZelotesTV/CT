@@ -8,7 +8,7 @@ export interface VoiceContextType {
   connectionState: 'disconnected' | 'connecting' | 'connected' | 'reconnecting';
   error: string | null;
   connectToChannel: (channelId: number, channelName: string) => Promise<void>;
-  disconnect: () => void;
+  disconnect: () => Promise<void>;
   token: string | null;
 }
 

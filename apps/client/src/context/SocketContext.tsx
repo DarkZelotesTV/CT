@@ -17,16 +17,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const token = localStorage.getItem('clover_token');
-    const userStr = localStorage.getItem('clover_user');
-    
-    if (!token || !userStr) return;
+    if (!token) return;
 
-    const user = JSON.parse(userStr);
-
-    // Verbindung aufbauen
     const socketInstance = io(getServerUrl(), {
-      query: { userId: user.id }, // Wir sagen dem Server, wer wir sind (für Online-Status)
-      auth: { token }
+      auth: { token }, // server verifies JWT and derives userId
     });
 
     socketInstance.on('connect', () => {
@@ -35,7 +29,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     socketInstance.on('disconnect', () => {
-      console.log("Socket getrennt");
+      console.log("Socket getrennt.");
       setIsConnected(false);
     });
 

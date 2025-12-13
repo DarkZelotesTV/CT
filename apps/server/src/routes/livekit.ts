@@ -1,13 +1,13 @@
 import { Router } from 'express';
 import { AccessToken } from 'livekit-server-sdk';
 import { authenticateToken, AuthRequest } from '../middleware/authMiddleware';
+import { User } from '../models/User';
 
 const router = Router();
 
 // GET /api/livekit/token?room=channel_123
 router.get('/token', authenticateToken, async (req: AuthRequest, res) => {
   const roomName = req.query.room as string;
-  const username = req.user!.username;
   const userId = String(req.user!.id);
 
   if (!roomName) {
@@ -15,27 +15,31 @@ router.get('/token', authenticateToken, async (req: AuthRequest, res) => {
   }
 
   try {
-    // 1. Token erstellen
-    const at = new AccessToken(
-      process.env.LIVEKIT_API_KEY,
-      process.env.LIVEKIT_API_SECRET,
-      {
-        identity: userId,
-        name: username,
-      }
-    );
+    const apiKey = process.env.LIVEKIT_API_KEY;
+    const apiSecret = process.env.LIVEKIT_API_SECRET;
 
-    // 2. Rechte vergeben (User darf joinen, sprechen, publishen)
-    at.addGrant({
-      roomJoin: true,
-      room: roomName,
-      canPublish: true, // Darf Kamera/Mikro anmachen
-      canSubscribe: true, // Darf andere hören
+    if (!apiKey || !apiSecret) {
+      return res.status(500).json({ error: 'LiveKit API keys are missing' });
+    }
+
+    // Try to load user for display name
+    const user = await User.findByPk(req.user!.id).catch(() => null as any);
+    const name = (user?.display_name || user?.username || req.user?.fingerprint?.slice(0, 12) || `user_${userId}`) as string;
+
+    const at = new AccessToken(apiKey, apiSecret, {
+      identity: userId, // stable per user in your DB
+      name,
     });
 
-    // 3. Token generieren (JWT String)
-    const token = await at.toJwt();
+    at.addGrant({
+      room: roomName,
+      roomJoin: true,
+      canPublish: true,
+      canSubscribe: true,
+      canPublishData: true,
+    });
 
+    const token = await at.toJwt();
     res.json({ token });
   } catch (err) {
     console.error("LiveKit Token Error:", err);

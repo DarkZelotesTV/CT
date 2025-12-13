@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import jwt from 'jsonwebtoken';
 import { sequelize } from './config/database';
 
 // Routen Importe
@@ -48,10 +49,29 @@ app.use('/api', friendsRoutes);
 // ==========================================
 // 4. ECHTZEIT LOGIK (Socket.io)
 // ==========================================
+
+// Auth Socket.io connections with the same JWT used for HTTP
+io.use((socket, next) => {
+  const token = (socket.handshake as any).auth?.token;
+  if (!token) return next(new Error('unauthorized'));
+  const secret = process.env.JWT_SECRET;
+  if (!secret) return next(new Error('server_misconfigured'));
+  try {
+    const payload: any = jwt.verify(token, secret);
+    const id = Number(payload?.sub);
+    if (!Number.isFinite(id)) return next(new Error('unauthorized'));
+    (socket.data as any).userId = id;
+    (socket.data as any).fingerprint = payload?.fp;
+    return next();
+  } catch {
+    return next(new Error('unauthorized'));
+  }
+});
+
 io.on('connection', async (socket) => {
   // Wir schauen, ob der Client eine userId beim Verbinden mitsendet
-  // (Das müssen wir im Frontend noch einbauen!)
-  const userId = socket.handshake.query.userId;
+  // (wird aus dem JWT abgeleitet)
+  const userId = (socket.data as any).userId ?? socket.handshake.query.userId;
   const numericUserId = userId ? Number(userId) : null;
 
   if (numericUserId) {

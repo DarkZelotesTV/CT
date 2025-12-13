@@ -13,8 +13,10 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
   const [error, setError] = useState<string | null>(null);
 
   const isConnecting = useRef(false);
+  const attemptRef = useRef(0);
 
   const disconnect = useCallback(async () => {
+  console.warn('[voice] disconnect() called', new Error().stack);
     isConnecting.current = false;
     if (activeRoom) {
       await activeRoom.disconnect();
@@ -27,6 +29,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
   }, [activeRoom]);
 
   const connectToChannel = useCallback(async (channelId: number, channelName: string) => {
+    const attempt = ++attemptRef.current;
     if (activeChannelId === channelId && connectionState === 'connected') return;
     if (isConnecting.current) return;
 
@@ -52,16 +55,16 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
 
       // Room Instanz mit den konfigurierten ICE-Servern erstellen
       const room = new Room({
-         adaptiveStream: true,
-         dynacast: true,
-         publishDefaults: {
-            simulcast: true,
-         },
-         // Hier werden jetzt die Google STUN Server oder deine eigenen verwendet
-         rtcConfig: lkConfig.connectOptions.rtcConfig 
+      adaptiveStream: true,
+      dynacast: true,
+      useSinglePeerConnection: true,
+      publishDefaults: { simulcast: true },
+      rtcConfig: lkConfig.connectOptions.rtcConfig,
       });
 
-      room.on(RoomEvent.Disconnected, () => {
+
+      room.on(RoomEvent.Disconnected, (reason) => {
+          console.warn('[voice] Room disconnected', reason);
           setConnectionState('disconnected');
           setActiveRoom(null);
           setActiveChannelId(null);
@@ -74,11 +77,22 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
           isConnecting.current = false;
       });
 
+      room.on(RoomEvent.ConnectionStateChanged, (state) => {
+      console.warn('[voice] ConnectionState', state);
+      });
+
       room.on(RoomEvent.Reconnecting, () => setConnectionState('reconnecting'));
       room.on(RoomEvent.Reconnected, () => setConnectionState('connected'));
+      room.on(RoomEvent.Reconnecting, () => console.warn('[voice] Reconnecting'));
+      room.on(RoomEvent.Reconnected, () => console.warn('[voice] Reconnected'));
 
       // Verbinden mit der sicheren URL
       await room.connect(lkConfig.serverUrl, newToken);
+        if (attemptRef.current !== attempt) {
+          room.disconnect();
+        return;
+        }
+      await room.localParticipant.setMicrophoneEnabled(true);
       
       setActiveRoom(room);
       setActiveChannelId(channelId);

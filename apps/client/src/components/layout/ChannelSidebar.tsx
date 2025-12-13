@@ -41,7 +41,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel }: C
   // Click Handler: Voice Logik in den Hintergrund schieben
   const handleChannelClick = (c: Channel) => {
       if (c.type === 'voice') {
-          connectToChannel(c.id, c.name);
+          connectToChannel(c.id, c.name).catch(console.error);
           onSelectChannel(c);
       } else {
           onSelectChannel(c);
@@ -106,7 +106,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel }: C
                </div>
                
                <button 
-                  onClick={(e) => { e.stopPropagation(); disconnect(); }}
+                  onClick={(e) => { e.stopPropagation(); disconnect().catch(console.error); }}
                   className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"
                   title="Auflegen"
                >
