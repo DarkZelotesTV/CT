@@ -10,6 +10,15 @@ export interface VoiceContextType {
   connectToChannel: (channelId: number, channelName: string) => Promise<void>;
   disconnect: () => Promise<void>;
   token: string | null;
+  muted: boolean;
+  usePushToTalk: boolean;
+  isTalking: boolean;
+  setMuted: (muted: boolean) => Promise<void>;
+  setPushToTalk: (enabled: boolean) => Promise<void>;
+  startTalking: () => Promise<void>;
+  stopTalking: () => Promise<void>;
+  selectedAudioInputId: string | null;
+  selectedAudioOutputId: string | null;
 }
 
 export const VoiceContext = createContext<VoiceContextType | null>(null);

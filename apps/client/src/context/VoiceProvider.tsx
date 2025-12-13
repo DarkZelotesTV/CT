@@ -6,17 +6,68 @@ import { apiFetch } from '../api/http';
 import { useSettings } from './SettingsContext';
 
 export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
+  const { settings, updateTalk } = useSettings();
+
   const [activeRoom, setActiveRoom] = useState<Room | null>(null);
   const [activeChannelId, setActiveChannelId] = useState<number | null>(null);
   const [activeChannelName, setActiveChannelName] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [connectionState, setConnectionState] = useState<VoiceContextType['connectionState']>('disconnected');
   const [error, setError] = useState<string | null>(null);
-
-  const { settings } = useSettings();
+  const [muted, setMutedState] = useState(settings.talk.muted);
+  const [usePushToTalk, setUsePushToTalkState] = useState(settings.talk.pushToTalkEnabled);
+  const [isTalking, setIsTalking] = useState(false);
 
   const isConnecting = useRef(false);
   const attemptRef = useRef(0);
+
+  useEffect(() => {
+    setMutedState(settings.talk.muted);
+    setUsePushToTalkState(settings.talk.pushToTalkEnabled);
+  }, [settings.talk.muted, settings.talk.pushToTalkEnabled]);
+
+  const applyMicrophoneState = useCallback(
+    async (room: Room | null, options?: { muted?: boolean; talking?: boolean; pushToTalk?: boolean }) => {
+      const isMuted = options?.muted ?? muted;
+      const talking = options?.talking ?? isTalking;
+      const pushToTalk = options?.pushToTalk ?? usePushToTalk;
+      const shouldEnable = !isMuted && (!pushToTalk || talking);
+      if (room) {
+        await room.localParticipant.setMicrophoneEnabled(shouldEnable);
+      }
+    },
+    [isTalking, muted, usePushToTalk]
+  );
+
+  const setMuted = useCallback(
+    async (nextMuted: boolean) => {
+      setMutedState(nextMuted);
+      updateTalk({ muted: nextMuted });
+      if (nextMuted) setIsTalking(false);
+      if (activeRoom) await applyMicrophoneState(activeRoom, { muted: nextMuted, talking: false });
+    },
+    [activeRoom, applyMicrophoneState, updateTalk]
+  );
+
+  const setPushToTalk = useCallback(
+    async (enabled: boolean) => {
+      setUsePushToTalkState(enabled);
+      updateTalk({ pushToTalkEnabled: enabled });
+      if (!enabled) setIsTalking(false);
+      if (activeRoom) await applyMicrophoneState(activeRoom, { pushToTalk: enabled, talking: false });
+    },
+    [activeRoom, applyMicrophoneState, updateTalk]
+  );
+
+  const startTalking = useCallback(async () => {
+    setIsTalking(true);
+    if (activeRoom) await applyMicrophoneState(activeRoom, { talking: true });
+  }, [activeRoom, applyMicrophoneState]);
+
+  const stopTalking = useCallback(async () => {
+    setIsTalking(false);
+    if (activeRoom) await applyMicrophoneState(activeRoom, { talking: false });
+  }, [activeRoom, applyMicrophoneState]);
 
   const disconnect = useCallback(async () => {
     console.warn('[voice] disconnect() called', new Error().stack);
@@ -29,6 +80,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
     setActiveChannelName(null);
     setToken(null);
     setConnectionState('disconnected');
+    setIsTalking(false);
   }, [activeRoom]);
 
   const connectToChannel = useCallback(async (channelId: number, channelName: string) => {
@@ -99,8 +151,8 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         room.disconnect();
         return;
       }
-      await room.localParticipant.setMicrophoneEnabled(true);
-      
+      await applyMicrophoneState(room);
+
       setActiveRoom(room);
       setActiveChannelId(channelId);
       setActiveChannelName(channelName);
@@ -111,7 +163,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       setConnectionState('disconnected');
       isConnecting.current = false;
     }
-  }, [activeChannelId, activeRoom, connectionState, settings.devices.audioInputId, settings.devices.audioOutputId, settings.devices.videoInputId]);
+  }, [activeChannelId, activeRoom, applyMicrophoneState, connectionState, settings.devices.audioInputId, settings.devices.audioOutputId, settings.devices.videoInputId]);
 
   useEffect(() => {
     if (!activeRoom) return;
@@ -127,13 +179,14 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         if (settings.devices.videoInputId) {
           await activeRoom.switchActiveDevice('videoinput', settings.devices.videoInputId, true);
         }
+        await applyMicrophoneState(activeRoom);
       } catch (err) {
         console.warn('Could not apply preferred devices', err);
       }
     };
 
     applyPreferredDevices();
-  }, [activeRoom, settings.devices.audioInputId, settings.devices.audioOutputId, settings.devices.videoInputId]);
+  }, [activeRoom, applyMicrophoneState, settings.devices.audioInputId, settings.devices.audioOutputId, settings.devices.videoInputId]);
 
   return (
     <VoiceContext.Provider
@@ -146,6 +199,15 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         connectToChannel,
         disconnect,
         token,
+        muted,
+        usePushToTalk,
+        isTalking,
+        setMuted,
+        setPushToTalk,
+        startTalking,
+        stopTalking,
+        selectedAudioInputId: settings.devices.audioInputId,
+        selectedAudioOutputId: settings.devices.audioOutputId,
       }}
     >
       {children}
