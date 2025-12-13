@@ -14,6 +14,8 @@ export const CreateChannelModal = ({ serverId, defaultType = 'text', onClose, on
   const [name, setName] = useState('');
   const [type, setType] = useState<'text' | 'voice' | 'web'>(defaultType);
   const [loading, setLoading] = useState(false);
+  const [defaultPassword, setDefaultPassword] = useState('');
+  const [joinPassword, setJoinPassword] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +25,7 @@ export const CreateChannelModal = ({ serverId, defaultType = 'text', onClose, on
     try {
       await apiFetch(`/api/servers/${serverId}/channels`, {
         method: 'POST',
-        body: JSON.stringify({ name, type })
+        body: JSON.stringify({ name, type, defaultPassword, joinPassword })
       });
 
       onCreated();
@@ -111,17 +113,40 @@ export const CreateChannelModal = ({ serverId, defaultType = 'text', onClose, on
            <div>
              <label className="text-xs font-bold text-gray-400 uppercase mb-2 block">Kanalname</label>
              <div className="bg-dark-400 flex items-center px-3 rounded border border-transparent focus-within:border-primary">
-                {type === 'text' ? <Hash size={16} className="text-gray-400 mr-2"/> : 
+                {type === 'text' ? <Hash size={16} className="text-gray-400 mr-2"/> :
                  type === 'voice' ? <Volume2 size={16} className="text-gray-400 mr-2"/> :
                  <Globe size={16} className="text-gray-400 mr-2"/>}
-                <input 
+                <input
                   autoFocus
-                  type="text" 
+                  type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
                   placeholder="neuer-kanal"
                   className="w-full bg-transparent text-white py-2.5 outline-none font-medium no-drag"
                 />
+             </div>
+           </div>
+
+           <div className="grid grid-cols-2 gap-3">
+             <div>
+               <label className="text-xs font-bold text-gray-400 uppercase mb-2 block">Standard Passwort</label>
+               <input
+                 type="text"
+                 value={defaultPassword}
+                 onChange={(e) => setDefaultPassword(e.target.value)}
+                 className="w-full bg-dark-400 border border-dark-500 rounded-xl text-white px-3 py-2 focus:border-primary outline-none"
+                 placeholder="Optional"
+               />
+             </div>
+             <div>
+               <label className="text-xs font-bold text-gray-400 uppercase mb-2 block">Beitritts Passwort</label>
+               <input
+                 type="text"
+                 value={joinPassword}
+                 onChange={(e) => setJoinPassword(e.target.value)}
+                 className="w-full bg-dark-400 border border-dark-500 rounded-xl text-white px-3 py-2 focus:border-primary outline-none"
+                 placeholder="Optional"
+               />
              </div>
            </div>
 

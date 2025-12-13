@@ -10,6 +10,8 @@ export class Channel extends Model {
   public position!: number;
   public custom_icon!: string | null;
   public content!: string | null; // NEU: Hier speichern wir das HTML
+  public default_password!: string | null;
+  public join_password!: string | null;
 }
 
 Channel.init({
@@ -23,4 +25,6 @@ Channel.init({
   custom_icon: { type: DataTypes.STRING, allowNull: true },
   // NEU: Textfeld für HTML (LONGTEXT für viel Platz)
   content: { type: DataTypes.TEXT, allowNull: true },
+  default_password: { type: DataTypes.STRING, allowNull: true },
+  join_password: { type: DataTypes.STRING, allowNull: true },
 }, { sequelize, tableName: 'channels' });
