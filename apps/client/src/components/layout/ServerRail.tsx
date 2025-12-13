@@ -24,6 +24,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer }: ServerRailProps
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [loading, setLoading] = useState(false);
   const [pinnedTick, setPinnedTick] = useState(0);
+  const [lastError, setLastError] = useState<string | null>(null);
 
   const pinned = useMemo(() => {
     // tick forces recompute after mutations
@@ -44,8 +45,11 @@ export const ServerRail = ({ selectedServerId, onSelectServer }: ServerRailProps
     try {
       const res = await apiFetch<Server[]>(`/api/servers`);
       setServers(res);
+      setLastError(null);
     } catch (err) {
       console.error(err);
+      const message = err instanceof Error ? err.message : 'Failed to load servers';
+      setLastError(message);
     } finally {
       setLoading(false);
     }
@@ -112,6 +116,19 @@ export const ServerRail = ({ selectedServerId, onSelectServer }: ServerRailProps
 
         {/* LOCAL SERVERS */}
         {loading && <Loader2 className="animate-spin text-gray-600" />}
+        {lastError && (
+          <button
+            type="button"
+            onClick={fetchServers}
+            className="text-xs text-red-200 bg-red-500/10 border border-red-500/40 rounded-full px-3 py-1 hover:bg-red-500/20 transition-colors"
+            title="Erneut versuchen"
+          >
+            Fehler beim Laden: {lastError} – Erneut versuchen
+          </button>
+        )}
+        {!loading && servers.length === 0 && !lastError && (
+          <div className="text-xs text-gray-400">Noch keine Server vorhanden</div>
+        )}
         {servers.map((server) => (
           <button
             key={`local-${server.id}`}
