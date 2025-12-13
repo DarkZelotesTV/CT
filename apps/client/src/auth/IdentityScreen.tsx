@@ -1,15 +1,8 @@
 import { useMemo, useState } from "react";
-import {
-  clearIdentity,
-  computeFingerprint,
-  createIdentity,
-  formatFingerprint,
-  loadIdentity,
-  saveIdentity,
-  type IdentityFile,
-} from "./identity";
+import { computeFingerprint, formatFingerprint, loadIdentity, saveIdentity, type IdentityFile } from "./identity";
 import { performHandshake } from "./identityApi";
 import { getServerPassword, getServerUrl, setServerPassword, setServerUrl } from "../utils/apiConfig";
+import { IdentityModal } from "../components/modals/IdentityModal";
 
 type Props = {
   onAuthed: (user: { id: number; username?: string | null; displayName: string | null; fingerprint: string }) => void;
@@ -22,39 +15,23 @@ export function IdentityScreen({ onAuthed }: Props) {
   const [err, setErr] = useState<string | null>(null);
   const [serverHost, setServerHost] = useState<string>(getServerUrl());
   const [serverPassword, setPassword] = useState<string>(getServerPassword());
+  const [showIdentityModal, setShowIdentityModal] = useState(!identity);
 
   const fp = useMemo(() => (identity ? computeFingerprint(identity) : null), [identity]);
 
-  async function handleCreate() {
+  const handleIdentityChange = (next: IdentityFile | null) => {
+    setIdentity(next);
+    setDisplayName(next?.displayName ?? "");
     setErr(null);
-    const id = await createIdentity(displayName || undefined);
-    saveIdentity(id);
-    setIdentity(id);
-  }
-
-  function handleExport() {
-    if (!identity) return;
-    const blob = new Blob([JSON.stringify(identity, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "clover-identity.cloverid.json";
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  async function handleImport(file: File) {
-    setErr(null);
-    const text = await file.text();
-    const parsed = JSON.parse(text) as IdentityFile;
-    if (!parsed?.publicKeyB64 || !parsed?.privateKeyB64) throw new Error("Ungültige Identity-Datei");
-    saveIdentity(parsed);
-    setDisplayName(parsed.displayName ?? "");
-    setIdentity(parsed);
-  }
+    if (next) setShowIdentityModal(false);
+  };
 
   async function handleLogin() {
-    if (!identity) return;
+    if (!identity) {
+      setErr("Bitte erst eine Identity erstellen oder importieren.");
+      setShowIdentityModal(true);
+      return;
+    }
     setBusy(true);
     setErr(null);
     try {
@@ -75,16 +52,6 @@ export function IdentityScreen({ onAuthed }: Props) {
     } finally {
       setBusy(false);
     }
-  }
-
-  function handleReset() {
-    clearIdentity();
-    localStorage.removeItem("clover_token");
-    localStorage.removeItem("clover_user");
-    localStorage.removeItem("ct.jwt");
-    localStorage.removeItem("clover_server_password");
-    setIdentity(null);
-    setDisplayName("");
   }
 
   return (
@@ -120,75 +87,44 @@ export function IdentityScreen({ onAuthed }: Props) {
           placeholder="z.B. jusbe"
         />
 
-        {!identity ? (
-          <div className="flex gap-3">
-            <button
-              className="px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 transition"
-              onClick={handleCreate}
-            >
-              Identity erstellen
-            </button>
-
-            <label className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition cursor-pointer">
-              Identity importieren
-              <input
-                type="file"
-                accept="application/json"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) handleImport(f).catch((x) => setErr(String(x?.message ?? x)));
-                }}
-              />
-            </label>
+        <div className="flex items-start justify-between gap-4 mb-6">
+          <div className="flex-1 text-sm">
+            <div className="text-gray-400">Aktuelle Identity</div>
+            {identity ? (
+              <div className="mt-1 font-mono break-all text-gray-200">
+                {formatFingerprint(fp!)}
+              </div>
+            ) : (
+              <div className="mt-1 text-yellow-300">Keine Identity vorhanden.</div>
+            )}
+            <p className="text-gray-500 mt-2">
+              Du kannst deine Identity jederzeit verwalten oder importieren, ohne diese Seite zu verlassen.
+            </p>
           </div>
-        ) : (
-          <>
-            <div className="mt-2 mb-4 text-sm">
-              <div className="text-gray-400">Fingerprint</div>
-              <div className="font-mono break-all text-gray-200">{formatFingerprint(fp!)}</div>
-            </div>
 
-            <div className="flex flex-wrap gap-3">
-              <button
-                className="px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 transition disabled:opacity-50"
-                onClick={handleLogin}
-                disabled={busy}
-              >
-                {busy ? "Verbinde..." : "Verbinden"}
-              </button>
+          <button
+            className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 transition text-sm"
+            onClick={() => setShowIdentityModal(true)}
+          >
+            Identity verwalten
+          </button>
+        </div>
 
-              <button
-                className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition"
-                onClick={handleExport}
-              >
-                Export / Backup
-              </button>
-
-              <label className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition cursor-pointer">
-                Import (ersetzen)
-                <input
-                  type="file"
-                  accept="application/json"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) handleImport(f).catch((x) => setErr(String(x?.message ?? x)));
-                  }}
-                />
-              </label>
-
-              <button
-                className="px-4 py-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 transition"
-                onClick={handleReset}
-              >
-                Zurücksetzen
-              </button>
-            </div>
-          </>
-        )}
+        <div className="flex flex-wrap gap-3">
+          <button
+            className="px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 transition disabled:opacity-50"
+            onClick={handleLogin}
+            disabled={busy || !identity}
+          >
+            {busy ? "Verbinde..." : "Verbinden"}
+          </button>
+        </div>
 
         {err && <div className="mt-4 text-red-400 text-sm">{err}</div>}
+
+        {showIdentityModal && (
+          <IdentityModal onClose={() => setShowIdentityModal(false)} onIdentityChanged={handleIdentityChange} />
+        )}
       </div>
     </div>
   );
