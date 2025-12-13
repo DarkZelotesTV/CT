@@ -16,10 +16,16 @@ export type HotkeySettings = {
   muteToggle: string | null;
 };
 
+export type TalkSettings = {
+  muted: boolean;
+  pushToTalkEnabled: boolean;
+};
+
 export type SettingsState = {
   profile: ProfileSettings;
   devices: DeviceSettings;
   hotkeys: HotkeySettings;
+  talk: TalkSettings;
 };
 
 const SETTINGS_STORAGE_KEY = 'ct.settings';
@@ -38,12 +44,17 @@ const defaultSettings: SettingsState = {
     pushToTalk: null,
     muteToggle: null,
   },
+  talk: {
+    muted: false,
+    pushToTalkEnabled: false,
+  },
 };
 
 const createDefaultSettings = (): SettingsState => ({
   profile: { ...defaultSettings.profile },
   devices: { ...defaultSettings.devices },
   hotkeys: { ...defaultSettings.hotkeys },
+  talk: { ...defaultSettings.talk },
 });
 
 const SettingsContext = createContext<{
@@ -51,6 +62,7 @@ const SettingsContext = createContext<{
   updateProfile: (nextProfile: Partial<ProfileSettings>) => void;
   updateDevices: (nextDevices: Partial<DeviceSettings>) => void;
   updateHotkeys: (nextHotkeys: Partial<HotkeySettings>) => void;
+  updateTalk: (nextTalk: Partial<TalkSettings>) => void;
   resetSettings: () => void;
 } | null>(null);
 
@@ -63,6 +75,7 @@ const loadInitialSettings = (): SettingsState => {
         profile: { ...defaultSettings.profile, ...parsed.profile },
         devices: { ...defaultSettings.devices, ...parsed.devices },
         hotkeys: { ...defaultSettings.hotkeys, ...parsed.hotkeys },
+        talk: { ...defaultSettings.talk, ...parsed.talk },
       };
     } catch (err) {
       console.warn('Could not parse stored settings', err);
@@ -116,10 +129,17 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
     }));
   };
 
+  const updateTalk = (nextTalk: Partial<TalkSettings>) => {
+    setSettings((prev) => ({
+      ...prev,
+      talk: { ...prev.talk, ...nextTalk },
+    }));
+  };
+
   const resetSettings = () => setSettings(createDefaultSettings());
 
   const value = useMemo(
-    () => ({ settings, updateProfile, updateDevices, updateHotkeys, resetSettings }),
+    () => ({ settings, updateProfile, updateDevices, updateHotkeys, updateTalk, resetSettings }),
     [settings]
   );
 
