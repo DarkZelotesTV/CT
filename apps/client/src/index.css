@@ -29,3 +29,42 @@
   background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
 }
+
+/*
+  Electron (frameless window) click/drag safety
+
+  In frameless BrowserWindows, any element inside a draggable region
+  (-webkit-app-region: drag) will NOT receive click events.
+
+  If "drag" accidentally lands on a high-level container (html/body/#root),
+  it can make *the whole UI* feel dead (server rail + buttons stop working).
+
+  Strategy:
+  1) Default the whole document to NO-DRAG.
+  2) Opt-in only small titlebar/header areas to DRAG via `.drag-region`.
+  3) Force interactive elements back to NO-DRAG with !important.
+*/
+
+html,
+body,
+#root {
+  -webkit-app-region: no-drag;
+}
+
+.drag-region {
+  -webkit-app-region: drag !important;
+}
+
+.no-drag,
+button,
+a,
+input,
+textarea,
+select,
+label,
+[role='button'],
+[role='menuitem'],
+[data-no-drag],
+.cursor-pointer {
+  -webkit-app-region: no-drag !important;
+}

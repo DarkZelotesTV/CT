@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { Server, Channel, Message, User, ServerMember, Category, Role, MemberRole, ChannelPermissionOverride } from '../models';
 import { authenticateRequest, AuthRequest } from '../middleware/authMiddleware';
 import { PermissionKey } from '../models/Role';
+import { Op } from 'sequelize';
 
 const router = Router();
 
@@ -81,10 +82,71 @@ const statusForError = (err: any) => err?.message === 'Fehlende Berechtigung' ? 
 // 1. Alle Server laden (MVP: Alle existierenden)
 router.get('/servers', authenticateRequest, async (req: AuthRequest, res) => {
   try {
-    const servers = await Server.findAll();
+    const userId = req.user!.id;
+    // Only return servers the user is a member of. Owner is always a member on creation.
+    const servers = await Server.findAll({
+      include: [{ model: ServerMember, as: 'members', where: { user_id: userId }, required: true }],
+      order: [['createdAt', 'ASC']],
+    });
     res.json(servers);
   } catch (err) {
     res.status(500).json({ error: "Fehler beim Laden der Server" });
+  }
+});
+
+// 1b. Server aktualisieren (Name/Icon) – Admin/Owner
+router.put('/servers/:serverId', authenticateRequest, async (req: AuthRequest, res) => {
+  try {
+    const serverId = Number(req.params.serverId);
+    const userId = req.user!.id;
+
+    // We treat server settings as admin-only. Either manage_channels OR manage_roles is sufficient.
+    const perms = await resolvePermissions(serverId, userId);
+    const server = await Server.findByPk(serverId);
+    if (!server) return res.status(404).json({ error: 'Server nicht gefunden' });
+    if (server.owner_id !== userId && !perms.manage_channels && !perms.manage_roles) {
+      return res.status(403).json({ error: 'Fehlende Berechtigung' });
+    }
+
+    const { name, icon_url } = req.body as { name?: string; icon_url?: string };
+    if (typeof name === 'string' && name.trim()) server.name = name.trim();
+    if (typeof icon_url === 'string') server.icon_url = icon_url;
+    await server.save();
+
+    res.json(server);
+  } catch (err: any) {
+    res.status(statusForError(err)).json({ error: err?.message || 'Konnte Server nicht speichern' });
+  }
+});
+
+// 1c. Server löschen – nur Owner
+router.delete('/servers/:serverId', authenticateRequest, async (req: AuthRequest, res) => {
+  try {
+    const serverId = Number(req.params.serverId);
+    const userId = req.user!.id;
+
+    const server = await Server.findByPk(serverId);
+    if (!server) return res.status(404).json({ error: 'Server nicht gefunden' });
+    if (server.owner_id !== userId) return res.status(403).json({ error: 'Fehlende Berechtigung' });
+
+    const channels = await Channel.findAll({ where: { server_id: serverId }, attributes: ['id'] });
+    const channelIds = channels.map((c: any) => c.id);
+
+    if (channelIds.length) {
+      await ChannelPermissionOverride.destroy({ where: { channel_id: { [Op.in]: channelIds } } });
+      await Message.destroy({ where: { channel_id: { [Op.in]: channelIds } } });
+    }
+
+    await Channel.destroy({ where: { server_id: serverId } });
+    await Category.destroy({ where: { server_id: serverId } });
+    await MemberRole.destroy({ where: { server_id: serverId } });
+    await Role.destroy({ where: { server_id: serverId } });
+    await ServerMember.destroy({ where: { server_id: serverId } });
+    await server.destroy();
+
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(statusForError(err)).json({ error: err?.message || 'Konnte Server nicht löschen' });
   }
 });
 

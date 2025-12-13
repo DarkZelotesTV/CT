@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react';
-import { Home, Plus, Loader2 } from 'lucide-react'; // WICHTIG: 'Home' statt 'House'
+import { useMemo, useState, useEffect, useCallback } from 'react';
+import { Home, Plus, Loader2, Globe, X } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { CreateServerModal } from '../modals/CreateServerModal';
+import { JoinServerModal } from '../modals/JoinServerModal';
+import { getServerUrl, setServerUrl } from '../../utils/apiConfig';
+import { readPinnedServers, removePinnedServer, normalizeInstanceUrl } from '../../utils/pinnedServers';
 
 interface ServerRailProps {
   selectedServerId: number | null;
@@ -17,9 +20,26 @@ interface Server {
 export const ServerRail = ({ selectedServerId, onSelectServer }: ServerRailProps) => {
   const [servers, setServers] = useState<Server[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const [showAddMenu, setShowAddMenu] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [pinnedTick, setPinnedTick] = useState(0);
 
-  const fetchServers = async () => {
+  const pinned = useMemo(() => {
+    // tick forces recompute after mutations
+    void pinnedTick;
+    return readPinnedServers();
+  }, [pinnedTick]);
+
+  // Keep this reactive: in multi-instance setups the user can switch instances.
+  const currentInstance = normalizeInstanceUrl(getServerUrl());
+
+  const pinnedRemote = useMemo(
+    () => pinned.filter((p) => normalizeInstanceUrl(p.instanceUrl) !== currentInstance),
+    [pinned, currentInstance]
+  );
+
+  const fetchServers = useCallback(async () => {
     setLoading(true);
     try {
       const res = await apiFetch<Server[]>(`/api/servers`);
@@ -29,70 +49,210 @@ export const ServerRail = ({ selectedServerId, onSelectServer }: ServerRailProps
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { fetchServers(); }, []);
+  useEffect(() => {
+    fetchServers();
+  }, [fetchServers]);
+
+  // Close the add menu on outside click / ESC
+  useEffect(() => {
+    if (!showAddMenu) return;
+
+    const onDocDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      if (!target.closest('[data-rail-add]')) setShowAddMenu(false);
+    };
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowAddMenu(false);
+    };
+
+    document.addEventListener('mousedown', onDocDown);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocDown);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [showAddMenu]);
+
+  const openPinned = (instanceUrl: string, serverId: number) => {
+    const norm = normalizeInstanceUrl(instanceUrl);
+    if (norm === normalizeInstanceUrl(getServerUrl())) {
+      onSelectServer(serverId);
+      return;
+    }
+    localStorage.setItem('ct.pending_server_id', String(serverId));
+    setServerUrl(norm);
+    window.location.reload();
+  };
 
   return (
     <>
-      <div className="w-full h-full flex flex-col items-center gap-4 py-4 overflow-y-auto no-scrollbar">
-        
-        {/* HOME BUTTON (Symbol) */}
-        <div 
-           onClick={() => onSelectServer(null)}
-           className={`
-             w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 group relative
-             ${selectedServerId === null 
-                ? 'bg-indigo-500 rounded-[16px] shadow-lg shadow-indigo-500/20 text-white' 
-                : 'bg-white/5 hover:bg-indigo-500 hover:text-white text-gray-400 rounded-[24px] hover:rounded-[16px]'}
-           `}
+      <div className="w-full h-full flex flex-col items-center gap-4 py-4 overflow-y-auto no-scrollbar relative no-drag">
+        {/* HOME BUTTON */}
+        <button
+          type="button"
+          onClick={() => onSelectServer(null)}
+          className={
+            `
+            w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 group relative no-drag
+            ${selectedServerId === null
+              ? 'bg-indigo-500 rounded-[16px] shadow-lg shadow-indigo-500/20 text-white'
+              : 'bg-white/5 hover:bg-indigo-500 hover:text-white text-gray-400 rounded-[24px] hover:rounded-[16px]'}
+          `
+          }
+          aria-label="Home"
         >
-            <Home size={22} />
-        </div>
+          <Home size={22} />
+        </button>
 
-        {/* Trenner (ganz dezent) */}
         <div className="w-8 h-[2px] bg-white/5 rounded-full flex-shrink-0" />
 
-        {/* SERVER LISTE */}
+        {/* LOCAL SERVERS */}
         {loading && <Loader2 className="animate-spin text-gray-600" />}
-        
         {servers.map((server) => (
-           <div 
-             key={server.id}
-             onClick={() => onSelectServer(server.id)}
-             className={`
-               w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 relative group
-               ${selectedServerId === server.id ? 'rounded-[16px]' : 'rounded-[24px] hover:rounded-[16px]'}
-               bg-white/5 hover:bg-white/10
-             `}
-           >
-              {/* Aktiver Balken (Links) */}
-              <div className={`absolute left-[-12px] w-1 bg-white rounded-r-full transition-all duration-300
-                  ${selectedServerId === server.id ? 'h-8 opacity-100' : 'h-2 opacity-0 group-hover:opacity-50 group-hover:h-4'}
-              `}></div>
+          <button
+            key={`local-${server.id}`}
+            type="button"
+            onClick={() => onSelectServer(server.id)}
+            className={
+              `
+              w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 relative group no-drag
+              ${selectedServerId === server.id ? 'rounded-[16px]' : 'rounded-[24px] hover:rounded-[16px]'}
+              bg-white/5 hover:bg-white/10
+            `
+            }
+            title={server.name}
+            aria-label={`Server ${server.name}`}
+          >
+            <div
+              className={`absolute left-[-12px] w-1 bg-white rounded-r-full transition-all duration-300
+                ${selectedServerId === server.id ? 'h-8 opacity-100' : 'h-2 opacity-0 group-hover:opacity-50 group-hover:h-4'}
+              `}
+            />
 
-              {server.icon_url ? (
-                  <img src={server.icon_url} alt={server.name} className={`w-full h-full object-cover transition-all ${selectedServerId === server.id ? 'rounded-[16px]' : 'rounded-[24px] group-hover:rounded-[16px]'}`} />
-              ) : (
-                  <span className="text-gray-200 font-bold text-sm group-hover:text-white transition-colors">{server.name.substring(0, 2).toUpperCase()}</span>
-              )}
-           </div>
+            {server.icon_url ? (
+              <img
+                src={server.icon_url}
+                alt={server.name}
+                className={`w-full h-full object-cover transition-all ${selectedServerId === server.id ? 'rounded-[16px]' : 'rounded-[24px] group-hover:rounded-[16px]'}`}
+              />
+            ) : (
+              <span className="text-gray-200 font-bold text-sm group-hover:text-white transition-colors">
+                {server.name.substring(0, 2).toUpperCase()}
+              </span>
+            )}
+          </button>
         ))}
 
-        {/* ADD BUTTON */}
-        <div 
-            onClick={() => setShowCreateModal(true)}
-            className="w-12 h-12 flex-shrink-0 rounded-[24px] bg-white/5 hover:bg-green-500/20 flex items-center justify-center cursor-pointer text-green-500 transition-all duration-300 mt-2 hover:rounded-[16px] group"
-        >
-            <Plus size={22} className="group-hover:text-green-400" />
-        </div>
+        {/* REMOTE / PINNED SERVERS */}
+        {pinnedRemote.length > 0 && (
+          <>
+            <div className="w-8 h-[2px] bg-white/5 rounded-full flex-shrink-0" />
+            {pinnedRemote.map((p) => (
+              <div
+                key={`remote-${p.instanceUrl}-${p.serverId}`}
+                role="button"
+                tabIndex={0}
+                onClick={() => openPinned(p.instanceUrl, p.serverId)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') openPinned(p.instanceUrl, p.serverId);
+                }}
+                className="no-drag w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 relative group no-drag rounded-[24px] hover:rounded-[16px] bg-white/5 hover:bg-white/10 outline-none"
+                title={`${p.name ?? `Server ${p.serverId}`} (${p.instanceUrl})`}
+              >
+                <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-black/70 border border-white/10 flex items-center justify-center text-cyan-300">
+                  <Globe size={12} />
+                </div>
 
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removePinnedServer(p.instanceUrl, p.serverId);
+                    setPinnedTick((x) => x + 1);
+                  }}
+                  className="no-drag absolute -top-1 -left-1 w-5 h-5 rounded-full bg-black/70 border border-white/10 hidden group-hover:flex items-center justify-center text-gray-300 hover:text-white"
+                  title="Entfernen"
+                  aria-label="Server entfernen"
+                >
+                  <X size={12} />
+                </button>
+
+                {p.iconUrl ? (
+                  <img
+                    src={p.iconUrl}
+                    alt={p.name ?? 'Remote'}
+                    className="w-full h-full object-cover transition-all rounded-[24px] group-hover:rounded-[16px]"
+                  />
+                ) : (
+                  <span className="text-gray-200 font-bold text-sm group-hover:text-white transition-colors">
+                    {(p.name ?? `S${p.serverId}`).substring(0, 2).toUpperCase()}
+                  </span>
+                )}
+              </div>
+            ))}
+          </>
+        )}
+
+        {/* ADD BUTTON + MENU */}
+        <div className="relative mt-2" data-rail-add>
+          <button
+            type="button"
+            onClick={() => setShowAddMenu((v) => !v)}
+            className="no-drag w-12 h-12 flex-shrink-0 no-drag rounded-[24px] bg-white/5 hover:bg-green-500/20 flex items-center justify-center cursor-pointer text-green-500 transition-all duration-300 hover:rounded-[16px] group"
+            title="Server hinzufügen"
+            aria-label="Server hinzufügen"
+          >
+            <Plus size={22} className="group-hover:text-green-400" />
+          </button>
+
+          {showAddMenu && (
+            <div className="absolute left-16 bottom-0 w-52 bg-[#0f1014] border border-white/10 rounded-xl shadow-2xl p-2 z-50 no-drag">
+              <button
+                type="button"
+                className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-sm text-white"
+                onClick={() => {
+                  setShowAddMenu(false);
+                  setShowCreateModal(true);
+                }}
+              >
+                Server erstellen
+              </button>
+              <button
+                type="button"
+                className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-sm text-white"
+                onClick={() => {
+                  setShowAddMenu(false);
+                  setShowJoinModal(true);
+                }}
+              >
+                Server beitreten / hinzufügen
+              </button>
+              <div className="text-[10px] text-gray-500 px-3 pt-2 pb-1">Aktuelle Instanz: {currentInstance}</div>
+            </div>
+          )}
+        </div>
       </div>
 
       {showCreateModal && (
-        <CreateServerModal 
-            onClose={() => setShowCreateModal(false)} 
-            onCreated={fetchServers} 
+        <CreateServerModal
+          onClose={() => setShowCreateModal(false)}
+          onCreated={async () => {
+            await fetchServers();
+          }}
+        />
+      )}
+
+      {showJoinModal && (
+        <JoinServerModal
+          onClose={() => setShowJoinModal(false)}
+          onJoined={async () => {
+            await fetchServers();
+            setPinnedTick((x) => x + 1);
+          }}
         />
       )}
     </>

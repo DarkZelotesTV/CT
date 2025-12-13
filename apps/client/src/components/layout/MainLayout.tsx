@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import classNames from 'classnames';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { RoomAudioRenderer, RoomContext } from '@livekit/components-react';
@@ -13,6 +13,8 @@ import { DashboardSidebar } from '../dashboard/DashboardSidebar';
 import { FriendListStage } from '../dashboard/FriendListStage';
 import { WebChannelView } from '../server/WebChannelView';
 
+import { OnboardingModal } from '../modals/OnboardingModal';
+
 import { useVoice } from '../../context/voice-state';
 
 interface Channel {
@@ -26,10 +28,26 @@ export const MainLayout = () => {
   const [showRightSidebar, setShowRightSidebar] = useState(true);
   const [selectedServerId, setSelectedServerId] = useState<number | null>(null);
   const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const chatBarRef = useRef<BottomChatBarRef>(null);
 
   // Voice Context holen
   const { activeRoom } = useVoice();
+
+  useEffect(() => {
+    // One-time tutorial after the first successful start.
+    if (!localStorage.getItem('ct.onboarding.v1.done')) {
+      setShowOnboarding(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    const pending = localStorage.getItem('ct.pending_server_id');
+    if (pending && /^\d+$/.test(pending)) {
+      setSelectedServerId(Number(pending));
+      localStorage.removeItem('ct.pending_server_id');
+    }
+  }, []);
 
   const handleServerSelect = (id: number | null) => {
     setSelectedServerId(id);
@@ -67,6 +85,7 @@ export const MainLayout = () => {
   // Dein komplettes UI bleibt gleich – nur ohne LiveKitRoom wrapper
   const ui = (
     <div className="flex h-screen w-screen overflow-hidden relative bg-[#050507] text-gray-200 font-sans">
+      {showOnboarding && <OnboardingModal onClose={() => setShowOnboarding(false)} />}
       {/* 1. SERVER RAIL */}
       <div className="w-[80px] flex-shrink-0 z-50 flex flex-col items-center py-3 h-full">
         <div className="w-full h-full bg-[#0a0a0c]/80 backdrop-blur-xl rounded-2xl border border-white/5 ml-3 shadow-2xl">

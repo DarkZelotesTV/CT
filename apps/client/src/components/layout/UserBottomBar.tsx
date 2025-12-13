@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
-import { Mic, Headphones, Settings } from 'lucide-react';
+import { Mic, Headphones, Settings, Shield } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import { UserSettingsModal } from '../modals/UserSettingsModal';
 import { TalkSettingsModal } from '../modals/TalkSettingsModal';
+import { IdentityModal } from '../modals/IdentityModal';
 import { useVoice } from '../../context/voice-state';
 
 export const UserBottomBar = () => {
@@ -10,6 +11,7 @@ export const UserBottomBar = () => {
   const user = useMemo(() => JSON.parse(localStorage.getItem('clover_user') || '{}'), []);
   const [showSettings, setShowSettings] = useState(false);
   const [showTalkSettings, setShowTalkSettings] = useState(false);
+  const [showIdentity, setShowIdentity] = useState(false);
 
   const { muted, setMuted } = useVoice();
 
@@ -50,7 +52,15 @@ export const UserBottomBar = () => {
           </button>
           <button
             className="p-1 hover:bg-cyan-900/30 rounded text-gray-500 hover:text-cyan-400"
+            onClick={() => setShowIdentity(true)}
+            title="Identität"
+          >
+            <Shield size={14} />
+          </button>
+          <button
+            className="p-1 hover:bg-cyan-900/30 rounded text-gray-500 hover:text-cyan-400"
             onClick={() => setShowSettings(true)}
+            title="Settings"
           >
             <Settings size={14} />
           </button>
@@ -59,6 +69,12 @@ export const UserBottomBar = () => {
 
       {showSettings && <UserSettingsModal onClose={() => setShowSettings(false)} />}
       {showTalkSettings && <TalkSettingsModal onClose={() => setShowTalkSettings(false)} />}
+      {showIdentity && (
+        <IdentityModal
+          onClose={() => setShowIdentity(false)}
+          onIdentityChanged={() => {}}
+        />
+      )}
     </>
   );
 };

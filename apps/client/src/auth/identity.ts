@@ -1,7 +1,13 @@
 import * as ed from "@noble/ed25519";
-import { sha256 } from "@noble/hashes/sha2.js";
-import * as ed from "@noble/ed25519";
+// NOTE: @noble/hashes v2 uses package "exports".
+// In some installs, only the SHA-2 bundle is exported as a deep import (sha2.js),
+// while a direct deep import like "@noble/hashes/sha512(.js)" may be blocked.
+// SHA-512 is part of SHA-2, so import both from the SHA-2 entry.
+import { sha256, sha512 } from "@noble/hashes/sha2.js";
 
+// Ensure noble-ed25519 has a SHA-512 implementation in browser/electron renderer
+ed.hashes.sha512 = sha512;
+ed.hashes.sha512Async = async (msg: Uint8Array) => sha512(msg);
 
 export type IdentityFile = {
   version: 1;
@@ -39,7 +45,6 @@ export function fingerprintFromPublicKey(publicKey: Uint8Array): string {
 export async function createIdentity(displayName?: string): Promise<IdentityFile> {
   const seed = crypto.getRandomValues(new Uint8Array(32));
   const pub = await ed.getPublicKeyAsync(seed);
-
 
   return {
     version: 1,
@@ -83,10 +88,14 @@ export async function signNonce(id: IdentityFile, nonceB64: string): Promise<str
   return u8ToB64(sig);
 }
 
-export async function signMessage(id: IdentityFile, message: string): Promise<{ signatureB64: string; timestamp: number }>
+export async function signMessage(
+  id: IdentityFile,
+  _message: string
+): Promise<{ signatureB64: string; timestamp: number }>
 {
   const { seed } = identityToKeys(id);
   const timestamp = Date.now();
+  // Server expects: "handshake:${timestamp}" (see server auth route)
   const data = new TextEncoder().encode(`handshake:${timestamp}`);
   const sig = await ed.signAsync(data, seed);
   return { signatureB64: u8ToB64(sig), timestamp };

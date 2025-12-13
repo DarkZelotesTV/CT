@@ -1,16 +1,48 @@
 import { useMemo, useState } from 'react';
-import { X, Loader2, Compass, Shield } from 'lucide-react';
+import { X, Loader2, Compass, Shield, Globe } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { IdentityModal } from './IdentityModal';
 import { computeFingerprint, formatFingerprint, loadIdentity, type IdentityFile } from '../../auth/identity';
+import { addPinnedServer, normalizeInstanceUrl } from '../../utils/pinnedServers';
+import { getServerUrl, setServerUrl } from '../../utils/apiConfig';
 
 interface JoinServerModalProps {
   onClose: () => void;
   onJoined: () => void;
 }
 
+function parseServerInput(input: string): { serverId: string; instanceUrl?: string } {
+  const v = (input || '').trim();
+  if (!v) return { serverId: '' };
+
+  // URL form
+  if (/^https?:\/\//i.test(v)) {
+    try {
+      const u = new URL(v);
+      const origin = `${u.protocol}//${u.host}`;
+
+      // allow query params like ?serverId=123
+      const qServerId = u.searchParams.get('serverId') || u.searchParams.get('id');
+      if (qServerId) return { serverId: qServerId, instanceUrl: origin };
+
+      // else try last path segment as number
+      const parts = u.pathname.split('/').filter(Boolean);
+      const last = parts[parts.length - 1];
+      if (last && /^\d+$/.test(last)) return { serverId: last, instanceUrl: origin };
+
+      return { serverId: '', instanceUrl: origin };
+    } catch {
+      // fallthrough
+    }
+  }
+
+  // Raw server id
+  return { serverId: v };
+}
+
 export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => {
-  const [inviteCode, setInviteCode] = useState(''); // Hier kommt die Server ID rein
+  const [serverInput, setServerInput] = useState('');
+  const [instanceUrl, setInstanceUrlState] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [identity, setIdentity] = useState<IdentityFile | null>(() => loadIdentity());
@@ -26,27 +58,52 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!identity) {
       setError('Bitte erst eine Clover Identity erstellen oder importieren.');
       setShowIdentityModal(true);
       return;
     }
+
     setLoading(true);
     setError('');
 
     try {
-      // Wir nutzen die ID als Invite Code für das MVP
-      await apiFetch('/api/servers/join', {
+      const parsed = parseServerInput(serverInput);
+      const serverId = parsed.serverId;
+      if (!serverId) throw new Error('Bitte eine gültige Server-ID oder einen Invite-Link eingeben.');
+
+      const chosenBase = normalizeInstanceUrl(instanceUrl || parsed.instanceUrl || getServerUrl());
+
+      const joinRes = await apiFetch<any>('/api/servers/join', {
         method: 'POST',
-        body: JSON.stringify({ serverId: inviteCode })
+        body: JSON.stringify({ serverId }),
+        baseUrl: chosenBase,
       });
-      
+
+      // If this was a remote instance, pin it so the user can switch back later.
+      const current = normalizeInstanceUrl(getServerUrl());
+      if (normalizeInstanceUrl(chosenBase) !== current) {
+        const server = joinRes?.server;
+        addPinnedServer({
+          instanceUrl: chosenBase,
+          serverId: Number(serverId),
+          name: server?.name,
+          iconUrl: server?.icon_url,
+        });
+
+        // Switch to the remote instance now
+        localStorage.setItem('ct.pending_server_id', String(serverId));
+        setServerUrl(chosenBase);
+        window.location.reload();
+        return;
+      }
+
       onJoined();
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.error || "Server nicht gefunden oder ungültige ID");
+      setError(err?.response?.data?.error || err?.message || 'Server nicht gefunden oder ungültige Eingabe');
     } finally {
       setLoading(false);
     }
@@ -55,77 +112,87 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] flex items-center justify-center animate-in fade-in duration-200">
       <div className="bg-dark-200 w-full max-w-md rounded-lg shadow-2xl border border-dark-400 overflow-hidden">
-        
         {/* Header */}
         <div className="p-6 text-center relative">
-           <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white"><X size={24} /></button>
-           <h2 className="text-2xl font-bold text-white">Server beitreten</h2>
-           <p className="text-gray-400 mt-2 text-sm">
-             Gib unten die Server-ID oder den Einladungs-Link ein.
-           </p>
+          <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white">
+            <X size={24} />
+          </button>
+          <h2 className="text-2xl font-bold text-white">Server beitreten</h2>
+          <p className="text-gray-400 mt-2 text-sm">Gib die Server-ID ein oder einen Einladungs-Link.</p>
         </div>
 
         {/* Body */}
         <form onSubmit={handleSubmit} className="p-6 pt-0 space-y-4">
-           
-           <div className="flex justify-center mb-4">
-              <div className="w-20 h-20 rounded-full bg-dark-300 flex items-center justify-center text-green-500">
-                  <Compass size={40} />
-              </div>
-           </div>
+          <div className="flex justify-center mb-4">
+            <div className="w-20 h-20 rounded-full bg-dark-300 flex items-center justify-center text-green-500">
+              <Compass size={40} />
+            </div>
+          </div>
 
-           {error && <div className="text-red-400 text-sm text-center bg-red-500/10 p-2 rounded">{error}</div>}
+          {error && <div className="text-red-400 text-sm text-center bg-red-500/10 p-2 rounded">{error}</div>}
 
-           <div>
-             <label className="text-xs font-bold text-gray-400 uppercase mb-1 block">Invite Code / Server ID</label>
-             <input 
-               autoFocus
-               type="text" 
-               value={inviteCode}
-               onChange={(e) => setInviteCode(e.target.value)}
-               placeholder="z.B. 1"
-               className="w-full bg-dark-400 text-white p-2.5 rounded border-none focus:ring-2 focus:ring-green-500 outline-none"
-             />
-             <p className="text-[10px] text-gray-500 mt-1">Für dieses MVP: Gib einfach die ID des Servers ein (z.B. '1', '2').</p>
-           </div>
+          <div>
+            <label className="text-xs font-bold text-gray-400 uppercase mb-1 block">Invite / Server ID</label>
+            <input
+              autoFocus
+              type="text"
+              value={serverInput}
+              onChange={(e) => setServerInput(e.target.value)}
+              placeholder="z.B. 1 oder https://example.com/invite/1"
+              className="w-full bg-dark-400 text-white p-2.5 rounded border-none focus:ring-2 focus:ring-green-500 outline-none"
+            />
+          </div>
 
-           <div className="rounded-lg border border-dark-400 bg-dark-300/50 p-3 flex items-start gap-3">
-             <div className="p-2 rounded-full bg-dark-400 text-green-400">
-               <Shield size={18} />
-             </div>
-             <div className="flex-1">
-               <div className="text-sm font-medium text-white">Clover Identity</div>
-                {identity && fingerprint ? (
-                  <p className="text-xs text-gray-400 mt-1 break-all">
-                    Fingerprint: {formatFingerprint(fingerprint)}
-                  </p>
-                ) : (
-                  <p className="text-xs text-yellow-300 mt-1">
-                    Du benötigst eine Identity, um einem Server beizutreten.
-                  </p>
-                )}
-               <button
-                 type="button"
-                 className="mt-2 text-sm text-indigo-400 hover:text-indigo-300"
-                 onClick={() => setShowIdentityModal(true)}
-               >
-                 Identity verwalten
-               </button>
-             </div>
-           </div>
+          <div>
+            <label className="text-xs font-bold text-gray-400 uppercase mb-1 block flex items-center gap-2">
+              <Globe size={14} />
+              Instanz URL (optional)
+            </label>
+            <input
+              type="text"
+              value={instanceUrl}
+              onChange={(e) => setInstanceUrlState(e.target.value)}
+              placeholder="z.B. https://mein-server.tld"
+              className="w-full bg-dark-400 text-white p-2.5 rounded border-none focus:ring-2 focus:ring-green-500 outline-none"
+            />
+            <p className="text-[10px] text-gray-500 mt-1">Leer lassen, um die aktuelle Instanz zu nutzen.</p>
+          </div>
+
+          <div className="rounded-lg border border-dark-400 bg-dark-300/50 p-3 flex items-start gap-3">
+            <div className="p-2 rounded-full bg-dark-400 text-green-400">
+              <Shield size={18} />
+            </div>
+            <div className="flex-1">
+              <div className="text-sm font-medium text-white">Clover Identity</div>
+              {identity && fingerprint ? (
+                <p className="text-xs text-gray-400 mt-1 break-all">Fingerprint: {formatFingerprint(fingerprint)}</p>
+              ) : (
+                <p className="text-xs text-yellow-300 mt-1">Du benötigst eine Identity, um einem Server beizutreten.</p>
+              )}
+              <button
+                type="button"
+                className="mt-2 text-sm text-indigo-400 hover:text-indigo-300"
+                onClick={() => setShowIdentityModal(true)}
+              >
+                Identity verwalten
+              </button>
+            </div>
+          </div>
         </form>
 
         {/* Footer */}
         <div className="bg-dark-300 p-4 flex justify-between items-center">
-           <button onClick={onClose} className="text-white hover:underline text-sm font-medium px-4">Abbrechen</button>
-           <button
-             onClick={handleSubmit}
-             disabled={loading || !inviteCode || !identity}
-             className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-medium disabled:opacity-50 flex items-center gap-2"
-           >
-             {loading && <Loader2 className="animate-spin" size={16} />}
-             Beitreten
-           </button>
+          <button onClick={onClose} className="text-white hover:underline text-sm font-medium px-4">
+            Abbrechen
+          </button>
+          <button
+            onClick={() => handleSubmit()}
+            disabled={loading || !serverInput || !identity}
+            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-medium disabled:opacity-50 flex items-center gap-2"
+          >
+            {loading && <Loader2 className="animate-spin" size={16} />}
+            Beitreten
+          </button>
         </div>
       </div>
 

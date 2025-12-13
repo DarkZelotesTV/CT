@@ -5,12 +5,13 @@ import classNames from 'classnames';
 
 interface CreateChannelModalProps {
   serverId: number;
+  categoryId?: number | null;
   defaultType?: 'text' | 'voice' | 'web';
   onClose: () => void;
   onCreated: () => void;
 }
 
-export const CreateChannelModal = ({ serverId, defaultType = 'text', onClose, onCreated }: CreateChannelModalProps) => {
+export const CreateChannelModal = ({ serverId, categoryId = null, defaultType = 'text', onClose, onCreated }: CreateChannelModalProps) => {
   const [name, setName] = useState('');
   const [type, setType] = useState<'text' | 'voice' | 'web'>(defaultType);
   const [loading, setLoading] = useState(false);
@@ -25,7 +26,7 @@ export const CreateChannelModal = ({ serverId, defaultType = 'text', onClose, on
     try {
       await apiFetch(`/api/servers/${serverId}/channels`, {
         method: 'POST',
-        body: JSON.stringify({ name, type, defaultPassword, joinPassword })
+        body: JSON.stringify({ name, type, categoryId, defaultPassword, joinPassword })
       });
 
       onCreated();

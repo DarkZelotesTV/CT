@@ -5,6 +5,7 @@ import { CreateChannelModal } from '../modals/CreateChannelModal';
 import { UserBottomBar } from './UserBottomBar';
 import { ServerSettingsModal } from '../modals/ServerSettingsModal';
 import { useVoice } from '../../context/voice-state'; // Importieren
+import { VoiceParticipantsPanel } from "../voice/VoiceParticipantsPanel";
 
 // ... (Interfaces Channel, Category wie gehabt) ...
 interface Channel { id: number; name: string; type: 'text' | 'voice' | 'web'; custom_icon?: string; }
@@ -19,6 +20,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel }: C
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [createType, setCreateType] = useState<any>('text');
+  const [createCategoryId, setCreateCategoryId] = useState<number | null>(null);
 
   // CONTEXT NUTZEN
   const { connectToChannel, activeChannelId: voiceChannelId, connectionState, activeChannelName, disconnect } = useVoice();
@@ -55,7 +57,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel }: C
       <div 
         key={c.id} 
         onClick={() => handleChannelClick(c)}
-        className={`relative flex items-center px-2 py-1.5 mb-0.5 cursor-pointer group select-none rounded-md transition-colors
+        className={`relative flex items-center no-drag px-2 py-1.5 mb-0.5 cursor-pointer group select-none rounded-md transition-colors
           ${isInside ? 'ml-4' : 'mx-2'}
           ${isActive ? 'bg-white/10 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'}
         `}
@@ -71,9 +73,27 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel }: C
   return (
     <div className="flex flex-col h-full bg-transparent">
         {/* Header */}
-        <div onClick={() => setShowSettingsModal(true)} className="h-12 flex items-center px-4 border-b border-white/5 cursor-pointer hover:bg-white/5 transition-colors">
-           <span className="font-bold text-white truncate">{serverName}</span>
-           <Settings size={16} className="ml-auto text-gray-500" />
+        <div
+          onClick={() => setShowSettingsModal(true)}
+          className="h-12 flex items-center gap-2 px-4 border-b border-white/5 cursor-pointer hover:bg-white/5 transition-colors no-drag"
+        >
+          <span className="font-bold text-white truncate flex-1">{serverName}</span>
+
+          <button
+            type="button"
+            className="p-1.5 rounded-md hover:bg-white/10 text-gray-500 hover:text-white"
+            title="Kanal erstellen"
+            onClick={(e) => {
+              e.stopPropagation();
+              setCreateType('text');
+              setCreateCategoryId(null);
+              setShowCreateModal(true);
+            }}
+          >
+            <Plus size={16} />
+          </button>
+
+          <Settings size={16} className="text-gray-500" />
         </div>
 
         {/* Liste */}
@@ -81,12 +101,24 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel }: C
            {uncategorized.map(c => renderChannel(c, false))}
            {categories.map(cat => (
              <div key={cat.id} className="mt-4">
-                <div className="flex items-center justify-between group cursor-pointer mb-1 pl-1 pr-2" onClick={() => toggleCategory(cat.id)}>
+                <div className="flex items-center justify-between group cursor-pointer no-drag mb-1 pl-1 pr-2" onClick={() => toggleCategory(cat.id)}>
                    <div className="flex items-center gap-1 text-gray-500 text-xs font-bold uppercase hover:text-gray-300">
                        {collapsed[cat.id] ? <ChevronRight size={10}/> : <ChevronDown size={10}/>}
                        {cat.name}
                    </div>
-                   <Plus size={14} className="text-gray-500 opacity-0 group-hover:opacity-100 hover:text-white" onClick={(e) => {e.stopPropagation(); setCreateType('text'); setShowCreateModal(true);}}/>
+                   <button
+                     type="button"
+                     className="no-drag p-1 rounded-md text-gray-500 opacity-0 group-hover:opacity-100 hover:text-white hover:bg-white/5"
+                     title="Kanal in Kategorie erstellen"
+                     onClick={(e) => {
+                       e.stopPropagation();
+                       setCreateType('text');
+                       setCreateCategoryId(cat.id);
+                       setShowCreateModal(true);
+                     }}
+                   >
+                     <Plus size={14} />
+                   </button>
                 </div>
                 {!collapsed[cat.id] && cat.channels.map(c => renderChannel(c, true))}
              </div>
@@ -113,10 +145,12 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel }: C
            </div>
         )}
 
+        <VoiceParticipantsPanel />
+
         <UserBottomBar />
 
       {/* Modals */}
-      {showCreateModal && <CreateChannelModal serverId={serverId!} defaultType={createType} onClose={() => setShowCreateModal(false)} onCreated={fetchData} />}
+      {showCreateModal && <CreateChannelModal serverId={serverId!} categoryId={createCategoryId} defaultType={createType} onClose={() => setShowCreateModal(false)} onCreated={fetchData} />}
       {showSettingsModal && <ServerSettingsModal serverId={serverId!} onClose={() => setShowSettingsModal(false)} />}
     </div>
   );
