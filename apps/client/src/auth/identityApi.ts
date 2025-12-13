@@ -1,9 +1,8 @@
-import { IdentityFile, signNonce } from "./identity";
+import { IdentityFile, computeFingerprint, signMessage } from "./identity";
+import { getServerUrl, getServerPassword } from "../utils/apiConfig";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:3001";
-
-async function postJson<T>(path: string, body: any): Promise<T> {
-  const res = await fetch(`${API}${path}`, {
+async function postJson<T>(baseUrl: string, path: string, body: any): Promise<T> {
+  const res = await fetch(`${baseUrl}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -13,29 +12,40 @@ async function postJson<T>(path: string, body: any): Promise<T> {
   return json as T;
 }
 
-/**
- * TS3-style identity login:
- * 1) /api/auth/challenge  -> nonce
- * 2) sign nonce with local private key
- * 3) /api/auth/verify     -> app JWT + user payload
- */
-export async function identityLogin(id: IdentityFile) {
-  const challenge = await postJson<{ nonce: string; expiresIn: number }>(
-    "/api/auth/challenge",
-    { publicKey: id.publicKeyB64 }
-  );
+export async function performHandshake(id: IdentityFile, serverPassword?: string) {
+  const serverUrl = getServerUrl();
+  const { signatureB64, timestamp } = await signMessage(id, "handshake");
 
-  const signature = await signNonce(id, challenge.nonce);
-
-  const verified = await postJson<{
-    token: string;
-    user: { id: number; username?: string | null; displayName: string | null; fingerprint: string };
-  }>("/api/auth/verify", {
+  const payload = {
     publicKey: id.publicKeyB64,
-    nonce: challenge.nonce,
-    signature,
+    fingerprint: computeFingerprint(id),
     displayName: id.displayName ?? null,
-  });
+    serverPassword: serverPassword || null,
+    signature: signatureB64,
+    timestamp,
+  };
 
-  return verified;
+  return postJson<{
+    user: { id: number; username?: string | null; displayName: string | null; fingerprint: string };
+    access: { passwordRequired: boolean };
+  }>(serverUrl, "/api/auth/handshake", payload);
+}
+
+export async function buildIdentityHeaders(): Promise<Headers> {
+  const headers = new Headers();
+  const storedPassword = getServerPassword();
+  const rawIdentity = localStorage.getItem("ct.identity.v1");
+  if (!rawIdentity) return headers;
+
+  const identity = JSON.parse(rawIdentity) as IdentityFile;
+  const { signatureB64, timestamp } = await signMessage(identity, "handshake");
+
+  headers.set("X-Server-Password", storedPassword || "");
+  headers.set("X-Identity-PublicKey", identity.publicKeyB64);
+  headers.set("X-Identity-Fingerprint", computeFingerprint(identity));
+  headers.set("X-Identity-DisplayName", identity.displayName ?? "");
+  headers.set("X-Identity-Signature", signatureB64);
+  headers.set("X-Identity-Timestamp", String(timestamp));
+
+  return headers;
 }

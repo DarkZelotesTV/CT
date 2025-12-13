@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { Home, Plus, Loader2 } from 'lucide-react'; // WICHTIG: 'Home' statt 'House'
-import { getServerUrl } from '../../utils/apiConfig';
+import { apiFetch } from '../../api/http';
 import { CreateServerModal } from '../modals/CreateServerModal';
 
 interface ServerRailProps {
@@ -23,11 +22,8 @@ export const ServerRail = ({ selectedServerId, onSelectServer }: ServerRailProps
   const fetchServers = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('clover_token');
-      const res = await axios.get(`${getServerUrl()}/api/servers`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setServers(res.data);
+      const res = await apiFetch<Server[]>(`/api/servers`);
+      setServers(res);
     } catch (err) {
       console.error(err);
     } finally {

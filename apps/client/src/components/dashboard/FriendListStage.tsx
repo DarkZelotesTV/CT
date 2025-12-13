@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { MessageSquare, MoreVertical, Search, UserPlus, Check, X, Loader2 } from 'lucide-react';
-import { getServerUrl } from '../../utils/apiConfig';
+import { apiFetch } from '../../api/http';
 
 interface Friend {
   id: number;
@@ -20,17 +19,13 @@ export const FriendListStage = () => {
   const [addUsername, setAddUsername] = useState('');
   const [addStatus, setAddStatus] = useState('');
 
-  const token = localStorage.getItem('clover_token');
-
   // Daten laden
   const fetchFriends = async () => {
     setLoading(true);
     try {
       // 1. Hole akzeptierte Freunde
-      const res = await axios.get(`${getServerUrl()}/api/friends`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setFriends(res.data);
+      const res = await apiFetch<Friend[]>(`/api/friends`);
+      setFriends(res);
       
       // TODO: Einen separaten Endpunkt für 'pending' Requests im Backend bauen
       // Aktuell simulieren wir das, da der Endpoint im Backend-Beispiel nur 'accepted' lieferte.
@@ -52,9 +47,8 @@ export const FriendListStage = () => {
     setAddStatus('Sende...');
     
     try {
-      await axios.post(`${getServerUrl()}/api/friends/request`, 
-        { username: addUsername },
-        { headers: { Authorization: `Bearer ${token}` } }
+      await apiFetch(`/api/friends/request`,
+        { method: 'POST', body: JSON.stringify({ username: addUsername }) }
       );
       setAddStatus('Anfrage gesendet! ✅');
       setAddUsername('');

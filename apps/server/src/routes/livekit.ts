@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import { AccessToken } from 'livekit-server-sdk';
-import { authenticateToken, AuthRequest } from '../middleware/authMiddleware';
+import { authenticateRequest, AuthRequest } from '../middleware/authMiddleware';
 import { User } from '../models/User';
 
 const router = Router();
 
 // GET /api/livekit/token?room=channel_123
-router.get('/token', authenticateToken, async (req: AuthRequest, res) => {
+router.get('/token', authenticateRequest, async (req: AuthRequest, res) => {
   const roomName = req.query.room as string;
   const userId = String(req.user!.id);
 

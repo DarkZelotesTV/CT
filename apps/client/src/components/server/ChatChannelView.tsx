@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
-import axios from 'axios';
 import { Hash, Bell, Pin, Users, Search, Plus, Gift, Sticker, Smile, Send, Loader2 } from 'lucide-react';
-import { getServerUrl } from '../../utils/apiConfig';
+import { apiFetch } from '../../api/http';
 import { useSocket } from '../../context/SocketContext';
 
 interface Message {
@@ -34,11 +33,8 @@ export const ChatChannelView = ({ channelId, channelName }: ChatChannelViewProps
       setLoading(true);
       setMessages([]); // Reset bei Channel-Wechsel
       try {
-        const token = localStorage.getItem('clover_token');
-        const res = await axios.get(`${getServerUrl()}/api/channels/${channelId}/messages`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setMessages(res.data);
+        const res = await apiFetch<Message[]>(`/api/channels/${channelId}/messages`);
+        setMessages(res);
       } catch (err) {
         console.error("Chat Error:", err);
       } finally {

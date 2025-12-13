@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { X, Trash2, Shield, Save, Loader2 } from 'lucide-react';
-import { getServerUrl } from '../../utils/apiConfig';
+import { apiFetch } from '../../api/http';
 
 interface ServerSettingsProps {
   serverId: number;
@@ -14,16 +13,12 @@ export const ServerSettingsModal = ({ serverId, onClose }: ServerSettingsProps) 
   const [serverName, setServerName] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const token = localStorage.getItem('clover_token');
-
   // Server Details laden (für den Namen)
   useEffect(() => {
     const loadDetails = async () => {
         try {
-            const res = await axios.get(`${getServerUrl()}/api/servers`, {
-                headers: { Authorization: `Bearer ${token}`}
-            });
-            const myServer = res.data.find((s: any) => s.id === serverId);
+            const res = await apiFetch<any[]>(`/api/servers`);
+            const myServer = res.find((s: any) => s.id === serverId);
             if (myServer) setServerName(myServer.name);
         } catch(e) {}
     };
@@ -36,10 +31,8 @@ export const ServerSettingsModal = ({ serverId, onClose }: ServerSettingsProps) 
       const load = async () => {
          setLoading(true);
          try {
-            const res = await axios.get(`${getServerUrl()}/api/servers/${serverId}/members`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setMembers(res.data);
+            const res = await apiFetch<any[]>(`/api/servers/${serverId}/members`);
+            setMembers(res);
          } catch(e) { console.error(e); }
          setLoading(false);
       };
@@ -50,9 +43,8 @@ export const ServerSettingsModal = ({ serverId, onClose }: ServerSettingsProps) 
   // Server Update (Name)
   const handleSave = async () => {
     try {
-        await axios.put(`${getServerUrl()}/api/servers/${serverId}`, 
-            { name: serverName },
-            { headers: { Authorization: `Bearer ${token}` } }
+        await apiFetch(`/api/servers/${serverId}`,
+            { method: 'PUT', body: JSON.stringify({ name: serverName }) }
         );
         alert("Server gespeichert!");
         window.location.reload(); // Einfachste Methode um UI zu refreshen
@@ -63,9 +55,7 @@ export const ServerSettingsModal = ({ serverId, onClose }: ServerSettingsProps) 
   const handleKick = async (userId: number) => {
     if(!confirm("Diesen Nutzer wirklich kicken?")) return;
     try {
-        await axios.delete(`${getServerUrl()}/api/servers/${serverId}/members/${userId}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        await apiFetch(`/api/servers/${serverId}/members/${userId}`, { method: 'DELETE' });
         setMembers(prev => prev.filter(m => m.user_id !== userId)); // UI Update
     } catch(e) { alert("Konnte User nicht kicken (Fehlende Rechte?)"); }
   };
@@ -76,9 +66,7 @@ export const ServerSettingsModal = ({ serverId, onClose }: ServerSettingsProps) 
       if (name !== serverName) return alert("Name stimmt nicht überein.");
       
       try {
-        await axios.delete(`${getServerUrl()}/api/servers/${serverId}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        await apiFetch(`/api/servers/${serverId}`, { method: 'DELETE' });
         window.location.reload();
       } catch(e) { alert("Fehler beim Löschen."); }
   };
