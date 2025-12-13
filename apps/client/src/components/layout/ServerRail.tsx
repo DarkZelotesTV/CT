@@ -218,6 +218,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer }: ServerRailProps
         <div className="relative mt-2" data-rail-add>
           <button
             type="button"
+            onMouseDown={(e) => e.stopPropagation()}
             onClick={() => setShowAddMenu((v) => !v)}
             className="no-drag w-12 h-12 flex-shrink-0 no-drag rounded-[24px] bg-white/5 hover:bg-green-500/20 flex items-center justify-center cursor-pointer text-green-500 transition-all duration-300 hover:rounded-[16px] group"
             title="Server hinzufügen"
