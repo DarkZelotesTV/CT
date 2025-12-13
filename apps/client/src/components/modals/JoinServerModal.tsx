@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Loader2, Compass, Shield, Globe } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { IdentityModal } from './IdentityModal';
@@ -109,7 +110,7 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] flex items-center justify-center animate-in fade-in duration-200">
       <div className="bg-dark-200 w-full max-w-md rounded-lg shadow-2xl border border-dark-400 overflow-hidden">
         {/* Header */}
@@ -199,6 +200,7 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
       {showIdentityModal && (
         <IdentityModal onClose={() => setShowIdentityModal(false)} onIdentityChanged={handleIdentityChanged} />
       )}
-    </div>
+    </div>,
+    document.body
   );
 };
