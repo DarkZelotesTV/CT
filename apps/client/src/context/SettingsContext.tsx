@@ -1,0 +1,133 @@
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+
+export type ProfileSettings = {
+  displayName: string;
+  avatarUrl: string;
+};
+
+export type DeviceSettings = {
+  audioInputId: string | null;
+  audioOutputId: string | null;
+  videoInputId: string | null;
+};
+
+export type HotkeySettings = {
+  pushToTalk: string | null;
+  muteToggle: string | null;
+};
+
+export type SettingsState = {
+  profile: ProfileSettings;
+  devices: DeviceSettings;
+  hotkeys: HotkeySettings;
+};
+
+const SETTINGS_STORAGE_KEY = 'ct.settings';
+
+const defaultSettings: SettingsState = {
+  profile: {
+    displayName: '',
+    avatarUrl: '',
+  },
+  devices: {
+    audioInputId: null,
+    audioOutputId: null,
+    videoInputId: null,
+  },
+  hotkeys: {
+    pushToTalk: null,
+    muteToggle: null,
+  },
+};
+
+const createDefaultSettings = (): SettingsState => ({
+  profile: { ...defaultSettings.profile },
+  devices: { ...defaultSettings.devices },
+  hotkeys: { ...defaultSettings.hotkeys },
+});
+
+const SettingsContext = createContext<{
+  settings: SettingsState;
+  updateProfile: (nextProfile: Partial<ProfileSettings>) => void;
+  updateDevices: (nextDevices: Partial<DeviceSettings>) => void;
+  updateHotkeys: (nextHotkeys: Partial<HotkeySettings>) => void;
+  resetSettings: () => void;
+} | null>(null);
+
+const loadInitialSettings = (): SettingsState => {
+  const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored) as SettingsState;
+      return {
+        profile: { ...defaultSettings.profile, ...parsed.profile },
+        devices: { ...defaultSettings.devices, ...parsed.devices },
+        hotkeys: { ...defaultSettings.hotkeys, ...parsed.hotkeys },
+      };
+    } catch (err) {
+      console.warn('Could not parse stored settings', err);
+    }
+  }
+
+  const rawUser = localStorage.getItem('clover_user');
+  if (rawUser) {
+    try {
+      const parsedUser = JSON.parse(rawUser) as { username?: string };
+      return {
+        ...createDefaultSettings(),
+        profile: {
+          ...defaultSettings.profile,
+          displayName: parsedUser.username || '',
+        },
+      };
+    } catch (err) {
+      console.warn('Could not parse clover_user', err);
+    }
+  }
+
+  return createDefaultSettings();
+};
+
+export const SettingsProvider = ({ children }: { children: React.ReactNode }) => {
+  const [settings, setSettings] = useState<SettingsState>(() => loadInitialSettings());
+
+  useEffect(() => {
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  }, [settings]);
+
+  const updateProfile = (nextProfile: Partial<ProfileSettings>) => {
+    setSettings((prev) => ({
+      ...prev,
+      profile: { ...prev.profile, ...nextProfile },
+    }));
+  };
+
+  const updateDevices = (nextDevices: Partial<DeviceSettings>) => {
+    setSettings((prev) => ({
+      ...prev,
+      devices: { ...prev.devices, ...nextDevices },
+    }));
+  };
+
+  const updateHotkeys = (nextHotkeys: Partial<HotkeySettings>) => {
+    setSettings((prev) => ({
+      ...prev,
+      hotkeys: { ...prev.hotkeys, ...nextHotkeys },
+    }));
+  };
+
+  const resetSettings = () => setSettings(createDefaultSettings());
+
+  const value = useMemo(
+    () => ({ settings, updateProfile, updateDevices, updateHotkeys, resetSettings }),
+    [settings]
+  );
+
+  return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
+};
+
+export const useSettings = () => {
+  const context = useContext(SettingsContext);
+  if (!context) throw new Error('useSettings must be used within a SettingsProvider');
+  return context;
+};
