@@ -1,6 +1,8 @@
-import { useState } from 'react';
-import { X, Loader2, Compass } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { X, Loader2, Compass, Shield } from 'lucide-react';
 import { apiFetch } from '../../api/http';
+import { IdentityModal } from './IdentityModal';
+import { computeFingerprint, formatFingerprint, loadIdentity, type IdentityFile } from '../../auth/identity';
 
 interface JoinServerModalProps {
   onClose: () => void;
@@ -11,9 +13,26 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
   const [inviteCode, setInviteCode] = useState(''); // Hier kommt die Server ID rein
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [identity, setIdentity] = useState<IdentityFile | null>(() => loadIdentity());
+  const [showIdentityModal, setShowIdentityModal] = useState(!identity);
+
+  const fingerprint = useMemo(() => (identity ? computeFingerprint(identity) : null), [identity]);
+
+  const handleIdentityChanged = (next: IdentityFile | null) => {
+    setIdentity(next);
+    if (next) {
+      setError('');
+      setShowIdentityModal(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!identity) {
+      setError('Bitte erst eine Clover Identity erstellen oder importieren.');
+      setShowIdentityModal(true);
+      return;
+    }
     setLoading(true);
     setError('');
 
@@ -69,14 +88,39 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
              />
              <p className="text-[10px] text-gray-500 mt-1">Für dieses MVP: Gib einfach die ID des Servers ein (z.B. '1', '2').</p>
            </div>
+
+           <div className="rounded-lg border border-dark-400 bg-dark-300/50 p-3 flex items-start gap-3">
+             <div className="p-2 rounded-full bg-dark-400 text-green-400">
+               <Shield size={18} />
+             </div>
+             <div className="flex-1">
+               <div className="text-sm font-medium text-white">Clover Identity</div>
+                {identity && fingerprint ? (
+                  <p className="text-xs text-gray-400 mt-1 break-all">
+                    Fingerprint: {formatFingerprint(fingerprint)}
+                  </p>
+                ) : (
+                  <p className="text-xs text-yellow-300 mt-1">
+                    Du benötigst eine Identity, um einem Server beizutreten.
+                  </p>
+                )}
+               <button
+                 type="button"
+                 className="mt-2 text-sm text-indigo-400 hover:text-indigo-300"
+                 onClick={() => setShowIdentityModal(true)}
+               >
+                 Identity verwalten
+               </button>
+             </div>
+           </div>
         </form>
 
         {/* Footer */}
         <div className="bg-dark-300 p-4 flex justify-between items-center">
            <button onClick={onClose} className="text-white hover:underline text-sm font-medium px-4">Abbrechen</button>
-           <button 
+           <button
              onClick={handleSubmit}
-             disabled={loading || !inviteCode}
+             disabled={loading || !inviteCode || !identity}
              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-medium disabled:opacity-50 flex items-center gap-2"
            >
              {loading && <Loader2 className="animate-spin" size={16} />}
@@ -84,6 +128,10 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
            </button>
         </div>
       </div>
+
+      {showIdentityModal && (
+        <IdentityModal onClose={() => setShowIdentityModal(false)} onIdentityChanged={handleIdentityChanged} />
+      )}
     </div>
   );
 };
