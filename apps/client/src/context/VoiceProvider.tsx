@@ -1,8 +1,9 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Room, RoomEvent } from 'livekit-client';
 import { getLiveKitConfig } from '../utils/apiConfig';
 import { VoiceContext, VoiceContextType } from './voice-state';
 import { apiFetch } from '../api/http';
+import { useSettings } from './SettingsContext';
 
 export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
   const [activeRoom, setActiveRoom] = useState<Room | null>(null);
@@ -12,11 +13,13 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
   const [connectionState, setConnectionState] = useState<VoiceContextType['connectionState']>('disconnected');
   const [error, setError] = useState<string | null>(null);
 
+  const { settings } = useSettings();
+
   const isConnecting = useRef(false);
   const attemptRef = useRef(0);
 
   const disconnect = useCallback(async () => {
-  console.warn('[voice] disconnect() called', new Error().stack);
+    console.warn('[voice] disconnect() called', new Error().stack);
     isConnecting.current = false;
     if (activeRoom) {
       await activeRoom.disconnect();
@@ -51,30 +54,29 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
 
       // Room Instanz mit den konfigurierten ICE-Servern erstellen
       const room = new Room({
-      adaptiveStream: true,
-      dynacast: true,
-      useSinglePeerConnection: true,
-      publishDefaults: { simulcast: true },
-      rtcConfig: lkConfig.connectOptions.rtcConfig,
+        adaptiveStream: true,
+        dynacast: true,
+        useSinglePeerConnection: true,
+        publishDefaults: { simulcast: true },
+        rtcConfig: lkConfig.connectOptions.rtcConfig,
       });
-
 
       room.on(RoomEvent.Disconnected, (reason) => {
-          console.warn('[voice] Room disconnected', reason);
-          setConnectionState('disconnected');
-          setActiveRoom(null);
-          setActiveChannelId(null);
-          setActiveChannelName(null);
-          isConnecting.current = false;
+        console.warn('[voice] Room disconnected', reason);
+        setConnectionState('disconnected');
+        setActiveRoom(null);
+        setActiveChannelId(null);
+        setActiveChannelName(null);
+        isConnecting.current = false;
       });
-      
+
       room.on(RoomEvent.Connected, () => {
-          setConnectionState('connected');
-          isConnecting.current = false;
+        setConnectionState('connected');
+        isConnecting.current = false;
       });
 
       room.on(RoomEvent.ConnectionStateChanged, (state) => {
-      console.warn('[voice] ConnectionState', state);
+        console.warn('[voice] ConnectionState', state);
       });
 
       room.on(RoomEvent.Reconnecting, () => setConnectionState('reconnecting'));
@@ -84,10 +86,19 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
 
       // Verbinden mit der sicheren URL
       await room.connect(lkConfig.serverUrl, newToken);
-        if (attemptRef.current !== attempt) {
-          room.disconnect();
+      if (settings.devices.audioInputId) {
+        await room.switchActiveDevice('audioinput', settings.devices.audioInputId, true);
+      }
+      if (settings.devices.audioOutputId) {
+        await room.switchActiveDevice('audiooutput', settings.devices.audioOutputId, true);
+      }
+      if (settings.devices.videoInputId) {
+        await room.switchActiveDevice('videoinput', settings.devices.videoInputId, true);
+      }
+      if (attemptRef.current !== attempt) {
+        room.disconnect();
         return;
-        }
+      }
       await room.localParticipant.setMicrophoneEnabled(true);
       
       setActiveRoom(room);
@@ -100,13 +111,43 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       setConnectionState('disconnected');
       isConnecting.current = false;
     }
-  }, [activeChannelId, activeRoom, connectionState]); 
+  }, [activeChannelId, activeRoom, connectionState, settings.devices.audioInputId, settings.devices.audioOutputId, settings.devices.videoInputId]);
+
+  useEffect(() => {
+    if (!activeRoom) return;
+
+    const applyPreferredDevices = async () => {
+      try {
+        if (settings.devices.audioInputId) {
+          await activeRoom.switchActiveDevice('audioinput', settings.devices.audioInputId, true);
+        }
+        if (settings.devices.audioOutputId) {
+          await activeRoom.switchActiveDevice('audiooutput', settings.devices.audioOutputId, true);
+        }
+        if (settings.devices.videoInputId) {
+          await activeRoom.switchActiveDevice('videoinput', settings.devices.videoInputId, true);
+        }
+      } catch (err) {
+        console.warn('Could not apply preferred devices', err);
+      }
+    };
+
+    applyPreferredDevices();
+  }, [activeRoom, settings.devices.audioInputId, settings.devices.audioOutputId, settings.devices.videoInputId]);
 
   return (
-    <VoiceContext.Provider value={{ 
-        activeRoom, activeChannelId, activeChannelName,
-        connectionState, error, connectToChannel, disconnect, token
-    }}>
+    <VoiceContext.Provider
+      value={{
+        activeRoom,
+        activeChannelId,
+        activeChannelName,
+        connectionState,
+        error,
+        connectToChannel,
+        disconnect,
+        token,
+      }}
+    >
       {children}
     </VoiceContext.Provider>
   );
