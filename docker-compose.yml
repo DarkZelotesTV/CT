@@ -17,11 +17,11 @@ services:
       REDIS_HOST: redis
       
       # LiveKit API Keys (Müssen mit deiner livekit.yaml / .env übereinstimmen!)
-      LIVEKIT_API_KEY: devkey
-      LIVEKIT_API_SECRET: secret
+      LIVEKIT_API_KEY: 2Bjj9y1F9rs4BGTmbIyA5HQR
+      LIVEKIT_API_SECRET: 2Bjj9y1F9rs4BGTmbIyA5HQR
       
       # WICHTIG: Hier ist die URL, die an den Client gesendet wird!
-      LIVEKIT_PUBLIC_URL: wss://mini.zimply.network:7880
+      LIVEKIT_PUBLIC_URL: ws://mini.zimply.network:7880
       
     depends_on:
       - mysql
