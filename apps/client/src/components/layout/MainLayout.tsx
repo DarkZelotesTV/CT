@@ -105,6 +105,21 @@ export const MainLayout = () => {
     return undefined;
   }, []);
 
+  useEffect(() => {
+    if (typeof BroadcastChannel === 'undefined') return undefined;
+
+    const broadcast = new BroadcastChannel('ct-chat-docking');
+    const handleMessage = (event: MessageEvent) => {
+      const data = event.data as { type?: string; chatId?: number; chatName?: string };
+      if (data?.type === 'chat:docked' && data.chatId) {
+        setActiveChannel({ id: Number(data.chatId), name: data.chatName || 'Channel', type: 'text' });
+      }
+    };
+
+    broadcast.addEventListener('message', handleMessage);
+    return () => broadcast.close();
+  }, []);
+
   const handleServerSelect = (id: number | null) => {
     setSelectedServerId(id);
     setActiveChannel(null);
