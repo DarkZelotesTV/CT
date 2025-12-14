@@ -12,9 +12,12 @@ import { ChannelSidebar } from './ChannelSidebar';
 import { DashboardSidebar } from '../dashboard/DashboardSidebar';
 import { FriendListStage } from '../dashboard/FriendListStage';
 import { WebChannelView } from '../server/WebChannelView';
+import { HomeOnboardingStage } from '../dashboard/HomeOnboardingStage';
 
 import { OnboardingModal } from '../modals/OnboardingModal';
 import { ServerSettingsModal } from '../modals/ServerSettingsModal';
+import { CreateServerModal } from '../modals/CreateServerModal';
+import { JoinServerModal } from '../modals/JoinServerModal';
 
 import { useVoice } from '../../context/voice-state';
 
@@ -29,8 +32,11 @@ export const MainLayout = () => {
   const [showRightSidebar, setShowRightSidebar] = useState(true);
   const [selectedServerId, setSelectedServerId] = useState<number | null>(null);
   const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
+  const [homeView, setHomeView] = useState<'home' | 'friends'>('home');
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showServerSettings, setShowServerSettings] = useState(false);
+  const [showCreateServer, setShowCreateServer] = useState(false);
+  const [showJoinServer, setShowJoinServer] = useState(false);
   const chatBarRef = useRef<BottomChatBarRef>(null);
 
   // Voice Context holen
@@ -66,15 +72,32 @@ export const MainLayout = () => {
   const handleServerSelect = (id: number | null) => {
     setSelectedServerId(id);
     setActiveChannel(null);
+    setHomeView('home');
     setShowServerSettings(false);
+  };
+
+  const announceServerChange = () => {
+    window.dispatchEvent(new Event('ct-servers-changed'));
   };
 
   // Helper: Rendert den Inhalt der Main Stage
   const renderContent = () => {
     if (!selectedServerId) {
+      if (homeView === 'friends') {
+        return (
+          <div className="flex-1 relative h-full">
+            <FriendListStage onBackToHome={() => setHomeView('home')} />
+          </div>
+        );
+      }
+
       return (
         <div className="flex-1 relative h-full">
-          <FriendListStage />
+          <HomeOnboardingStage
+            onCreateServer={() => setShowCreateServer(true)}
+            onJoinServer={() => setShowJoinServer(true)}
+            onOpenFriends={() => setHomeView('friends')}
+          />
         </div>
       );
     }
@@ -101,6 +124,24 @@ export const MainLayout = () => {
   const ui = (
     <div className="flex h-screen w-screen overflow-hidden relative bg-[#050507] text-gray-200 font-sans">
       {showOnboarding && <OnboardingModal onClose={() => setShowOnboarding(false)} />}
+      {showCreateServer && (
+        <CreateServerModal
+          onClose={() => setShowCreateServer(false)}
+          onCreated={() => {
+            announceServerChange();
+            setShowCreateServer(false);
+          }}
+        />
+      )}
+      {showJoinServer && (
+        <JoinServerModal
+          onClose={() => setShowJoinServer(false)}
+          onJoined={() => {
+            announceServerChange();
+            setShowJoinServer(false);
+          }}
+        />
+      )}
       {selectedServerId && showServerSettings && (
         <ServerSettingsModal serverId={selectedServerId} onClose={() => setShowServerSettings(false)} />
       )}

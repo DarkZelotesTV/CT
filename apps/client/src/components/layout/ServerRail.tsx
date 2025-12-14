@@ -59,6 +59,17 @@ export const ServerRail = ({ selectedServerId, onSelectServer }: ServerRailProps
     fetchServers();
   }, [fetchServers]);
 
+  useEffect(() => {
+    const handleServersChanged = () => {
+      fetchServers();
+    };
+
+    window.addEventListener('ct-servers-changed', handleServersChanged);
+    return () => {
+      window.removeEventListener('ct-servers-changed', handleServersChanged);
+    };
+  }, [fetchServers]);
+
   // Close the add menu on outside click / ESC
   useEffect(() => {
     if (!showAddMenu) return;
