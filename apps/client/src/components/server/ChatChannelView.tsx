@@ -1,4 +1,5 @@
-import { Hash, Bell, Pin, Users, Search, Plus, Gift, Sticker, Smile, Send, SquareArrowOutUpRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Hash, Bell, Pin, Users, Search, Plus, Gift, Sticker, Smile, Send, SquareArrowOutUpRight, MoreVertical } from 'lucide-react';
 import { useSocket } from '../../context/SocketContext';
 import { ChatMessageList } from '../chat/ChatMessageList';
 import { useChatChannel } from '../../hooks/useChatChannel';
@@ -6,12 +7,19 @@ import { useChatChannel } from '../../hooks/useChatChannel';
 interface ChatChannelViewProps {
   channelId: number;
   channelName: string;
+  isCompact?: boolean;
+  onOpenMembers?: () => void;
 }
 
-export const ChatChannelView = ({ channelId, channelName }: ChatChannelViewProps) => {
+export const ChatChannelView = ({ channelId, channelName, isCompact = false, onOpenMembers }: ChatChannelViewProps) => {
   const { channelPresence } = useSocket();
   const { messages, loading, inputText, setInputText, handleKeyDown, sendMessage } = useChatChannel(channelId);
   const activeUsers = channelPresence[channelId] || [];
+  const [showHeaderMenu, setShowHeaderMenu] = useState(false);
+
+  useEffect(() => {
+    setShowHeaderMenu(false);
+  }, [channelId]);
 
   const handlePopout = () => {
     const url = `#/popout/${channelId}?name=${encodeURIComponent(channelName)}`;
@@ -29,63 +37,136 @@ export const ChatChannelView = ({ channelId, channelName }: ChatChannelViewProps
 
         {/* HEADER */}
         <div className="h-12 border-b border-white/5 flex items-center px-4 bg-white/[0.02] backdrop-blur-md flex-shrink-0 justify-between">
-          <div className="flex items-center text-white">
-            <Hash className="text-gray-500 mr-2" size={20} />
-            <span className="font-bold tracking-tight">{channelName}</span>
+          <div className="flex items-center text-white gap-2 min-w-0">
+            <Hash className="text-gray-500" size={20} />
+            <span className="font-bold tracking-tight truncate">{channelName}</span>
           </div>
 
-          <div className="flex items-center gap-4 text-gray-400">
-            <button
-              onClick={handlePopout}
-              className="flex items-center gap-2 text-xs font-medium text-gray-300 hover:text-white px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-            >
-              <SquareArrowOutUpRight size={14} />
-              Im neuen Fenster öffnen
-            </button>
-            <Bell size={18} className="hover:text-white cursor-pointer transition-colors" />
-            <Pin size={18} className="hover:text-white cursor-pointer transition-colors" />
-            <Users size={18} className="hover:text-white cursor-pointer transition-colors block lg:hidden" />
-            <div className="relative hidden md:block">
-              <input
-                type="text"
-                placeholder="Suchen"
-                className="bg-black/20 text-xs px-2 py-1.5 rounded w-32 focus:w-48 outline-none text-white transition-all border border-transparent focus:border-white/10"
-              />
-              <Search size={12} className="absolute right-2 top-2 text-gray-500" />
+          <div className="relative flex items-center gap-2 text-gray-400">
+            <div className="hidden sm:flex items-center gap-3">
+              <button
+                onClick={handlePopout}
+                className="flex items-center gap-2 text-xs font-medium text-gray-300 hover:text-white px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+              >
+                <SquareArrowOutUpRight size={14} />
+                Im neuen Fenster öffnen
+              </button>
+              <Bell size={18} className="hover:text-white cursor-pointer transition-colors" />
+              <Pin size={18} className="hover:text-white cursor-pointer transition-colors" />
+              {onOpenMembers && (
+                <button
+                  onClick={onOpenMembers}
+                  className="hover:text-white cursor-pointer transition-colors block lg:hidden"
+                  aria-label="Mitglieder anzeigen"
+                >
+                  <Users size={18} />
+                </button>
+              )}
+              <div className="relative hidden md:block">
+                <input
+                  type="text"
+                  placeholder="Suchen"
+                  className="bg-black/20 text-xs px-2 py-1.5 rounded w-32 focus:w-48 outline-none text-white transition-all border border-transparent focus:border-white/10"
+                />
+                <Search size={12} className="absolute right-2 top-2 text-gray-500" />
+              </div>
             </div>
+
+            <button
+              className="sm:hidden p-2 rounded-lg hover:bg-white/10 text-white/80 transition-colors"
+              onClick={() => setShowHeaderMenu((open) => !open)}
+              aria-label="Weitere Optionen"
+            >
+              <MoreVertical size={18} />
+            </button>
+
+            {showHeaderMenu && (
+              <div className="absolute right-0 top-full mt-2 w-60 bg-[#0d0d10]/95 border border-white/10 rounded-xl shadow-2xl p-2 flex flex-col gap-1">
+                <button
+                  onClick={() => {
+                    handlePopout();
+                    setShowHeaderMenu(false);
+                  }}
+                  className="flex items-center gap-2 text-xs font-medium text-gray-200 hover:text-white hover:bg-white/5 rounded-lg px-3 py-2 text-left"
+                >
+                  <SquareArrowOutUpRight size={14} />
+                  Im neuen Fenster öffnen
+                </button>
+                <button
+                  onClick={() => setShowHeaderMenu(false)}
+                  className="flex items-center gap-2 text-xs font-medium text-gray-200 hover:text-white hover:bg-white/5 rounded-lg px-3 py-2 text-left"
+                >
+                  <Bell size={14} />
+                  Benachrichtigungen
+                </button>
+                <button
+                  onClick={() => setShowHeaderMenu(false)}
+                  className="flex items-center gap-2 text-xs font-medium text-gray-200 hover:text-white hover:bg-white/5 rounded-lg px-3 py-2 text-left"
+                >
+                  <Pin size={14} />
+                  Channel pinnen
+                </button>
+                {onOpenMembers && (
+                  <button
+                    onClick={() => {
+                      onOpenMembers();
+                      setShowHeaderMenu(false);
+                    }}
+                    className="flex items-center gap-2 text-xs font-medium text-gray-200 hover:text-white hover:bg-white/5 rounded-lg px-3 py-2 text-left"
+                  >
+                    <Users size={14} />
+                    Mitglieder anzeigen
+                  </button>
+                )}
+                <div className="relative mt-1">
+                  <input
+                    type="text"
+                    placeholder="Suchen"
+                    className="bg-black/30 text-xs px-3 py-2 rounded w-full outline-none text-white transition-all border border-transparent focus:border-white/10 pr-8"
+                  />
+                  <Search size={12} className="absolute right-3 top-3 text-gray-500" />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* MESSAGES AREA */}
-        <ChatMessageList messages={messages} loading={loading} channelName={channelName} />
+        <ChatMessageList messages={messages} loading={loading} channelName={channelName} isCompact={isCompact} />
 
         {/* INPUT AREA */}
         <div className="px-4 pb-6 pt-2 flex-shrink-0">
-            <div className="bg-white/5 rounded-xl p-2 flex items-center gap-2 relative focus-within:bg-white/10 transition-colors shadow-inner ring-1 ring-white/5 focus-within:ring-primary/50">
-                <button className="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-white/10 transition-colors">
-                    <Plus size={20} />
+          <div className="bg-white/5 rounded-xl p-2 flex items-center gap-2 relative focus-within:bg-white/10 transition-colors shadow-inner ring-1 ring-white/5 focus-within:ring-primary/50 w-full min-w-0">
+            <button className="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-white/10 transition-colors">
+              <Plus size={20} />
+            </button>
+
+            <input
+              type="text"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={`Nachricht an #${channelName}`}
+              className="bg-transparent flex-1 min-w-0 outline-none text-white text-sm placeholder-gray-500 h-full py-2 no-drag"
+            />
+
+            <div className="flex gap-1 text-gray-400 pr-1 items-center flex-shrink-0">
+              <button className="p-1.5 hover:text-white hover:bg-white/10 rounded-md transition-all">
+                <Gift size={20} />
+              </button>
+              <button className="p-1.5 hover:text-white hover:bg-white/10 rounded-md transition-all">
+                <Sticker size={20} />
+              </button>
+              <button className="p-1.5 hover:text-white hover:bg-white/10 rounded-md transition-all">
+                <Smile size={20} />
+              </button>
+              {inputText.length > 0 && (
+                <button onClick={sendMessage} className="p-1.5 text-primary hover:bg-primary/20 rounded-md transition-all animate-in zoom-in">
+                  <Send size={20} />
                 </button>
-
-                <input
-                  type="text"
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder={`Nachricht an #${channelName}`}
-                  className="bg-transparent flex-1 outline-none text-white text-sm placeholder-gray-500 h-full py-2 no-drag"
-                />
-
-                <div className="flex gap-1 text-gray-400 pr-1">
-                    <button className="p-1.5 hover:text-white hover:bg-white/10 rounded-md transition-all"><Gift size={20}/></button>
-                    <button className="p-1.5 hover:text-white hover:bg-white/10 rounded-md transition-all"><Sticker size={20}/></button>
-                    <button className="p-1.5 hover:text-white hover:bg-white/10 rounded-md transition-all"><Smile size={20}/></button>
-                    {inputText.length > 0 && (
-                       <button onClick={sendMessage} className="p-1.5 text-primary hover:bg-primary/20 rounded-md transition-all animate-in zoom-in">
-                          <Send size={20} />
-                       </button>
-                    )}
-                </div>
+              )}
             </div>
+          </div>
         </div>
       </div>
 

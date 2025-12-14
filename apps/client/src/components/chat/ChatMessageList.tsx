@@ -6,9 +6,10 @@ interface ChatMessageListProps {
   messages: ChatMessage[];
   loading: boolean;
   channelName: string;
+  isCompact?: boolean;
 }
 
-export const ChatMessageList = ({ messages, loading, channelName }: ChatMessageListProps) => {
+export const ChatMessageList = ({ messages, loading, channelName, isCompact = false }: ChatMessageListProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -18,7 +19,7 @@ export const ChatMessageList = ({ messages, loading, channelName }: ChatMessageL
   }, [messages]);
 
   return (
-    <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
+    <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-1 custom-scrollbar">
       {loading && (
         <div className="flex justify-center py-10">
           <Loader2 className="animate-spin text-primary" />
@@ -54,7 +55,9 @@ export const ChatMessageList = ({ messages, loading, channelName }: ChatMessageL
         return (
           <div
             key={msg.id}
-            className={`group flex gap-4 hover:bg-white/[0.02] px-2 py-0.5 -mx-2 rounded transition-colors ${!isSameSender ? 'mt-4' : ''}`}
+            className={`group flex gap-3 sm:gap-4 items-start hover:bg-white/[0.02] px-2 py-0.5 -mx-2 rounded transition-colors ${
+              !isSameSender ? 'mt-4' : ''
+            } ${isCompact ? 'flex-wrap' : 'flex-wrap sm:flex-nowrap'}`}
           >
             {!isSameSender ? (
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex-shrink-0 overflow-hidden cursor-pointer shadow-lg hover:scale-105 transition-transform mt-0.5">
@@ -67,21 +70,21 @@ export const ChatMessageList = ({ messages, loading, channelName }: ChatMessageL
                 )}
               </div>
             ) : (
-              <div className="w-10 flex-shrink-0 text-[10px] text-gray-600 opacity-0 group-hover:opacity-100 text-right pt-1 select-none">
+              <div className="w-10 min-w-[2.5rem] flex-shrink-0 text-[10px] text-gray-600 opacity-0 group-hover:opacity-100 text-right pt-1 select-none">
                 {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>
             )}
 
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 flex flex-col gap-0.5">
               {!isSameSender && (
-                <div className="flex items-center gap-2 mb-0.5">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 mb-0.5">
                   <span className="text-white font-medium hover:underline cursor-pointer">{msg.sender.username}</span>
                   <span className="text-[10px] text-gray-500">
                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
               )}
-              <p className={`text-gray-300 text-[15px] leading-relaxed whitespace-pre-wrap ${!isSameSender ? '' : ''}`}>
+              <p className="text-gray-300 text-[15px] leading-relaxed whitespace-pre-wrap break-words">
                 {msg.content}
               </p>
             </div>
