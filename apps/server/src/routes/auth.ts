@@ -26,6 +26,9 @@ router.post("/handshake", async (req, res) => {
         username: user.username,
         displayName: user.display_name ?? null,
         fingerprint,
+        // NEU: Diese Felder fehlten für die Anzeige im Client
+        avatar_url: user.avatar_url,
+        status: user.status
       },
       access: {
         passwordRequired: Boolean(process.env.SERVER_PASSWORD),

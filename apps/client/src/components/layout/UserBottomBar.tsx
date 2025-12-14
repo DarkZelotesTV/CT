@@ -3,6 +3,7 @@ import { Headphones, MicOff, Settings } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import { UserSettingsModal } from '../modals/UserSettingsModal';
 import { useVoice } from '../../context/voice-state';
+import { useSocket } from '../../context/SocketContext';
 
 export const UserBottomBar = () => {
   const { settings } = useSettings();
@@ -10,25 +11,37 @@ export const UserBottomBar = () => {
   const [showSettings, setShowSettings] = useState(false);
 
   const { muted, micMuted, setMuted, setMicMuted } = useVoice();
+  // NEU: Echter Verbindungsstatus vom Socket
+  const { isConnected } = useSocket();
 
-  const displayName = settings.profile.displayName || user.username || 'Trooper';
+  // Priorisierung: Lokale Einstellung > Server DisplayName > Server Username > Fallback
+  const displayName = settings.profile.displayName || user.displayName || user.username || 'Trooper';
+  // Priorisierung: Lokale Einstellung > Server Avatar
   const avatarUrl = settings.profile.avatarUrl || user.avatar_url;
+
+  // NEU: Statusfarbe basierend auf Socket-Verbindung
+  const statusColor = isConnected ? 'bg-green-500' : 'bg-red-500';
+  const statusText = isConnected ? 'Online' : 'Verbindung getrennt';
 
   return (
     <>
       <div className="p-3 bg-[#0a0a0a] flex items-center gap-3">
         <div className="w-8 h-8 bg-cyan-700/20 border border-cyan-500/50 rounded flex items-center justify-center text-cyan-400 font-bold text-xs relative overflow-hidden">
           {avatarUrl ? (
-            <img src={avatarUrl} className="w-full h-full object-cover" />
+            <img src={avatarUrl} className="w-full h-full object-cover" alt="User Avatar" />
           ) : (
             displayName.substring(0, 1).toUpperCase()
           )}
-          <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full border border-black animate-pulse"></div>
+          {/* NEU: Dynamischer Status-Indikator */}
+          <div 
+            className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 ${statusColor} rounded-full border border-black animate-pulse`}
+            title={statusText}
+          ></div>
         </div>
 
         <div className="flex-1 overflow-hidden">
           <div className="text-xs font-bold text-gray-300 truncate tracking-wider">{displayName}</div>
-          <div className="text-[9px] text-cyan-600 uppercase tracking-widest">ID: {user.id || '7567'}</div>
+          <div className="text-[9px] text-cyan-600 uppercase tracking-widest">ID: {user.id || 'Unknown'}</div>
         </div>
 
         <div className="flex gap-1">

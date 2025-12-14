@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type RefObject } from 'react';
+import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Camera,
@@ -123,23 +123,17 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
   const [backupPassphrase, setBackupPassphrase] = useState('');
   const [identityError, setIdentityError] = useState<string | null>(null);
 
+  // 'Talk & Audio' wurde in 'devices' integriert und entfernt
   const categories = useMemo(
     () => [
       { id: 'profile', label: 'Profil', icon: Settings },
       { id: 'devices', label: 'Audio & Video', icon: Camera },
       { id: 'hotkeys', label: 'Hotkeys', icon: Keyboard },
-      { id: 'talk', label: 'Talk & Audio', icon: Volume2 },
       { id: 'identity', label: 'Identity', icon: ShieldAlert },
     ],
     []
   );
-  const sectionRefs = useMemo(() => {
-    return categories.reduce<Record<string, RefObject<HTMLElement>>>((acc, cat) => {
-      acc[cat.id] = useRef<HTMLElement>(null);
-      return acc;
-    }, {});
-  }, [categories]);
-  const containerRef = useRef<HTMLDivElement>(null);
+
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id ?? '');
 
   const refreshDevices = useCallback(async () => {
@@ -341,56 +335,10 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
     onClose();
   };
 
-  const handleScroll = useCallback(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    const containerTop = container.getBoundingClientRect().top;
-    let closestId = activeCategory;
-    let closestDistance = Number.POSITIVE_INFINITY;
-
-    categories.forEach((cat) => {
-      const el = sectionRefs[cat.id]?.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const distance = Math.abs(rect.top - containerTop - 16);
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestId = cat.id;
-      }
-    });
-
-    if (closestId !== activeCategory) {
-      setActiveCategory(closestId);
-    }
-  }, [activeCategory, categories, sectionRefs]);
-
-  const scrollToCategory = useCallback(
-    (id: string) => {
-      const container = containerRef.current;
-      const el = sectionRefs[id]?.current;
-      if (!container || !el) return;
-      const containerRect = container.getBoundingClientRect();
-      const elRect = el.getBoundingClientRect();
-      const nextTop = elRect.top - containerRect.top + container.scrollTop - 12;
-      container.scrollTo({ top: nextTop, behavior: 'smooth' });
-      setActiveCategory(id);
-    },
-    [sectionRefs]
-  );
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    const onScroll = () => handleScroll();
-    container.addEventListener('scroll', onScroll, { passive: true });
-    handleScroll();
-    return () => container.removeEventListener('scroll', onScroll);
-  }, [handleScroll]);
-
   return createPortal(
     <div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-[#0f1014] w-full max-w-4xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+      <div className="bg-[#0f1014] w-full max-w-4xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 shrink-0">
           <div>
             <div className="text-xs uppercase tracking-widest text-gray-500 flex items-center gap-2">
               <Settings size={14} /> Settings
@@ -405,14 +353,14 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
           </button>
         </div>
 
-        <div className="p-6 max-h-[75vh]">
-          <div className="grid md:grid-cols-[200px,1fr] gap-6 h-full">
-            <nav className="bg-white/5 border border-white/10 rounded-2xl p-3 flex md:flex-col gap-2 md:sticky md:top-4 h-fit">
+        <div className="flex-1 overflow-hidden">
+          <div className="grid md:grid-cols-[200px,1fr] gap-0 h-full">
+            <nav className="bg-white/5 border-r border-white/10 p-3 flex md:flex-col gap-2 overflow-y-auto">
               {categories.map((cat) => (
                 <button
                   key={cat.id}
-                  onClick={() => scrollToCategory(cat.id)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition border ${
+                  onClick={() => setActiveCategory(cat.id)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition border w-full text-left ${
                     activeCategory === cat.id
                       ? 'bg-cyan-500/20 border-cyan-400 text-cyan-100'
                       : 'border-transparent text-gray-300 hover:text-white hover:bg-white/10'
@@ -424,351 +372,359 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
               ))}
             </nav>
 
-            <div ref={containerRef} className="space-y-6 overflow-y-auto pr-1">
-              <section ref={sectionRefs.profile} id="profile" className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-                <div className="space-y-2 md:col-span-2">
-                  <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Profil</div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-xs text-gray-400 uppercase font-semibold">Anzeigename</label>
+            <div className="p-6 overflow-y-auto custom-scrollbar">
+              {activeCategory === 'profile' && (
+                <div className="space-y-6 animate-in fade-in zoom-in-95 duration-200">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                    <div className="space-y-2 md:col-span-2">
+                      <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Profil</div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-xs text-gray-400 uppercase font-semibold">Anzeigename</label>
+                          <input
+                            value={displayName}
+                            onChange={(e) => setDisplayName(e.target.value)}
+                            placeholder="Dein Name"
+                            className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs text-gray-400 uppercase font-semibold">Avatar-URL</label>
+                          <input
+                            value={avatarUrl}
+                            onChange={(e) => setAvatarUrl(e.target.value)}
+                            placeholder="https://..."
+                            className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-center justify-center gap-3 bg-white/5 rounded-2xl border border-white/10 p-4">
+                      <div className="w-20 h-20 rounded-full overflow-hidden bg-cyan-900/40 border border-cyan-600/40 flex items-center justify-center text-cyan-300 font-bold text-xl">
+                        {avatarPreview ? (
+                          <img src={avatarPreview} className="w-full h-full object-cover" />
+                        ) : (
+                          (displayName || settings.profile.displayName || 'CT').substring(0, 2).toUpperCase()
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-400 text-center">Vorschau</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeCategory === 'devices' && (
+                <div className="space-y-8 animate-in fade-in zoom-in-95 duration-200">
+                  
+                  {/* Geräteauswahl */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Geräte</div>
+                        <p className="text-gray-400 text-sm">Wähle deine bevorzugten Ein- und Ausgabegeräte.</p>
+                      </div>
+                      <button
+                        onClick={refreshDevices}
+                        className="flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300"
+                      >
+                        <RefreshCw size={16} />
+                        Geräte aktualisieren
+                      </button>
+                    </div>
+                    {deviceError && <div className="text-red-400 text-sm">{deviceError}</div>}
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <label className="space-y-2">
+                        <div className="text-xs text-gray-400 uppercase font-semibold flex items-center gap-2">
+                          <Mic size={14} /> Mikrofon
+                        </div>
+                        <select
+                          value={audioInputId}
+                          onChange={(e) => setAudioInputId(e.target.value)}
+                          className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                        >
+                          <option value="">System-Standard</option>
+                          {deviceLists.audioInputs.map((d) => (
+                            <option key={d.deviceId} value={d.deviceId}>
+                              {d.label || 'Unbenanntes Mikrofon'}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label className="space-y-2">
+                        <div className="text-xs text-gray-400 uppercase font-semibold flex items-center gap-2">
+                          <Headphones size={14} /> Lautsprecher
+                        </div>
+                        <select
+                          value={audioOutputId}
+                          onChange={(e) => setAudioOutputId(e.target.value)}
+                          className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                        >
+                          <option value="">System-Standard</option>
+                          {deviceLists.audioOutputs.map((d) => (
+                            <option key={d.deviceId} value={d.deviceId}>
+                              {d.label || 'Unbenannter Ausgang'}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label className="space-y-2">
+                        <div className="text-xs text-gray-400 uppercase font-semibold flex items-center gap-2">
+                          <Camera size={14} /> Kamera
+                        </div>
+                        <select
+                          value={videoInputId}
+                          onChange={(e) => setVideoInputId(e.target.value)}
+                          className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                        >
+                          <option value="">System-Standard</option>
+                          {deviceLists.videoInputs.map((d) => (
+                            <option key={d.deviceId} value={d.deviceId}>
+                              {d.label || 'Unbenannte Kamera'}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Mikrofon Einstellungen & Pegel */}
+                  <div className="space-y-3">
+                    <div className="text-xs uppercase tracking-widest text-gray-500 font-bold flex items-center gap-2">
+                      <Volume2 size={14} /> Mikrofon-Test & Pegel
+                    </div>
+                    <div className="p-4 rounded-2xl border border-white/10 bg-white/5 space-y-4">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="range"
+                          min={0.5}
+                          max={2}
+                          step={0.1}
+                          value={sensitivity}
+                          onChange={(e) => setSensitivity(Number(e.target.value))}
+                          className="flex-1 accent-cyan-500"
+                        />
+                        <div className="text-[11px] text-gray-400 w-24 text-right">Empfindlichkeit: {sensitivity.toFixed(1)}x</div>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <div className="h-3 rounded-full bg-white/5 overflow-hidden border border-white/10">
+                          <div
+                            className="h-full bg-gradient-to-r from-green-400 via-yellow-400 to-red-500 transition-all"
+                            style={{ width: `${levelPercent}%` }}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between text-[11px] text-gray-500">
+                          <span className={meterError ? 'text-red-400' : ''}>
+                            {meterError || 'Sprich in dein Mikrofon, um den Pegel zu testen.'}
+                          </span>
+                          <span className="text-cyan-400 font-semibold">{levelPercent}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Sprach-Aktivierung */}
+                    <div className="space-y-3">
+                      <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Sprach-Aktivierung</div>
+                      <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10">
+                        <div>
+                          <div className="text-sm font-semibold text-white">Push-to-Talk</div>
+                          <p className="text-xs text-gray-400">Nur senden, wenn Taste gedrückt.</p>
+                        </div>
+                        <button
+                          onClick={() => setPushToTalkEnabled((v) => !v)}
+                          className={`px-4 py-2 rounded-xl border ${pushToTalkEnabled ? 'border-cyan-400 bg-cyan-500/20 text-cyan-200' : 'border-white/10 text-gray-300 hover:text-white hover:border-white/30'}`}
+                        >
+                          {pushToTalkEnabled ? 'An' : 'Aus'}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Audio Steuerung */}
+                    <div className="space-y-3">
+                      <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Audio-Steuerung</div>
+                      
+                      {/* Mute Controls */}
+                      <div className="flex gap-2">
+                         <button
+                            onClick={() => setLocallyMuted((v) => !v)}
+                            className={`flex-1 px-3 py-3 rounded-xl border text-sm font-medium flex items-center justify-center gap-2 ${locallyMuted ? 'border-red-400 bg-red-500/20 text-red-200' : 'border-white/10 text-gray-300 hover:bg-white/5'}`}
+                          >
+                            <Headphones size={16} />
+                            {locallyMuted ? 'Entstummen' : 'Stumm (Alle)'}
+                          </button>
+                          
+                          <button
+                            onClick={() => setLocallyMicMuted((v) => !v)}
+                            className={`flex-1 px-3 py-3 rounded-xl border text-sm font-medium flex items-center justify-center gap-2 ${locallyMicMuted ? 'border-red-400 bg-red-500/20 text-red-200' : 'border-white/10 text-gray-300 hover:bg-white/5'}`}
+                          >
+                            <Mic size={16} />
+                            {locallyMicMuted ? 'Unmute Mic' : 'Mute Mic'}
+                          </button>
+                      </div>
+
+                      {/* Output Test */}
+                      <div className="p-3 rounded-2xl border border-white/10 bg-white/5 flex items-center justify-between gap-3">
+                        <div className="text-xs text-gray-400">
+                           Testton abspielen
+                           {outputError && <span className="block text-red-400">{outputError}</span>}
+                        </div>
+                        <button
+                          onClick={handleTestOutput}
+                          disabled={isTestingOutput}
+                          className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white flex items-center gap-2 text-xs font-bold"
+                        >
+                          <Play size={14} /> {isTestingOutput ? '...' : 'Test'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              )}
+
+              {activeCategory === 'hotkeys' && (
+                <div className="space-y-3 animate-in fade-in zoom-in-95 duration-200">
+                  <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Hotkeys</div>
+                  <p className="text-gray-400 text-sm">Lege Tasten für Push-to-Talk oder schnelles Muten fest.</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <HotkeyInput label="Push-to-Talk" value={pushToTalk} onChange={setPushToTalkHotkey} />
+                    <HotkeyInput label="Mute Toggle" value={muteToggle} onChange={setMuteToggle} />
+                  </div>
+                </div>
+              )}
+
+              {activeCategory === 'identity' && (
+                <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                  <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Identity</div>
+                  <p className="text-gray-400 text-sm">Verwalte deine lokale Clover Identity direkt aus den Einstellungen.</p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-xs uppercase font-bold text-gray-400 block">Anzeigename (optional)</label>
                       <input
-                        value={displayName}
-                        onChange={(e) => setDisplayName(e.target.value)}
-                        placeholder="Dein Name"
-                        className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                        type="text"
+                        value={identityName}
+                        onChange={(e) => setIdentityName(e.target.value)}
+                        placeholder="z.B. jusbe"
+                        className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
                       />
+                      <button
+                        className="text-sm text-indigo-400 hover:text-indigo-300"
+                        onClick={handleSaveIdentityName}
+                        disabled={!identity}
+                      >
+                        Anzeigename speichern
+                      </button>
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-xs text-gray-400 uppercase font-semibold">Avatar-URL</label>
-                      <input
-                        value={avatarUrl}
-                        onChange={(e) => setAvatarUrl(e.target.value)}
-                        placeholder="https://..."
-                        className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
-                      />
+
+                    <div className="flex flex-col gap-2 p-4 rounded-2xl bg-white/5 border border-white/10">
+                      <div className="text-gray-400 text-sm">Fingerprint</div>
+                      <div className="font-mono break-all text-gray-200 text-xs">
+                        {fingerprint ? formatFingerprint(fingerprint) : '–'}
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="flex flex-col items-center justify-center gap-3 bg-white/5 rounded-2xl border border-white/10 p-4">
-                  <div className="w-20 h-20 rounded-full overflow-hidden bg-cyan-900/40 border border-cyan-600/40 flex items-center justify-center text-cyan-300 font-bold text-xl">
-                    {avatarPreview ? (
-                      <img src={avatarPreview} className="w-full h-full object-cover" />
-                    ) : (
-                      (displayName || settings.profile.displayName || 'CT').substring(0, 2).toUpperCase()
-                    )}
-                  </div>
-                  <div className="text-xs text-gray-400 text-center">Vorschau</div>
-                </div>
-              </section>
 
-              <section ref={sectionRefs.devices} id="devices" className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Audio & Video</div>
-                <p className="text-gray-400 text-sm">Wähle deine bevorzugten Ein- und Ausgabegeräte.</p>
-              </div>
-              <button
-                onClick={refreshDevices}
-                className="flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300"
-              >
-                <RefreshCw size={16} />
-                Geräte aktualisieren
-              </button>
-            </div>
-            {deviceError && <div className="text-red-400 text-sm">{deviceError}</div>}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <label className="space-y-2">
-                <div className="text-xs text-gray-400 uppercase font-semibold flex items-center gap-2">
-                  <Mic size={14} /> Mikrofon
-                </div>
-                <select
-                  value={audioInputId}
-                  onChange={(e) => setAudioInputId(e.target.value)}
-                  className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
-                >
-                  <option value="">System-Standard</option>
-                  {deviceLists.audioInputs.map((d) => (
-                    <option key={d.deviceId} value={d.deviceId}>
-                      {d.label || 'Unbenanntes Mikrofon'}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  {!identity ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <button
+                        className="px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 transition text-white font-medium"
+                        onClick={handleCreateIdentity}
+                      >
+                        Identity erstellen
+                      </button>
 
-              <label className="space-y-2">
-                <div className="text-xs text-gray-400 uppercase font-semibold flex items-center gap-2">
-                  <Headphones size={14} /> Lautsprecher
-                </div>
-                <select
-                  value={audioOutputId}
-                  onChange={(e) => setAudioOutputId(e.target.value)}
-                  className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
-                >
-                  <option value="">System-Standard</option>
-                  {deviceLists.audioOutputs.map((d) => (
-                    <option key={d.deviceId} value={d.deviceId}>
-                      {d.label || 'Unbenannter Ausgang'}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="space-y-2">
-                <div className="text-xs text-gray-400 uppercase font-semibold flex items-center gap-2">
-                  <Camera size={14} /> Kamera
-                </div>
-                <select
-                  value={videoInputId}
-                  onChange={(e) => setVideoInputId(e.target.value)}
-                  className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
-                >
-                  <option value="">System-Standard</option>
-                  {deviceLists.videoInputs.map((d) => (
-                    <option key={d.deviceId} value={d.deviceId}>
-                      {d.label || 'Unbenannte Kamera'}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-          </section>
-
-          <section ref={sectionRefs.hotkeys} id="hotkeys" className="space-y-3">
-            <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Hotkeys</div>
-            <p className="text-gray-400 text-sm">Lege Tasten für Push-to-Talk oder schnelles Muten fest.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <HotkeyInput label="Push-to-Talk" value={pushToTalk} onChange={setPushToTalkHotkey} />
-              <HotkeyInput label="Mute Toggle" value={muteToggle} onChange={setMuteToggle} />
-            </div>
-          </section>
-
-          <section ref={sectionRefs.talk} id="talk" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Talk & Audio-Steuerung</div>
-                <p className="text-gray-400 text-sm">Passe Stummschaltung, Push-to-Talk und Ausgangstest an.</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="space-y-3 p-4 rounded-2xl border border-white/10 bg-white/5">
-                <div className="flex items-center justify-between">
-                  <div className="text-xs uppercase tracking-widest text-gray-500 font-bold flex items-center gap-2">
-                    <Volume2 size={14} /> Eingangspegel
-                  </div>
-                  <span className="text-cyan-400 text-xs font-semibold">{levelPercent}%</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="range"
-                    min={0.5}
-                    max={2}
-                    step={0.1}
-                    value={sensitivity}
-                    onChange={(e) => setSensitivity(Number(e.target.value))}
-                    className="flex-1 accent-cyan-500"
-                  />
-                  <div className="text-[11px] text-gray-400 w-24 text-right">Empfindlichkeit: {sensitivity.toFixed(1)}x</div>
-                </div>
-                <div className="h-3 rounded-full bg-white/5 overflow-hidden border border-white/10">
-                  <div
-                    className="h-full bg-gradient-to-r from-green-400 via-yellow-400 to-red-500 transition-all"
-                    style={{ width: `${levelPercent}%` }}
-                  />
-                </div>
-                <div className="flex items-center justify-between text-[11px] text-gray-500">
-                  <span className={meterError ? 'text-red-400' : ''}>
-                    {meterError || 'Sprich, um den Pegel zu prüfen.'}
-                  </span>
-                  <span className="text-cyan-400 font-semibold">{levelPercent}%</span>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10">
-                  <div>
-                    <div className="text-sm font-semibold text-white">Push-to-Talk</div>
-                    <p className="text-xs text-gray-400">Wenn aktiv, sendest du nur während der Tastenkombination.</p>
-                  </div>
-                  <button
-                    onClick={() => setPushToTalkEnabled((v) => !v)}
-                    className={`px-4 py-2 rounded-xl border ${pushToTalkEnabled ? 'border-cyan-400 bg-cyan-500/20 text-cyan-200' : 'border-white/10 text-gray-300 hover:text-white hover:border-white/30'}`}
-                  >
-                    {pushToTalkEnabled ? 'Aktiv' : 'Aus'}
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10">
-                  <div>
-                    <div className="text-sm font-semibold text-white">Gesamt-Stummschaltung</div>
-                    <p className="text-xs text-gray-400">Alle Voice-Signale stummschalten, inklusive Mikrofon.</p>
-                  </div>
-                  <button
-                    onClick={() => setLocallyMuted((v) => !v)}
-                    className={`px-4 py-2 rounded-xl border ${locallyMuted ? 'border-red-400 bg-red-500/20 text-red-200' : 'border-green-400 bg-green-500/20 text-green-100'}`}
-                  >
-                    {locallyMuted ? 'Stumm' : 'Aktiv'}
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10">
-                  <div>
-                    <div className="text-sm font-semibold text-white">Mikrofon-Stummschaltung</div>
-                    <p className="text-xs text-gray-400">Nur die Aufnahme deaktivieren, Ausgabe bleibt aktiv.</p>
-                  </div>
-                  <button
-                    onClick={() => setLocallyMicMuted((v) => !v)}
-                    className={`px-4 py-2 rounded-xl border ${locallyMicMuted ? 'border-red-400 bg-red-500/20 text-red-200' : 'border-green-400 bg-green-500/20 text-green-100'}`}
-                  >
-                    {locallyMicMuted ? 'Stumm' : 'Aktiv'}
-                  </button>
-                </div>
-
-                <div className="p-4 rounded-2xl border border-white/10 bg-white/5 space-y-2">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-semibold text-white">Ausgabe testen</div>
-                      <p className="text-xs text-gray-400">Spiele einen kurzen Ton über den gewählten Lautsprecher ab.</p>
+                      <label className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition cursor-pointer text-center text-white font-medium">
+                        <div className="flex items-center justify-center gap-2">
+                          <Upload size={18} />
+                          <span>Identity importieren</span>
+                        </div>
+                        <input
+                          type="file"
+                          accept="application/json"
+                          className="hidden"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) handleImportIdentity(f);
+                          }}
+                        />
+                      </label>
                     </div>
-                    <button
-                      onClick={handleTestOutput}
-                      disabled={isTestingOutput}
-                      className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white flex items-center gap-2"
-                    >
-                      <Play size={16} /> {isTestingOutput ? 'Test läuft' : 'Testton'}
-                    </button>
-                  </div>
-                  {outputError && <div className="text-xs text-red-400">{outputError}</div>}
-                </div>
-              </div>
-            </div>
-          </section>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="text-sm bg-white/[0.02] border border-white/5 rounded-xl p-3">
+                          <div className="text-gray-400 mb-1">Erstellt</div>
+                          <div className="text-gray-200">{identity.createdAt ? new Date(identity.createdAt).toLocaleString() : '–'}</div>
+                        </div>
 
-          <section ref={sectionRefs.identity} id="identity" className="space-y-4">
-            <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Identity</div>
-            <p className="text-gray-400 text-sm">Verwalte deine lokale Clover Identity direkt aus den Einstellungen.</p>
+                        <div className="text-sm bg-white/[0.02] border border-white/5 rounded-xl p-3">
+                          <div className="text-gray-400 mb-1">Public Key</div>
+                          <div className="font-mono break-all text-gray-200 text-xs">{identity.publicKeyB64}</div>
+                        </div>
+                      </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-xs uppercase font-bold text-gray-400 block">Anzeigename (optional)</label>
-                <input
-                  type="text"
-                  value={identityName}
-                  onChange={(e) => setIdentityName(e.target.value)}
-                  placeholder="z.B. jusbe"
-                  className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
-                />
-                <button
-                  className="text-sm text-indigo-400 hover:text-indigo-300"
-                  onClick={handleSaveIdentityName}
-                  disabled={!identity}
-                >
-                  Anzeigename speichern
-                </button>
-              </div>
+                      <div>
+                        <label className="text-xs uppercase font-bold text-gray-400 block mb-1">Backup-Passphrase (optional)</label>
+                        <input
+                          type="password"
+                          value={backupPassphrase}
+                          onChange={(e) => setBackupPassphrase(e.target.value)}
+                          placeholder="Leer lassen für Klartext-Export"
+                          className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                        />
+                        <p className="text-[11px] text-gray-500 mt-1">Wenn gesetzt, wird dein Backup AES-GCM verschlüsselt (PBKDF2).</p>
+                      </div>
 
-              <div className="flex flex-col gap-2 p-4 rounded-2xl bg-white/5 border border-white/10">
-                <div className="text-gray-400 text-sm">Fingerprint</div>
-                <div className="font-mono break-all text-gray-200 text-xs">
-                  {fingerprint ? formatFingerprint(fingerprint) : '–'}
-                </div>
-              </div>
-            </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button
+                          className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition text-white font-medium flex items-center justify-center gap-2"
+                          onClick={handleExportIdentity}
+                        >
+                          <Download size={18} />
+                          Export / Backup
+                        </button>
 
-            {!identity ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <button
-                  className="px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 transition text-white font-medium"
-                  onClick={handleCreateIdentity}
-                >
-                  Identity erstellen
-                </button>
+                        <label className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition cursor-pointer text-center text-white font-medium">
+                          <div className="flex items-center justify-center gap-2">
+                            <Upload size={18} />
+                            <span>Import (ersetzen)</span>
+                          </div>
+                          <input
+                            type="file"
+                            accept="application/json"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) handleImportIdentity(f);
+                            }}
+                          />
+                        </label>
 
-                <label className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition cursor-pointer text-center text-white font-medium">
-                  <div className="flex items-center justify-center gap-2">
-                    <Upload size={18} />
-                    <span>Identity importieren</span>
-                  </div>
-                  <input
-                    type="file"
-                    accept="application/json"
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) handleImportIdentity(f);
-                    }}
-                  />
-                </label>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="text-sm bg-white/[0.02] border border-white/5 rounded-xl p-3">
-                    <div className="text-gray-400 mb-1">Erstellt</div>
-                    <div className="text-gray-200">{identity.createdAt ? new Date(identity.createdAt).toLocaleString() : '–'}</div>
-                  </div>
-
-                  <div className="text-sm bg-white/[0.02] border border-white/5 rounded-xl p-3">
-                    <div className="text-gray-400 mb-1">Public Key</div>
-                    <div className="font-mono break-all text-gray-200 text-xs">{identity.publicKeyB64}</div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-xs uppercase font-bold text-gray-400 block mb-1">Backup-Passphrase (optional)</label>
-                  <input
-                    type="password"
-                    value={backupPassphrase}
-                    onChange={(e) => setBackupPassphrase(e.target.value)}
-                    placeholder="Leer lassen für Klartext-Export"
-                    className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
-                  />
-                  <p className="text-[11px] text-gray-500 mt-1">Wenn gesetzt, wird dein Backup AES-GCM verschlüsselt (PBKDF2).</p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <button
-                    className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition text-white font-medium flex items-center justify-center gap-2"
-                    onClick={handleExportIdentity}
-                  >
-                    <Download size={18} />
-                    Export / Backup
-                  </button>
-
-                  <label className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition cursor-pointer text-center text-white font-medium">
-                    <div className="flex items-center justify-center gap-2">
-                      <Upload size={18} />
-                      <span>Import (ersetzen)</span>
+                        <button
+                          className="px-4 py-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 transition text-red-100 font-medium flex items-center justify-center gap-2 sm:col-span-2"
+                          onClick={handleResetIdentity}
+                        >
+                          <ShieldAlert size={18} />
+                          Identity zurücksetzen
+                        </button>
+                      </div>
                     </div>
-                    <input
-                      type="file"
-                      accept="application/json"
-                      className="hidden"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) handleImportIdentity(f);
-                      }}
-                    />
-                  </label>
+                  )}
 
-                  <button
-                    className="px-4 py-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 transition text-red-100 font-medium flex items-center justify-center gap-2 sm:col-span-2"
-                    onClick={handleResetIdentity}
-                  >
-                    <ShieldAlert size={18} />
-                    Identity zurücksetzen
-                  </button>
+                  {identityError && <div className="text-red-400 text-sm">{identityError}</div>}
                 </div>
-              </div>
-            )}
-
-            {identityError && <div className="text-red-400 text-sm">{identityError}</div>}
-          </section>
+              )}
             </div>
           </div>
         </div>
 
-        <div className="px-6 py-4 border-t border-white/5 flex items-center justify-between bg-white/5">
+        <div className="px-6 py-4 border-t border-white/5 flex items-center justify-between bg-white/5 shrink-0">
           <div className="flex items-center gap-2 text-xs text-gray-400">
             <Check size={14} className="text-green-400" />
             Änderungen werden lokal gespeichert.

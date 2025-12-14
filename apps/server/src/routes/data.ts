@@ -413,6 +413,22 @@ router.get('/channels/:channelId/messages', authenticateRequest, async (req, res
   }
 });
 
+// CHANNEL CONTENT LOAD (Für Web-Channels)
+router.get('/channels/:channelId/content', authenticateRequest, async (req, res) => {
+  try {
+    const channelId = req.params.channelId;
+    const channel = await Channel.findByPk(channelId);
+
+    if (!channel) {
+      return res.status(404).json({ error: "Kanal nicht gefunden" });
+    }
+
+    res.json({ content: channel.content });
+  } catch (err) {
+    res.status(500).json({ error: "Fehler beim Laden des Inhalts" });
+  }
+});
+
 // CHANNEL CONTENT UPDATE (Für Web-Channels)
 router.put('/channels/:channelId/content', authenticateRequest, async (req: AuthRequest, res) => {
   try {

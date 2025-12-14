@@ -26,7 +26,15 @@ export async function performHandshake(id: IdentityFile, serverPassword?: string
   };
 
   const response = await postJson<{
-    user: { id: number; username?: string | null; displayName: string | null; fingerprint: string };
+    user: { 
+      id: number; 
+      username?: string | null; 
+      displayName: string | null; 
+      fingerprint: string;
+      // NEU: Typdefinitionen erweitert
+      avatar_url?: string | null;
+      status?: string | null;
+    };
     access: { passwordRequired: boolean };
     config?: { livekitUrl?: string };
   }>(serverUrl, "/api/auth/handshake", payload);
