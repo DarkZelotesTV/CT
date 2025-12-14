@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { MicOff, Volume2 } from 'lucide-react';
+import { MicOff, Monitor, Video, Volume2 } from 'lucide-react';
 import { RoomEvent } from 'livekit-client';
 import { useVoice } from '../../context/voice-state';
 
@@ -8,6 +8,8 @@ type VoicePerson = {
   label: string;
   isLocal: boolean;
   micEnabled: boolean;
+  cameraEnabled: boolean;
+  screenShareEnabled: boolean;
 };
 
 /**
@@ -37,7 +39,9 @@ export const VoiceParticipantsPanel = () => {
       const label = String(p?.name || p?.identity || p?.metadata || (p?.isLocal ? 'Du' : 'User'));
       const micEnabled = typeof p?.isMicrophoneEnabled === 'boolean' ? p.isMicrophoneEnabled : true;
       const isLocal = !!p?.isLocal || p === local;
-      return { sid, label, isLocal, micEnabled };
+      const cameraEnabled = !!p?.isCameraEnabled;
+      const screenShareEnabled = !!p?.isScreenShareEnabled;
+      return { sid, label, isLocal, micEnabled, cameraEnabled, screenShareEnabled };
     });
 
     // Sort: local first, then alphabetically
@@ -67,6 +71,8 @@ export const VoiceParticipantsPanel = () => {
     activeRoom.on(RoomEvent.ParticipantDisconnected, refresh);
     activeRoom.on(RoomEvent.LocalTrackPublished, refresh);
     activeRoom.on(RoomEvent.LocalTrackUnpublished, refresh);
+    activeRoom.on(RoomEvent.TrackPublished, refresh);
+    activeRoom.on(RoomEvent.TrackUnpublished, refresh);
     activeRoom.on(RoomEvent.TrackMuted, refresh);
     activeRoom.on(RoomEvent.TrackUnmuted, refresh);
     activeRoom.on(RoomEvent.ActiveSpeakersChanged, handleSpeakers);
@@ -76,6 +82,8 @@ export const VoiceParticipantsPanel = () => {
       activeRoom.off(RoomEvent.ParticipantDisconnected, refresh);
       activeRoom.off(RoomEvent.LocalTrackPublished, refresh);
       activeRoom.off(RoomEvent.LocalTrackUnpublished, refresh);
+      activeRoom.off(RoomEvent.TrackPublished, refresh);
+      activeRoom.off(RoomEvent.TrackUnpublished, refresh);
       activeRoom.off(RoomEvent.TrackMuted, refresh);
       activeRoom.off(RoomEvent.TrackUnmuted, refresh);
       activeRoom.off(RoomEvent.ActiveSpeakersChanged, handleSpeakers);
@@ -119,11 +127,23 @@ export const VoiceParticipantsPanel = () => {
                 {p.isLocal ? <span className="text-gray-500"> (du)</span> : null}
               </div>
 
-              {p.micEnabled ? (
-                <Volume2 size={14} className={isSpeaking ? 'text-green-400' : 'text-gray-500'} />
-              ) : (
-                <MicOff size={14} className="text-red-400" />
-              )}
+              <div className="flex items-center gap-1">
+                {p.cameraEnabled && (
+                  <span title="Kamera aktiv">
+                    <Video size={14} className="text-cyan-300" />
+                  </span>
+                )}
+                {p.screenShareEnabled && (
+                  <span title="Screenshare aktiv">
+                    <Monitor size={14} className="text-indigo-300" />
+                  </span>
+                )}
+                {p.micEnabled ? (
+                  <Volume2 size={14} className={isSpeaking ? 'text-green-400' : 'text-gray-500'} />
+                ) : (
+                  <MicOff size={14} className="text-red-400" />
+                )}
+              </div>
             </div>
           );
         })}

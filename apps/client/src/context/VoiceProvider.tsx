@@ -5,6 +5,12 @@ import { VoiceContext, VoiceContextType } from './voice-state';
 import { apiFetch } from '../api/http';
 import { useSettings } from './SettingsContext';
 
+const qualityPresets = {
+  low: { resolution: { width: 640, height: 360 }, frameRate: 24 },
+  medium: { resolution: { width: 1280, height: 720 }, frameRate: 30 },
+  high: { resolution: { width: 1920, height: 1080 }, frameRate: 60 },
+};
+
 export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
   const { settings, updateTalk } = useSettings();
 
@@ -18,6 +24,13 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
   const [micMuted, setMicMutedState] = useState(settings.talk.micMuted);
   const [usePushToTalk, setUsePushToTalkState] = useState(settings.talk.pushToTalkEnabled);
   const [isTalking, setIsTalking] = useState(false);
+  const [isCameraEnabled, setIsCameraEnabled] = useState(false);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [isPublishingCamera, setIsPublishingCamera] = useState(false);
+  const [isPublishingScreen, setIsPublishingScreen] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [screenShareError, setScreenShareError] = useState<string | null>(null);
+  const [localParticipantId, setLocalParticipantId] = useState<string | null>(null);
 
   const isConnecting = useRef(false);
   const attemptRef = useRef(0);
@@ -27,6 +40,20 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
     setMicMutedState(settings.talk.micMuted);
     setUsePushToTalkState(settings.talk.pushToTalkEnabled);
   }, [settings.talk.micMuted, settings.talk.muted, settings.talk.pushToTalkEnabled]);
+
+  const syncLocalMediaState = useCallback((room: Room | null) => {
+    if (!room) {
+      setIsCameraEnabled(false);
+      setIsScreenSharing(false);
+      setLocalParticipantId(null);
+      return;
+    }
+
+    const local = room.localParticipant;
+    setIsCameraEnabled(!!local?.isCameraEnabled);
+    setIsScreenSharing(!!local?.isScreenShareEnabled);
+    setLocalParticipantId(local?.sid || local?.identity || null);
+  }, []);
 
   const applyMicrophoneState = useCallback(
     async (
@@ -85,6 +112,109 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
     if (activeRoom) await applyMicrophoneState(activeRoom, { talking: false });
   }, [activeRoom, applyMicrophoneState]);
 
+  const startCamera = useCallback(
+    async (quality: 'low' | 'medium' | 'high' = 'medium') => {
+      if (!activeRoom) {
+        setCameraError('Keine aktive Voice-Verbindung für Video verfügbar.');
+        return;
+      }
+
+      setIsPublishingCamera(true);
+      setCameraError(null);
+
+      try {
+        const preset = qualityPresets[quality] || qualityPresets.medium;
+        await activeRoom.localParticipant.setCameraEnabled(true, {
+          deviceId: settings.devices.videoInputId ?? undefined,
+          resolution: preset.resolution,
+          frameRate: preset.frameRate,
+        });
+        syncLocalMediaState(activeRoom);
+      } catch (err: any) {
+        console.error('Kamera konnte nicht gestartet werden', err);
+        setCameraError(err?.message || 'Kamera konnte nicht gestartet werden.');
+        setIsCameraEnabled(false);
+      } finally {
+        setIsPublishingCamera(false);
+      }
+    },
+    [activeRoom, settings.devices.videoInputId, syncLocalMediaState]
+  );
+
+  const stopCamera = useCallback(async () => {
+    if (!activeRoom) {
+      setIsCameraEnabled(false);
+      return;
+    }
+
+    setIsPublishingCamera(true);
+    try {
+      await activeRoom.localParticipant.setCameraEnabled(false);
+      syncLocalMediaState(activeRoom);
+    } catch (err: any) {
+      console.error('Kamera konnte nicht gestoppt werden', err);
+      setCameraError(err?.message || 'Kamera konnte nicht gestoppt werden.');
+    } finally {
+      setIsPublishingCamera(false);
+    }
+  }, [activeRoom, syncLocalMediaState]);
+
+  const toggleCamera = useCallback(async () => {
+    if (isCameraEnabled) {
+      await stopCamera();
+    } else {
+      await startCamera();
+    }
+  }, [isCameraEnabled, startCamera, stopCamera]);
+
+  const startScreenShare = useCallback(async () => {
+    if (!activeRoom) {
+      setScreenShareError('Keine aktive Voice-Verbindung für Screen-Sharing.');
+      return;
+    }
+
+    setIsPublishingScreen(true);
+    setScreenShareError(null);
+    try {
+      await activeRoom.localParticipant.setScreenShareEnabled(true, {
+        audio: false,
+        resolution: qualityPresets.high.resolution,
+      });
+      syncLocalMediaState(activeRoom);
+    } catch (err: any) {
+      console.error('Screenshare konnte nicht gestartet werden', err);
+      setScreenShareError(err?.message || 'Screenshare konnte nicht gestartet werden.');
+      setIsScreenSharing(false);
+    } finally {
+      setIsPublishingScreen(false);
+    }
+  }, [activeRoom, syncLocalMediaState]);
+
+  const stopScreenShare = useCallback(async () => {
+    if (!activeRoom) {
+      setIsScreenSharing(false);
+      return;
+    }
+    setIsPublishingScreen(true);
+    try {
+      await activeRoom.localParticipant.setScreenShareEnabled(false);
+      syncLocalMediaState(activeRoom);
+    } catch (err: any) {
+      console.error('Screenshare konnte nicht gestoppt werden', err);
+      setScreenShareError(err?.message || 'Screenshare konnte nicht gestoppt werden.');
+    } finally {
+      setIsPublishingScreen(false);
+    }
+  }, [activeRoom, syncLocalMediaState]);
+
+  const toggleScreenShare = useCallback(async () => {
+    if (isScreenSharing) {
+      await stopScreenShare();
+    } else {
+      await startScreenShare();
+    }
+  }, [isScreenSharing, startScreenShare, stopScreenShare]);
+
   const disconnect = useCallback(async () => {
     console.warn('[voice] disconnect() called', new Error().stack);
     isConnecting.current = false;
@@ -97,6 +227,13 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
     setToken(null);
     setConnectionState('disconnected');
     setIsTalking(false);
+    setIsCameraEnabled(false);
+    setIsScreenSharing(false);
+    setIsPublishingCamera(false);
+    setIsPublishingScreen(false);
+    setCameraError(null);
+    setScreenShareError(null);
+    setLocalParticipantId(null);
   }, [activeRoom]);
 
   const connectToChannel = useCallback(async (channelId: number, channelName: string) => {
@@ -133,12 +270,14 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         setActiveRoom(null);
         setActiveChannelId(null);
         setActiveChannelName(null);
+        syncLocalMediaState(null);
         isConnecting.current = false;
       });
 
       room.on(RoomEvent.Connected, () => {
         setConnectionState('connected');
         isConnecting.current = false;
+        syncLocalMediaState(room);
       });
 
       room.on(RoomEvent.ConnectionStateChanged, (state) => {
@@ -149,6 +288,12 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       room.on(RoomEvent.Reconnected, () => setConnectionState('connected'));
       room.on(RoomEvent.Reconnecting, () => console.warn('[voice] Reconnecting'));
       room.on(RoomEvent.Reconnected, () => console.warn('[voice] Reconnected'));
+
+      const handleTrackChange = () => syncLocalMediaState(room);
+      room.on(RoomEvent.LocalTrackPublished, handleTrackChange);
+      room.on(RoomEvent.LocalTrackUnpublished, handleTrackChange);
+      room.on(RoomEvent.TrackMuted, handleTrackChange);
+      room.on(RoomEvent.TrackUnmuted, handleTrackChange);
 
       // Verbinden mit der sicheren URL
       await room.connect(lkConfig.serverUrl, newToken, lkConfig.connectOptions);
@@ -175,6 +320,9 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       console.error("Voice Connection Failed:", err);
       setError(err.message || 'Verbindung fehlgeschlagen');
       setConnectionState('disconnected');
+      syncLocalMediaState(null);
+      setIsPublishingCamera(false);
+      setIsPublishingScreen(false);
       isConnecting.current = false;
     }
   }, [activeChannelId, activeRoom, applyMicrophoneState, connectionState, settings.devices.audioInputId, settings.devices.audioOutputId, settings.devices.videoInputId]);
@@ -202,6 +350,15 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
     applyPreferredDevices();
   }, [activeRoom, applyMicrophoneState, settings.devices.audioInputId, settings.devices.audioOutputId, settings.devices.videoInputId]);
 
+  useEffect(() => {
+    if (!activeRoom) {
+      syncLocalMediaState(null);
+      return;
+    }
+
+    syncLocalMediaState(activeRoom);
+  }, [activeRoom, syncLocalMediaState]);
+
   return (
     <VoiceContext.Provider
       value={{
@@ -210,6 +367,8 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         activeChannelName,
         connectionState,
         error,
+        cameraError,
+        screenShareError,
         connectToChannel,
         disconnect,
         token,
@@ -217,13 +376,25 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         micMuted,
         usePushToTalk,
         isTalking,
+        isCameraEnabled,
+        isScreenSharing,
+        isPublishingCamera,
+        isPublishingScreen,
         setMuted,
         setMicMuted,
         setPushToTalk,
         startTalking,
         stopTalking,
+        startCamera,
+        stopCamera,
+        toggleCamera,
+        startScreenShare,
+        stopScreenShare,
+        toggleScreenShare,
         selectedAudioInputId: settings.devices.audioInputId,
         selectedAudioOutputId: settings.devices.audioOutputId,
+        selectedVideoInputId: settings.devices.videoInputId,
+        localParticipantId,
       }}
     >
       {children}
