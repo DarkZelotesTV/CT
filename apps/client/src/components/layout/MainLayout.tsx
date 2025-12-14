@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import type React from 'react';
+import { useEffect, useRef, useState } from 'react';
 import classNames from 'classnames';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { RoomAudioRenderer, RoomContext } from '@livekit/components-react';
@@ -22,6 +23,12 @@ import { JoinServerModal } from '../modals/JoinServerModal';
 
 import { useVoice } from '../../context/voice-state';
 
+const defaultChannelWidth = 256;
+const defaultMemberWidth = 256;
+const minSidebarWidth = 200;
+const maxSidebarWidth = 420;
+const clampSidebarWidth = (value: number) => Math.min(Math.max(value, minSidebarWidth), maxSidebarWidth);
+
 interface Channel {
   id: number;
   name: string;
@@ -31,6 +38,25 @@ interface Channel {
 export const MainLayout = () => {
   const [showLeftSidebar, setShowLeftSidebar] = useState(true);
   const [showRightSidebar, setShowRightSidebar] = useState(true);
+  const [leftSidebarWidth, setLeftSidebarWidth] = useState(() => {
+    if (typeof window === 'undefined') return defaultChannelWidth;
+    const stored = localStorage.getItem('ct.layout.left_width');
+    if (!stored) return defaultChannelWidth;
+    const parsed = Number(stored);
+    return Number.isFinite(parsed) ? clampSidebarWidth(parsed) : defaultChannelWidth;
+  });
+  const [rightSidebarWidth, setRightSidebarWidth] = useState(() => {
+    if (typeof window === 'undefined') return defaultMemberWidth;
+    const stored = localStorage.getItem('ct.layout.right_width');
+    if (!stored) return defaultMemberWidth;
+    const parsed = Number(stored);
+    return Number.isFinite(parsed) ? clampSidebarWidth(parsed) : defaultMemberWidth;
+  });
+  const [isDraggingLeft, setIsDraggingLeft] = useState(false);
+  const [isDraggingRight, setIsDraggingRight] = useState(false);
+  const leftSidebarRef = useRef<HTMLDivElement>(null);
+  const rightSidebarRef = useRef<HTMLDivElement>(null);
+  const dragState = useRef<{ startX: number; startWidth: number }>({ startX: 0, startWidth: 0 });
   const [selectedServerId, setSelectedServerId] = useState<number | null>(null);
   const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
   const [homeView, setHomeView] = useState<'home' | 'friends'>('home');
@@ -41,6 +67,14 @@ export const MainLayout = () => {
 
   // Voice Context holen
   const { activeRoom } = useVoice();
+
+  useEffect(() => {
+    localStorage.setItem('ct.layout.left_width', String(leftSidebarWidth));
+  }, [leftSidebarWidth]);
+
+  useEffect(() => {
+    localStorage.setItem('ct.layout.right_width', String(rightSidebarWidth));
+  }, [rightSidebarWidth]);
 
   useEffect(() => {
     // One-time tutorial after the first successful start.
@@ -79,6 +113,49 @@ export const MainLayout = () => {
   const announceServerChange = () => {
     window.dispatchEvent(new Event('ct-servers-changed'));
   };
+
+  const startDragLeft = (event: React.MouseEvent) => {
+    setIsDraggingLeft(true);
+    dragState.current = { startX: event.clientX, startWidth: leftSidebarWidth };
+  };
+
+  const startDragRight = (event: React.MouseEvent) => {
+    setIsDraggingRight(true);
+    dragState.current = { startX: event.clientX, startWidth: rightSidebarWidth };
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      if (isDraggingLeft) {
+        const delta = event.clientX - dragState.current.startX;
+        const nextWidth = clampSidebarWidth(dragState.current.startWidth + delta);
+        setLeftSidebarWidth(nextWidth);
+      }
+
+      if (isDraggingRight) {
+        const delta = event.clientX - dragState.current.startX;
+        const nextWidth = clampSidebarWidth(dragState.current.startWidth - delta);
+        setRightSidebarWidth(nextWidth);
+      }
+    };
+
+    const stopDragging = () => {
+      setIsDraggingLeft(false);
+      setIsDraggingRight(false);
+    };
+
+    if (isDraggingLeft || isDraggingRight) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', stopDragging);
+      document.body.classList.add('select-none');
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', stopDragging);
+      document.body.classList.remove('select-none');
+    };
+  }, [isDraggingLeft, isDraggingRight]);
 
   // Helper: Rendert den Inhalt der Main Stage
   const renderContent = () => {
@@ -158,10 +235,12 @@ export const MainLayout = () => {
 
       {/* 2. SIDEBAR */}
       <div
+        ref={leftSidebarRef}
         className={classNames(
           'transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] relative z-40 h-full py-3 pl-3',
-          showLeftSidebar ? 'w-64 opacity-100 translate-x-0' : 'w-0 opacity-0 -translate-x-10 pl-0'
+          showLeftSidebar ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10 pl-0'
         )}
+        style={{ width: showLeftSidebar ? leftSidebarWidth : 0 }}
       >
         <div className="w-full h-full bg-[#0e0e11]/60 backdrop-blur-xl rounded-2xl border border-white/5 overflow-hidden">
           {selectedServerId ? (
@@ -177,6 +256,12 @@ export const MainLayout = () => {
             <DashboardSidebar />
           )}
         </div>
+        {showLeftSidebar && (
+          <div
+            className="absolute top-0 right-0 h-full w-2 cursor-ew-resize bg-transparent hover:bg-white/5"
+            onMouseDown={startDragLeft}
+          />
+        )}
       </div>
 
       {/* 3. MAIN STAGE */}
@@ -200,6 +285,7 @@ export const MainLayout = () => {
           <button
             onClick={() => setShowRightSidebar(!showRightSidebar)}
             className="absolute right-3 top-1/2 -translate-y-1/2 z-50 w-6 h-12 bg-black/50 hover:bg-indigo-600 rounded-l-xl backdrop-blur-md flex items-center justify-center text-white/50 hover:text-white transition-all cursor-pointer shadow-lg"
+            style={{ right: showRightSidebar ? 12 : 12 }}
           >
             {showRightSidebar ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
           </button>
@@ -209,14 +295,22 @@ export const MainLayout = () => {
       {/* 4. MEMBER SIDEBAR */}
       {selectedServerId && (
         <div
+          ref={rightSidebarRef}
           className={classNames(
             'transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] relative z-40 h-full py-3 pr-3',
-            showRightSidebar ? 'w-64 opacity-100 translate-x-0' : 'w-0 opacity-0 translate-x-10 pr-0'
+            showRightSidebar ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10 pr-0'
           )}
+          style={{ width: showRightSidebar ? rightSidebarWidth : 0 }}
         >
           <div className="w-full h-full bg-[#0e0e11]/80 backdrop-blur-xl rounded-2xl border border-white/5 overflow-hidden">
             <MemberSidebar serverId={selectedServerId} />
           </div>
+          {showRightSidebar && (
+            <div
+              className="absolute top-0 left-0 h-full w-2 cursor-ew-resize bg-transparent hover:bg-white/5"
+              onMouseDown={startDragRight}
+            />
+          )}
         </div>
       )}
 
