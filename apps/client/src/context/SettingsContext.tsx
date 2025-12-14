@@ -18,6 +18,7 @@ export type HotkeySettings = {
 
 export type TalkSettings = {
   muted: boolean;
+  micMuted: boolean;
   pushToTalkEnabled: boolean;
 };
 
@@ -46,6 +47,7 @@ const defaultSettings: SettingsState = {
   },
   talk: {
     muted: false,
+    micMuted: false,
     pushToTalkEnabled: false,
   },
 };

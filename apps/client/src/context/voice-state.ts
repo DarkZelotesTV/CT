@@ -11,9 +11,11 @@ export interface VoiceContextType {
   disconnect: () => Promise<void>;
   token: string | null;
   muted: boolean;
+  micMuted: boolean;
   usePushToTalk: boolean;
   isTalking: boolean;
   setMuted: (muted: boolean) => Promise<void>;
+  setMicMuted: (muted: boolean) => Promise<void>;
   setPushToTalk: (enabled: boolean) => Promise<void>;
   startTalking: () => Promise<void>;
   stopTalking: () => Promise<void>;
