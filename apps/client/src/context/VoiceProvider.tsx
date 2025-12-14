@@ -235,12 +235,12 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
           if (!selectedTrack || (shouldShareAudio && !systemAudioTrack)) {
             const stream = await navigator.mediaDevices.getUserMedia({
               audio: shouldShareAudio
-                ? {
+                ? ({
                     mandatory: {
                       chromeMediaSource: 'desktop',
                       ...(options?.sourceId ? { chromeMediaSourceId: options.sourceId } : {}),
                     },
-                  }
+                  } as MediaTrackConstraints)
                 : false,
               video: {
                 mandatory: {
@@ -306,9 +306,9 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
             frameRate: preferredFrameRate,
           },
           audio: shouldShareAudio
-            ? {
+            ? ({
                 suppressLocalAudioPlayback: false,
-              }
+              } as MediaTrackConstraints)
             : false,
         });
 
