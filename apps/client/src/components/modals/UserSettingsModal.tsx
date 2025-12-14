@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Camera,
   Check,
   Download,
   Headphones,
+  Keyboard,
   Mic,
   Play,
   RefreshCw,
@@ -118,6 +119,25 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
   const [identityName, setIdentityName] = useState(identity?.displayName ?? '');
   const [backupPassphrase, setBackupPassphrase] = useState('');
   const [identityError, setIdentityError] = useState<string | null>(null);
+
+  const categories = useMemo(
+    () => [
+      { id: 'profile', label: 'Profil', icon: Settings },
+      { id: 'devices', label: 'Audio & Video', icon: Camera },
+      { id: 'hotkeys', label: 'Hotkeys', icon: Keyboard },
+      { id: 'talk', label: 'Talk & Audio', icon: Volume2 },
+      { id: 'identity', label: 'Identity', icon: ShieldAlert },
+    ],
+    []
+  );
+  const sectionRefs = useMemo(() => {
+    return categories.reduce<Record<string, RefObject<HTMLElement>>>((acc, cat) => {
+      acc[cat.id] = useRef<HTMLElement>(null);
+      return acc;
+    }, {});
+  }, [categories]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [activeCategory, setActiveCategory] = useState(categories[0]?.id ?? '');
 
   const refreshDevices = useCallback(async () => {
     if (!navigator.mediaDevices?.enumerateDevices) {
@@ -317,6 +337,52 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
     onClose();
   };
 
+  const handleScroll = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const containerTop = container.getBoundingClientRect().top;
+    let closestId = activeCategory;
+    let closestDistance = Number.POSITIVE_INFINITY;
+
+    categories.forEach((cat) => {
+      const el = sectionRefs[cat.id]?.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const distance = Math.abs(rect.top - containerTop - 16);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestId = cat.id;
+      }
+    });
+
+    if (closestId !== activeCategory) {
+      setActiveCategory(closestId);
+    }
+  }, [activeCategory, categories, sectionRefs]);
+
+  const scrollToCategory = useCallback(
+    (id: string) => {
+      const container = containerRef.current;
+      const el = sectionRefs[id]?.current;
+      if (!container || !el) return;
+      const containerRect = container.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      const nextTop = elRect.top - containerRect.top + container.scrollTop - 12;
+      container.scrollTo({ top: nextTop, behavior: 'smooth' });
+      setActiveCategory(id);
+    },
+    [sectionRefs]
+  );
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const onScroll = () => handleScroll();
+    container.addEventListener('scroll', onScroll, { passive: true });
+    handleScroll();
+    return () => container.removeEventListener('scroll', onScroll);
+  }, [handleScroll]);
+
   return createPortal(
     <div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-[#0f1014] w-full max-w-4xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
@@ -335,44 +401,63 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
           </button>
         </div>
 
-        <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
-          <section className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-            <div className="space-y-2 md:col-span-2">
-              <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Profil</div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs text-gray-400 uppercase font-semibold">Anzeigename</label>
-                  <input
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="Dein Name"
-                    className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs text-gray-400 uppercase font-semibold">Avatar-URL</label>
-                  <input
-                    value={avatarUrl}
-                    onChange={(e) => setAvatarUrl(e.target.value)}
-                    placeholder="https://..."
-                    className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col items-center justify-center gap-3 bg-white/5 rounded-2xl border border-white/10 p-4">
-              <div className="w-20 h-20 rounded-full overflow-hidden bg-cyan-900/40 border border-cyan-600/40 flex items-center justify-center text-cyan-300 font-bold text-xl">
-                {avatarPreview ? (
-                  <img src={avatarPreview} className="w-full h-full object-cover" />
-                ) : (
-                  (displayName || settings.profile.displayName || 'CT').substring(0, 2).toUpperCase()
-                )}
-              </div>
-              <div className="text-xs text-gray-400 text-center">Vorschau</div>
-            </div>
-          </section>
+        <div className="p-6 max-h-[75vh]">
+          <div className="grid md:grid-cols-[200px,1fr] gap-6 h-full">
+            <nav className="bg-white/5 border border-white/10 rounded-2xl p-3 flex md:flex-col gap-2 md:sticky md:top-4 h-fit">
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => scrollToCategory(cat.id)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition border ${
+                    activeCategory === cat.id
+                      ? 'bg-cyan-500/20 border-cyan-400 text-cyan-100'
+                      : 'border-transparent text-gray-300 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  <cat.icon size={16} />
+                  <span>{cat.label}</span>
+                </button>
+              ))}
+            </nav>
 
-          <section className="space-y-3">
+            <div ref={containerRef} className="space-y-6 overflow-y-auto pr-1">
+              <section ref={sectionRefs.profile} id="profile" className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                <div className="space-y-2 md:col-span-2">
+                  <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Profil</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs text-gray-400 uppercase font-semibold">Anzeigename</label>
+                      <input
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        placeholder="Dein Name"
+                        className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-gray-400 uppercase font-semibold">Avatar-URL</label>
+                      <input
+                        value={avatarUrl}
+                        onChange={(e) => setAvatarUrl(e.target.value)}
+                        placeholder="https://..."
+                        className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col items-center justify-center gap-3 bg-white/5 rounded-2xl border border-white/10 p-4">
+                  <div className="w-20 h-20 rounded-full overflow-hidden bg-cyan-900/40 border border-cyan-600/40 flex items-center justify-center text-cyan-300 font-bold text-xl">
+                    {avatarPreview ? (
+                      <img src={avatarPreview} className="w-full h-full object-cover" />
+                    ) : (
+                      (displayName || settings.profile.displayName || 'CT').substring(0, 2).toUpperCase()
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-400 text-center">Vorschau</div>
+                </div>
+              </section>
+
+              <section ref={sectionRefs.devices} id="devices" className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Audio & Video</div>
@@ -444,7 +529,7 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
             </div>
           </section>
 
-          <section className="space-y-3">
+          <section ref={sectionRefs.hotkeys} id="hotkeys" className="space-y-3">
             <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Hotkeys</div>
             <p className="text-gray-400 text-sm">Lege Tasten für Push-to-Talk oder schnelles Muten fest.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -453,7 +538,7 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
             </div>
           </section>
 
-          <section className="space-y-4">
+          <section ref={sectionRefs.talk} id="talk" className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Talk & Audio-Steuerung</div>
@@ -542,7 +627,7 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
             </div>
           </section>
 
-          <section className="space-y-4">
+          <section ref={sectionRefs.identity} id="identity" className="space-y-4">
             <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Identity</div>
             <p className="text-gray-400 text-sm">Verwalte deine lokale Clover Identity direkt aus den Einstellungen.</p>
 
@@ -662,6 +747,8 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
 
             {identityError && <div className="text-red-400 text-sm">{identityError}</div>}
           </section>
+            </div>
+          </div>
         </div>
 
         <div className="px-6 py-4 border-t border-white/5 flex items-center justify-between bg-white/5">
