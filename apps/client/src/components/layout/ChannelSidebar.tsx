@@ -5,6 +5,7 @@ import { CreateChannelModal } from '../modals/CreateChannelModal';
 import { UserBottomBar } from './UserBottomBar';
 import { useVoice } from '../../context/voice-state'; // Importieren
 import { VoiceParticipantsPanel } from "../voice/VoiceParticipantsPanel";
+import { useSocket } from '../../context/SocketContext';
 
 // ... (Interfaces Channel, Category wie gehabt) ...
 interface Channel { id: number; name: string; type: 'text' | 'voice' | 'web'; custom_icon?: string; }
@@ -24,9 +25,11 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createType, setCreateType] = useState<any>('text');
   const [createCategoryId, setCreateCategoryId] = useState<number | null>(null);
+  const [hoveredChannelId, setHoveredChannelId] = useState<number | null>(null);
 
   // CONTEXT NUTZEN
   const { connectToChannel, activeChannelId: voiceChannelId, connectionState, activeChannelName, disconnect } = useVoice();
+  const { channelPresence } = useSocket();
 
   const fetchData = useCallback(async () => {
     if (!serverId) return;
@@ -37,36 +40,67 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
       const structRes = await apiFetch<{ categories: Category[]; uncategorized: Channel[] }>(`/api/servers/${serverId}/structure`);
       setCategories(structRes.categories);
       setUncategorized(structRes.uncategorized);
-    } catch(e) {}
+    } catch (e) {}
   }, [serverId]);
   useEffect(() => { fetchData(); }, [fetchData]);
 
   // Click Handler: Voice Logik in den Hintergrund schieben
   const handleChannelClick = (c: Channel) => {
-      if (c.type === 'voice') {
-          connectToChannel(c.id, c.name).catch(console.error);
-          onSelectChannel(c);
-      } else {
-          onSelectChannel(c);
-      }
+    if (c.type === 'voice') {
+      connectToChannel(c.id, c.name).catch(console.error);
+      onSelectChannel(c);
+    } else {
+      onSelectChannel(c);
+    }
   };
 
   const renderChannel = (c: Channel, isInside: boolean) => {
     const Icon = c.type === 'web' ? Globe : c.type === 'voice' ? Volume2 : Hash;
-    const isActive = activeChannelId === c.id; 
+    const isActive = activeChannelId === c.id;
     const isConnected = c.type === 'voice' && voiceChannelId === c.id; // Bin ich hier verbunden?
+    const presenceList = channelPresence[c.id] || [];
+    const presenceCount = presenceList.length;
 
     return (
-      <div 
-        key={c.id} 
-        onClick={() => handleChannelClick(c)}
-        className={`relative flex items-center no-drag px-2 py-1.5 mb-0.5 cursor-pointer group select-none rounded-md transition-colors
-          ${isInside ? 'ml-4' : 'mx-2'}
-          ${isActive ? 'bg-white/10 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'}
-        `}
+      <div
+        key={c.id}
+        onMouseEnter={() => setHoveredChannelId(c.id)}
+        onMouseLeave={() => setHoveredChannelId((prev) => (prev === c.id ? null : prev))}
+        className="relative"
       >
-        <Icon size={16} className={`mr-2 ${isConnected ? 'text-green-500' : ''}`} />
-        <span className={`text-sm truncate flex-1 font-medium ${isConnected ? 'text-green-400' : ''}`}>{c.name}</span>
+        <div
+          onClick={() => handleChannelClick(c)}
+          className={`flex items-center no-drag px-2 py-1.5 mb-0.5 cursor-pointer group select-none rounded-md transition-colors
+            ${isInside ? 'ml-4' : 'mx-2'}
+            ${isActive ? 'bg-white/10 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'}
+          `}
+        >
+          <Icon size={16} className={`mr-2 ${isConnected ? 'text-green-500' : ''}`} />
+          <span className={`text-sm truncate flex-1 font-medium ${isConnected ? 'text-green-400' : ''}`}>{c.name}</span>
+          {presenceCount > 0 && (
+            <div className="ml-2 px-1.5 py-0.5 rounded-full bg-white/10 text-xs text-gray-200 min-w-[24px] text-center">
+              {presenceCount}
+            </div>
+          )}
+        </div>
+
+        {hoveredChannelId === c.id && presenceCount > 0 && (
+          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-[#111214] border border-white/10 rounded-lg shadow-lg p-3 z-20 w-60">
+            <div className="text-xs font-semibold text-gray-300 mb-2">Im Kanal</div>
+            <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+              {presenceList.map((user) => (
+                <div key={user.id} className="flex items-center gap-2 text-xs text-gray-200">
+                  <span
+                    className={`w-2 h-2 rounded-full ${user.status === 'online' ? 'bg-green-500' : 'bg-gray-500'}`}
+                    title={user.status === 'online' ? 'Online' : 'Offline'}
+                  />
+                  <span className="font-medium truncate flex-1" title={user.username}>{user.username}</span>
+                  <span className="text-[10px] uppercase text-gray-400">{user.status === 'online' ? 'Online' : 'Offline'}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     );
   };
