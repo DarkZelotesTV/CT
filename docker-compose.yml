@@ -1,9 +1,3 @@
-version: "3.9"
-
-# Dienste für lokale Entwicklung/Deployments.
-# HINWEIS: Der 'server' Service wurde ergänzt, damit die Config-Variable automatisch
-# an die App übergeben wird.
-
 services:
   # --- Deine App (Node.js Server) ---
   server:
