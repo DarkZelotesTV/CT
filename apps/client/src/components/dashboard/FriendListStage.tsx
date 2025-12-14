@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
-import { MessageSquare, MoreVertical, Search, UserPlus, Check, X, Loader2, Ban } from 'lucide-react';
+import { ArrowLeft, MessageSquare, MoreVertical, Search, UserPlus, Check, X, Loader2, Ban } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { useSocket } from '../../context/SocketContext';
+
+interface FriendListStageProps {
+  onBackToHome?: () => void;
+}
 
 interface Friend {
   id: number;
@@ -23,7 +27,7 @@ interface BlockedFriendship {
   user: Friend;
 }
 
-export const FriendListStage = () => {
+export const FriendListStage = ({ onBackToHome }: FriendListStageProps) => {
   const [activeTab, setActiveTab] = useState<'online' | 'all' | 'pending' | 'blocked'>('online');
   const [friends, setFriends] = useState<Friend[]>([]);
   const [pendingRequests, setPendingRequests] = useState<PendingFriendRequest[]>([]);
@@ -141,7 +145,17 @@ export const FriendListStage = () => {
     <div className="flex flex-col h-full bg-dark-100">
 
       {/* Top Bar */}
-      <div className="h-12 border-b border-dark-400 flex items-center px-4 shadow-sm bg-dark-100 z-10">
+      <div className="h-12 border-b border-dark-400 flex items-center px-4 shadow-sm bg-dark-100 z-10 gap-2">
+        {onBackToHome && (
+          <button
+            onClick={onBackToHome}
+            className="flex items-center gap-1 text-gray-400 hover:text-white px-2 py-1 rounded hover:bg-dark-300 transition-colors"
+          >
+            <ArrowLeft size={16} />
+            <span className="text-sm">Home</span>
+          </button>
+        )}
+
         <div className="flex items-center text-white font-bold mr-4 border-r border-gray-600 pr-4 gap-2">
            <span className="text-gray-400">Freunde</span>
         </div>
