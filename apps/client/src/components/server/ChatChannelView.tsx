@@ -7,6 +7,8 @@ interface Message {
   id: number;
   content: string;
   createdAt: string;
+  channel_id?: number;
+  channelId?: number;
   sender: {
     id: number;
     username: string;
@@ -44,15 +46,26 @@ export const ChatChannelView = ({ channelId, channelName }: ChatChannelViewProps
     };
 
     fetchMessages();
-    if (socket) socket.emit('join_channel', channelId);
+  }, [channelId]);
 
-  }, [channelId, socket]);
+  // Channel Join/Leave
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.emit('join_channel', channelId);
+
+    return () => {
+      socket.emit('leave_channel', channelId);
+    };
+  }, [socket, channelId]);
 
   // --- SOCKET LOGIC: Neue Nachricht ---
   useEffect(() => {
     if (!socket) return;
     const handleMsg = (newMsg: Message) => {
-        // Optional: Check if msg.channel_id === channelId
+        const msgChannelId = (newMsg.channel_id ?? newMsg.channelId) as number | undefined;
+        if (msgChannelId !== undefined && msgChannelId !== channelId) return;
+
         setMessages((prev) => [...prev, newMsg]);
     };
     socket.on('receive_message', handleMsg);

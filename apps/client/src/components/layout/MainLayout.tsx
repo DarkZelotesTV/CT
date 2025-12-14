@@ -1,11 +1,11 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import classNames from 'classnames';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { RoomAudioRenderer, RoomContext } from '@livekit/components-react';
 import '@livekit/components-styles';
 
 import { ServerRail } from './ServerRail';
-import { BottomChatBar, BottomChatBarRef } from './BottomChatBar';
+import { BottomChatBar } from './BottomChatBar';
 import { MemberSidebar } from './MemberSidebar';
 import { ChannelSidebar } from './ChannelSidebar';
 
@@ -13,6 +13,7 @@ import { DashboardSidebar } from '../dashboard/DashboardSidebar';
 import { FriendListStage } from '../dashboard/FriendListStage';
 import { WebChannelView } from '../server/WebChannelView';
 import { HomeOnboardingStage } from '../dashboard/HomeOnboardingStage';
+import { ChatChannelView } from '../server/ChatChannelView';
 
 import { OnboardingModal } from '../modals/OnboardingModal';
 import { ServerSettingsModal } from '../modals/ServerSettingsModal';
@@ -37,7 +38,6 @@ export const MainLayout = () => {
   const [showServerSettings, setShowServerSettings] = useState(false);
   const [showCreateServer, setShowCreateServer] = useState(false);
   const [showJoinServer, setShowJoinServer] = useState(false);
-  const chatBarRef = useRef<BottomChatBarRef>(null);
 
   // Voice Context holen
   const { activeRoom } = useVoice();
@@ -61,7 +61,7 @@ export const MainLayout = () => {
     if (typeof window === 'undefined' || !window.electron?.onChatDocked) return;
 
     const unsubscribe = window.electron.onChatDocked((chatId, chatName) => {
-      chatBarRef.current?.openChat(Number(chatId), chatName);
+      setActiveChannel({ id: Number(chatId), name: chatName, type: 'text' });
     });
 
     return () => {
@@ -104,6 +104,10 @@ export const MainLayout = () => {
 
     if (activeChannel?.type === 'web') {
       return <WebChannelView channelId={activeChannel.id} channelName={activeChannel.name} />;
+    }
+
+    if (activeChannel?.type === 'text') {
+      return <ChatChannelView channelId={activeChannel.id} channelName={activeChannel.name} />;
     }
 
     return (
@@ -165,8 +169,7 @@ export const MainLayout = () => {
               serverId={selectedServerId}
               activeChannelId={activeChannel?.id || null}
               onSelectChannel={(channel) => {
-                if (channel.type === 'voice' || channel.type === 'web') setActiveChannel(channel);
-                else chatBarRef.current?.openChat(channel.id, channel.name);
+                setActiveChannel(channel);
               }}
               onOpenServerSettings={() => setShowServerSettings(true)}
             />
@@ -187,7 +190,10 @@ export const MainLayout = () => {
 
         <div className="flex-1 bg-[#09090b] rounded-2xl border border-white/5 relative overflow-hidden shadow-2xl flex flex-col">
           {renderContent()}
-          <BottomChatBar ref={chatBarRef} />
+          <BottomChatBar
+            channelId={activeChannel?.type === 'text' ? activeChannel.id : null}
+            channelName={activeChannel?.type === 'text' ? activeChannel.name : undefined}
+          />
         </div>
 
         {selectedServerId && (

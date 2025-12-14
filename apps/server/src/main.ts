@@ -163,6 +163,23 @@ io.on('connection', async (socket) => {
     }
   });
 
+  socket.on('leave_channel', (channelId: number) => {
+    if (!numericUserId) return;
+
+    const joinedChannels: Set<number> = (socket.data as any).joinedChannels;
+    if (!joinedChannels.has(channelId)) return;
+
+    socket.leave(`channel_${channelId}`);
+    joinedChannels.delete(channelId);
+
+    const presenceSet = channelPresence.get(channelId);
+    if (presenceSet?.has(numericUserId)) {
+      presenceSet.delete(numericUserId);
+      if (!presenceSet.size) channelPresence.delete(channelId);
+      io.to(`channel_${channelId}`).emit('channel_presence_leave', { channelId, userId: numericUserId });
+    }
+  });
+
   socket.on('disconnect', async () => {
     if (numericUserId) {
        console.log(`User ${numericUserId} disconnected`);
