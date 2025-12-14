@@ -90,6 +90,7 @@ export const TalkSettingsModal = ({ onClose }: { onClose: () => void }) => {
   const [pushToTalkEnabled, setPushToTalkEnabled] = useState(usePushToTalk);
   const [locallyMuted, setLocallyMuted] = useState(muted);
   const [inputLevel, setInputLevel] = useState(0);
+  const [sensitivity, setSensitivity] = useState(1);
   const [meterError, setMeterError] = useState<string | null>(null);
   const [isTestingOutput, setIsTestingOutput] = useState(false);
   const [outputError, setOutputError] = useState<string | null>(null);
@@ -120,6 +121,8 @@ export const TalkSettingsModal = ({ onClose }: { onClose: () => void }) => {
     let analyser: AnalyserNode | null = null;
     let sourceNode: MediaStreamAudioSourceNode | null = null;
     let frame: number | null = null;
+    let smoothedLevel = 0;
+    let lastUpdate = 0;
     const run = async () => {
       try {
         setMeterError(null);
@@ -130,8 +133,14 @@ export const TalkSettingsModal = ({ onClose }: { onClose: () => void }) => {
         analyser.fftSize = 256;
         sourceNode.connect(analyser);
         const data = new Uint8Array(analyser.frequencyBinCount);
-        const tick = () => {
+        const smoothing = 0.2;
+        const minInterval = 75; // throttle UI updates
+        const tick = (time: number) => {
           if (!analyser) return;
+          if (time - lastUpdate < minInterval) {
+            frame = requestAnimationFrame(tick);
+            return;
+          }
           analyser.getByteTimeDomainData(data);
           let sum = 0;
           for (let i = 0; i < data.length; i++) {
@@ -139,12 +148,16 @@ export const TalkSettingsModal = ({ onClose }: { onClose: () => void }) => {
             sum += value * value;
           }
           const rms = Math.sqrt(sum / data.length) / 128;
-          setInputLevel(Math.min(1, rms * 2));
+          const level = Math.min(1, rms * 2 * sensitivity);
+          smoothedLevel = smoothedLevel + (level - smoothedLevel) * smoothing;
+          setInputLevel(smoothedLevel);
+          lastUpdate = time;
           frame = requestAnimationFrame(tick);
         };
-        tick();
+        tick(performance.now());
       } catch (err: any) {
         setMeterError(err?.message || 'Pegel konnte nicht gemessen werden.');
+        setInputLevel(0);
       }
     };
 
@@ -157,7 +170,7 @@ export const TalkSettingsModal = ({ onClose }: { onClose: () => void }) => {
       stream?.getTracks().forEach((t) => t.stop());
       if (audioContext) audioContext.close();
     };
-  }, [audioInputId]);
+  }, [audioInputId, sensitivity]);
 
   const levelPercent = useMemo(() => Math.round(inputLevel * 100), [inputLevel]);
 
@@ -264,6 +277,20 @@ export const TalkSettingsModal = ({ onClose }: { onClose: () => void }) => {
               <div className="text-xs uppercase tracking-widest text-gray-500 font-bold flex items-center gap-2">
                 <Volume2 size={14} /> Eingangspegel
               </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min={0.5}
+                  max={2}
+                  step={0.1}
+                  value={sensitivity}
+                  onChange={(e) => setSensitivity(Number(e.target.value))}
+                  className="flex-1 accent-cyan-500"
+                />
+                <div className="text-[11px] text-gray-400 w-24 text-right">
+                  Empfindlichkeit: {sensitivity.toFixed(1)}x
+                </div>
+              </div>
               <div className="h-3 rounded-full bg-white/5 overflow-hidden border border-white/10">
                 <div
                   className="h-full bg-gradient-to-r from-green-400 via-yellow-400 to-red-500 transition-all"
@@ -271,8 +298,13 @@ export const TalkSettingsModal = ({ onClose }: { onClose: () => void }) => {
                 />
               </div>
               <div className="flex items-center justify-between text-[11px] text-gray-500">
-                <span>{meterError || 'Sprich, um den Pegel zu prüfen.'}</span>
+                <span className={meterError ? 'text-red-400' : ''}>
+                  {meterError || 'Sprich, um den Pegel zu prüfen.'}
+                </span>
                 <span className="text-cyan-400 font-semibold">{levelPercent}%</span>
+              </div>
+              <div className="text-[11px] text-gray-400">
+                Passt die Empfindlichkeit an, bis Umgebungsgeräusche im grünen Bereich bleiben.
               </div>
             </div>
           </section>
