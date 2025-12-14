@@ -28,7 +28,12 @@ export interface VoiceContextType {
   startCamera: (quality?: 'low' | 'medium' | 'high') => Promise<void>;
   stopCamera: () => Promise<void>;
   toggleCamera: () => Promise<void>;
-  startScreenShare: () => Promise<void>;
+  startScreenShare: (options?: {
+    sourceId?: string;
+    quality?: 'low' | 'medium' | 'high';
+    frameRate?: number;
+    track?: MediaStreamTrack;
+  }) => Promise<void>;
   stopScreenShare: () => Promise<void>;
   toggleScreenShare: () => Promise<void>;
   selectedAudioInputId: string | null;

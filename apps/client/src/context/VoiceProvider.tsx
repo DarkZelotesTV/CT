@@ -167,70 +167,95 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [isCameraEnabled, startCamera, stopCamera]);
 
-  const startScreenShare = useCallback(async () => {
-    if (!activeRoom) {
-      setScreenShareError('Keine aktive Voice-Verbindung für Screen-Sharing.');
-      return;
-    }
+  const startScreenShare = useCallback(
+    async (options?: { sourceId?: string; quality?: 'low' | 'medium' | 'high'; frameRate?: number; track?: MediaStreamTrack }) => {
+      if (!activeRoom) {
+        setScreenShareError('Keine aktive Voice-Verbindung für Screen-Sharing.');
+        return;
+      }
 
-    setIsPublishingScreen(true);
-    setScreenShareError(null);
+      setIsPublishingScreen(true);
+      setScreenShareError(null);
 
-    // FIX: Electron Detection & Handling
-    if ((window as any).electron && (window as any).electron.getScreenSources) {
-      try {
-        // 1. Quellen abrufen (hier könntest du später ein Modal einbauen)
-        const sources = await (window as any).electron.getScreenSources();
-        // Fallback: Nehme die erste Quelle (meist ganzer Bildschirm), wenn keine Auswahl erfolgt
-        const sourceId = sources[0]?.id;
-        
-        if (!sourceId) {
-          throw new Error("Keine Bildschirme gefunden.");
-        }
+      if (options?.track && options.track.readyState === 'ended') {
+        setScreenShareError('Die ausgewählte Bildschirmquelle ist nicht mehr aktiv.');
+        setIsPublishingScreen(false);
+        return;
+      }
 
-        // 2. Stream manuell via getUserMedia holen (Chrome-Spezifisch für Electron)
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: false, // System-Audio erfordert komplexeres Routing in Electron
-          video: {
-            mandatory: {
-              chromeMediaSource: 'desktop',
-              chromeMediaSourceId: sourceId
+      const preset = options?.quality ? qualityPresets[options.quality] ?? qualityPresets.high : qualityPresets.high;
+      const preferredFrameRate = options?.frameRate ?? preset.frameRate;
+
+      // FIX: Electron Detection & Handling
+      if ((window as any).electron && (window as any).electron.getScreenSources) {
+        try {
+          const sourceId = options?.sourceId;
+
+          if (!sourceId && !options?.track) {
+            const sources = await (window as any).electron.getScreenSources();
+            const fallbackId = sources[0]?.id;
+
+            if (!fallbackId) {
+              throw new Error('Keine Bildschirme gefunden.');
             }
-          } as any
-        });
+            options = { ...options, sourceId: fallbackId };
+          }
 
-        // 3. Track in LiveKit publishen
-        await activeRoom.localParticipant.publishTrack(stream.getVideoTracks()[0], {
-          name: 'screen_share',
-          source: Track.Source.ScreenShare
-        });
+          let selectedTrack = options?.track;
+          if (!selectedTrack) {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              audio: false,
+              video: {
+                mandatory: {
+                  chromeMediaSource: 'desktop',
+                  ...(options?.sourceId ? { chromeMediaSourceId: options.sourceId } : {}),
+                  maxWidth: preset.resolution.width,
+                  maxHeight: preset.resolution.height,
+                  maxFrameRate: preferredFrameRate,
+                },
+              } as any,
+            });
+            selectedTrack = stream.getVideoTracks()[0];
+          }
 
+          if (!selectedTrack || selectedTrack.readyState === 'ended') {
+            throw new Error('Kein Videotrack für Screenshare gefunden.');
+          }
+
+          await activeRoom.localParticipant.publishTrack(selectedTrack, {
+            name: 'screen_share',
+            source: Track.Source.ScreenShare,
+          });
+
+          syncLocalMediaState(activeRoom);
+        } catch (err: any) {
+          console.error('Electron Screenshare Error', err);
+          setScreenShareError(err?.message || 'Konnte Screenshare in App nicht starten.');
+          setIsScreenSharing(false);
+        } finally {
+          setIsPublishingScreen(false);
+        }
+        return;
+      }
+
+      // Standard Browser Fallback
+      try {
+        await activeRoom.localParticipant.setScreenShareEnabled(true, {
+          audio: false,
+          resolution: preset.resolution,
+          frameRate: preferredFrameRate,
+        });
         syncLocalMediaState(activeRoom);
       } catch (err: any) {
-        console.error('Electron Screenshare Error', err);
-        setScreenShareError(err?.message || 'Konnte Screenshare in App nicht starten.');
+        console.error('Screenshare konnte nicht gestartet werden', err);
+        setScreenShareError(err?.message || 'Screenshare konnte nicht gestartet werden.');
         setIsScreenSharing(false);
       } finally {
         setIsPublishingScreen(false);
       }
-      return;
-    }
-
-    // Standard Browser Fallback
-    try {
-      await activeRoom.localParticipant.setScreenShareEnabled(true, {
-        audio: false,
-        resolution: qualityPresets.high.resolution,
-      });
-      syncLocalMediaState(activeRoom);
-    } catch (err: any) {
-      console.error('Screenshare konnte nicht gestartet werden', err);
-      setScreenShareError(err?.message || 'Screenshare konnte nicht gestartet werden.');
-      setIsScreenSharing(false);
-    } finally {
-      setIsPublishingScreen(false);
-    }
-  }, [activeRoom, syncLocalMediaState]);
+    },
+    [activeRoom, syncLocalMediaState]
+  );
 
   const stopScreenShare = useCallback(async () => {
     if (!activeRoom) {
