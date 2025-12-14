@@ -76,8 +76,10 @@ export const TalkSettingsModal = ({ onClose }: { onClose: () => void }) => {
   const { settings, updateDevices, updateHotkeys } = useSettings();
   const {
     muted,
+    micMuted,
     usePushToTalk,
     setMuted,
+    setMicMuted,
     setPushToTalk,
     selectedAudioInputId,
     selectedAudioOutputId,
@@ -89,6 +91,7 @@ export const TalkSettingsModal = ({ onClose }: { onClose: () => void }) => {
   const [pushToTalkKey, setPushToTalkKey] = useState(settings.hotkeys.pushToTalk || '');
   const [pushToTalkEnabled, setPushToTalkEnabled] = useState(usePushToTalk);
   const [locallyMuted, setLocallyMuted] = useState(muted);
+  const [locallyMicMuted, setLocallyMicMuted] = useState(micMuted);
   const [inputLevel, setInputLevel] = useState(0);
   const [sensitivity, setSensitivity] = useState(1);
   const [meterError, setMeterError] = useState<string | null>(null);
@@ -211,6 +214,7 @@ export const TalkSettingsModal = ({ onClose }: { onClose: () => void }) => {
     updateHotkeys({ pushToTalk: pushToTalkKey || null });
     await setPushToTalk(pushToTalkEnabled);
     await setMuted(locallyMuted);
+    await setMicMuted(locallyMicMuted);
     onClose();
   };
 
@@ -346,14 +350,27 @@ export const TalkSettingsModal = ({ onClose }: { onClose: () => void }) => {
 
               <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
                 <div>
-                  <div className="text-sm font-semibold text-white">Mikrofon</div>
-                  <p className="text-xs text-gray-400">Schalte dein Mikrofon dauerhaft stumm oder frei.</p>
+                  <div className="text-sm font-semibold text-white">Gesamt-Stummschaltung</div>
+                  <p className="text-xs text-gray-400">Alle Voice-Signale stummschalten, inklusive Mikrofon.</p>
                 </div>
                 <button
                   onClick={() => setLocallyMuted((v) => !v)}
                   className={`px-4 py-2 rounded-xl border ${locallyMuted ? 'border-red-400 bg-red-500/20 text-red-200' : 'border-green-400 bg-green-500/20 text-green-100'}`}
                 >
                   {locallyMuted ? 'Stumm' : 'Aktiv'}
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
+                <div>
+                  <div className="text-sm font-semibold text-white">Mikrofon-Stummschaltung</div>
+                  <p className="text-xs text-gray-400">Nur die Aufnahme deaktivieren, Ausgabe bleibt aktiv.</p>
+                </div>
+                <button
+                  onClick={() => setLocallyMicMuted((v) => !v)}
+                  className={`px-4 py-2 rounded-xl border ${locallyMicMuted ? 'border-red-400 bg-red-500/20 text-red-200' : 'border-green-400 bg-green-500/20 text-green-100'}`}
+                >
+                  {locallyMicMuted ? 'Stumm' : 'Aktiv'}
                 </button>
               </div>
             </div>

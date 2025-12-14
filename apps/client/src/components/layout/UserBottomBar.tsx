@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Headphones, Settings } from 'lucide-react';
+import { Headphones, MicOff, Settings } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import { UserSettingsModal } from '../modals/UserSettingsModal';
 import { useVoice } from '../../context/voice-state';
@@ -9,7 +9,7 @@ export const UserBottomBar = () => {
   const user = useMemo(() => JSON.parse(localStorage.getItem('clover_user') || '{}'), []);
   const [showSettings, setShowSettings] = useState(false);
 
-  const { muted, setMuted } = useVoice();
+  const { muted, micMuted, setMuted, setMicMuted } = useVoice();
 
   const displayName = settings.profile.displayName || user.username || 'Trooper';
   const avatarUrl = settings.profile.avatarUrl || user.avatar_url;
@@ -33,9 +33,16 @@ export const UserBottomBar = () => {
 
         <div className="flex gap-1">
           <button
+            className={`p-1 rounded ${micMuted ? 'text-red-400 hover:text-red-300 bg-red-500/10' : 'text-gray-500 hover:text-cyan-400 hover:bg-cyan-900/30'}`}
+            onClick={() => setMicMuted(!micMuted)}
+            title={micMuted ? 'Mikrofon wieder aktivieren' : 'Nur Mikrofon stummschalten'}
+          >
+            <MicOff size={14} />
+          </button>
+          <button
             className={`p-1 rounded ${muted ? 'text-red-400 hover:text-red-300 bg-red-500/10' : 'text-gray-500 hover:text-cyan-400 hover:bg-cyan-900/30'}`}
             onClick={() => setMuted(!muted)}
-            title={muted ? 'Audio wieder einschalten' : 'Alles stummschalten'}
+            title={muted ? 'Audio wieder einschalten' : 'Gesamten Voice-Chat stummschalten'}
           >
             <Headphones size={14} />
           </button>

@@ -15,6 +15,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
   const [connectionState, setConnectionState] = useState<VoiceContextType['connectionState']>('disconnected');
   const [error, setError] = useState<string | null>(null);
   const [muted, setMutedState] = useState(settings.talk.muted);
+  const [micMuted, setMicMutedState] = useState(settings.talk.micMuted);
   const [usePushToTalk, setUsePushToTalkState] = useState(settings.talk.pushToTalkEnabled);
   const [isTalking, setIsTalking] = useState(false);
 
@@ -23,20 +24,25 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     setMutedState(settings.talk.muted);
+    setMicMutedState(settings.talk.micMuted);
     setUsePushToTalkState(settings.talk.pushToTalkEnabled);
-  }, [settings.talk.muted, settings.talk.pushToTalkEnabled]);
+  }, [settings.talk.micMuted, settings.talk.muted, settings.talk.pushToTalkEnabled]);
 
   const applyMicrophoneState = useCallback(
-    async (room: Room | null, options?: { muted?: boolean; talking?: boolean; pushToTalk?: boolean }) => {
+    async (
+      room: Room | null,
+      options?: { muted?: boolean; micMuted?: boolean; talking?: boolean; pushToTalk?: boolean }
+    ) => {
       const isMuted = options?.muted ?? muted;
+      const isMicMuted = options?.micMuted ?? micMuted;
       const talking = options?.talking ?? isTalking;
       const pushToTalk = options?.pushToTalk ?? usePushToTalk;
-      const shouldEnable = !isMuted && (!pushToTalk || talking);
+      const shouldEnable = !isMuted && !isMicMuted && (!pushToTalk || talking);
       if (room) {
         await room.localParticipant.setMicrophoneEnabled(shouldEnable);
       }
     },
-    [isTalking, muted, usePushToTalk]
+    [isTalking, micMuted, muted, usePushToTalk]
   );
 
   const setMuted = useCallback(
@@ -45,6 +51,16 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       updateTalk({ muted: nextMuted });
       if (nextMuted) setIsTalking(false);
       if (activeRoom) await applyMicrophoneState(activeRoom, { muted: nextMuted, talking: false });
+    },
+    [activeRoom, applyMicrophoneState, updateTalk]
+  );
+
+  const setMicMuted = useCallback(
+    async (nextMuted: boolean) => {
+      setMicMutedState(nextMuted);
+      updateTalk({ micMuted: nextMuted });
+      if (nextMuted) setIsTalking(false);
+      if (activeRoom) await applyMicrophoneState(activeRoom, { micMuted: nextMuted, talking: false });
     },
     [activeRoom, applyMicrophoneState, updateTalk]
   );
@@ -198,9 +214,11 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         disconnect,
         token,
         muted,
+        micMuted,
         usePushToTalk,
         isTalking,
         setMuted,
+        setMicMuted,
         setPushToTalk,
         startTalking,
         stopTalking,
