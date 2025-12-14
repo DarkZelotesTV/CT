@@ -9,7 +9,8 @@ export const StandaloneChat = () => {
   const chatName = searchParams.get('name') || 'Chat';
   const channelId = chatId ? Number(chatId) : null;
 
-  const { messages, loading, inputText, setInputText, handleKeyDown, sendMessage } = useChatChannel(channelId);
+  const { messages, loading, loadingMore, hasMore, loadMore, inputText, setInputText, handleKeyDown, sendMessage } =
+    useChatChannel(channelId);
 
   const handleDock = () => {
     if (!channelId) return;
@@ -53,7 +54,14 @@ export const StandaloneChat = () => {
       </div>
 
       {/* Messages */}
-      <ChatMessageList messages={messages} loading={loading} channelName={chatName} />
+      <ChatMessageList
+        messages={messages}
+        loading={loading}
+        loadingMore={loadingMore}
+        hasMore={hasMore}
+        onLoadMore={loadMore}
+        channelName={chatName}
+      />
 
       <div className="p-4 bg-dark-200 border-t border-dark-400">
         <div className="flex items-center bg-dark-300 rounded-lg px-3 py-2">

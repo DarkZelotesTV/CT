@@ -13,7 +13,8 @@ interface ChatChannelViewProps {
 
 export const ChatChannelView = ({ channelId, channelName, isCompact = false, onOpenMembers }: ChatChannelViewProps) => {
   const { channelPresence } = useSocket();
-  const { messages, loading, inputText, setInputText, handleKeyDown, sendMessage } = useChatChannel(channelId);
+  const { messages, loading, loadingMore, hasMore, loadMore, inputText, setInputText, handleKeyDown, sendMessage } =
+    useChatChannel(channelId);
   const activeUsers = channelPresence[channelId] || [];
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
 
@@ -132,7 +133,15 @@ export const ChatChannelView = ({ channelId, channelName, isCompact = false, onO
         </div>
 
         {/* MESSAGES AREA */}
-        <ChatMessageList messages={messages} loading={loading} channelName={channelName} isCompact={isCompact} />
+        <ChatMessageList
+          messages={messages}
+          loading={loading}
+          loadingMore={loadingMore}
+          hasMore={hasMore}
+          onLoadMore={loadMore}
+          channelName={channelName}
+          isCompact={isCompact}
+        />
 
         {/* INPUT AREA */}
         <div className="px-4 pb-6 pt-2 flex-shrink-0">

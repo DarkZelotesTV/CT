@@ -401,13 +401,27 @@ router.delete('/servers/:serverId/members/:userId', authenticateRequest, async (
 // 8. Nachrichten laden (History)
 router.get('/channels/:channelId/messages', authenticateRequest, async (req, res) => {
   try {
+    const channelId = Number(req.params.channelId);
+    const limitParam = Number(req.query.limit);
+    const limit = Number.isFinite(limitParam) ? Math.min(Math.max(limitParam, 1), 200) : 50;
+    const before = req.query.before ? new Date(String(req.query.before)) : null;
+
+    const where: any = { channel_id: channelId };
+    if (before && !isNaN(before.getTime())) {
+      where.createdAt = { [Op.lt]: before };
+    }
+
     const messages = await Message.findAll({
-      where: { channel_id: req.params.channelId },
+      where,
       include: [{ model: User, as: 'sender', attributes: ['username', 'avatar_url', 'id'] }],
-      order: [['createdAt', 'ASC']],
-      limit: 50
+      order: [['createdAt', 'DESC']],
+      limit: limit + 1,
     });
-    res.json(messages);
+
+    const hasMore = messages.length > limit;
+    const limited = hasMore ? messages.slice(0, limit) : messages;
+
+    res.json({ messages: limited.reverse(), hasMore });
   } catch (err) {
     res.status(500).json({ error: "Fehler beim Laden der Nachrichten" });
   }

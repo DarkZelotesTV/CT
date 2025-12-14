@@ -18,10 +18,13 @@ export interface ChatMessage {
 interface UseChatChannelResult {
   messages: ChatMessage[];
   loading: boolean;
+  loadingMore: boolean;
+  hasMore: boolean;
   inputText: string;
   setInputText: (value: string) => void;
   handleKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   sendMessage: () => Promise<void>;
+  loadMore: () => Promise<void>;
 }
 
 type ChannelKeyBundle = {
@@ -182,23 +185,52 @@ export const useChatChannel = (channelId: number | null): UseChatChannelResult =
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const { socket } = useSocket();
   const knownPublicKeys = useRef<Map<number, string>>(new Map());
+  const fetchInProgress = useRef(false);
 
   useEffect(() => {
     channelCrypto = null;
     knownPublicKeys.current.clear();
+    setMessages([]);
+    setHasMore(false);
   }, [channelId]);
+
+  const fetchMessages = React.useCallback(
+    async (before?: string, append = false) => {
+      if (channelId === null || fetchInProgress.current) return;
+      fetchInProgress.current = true;
+      try {
+        const params = new URLSearchParams({ limit: '50' });
+        if (before) params.set('before', before);
+
+        const res = await apiFetch<{ messages: ChatMessage[]; hasMore: boolean }>(
+          `/api/channels/${channelId}/messages?${params.toString()}`
+        );
+        const decrypted = await Promise.all(res.messages.map((msg) => decryptMessage(msg, channelId)));
+
+        setHasMore(res.hasMore);
+        if (append) {
+          setMessages((prev) => [...decrypted, ...prev]);
+        } else {
+          setMessages(decrypted);
+        }
+      } finally {
+        fetchInProgress.current = false;
+      }
+    },
+    [channelId]
+  );
 
   useEffect(() => {
     if (channelId === null) return;
-    const fetchMessages = async () => {
+
+    const loadInitial = async () => {
       setLoading(true);
-      setMessages([]);
       try {
-        const res = await apiFetch<ChatMessage[]>(`/api/channels/${channelId}/messages`);
-        const decrypted = await Promise.all(res.map((msg) => decryptMessage(msg, channelId)));
-        setMessages(decrypted);
+        await fetchMessages();
       } catch (err) {
         console.error('Chat Error:', err);
       } finally {
@@ -206,8 +238,8 @@ export const useChatChannel = (channelId: number | null): UseChatChannelResult =
       }
     };
 
-    fetchMessages();
-  }, [channelId]);
+    loadInitial();
+  }, [channelId, fetchMessages]);
 
   useEffect(() => {
     if (!socket || channelId === null) return;
@@ -279,6 +311,19 @@ export const useChatChannel = (channelId: number | null): UseChatChannelResult =
     };
   }, [socket, channelId]);
 
+  const loadMore = async () => {
+    if (loadingMore || loading || !hasMore || !messages.length) return;
+    setLoadingMore(true);
+    try {
+      const oldest = messages[0];
+      await fetchMessages(oldest.createdAt, true);
+    } catch (err) {
+      console.error('Failed to load older messages', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
   const sendMessage = async () => {
     if (!inputText.trim() || !socket || channelId === null) return;
     const user = JSON.parse(localStorage.getItem('clover_user') || '{}');
@@ -295,7 +340,7 @@ export const useChatChannel = (channelId: number | null): UseChatChannelResult =
     }
   };
 
-  return { messages, loading, inputText, setInputText, handleKeyDown, sendMessage };
+  return { messages, loading, loadingMore, hasMore, inputText, setInputText, handleKeyDown, sendMessage, loadMore };
 };
 
 export default useChatChannel;

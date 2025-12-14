@@ -7,19 +7,62 @@ interface ChatMessageListProps {
   loading: boolean;
   channelName: string;
   isCompact?: boolean;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
+  loadingMore?: boolean;
 }
 
-export const ChatMessageList = ({ messages, loading, channelName, isCompact = false }: ChatMessageListProps) => {
+export const ChatMessageList = ({
+  messages,
+  loading,
+  channelName,
+  isCompact = false,
+  onLoadMore,
+  hasMore = false,
+  loadingMore = false,
+}: ChatMessageListProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const prevHeightRef = useRef(0);
+  const prevFirstIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      const el = scrollRef.current;
+      const previousHeight = prevHeightRef.current;
+      const previousFirstId = prevFirstIdRef.current;
+      const isPrepend = previousFirstId !== null && messages[0]?.id !== previousFirstId;
+
+      if (isPrepend) {
+        const currentScroll = el.scrollTop;
+        el.scrollTop = el.scrollHeight - previousHeight + currentScroll;
+      } else {
+        el.scrollTop = el.scrollHeight;
+      }
+
+      prevHeightRef.current = el.scrollHeight;
+      prevFirstIdRef.current = messages[0]?.id ?? null;
     }
   }, [messages]);
 
+  const handleScroll = () => {
+    if (!scrollRef.current || !onLoadMore || !hasMore || loadingMore) return;
+    if (scrollRef.current.scrollTop < 120) {
+      onLoadMore();
+    }
+  };
+
   return (
-    <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-1 custom-scrollbar">
+    <div
+      ref={scrollRef}
+      className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-1 custom-scrollbar"
+      onScroll={handleScroll}
+    >
+      {loadingMore && (
+        <div className="flex justify-center py-2 text-gray-400 text-xs">
+          <Loader2 className="animate-spin mr-2" size={14} /> Ältere Nachrichten werden geladen...
+        </div>
+      )}
+
       {loading && (
         <div className="flex justify-center py-10">
           <Loader2 className="animate-spin text-primary" />
