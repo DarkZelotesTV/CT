@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { getServerPassword, getServerUrl } from '../utils/apiConfig';
+import { getServerPassword, getServerWebSocketUrl } from '../utils/apiConfig';
 import { computeFingerprint, signMessage } from '../auth/identity';
 
 export interface ChannelPresenceUser {
@@ -33,7 +33,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const identity = JSON.parse(rawIdentity);
     const setupSocket = async () => {
       const { signatureB64, timestamp } = await signMessage(identity, 'handshake');
-      const socketInstance = io(getServerUrl(), {
+      const socketInstance = io(getServerWebSocketUrl(), {
         auth: {
           fingerprint: computeFingerprint(identity),
           publicKey: identity.publicKeyB64,
