@@ -1,13 +1,28 @@
-export const DEFAULT_SERVER = 'http://localhost:3001';
 const SERVER_PASSWORD_KEY = 'clover_server_password';
 
+const getAppOrigin = () => {
+  if (typeof window !== "undefined" && window.location?.origin) {
+    return window.location.origin;
+  }
+
+  return "";
+};
+
+const getDefaultServerUrl = () => {
+  // Wenn keine Server-URL gesetzt ist, verwenden wir die Herkunft der geladenen App.
+  // So verbindet sich der Client automatisch mit der Instanz, von der aus er aufgerufen wurde.
+  return getAppOrigin() || 'http://localhost:3001';
+};
+
 export const getServerUrl = (): string => {
-  let url = localStorage.getItem('clover_server_url') || DEFAULT_SERVER;
-  return url.replace(/\/$/, "");
+  const stored = localStorage.getItem('clover_server_url');
+  const url = (stored && stored.trim()) || getDefaultServerUrl();
+
+  return url.trim().replace(/\/$/, "");
 };
 
 export const setServerUrl = (url: string) => {
-  localStorage.setItem('clover_server_url', url);
+  localStorage.setItem('clover_server_url', url.trim());
 };
 
 export const getServerPassword = (): string => {
@@ -22,14 +37,26 @@ export const setServerPassword = (password: string) => {
 
 const asUrl = (url: string) => new URL(url);
 
-const getServerUrlObject = () => {
+const normalizeServerUrl = (rawUrl: string) => {
+  const sanitizedUrl = rawUrl.trim();
+
   try {
-    return asUrl(getServerUrl());
-  } catch (error) {
-    console.error('Invalid server URL configured, falling back to default.', error);
-    return asUrl(DEFAULT_SERVER);
+    return asUrl(sanitizedUrl);
+  } catch (_err) {
+    // Allow users to omit the protocol (e.g. "example.com" or "10.0.0.5:3001").
+    // Default to the protocol of the loaded app (falls back to HTTP if unavailable)
+    const fallbackProtocol = (typeof window !== "undefined" && window.location?.protocol) || 'http:';
+    try {
+      return asUrl(`${fallbackProtocol}//${sanitizedUrl}`);
+    } catch (error) {
+      const fallback = getDefaultServerUrl();
+      console.error('Invalid server URL configured, falling back to app origin.', error);
+      return asUrl(fallback);
+    }
   }
 };
+
+const getServerUrlObject = () => normalizeServerUrl(getServerUrl());
 
 export const getServerWebSocketUrl = () => {
   const serverUrl = getServerUrlObject();
