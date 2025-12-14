@@ -1,10 +1,21 @@
-import * as ed from '@noble/ed25519';
 import crypto from 'crypto';
 import { User } from '../models/User';
 
-// noble braucht sha512 (Node liefert das über crypto)
-ed.hashes.sha512 = (msg: Uint8Array) => new Uint8Array(crypto.createHash('sha512').update(msg).digest());
-ed.hashes.sha512Async = async (msg: Uint8Array) => new Uint8Array(crypto.createHash('sha512').update(msg).digest());
+let edPromise: Promise<typeof import('@noble/ed25519')> | null = null;
+
+async function getEd() {
+  if (!edPromise) {
+    edPromise = import('@noble/ed25519').then((mod) => {
+      // noble braucht sha512 (Node liefert das über crypto)
+      mod.hashes.sha512 = (msg: Uint8Array) =>
+        new Uint8Array(crypto.createHash('sha512').update(msg).digest());
+      mod.hashes.sha512Async = async (msg: Uint8Array) =>
+        new Uint8Array(crypto.createHash('sha512').update(msg).digest());
+      return mod;
+    });
+  }
+  return edPromise;
+}
 
 function b64ToBuf(s: string) {
   return Buffer.from(s, 'base64');
@@ -76,6 +87,7 @@ export async function verifyIdentitySignature(payload: IdentityPayload) {
   const sig = b64ToBuf(payload.signatureB64);
   const pub = b64ToBuf(payload.publicKeyB64);
 
+  const ed = await getEd();
   const ok = await ed.verifyAsync(sig, message, pub);
   if (!ok) {
     const err: any = new Error('invalid signature');
