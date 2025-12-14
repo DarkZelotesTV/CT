@@ -19,6 +19,8 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.on("chat:docked", listener);
     return () => ipcRenderer.removeListener("chat:docked", listener);
   },
+  // FIX: Expose für Screen Sources
+  getScreenSources: () => ipcRenderer.invoke("media:getSources"),
 });
 
 export {};

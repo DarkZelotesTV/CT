@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell } from "electron";
+import { app, BrowserWindow, ipcMain, shell, desktopCapturer } from "electron";
 import path from "path";
 import fs from "fs";
 
@@ -13,7 +13,6 @@ const DEV_SERVER_URL =
 const PRELOAD_PATH = path.join(__dirname, "preload.cjs");
 
 // Renderer dist liegt typischerweise eine Ebene über dist-electron.
-// Passe das an, falls dein Output anders ist.
 const RENDERER_DIST = path.join(__dirname, "..", "dist");
 const INDEX_HTML = path.join(RENDERER_DIST, "index.html");
 
@@ -70,6 +69,16 @@ function createWindow() {
 
   mainWindow.once("ready-to-show", () => mainWindow?.show());
 
+  // FIX: Screen Share Handler für direkte Browser-Anfragen (als Fallback)
+  mainWindow.webContents.session.setDisplayMediaRequestHandler((request, callback) => {
+    desktopCapturer.getSources({ types: ['screen'] }).then((sources) => {
+      // Wählt automatisch den ersten Bildschirm, wenn kein Custom UI genutzt wird
+      callback({ video: sources[0] });
+    }).catch(() => {
+      callback(null as any);
+    });
+  });
+
   // Externe Links im Default Browser öffnen
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url).catch(() => {});
@@ -123,6 +132,24 @@ function registerIpc() {
       return app.getPath(name as any);
     } catch {
       return null;
+    }
+  });
+
+  // FIX: IPC Handler um Screen-Sources (Fenster/Bildschirme) abzurufen
+  ipcMain.handle("media:getSources", async () => {
+    try {
+      const sources = await desktopCapturer.getSources({
+        types: ["window", "screen"],
+        thumbnailSize: { width: 320, height: 180 },
+      });
+      return sources.map((s) => ({
+        id: s.id,
+        name: s.name,
+        thumbnail: s.thumbnail.toDataURL(),
+      }));
+    } catch (error) {
+      console.error("Error getting screen sources:", error);
+      return [];
     }
   });
 
@@ -183,7 +210,6 @@ function registerIpc() {
   });
 }
 
-// Single instance lock (optional, aber nice)
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
   app.quit();

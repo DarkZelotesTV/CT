@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Room, RoomEvent } from 'livekit-client';
+import { Room, RoomEvent, Track } from 'livekit-client';
 import { getLiveKitConfig } from '../utils/apiConfig';
 import { VoiceContext, VoiceContextType } from './voice-state';
 import { apiFetch } from '../api/http';
@@ -175,6 +175,48 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
 
     setIsPublishingScreen(true);
     setScreenShareError(null);
+
+    // FIX: Electron Detection & Handling
+    if ((window as any).electron && (window as any).electron.getScreenSources) {
+      try {
+        // 1. Quellen abrufen (hier könntest du später ein Modal einbauen)
+        const sources = await (window as any).electron.getScreenSources();
+        // Fallback: Nehme die erste Quelle (meist ganzer Bildschirm), wenn keine Auswahl erfolgt
+        const sourceId = sources[0]?.id;
+        
+        if (!sourceId) {
+          throw new Error("Keine Bildschirme gefunden.");
+        }
+
+        // 2. Stream manuell via getUserMedia holen (Chrome-Spezifisch für Electron)
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: false, // System-Audio erfordert komplexeres Routing in Electron
+          video: {
+            mandatory: {
+              chromeMediaSource: 'desktop',
+              chromeMediaSourceId: sourceId
+            }
+          } as any
+        });
+
+        // 3. Track in LiveKit publishen
+        await activeRoom.localParticipant.publishTrack(stream.getVideoTracks()[0], {
+          name: 'screen_share',
+          source: Track.Source.ScreenShare
+        });
+
+        syncLocalMediaState(activeRoom);
+      } catch (err: any) {
+        console.error('Electron Screenshare Error', err);
+        setScreenShareError(err?.message || 'Konnte Screenshare in App nicht starten.');
+        setIsScreenSharing(false);
+      } finally {
+        setIsPublishingScreen(false);
+      }
+      return;
+    }
+
+    // Standard Browser Fallback
     try {
       await activeRoom.localParticipant.setScreenShareEnabled(true, {
         audio: false,
