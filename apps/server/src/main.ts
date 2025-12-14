@@ -17,6 +17,7 @@ import { resolveUserFromIdentity } from './utils/identityAuth';
 const app = express();
 const httpServer = createServer(app);
 const channelPresence = new Map<number, Set<number>>();
+const channelPublicKeys = new Map<number, Map<number, string>>();
 
 // ==========================================
 // 1. CORS & MIDDLEWARE (Sicherheit lockern)
@@ -116,6 +117,12 @@ io.on('connection', async (socket) => {
       channelPresence.set(channelId, channelUsers);
     }
 
+    let channelKeys = channelPublicKeys.get(channelId);
+    if (!channelKeys) {
+      channelKeys = new Map<number, string>();
+      channelPublicKeys.set(channelId, channelKeys);
+    }
+
     const wasAlreadyPresent = channelUsers.has(numericUserId);
     channelUsers.add(numericUserId);
 
@@ -134,6 +141,7 @@ io.on('connection', async (socket) => {
       });
 
       socket.emit('channel_presence_snapshot', { channelId, users: activeUsers });
+      socket.emit('channel_public_keys', { channelId, keys: Array.from(channelKeys.entries()).map(([id, publicKey]) => ({ userId: id, publicKey })) });
     } catch (err) {
       console.error('Fehler bei Channel-Presence:', err);
     }
@@ -141,13 +149,44 @@ io.on('connection', async (socket) => {
     console.log(`Socket ${socket.id} joined channel_${channelId}`);
   });
 
+  socket.on('publish_public_key', (payload: { channelId?: number; publicKey?: string }) => {
+    if (!numericUserId) return;
+    if (!payload?.channelId || typeof payload.publicKey !== 'string') return;
+
+    const room = `channel_${payload.channelId}`;
+    const channelKeys = channelPublicKeys.get(payload.channelId) || new Map<number, string>();
+    channelKeys.set(numericUserId, payload.publicKey);
+    channelPublicKeys.set(payload.channelId, channelKeys);
+
+    socket.to(room).emit('channel_public_key', { channelId: payload.channelId, userId: numericUserId, publicKey: payload.publicKey });
+  });
+
+  socket.on('channel_key_share', (payload: { channelId?: number; toUserId?: number; encryptedKey?: string; iv?: string; senderPublicKey?: string }) => {
+    if (!numericUserId) return;
+    if (!payload?.channelId || typeof payload.toUserId !== 'number') return;
+    if (typeof payload.encryptedKey !== 'string' || typeof payload.iv !== 'string' || typeof payload.senderPublicKey !== 'string') return;
+
+    io.to(`channel_${payload.channelId}`).emit('channel_key_share', {
+      channelId: payload.channelId,
+      toUserId: payload.toUserId,
+      fromUserId: numericUserId,
+      encryptedKey: payload.encryptedKey,
+      iv: payload.iv,
+      senderPublicKey: payload.senderPublicKey,
+    });
+  });
+
   socket.on('send_message', async (data) => {
     try {
         const senderId = numericUserId;
         if (!senderId) throw new Error('unauthorized');
 
+        if (!data?.content || typeof data.content.ciphertext !== 'string' || typeof data.content.iv !== 'string') {
+          throw new Error('invalid payload');
+        }
+
         const msg = await Message.create({
-            content: data.content,
+            content: JSON.stringify({ ciphertext: data.content.ciphertext, iv: data.content.iv }),
             channel_id: data.channelId,
             user_id: senderId
         });
@@ -178,6 +217,12 @@ io.on('connection', async (socket) => {
       if (!presenceSet.size) channelPresence.delete(channelId);
       io.to(`channel_${channelId}`).emit('channel_presence_leave', { channelId, userId: numericUserId });
     }
+
+    const channelKeys = channelPublicKeys.get(channelId);
+    if (channelKeys?.has(numericUserId)) {
+      channelKeys.delete(numericUserId);
+      if (!channelKeys.size) channelPublicKeys.delete(channelId);
+    }
   });
 
   socket.on('disconnect', async () => {
@@ -194,6 +239,12 @@ io.on('connection', async (socket) => {
          }
          socket.leave(`channel_${ch}`);
          joinedChannels.delete(ch);
+
+         const channelKeys = channelPublicKeys.get(ch);
+         if (channelKeys?.has(numericUserId)) {
+           channelKeys.delete(numericUserId);
+           if (!channelKeys.size) channelPublicKeys.delete(ch);
+         }
        }
 
        try {
