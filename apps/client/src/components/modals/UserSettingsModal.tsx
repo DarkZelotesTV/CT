@@ -1,7 +1,24 @@
 import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { Camera, Check, Headphones, Mic, RefreshCw, Save, Settings, X } from 'lucide-react';
+import {
+  Camera,
+  Check,
+  Download,
+  Headphones,
+  Mic,
+  Play,
+  RefreshCw,
+  Save,
+  Settings,
+  ShieldAlert,
+  Upload,
+  Volume2,
+  X,
+} from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
+import { useVoice } from '../../context/voice-state';
+import { clearIdentity, computeFingerprint, createIdentity, formatFingerprint, loadIdentity, saveIdentity, type IdentityFile } from '../../auth/identity';
+import { buildBackupPayload, getBackupFilename, parseIdentityBackup } from '../../auth/identityBackup';
 
 const modifierKeys = ['Control', 'Shift', 'Alt', 'Meta'];
 
@@ -73,15 +90,34 @@ type DeviceLists = {
 
 export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
   const { settings, updateDevices, updateHotkeys, updateProfile } = useSettings();
+  const {
+    muted,
+    setMuted,
+    usePushToTalk,
+    setPushToTalk,
+    selectedAudioInputId,
+    selectedAudioOutputId,
+  } = useVoice();
   const [displayName, setDisplayName] = useState(settings.profile.displayName);
   const [avatarUrl, setAvatarUrl] = useState(settings.profile.avatarUrl);
-  const [audioInputId, setAudioInputId] = useState(settings.devices.audioInputId || '');
-  const [audioOutputId, setAudioOutputId] = useState(settings.devices.audioOutputId || '');
+  const [audioInputId, setAudioInputId] = useState(settings.devices.audioInputId || selectedAudioInputId || '');
+  const [audioOutputId, setAudioOutputId] = useState(settings.devices.audioOutputId || selectedAudioOutputId || '');
   const [videoInputId, setVideoInputId] = useState(settings.devices.videoInputId || '');
   const [pushToTalk, setPushToTalk] = useState(settings.hotkeys.pushToTalk || '');
   const [muteToggle, setMuteToggle] = useState(settings.hotkeys.muteToggle || '');
   const [deviceLists, setDeviceLists] = useState<DeviceLists>({ audioInputs: [], audioOutputs: [], videoInputs: [] });
   const [deviceError, setDeviceError] = useState<string | null>(null);
+  const [pushToTalkEnabled, setPushToTalkEnabled] = useState(usePushToTalk);
+  const [locallyMuted, setLocallyMuted] = useState(muted);
+  const [inputLevel, setInputLevel] = useState(0);
+  const [sensitivity, setSensitivity] = useState(1);
+  const [meterError, setMeterError] = useState<string | null>(null);
+  const [isTestingOutput, setIsTestingOutput] = useState(false);
+  const [outputError, setOutputError] = useState<string | null>(null);
+  const [identity, setIdentity] = useState<IdentityFile | null>(() => loadIdentity());
+  const [identityName, setIdentityName] = useState(identity?.displayName ?? '');
+  const [backupPassphrase, setBackupPassphrase] = useState('');
+  const [identityError, setIdentityError] = useState<string | null>(null);
 
   const refreshDevices = useCallback(async () => {
     if (!navigator.mediaDevices?.enumerateDevices) {
@@ -106,13 +142,166 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
     refreshDevices();
   }, [refreshDevices]);
 
+  useEffect(() => {
+    let stream: MediaStream | null = null;
+    let audioContext: AudioContext | null = null;
+    let analyser: AnalyserNode | null = null;
+    let sourceNode: MediaStreamAudioSourceNode | null = null;
+    let frame: number | null = null;
+    let smoothedLevel = 0;
+    let lastUpdate = 0;
+
+    const run = async () => {
+      try {
+        setMeterError(null);
+        stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: audioInputId || undefined } });
+        audioContext = new AudioContext();
+        sourceNode = audioContext.createMediaStreamSource(stream);
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        sourceNode.connect(analyser);
+        const data = new Uint8Array(analyser.frequencyBinCount);
+        const smoothing = 0.2;
+        const minInterval = 75;
+        const tick = (time: number) => {
+          if (!analyser) return;
+          if (time - lastUpdate < minInterval) {
+            frame = requestAnimationFrame(tick);
+            return;
+          }
+          analyser.getByteTimeDomainData(data);
+          let sum = 0;
+          for (let i = 0; i < data.length; i++) {
+            const value = data[i] - 128;
+            sum += value * value;
+          }
+          const rms = Math.sqrt(sum / data.length) / 128;
+          const level = Math.min(1, rms * 2 * sensitivity);
+          smoothedLevel = smoothedLevel + (level - smoothedLevel) * smoothing;
+          setInputLevel(smoothedLevel);
+          lastUpdate = time;
+          frame = requestAnimationFrame(tick);
+        };
+        tick(performance.now());
+      } catch (err: any) {
+        setMeterError(err?.message || 'Pegel konnte nicht gemessen werden.');
+        setInputLevel(0);
+      }
+    };
+
+    run();
+
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      sourceNode?.disconnect();
+      analyser?.disconnect();
+      stream?.getTracks().forEach((t) => t.stop());
+      if (audioContext) audioContext.close();
+    };
+  }, [audioInputId, sensitivity]);
+
   const avatarPreview = useMemo(() => {
     if (avatarUrl) return avatarUrl;
     if (settings.profile.avatarUrl) return settings.profile.avatarUrl;
     return '';
   }, [avatarUrl, settings.profile.avatarUrl]);
 
-  const handleSave = () => {
+  const levelPercent = useMemo(() => Math.round(inputLevel * 100), [inputLevel]);
+  const fingerprint = useMemo(() => (identity ? computeFingerprint(identity) : null), [identity]);
+
+  const handleTestOutput = useCallback(async () => {
+    setIsTestingOutput(true);
+    setOutputError(null);
+    try {
+      const ctx = new AudioContext();
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const destination = ctx.createMediaStreamDestination();
+      gain.gain.value = 0.1;
+      oscillator.type = 'sine';
+      oscillator.frequency.value = 440;
+      oscillator.connect(gain).connect(destination);
+      const audio = new Audio();
+      audio.srcObject = destination.stream as any;
+      if ('setSinkId' in audio && audioOutputId) {
+        await (audio as any).setSinkId(audioOutputId);
+      }
+      oscillator.start();
+      await ctx.resume();
+      await audio.play();
+      setTimeout(() => {
+        oscillator.stop();
+        ctx.close();
+        setIsTestingOutput(false);
+      }, 1200);
+    } catch (err: any) {
+      setOutputError(err?.message || 'Ausgabe konnte nicht getestet werden.');
+      setIsTestingOutput(false);
+    }
+  }, [audioOutputId]);
+
+  const persistIdentity = (nextIdentity: IdentityFile | null) => {
+    if (nextIdentity) saveIdentity(nextIdentity);
+    setIdentity(nextIdentity);
+  };
+
+  const handleCreateIdentity = async () => {
+    setIdentityError(null);
+    try {
+      const id = await createIdentity(identityName || undefined);
+      persistIdentity(id);
+    } catch (e: any) {
+      setIdentityError(e?.message ?? 'Identity konnte nicht erstellt werden');
+    }
+  };
+
+  const handleExportIdentity = () => {
+    if (!identity) return;
+    const pass = backupPassphrase.trim();
+    const doExport = async () => {
+      const payload = await buildBackupPayload(identity, pass);
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = getBackupFilename(!!pass);
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+    void doExport();
+  };
+
+  const handleImportIdentity = async (file: File) => {
+    setIdentityError(null);
+    try {
+      const text = await file.text();
+      const parsed = await parseIdentityBackup(text, () => window.prompt('Passphrase für dieses Backup?'));
+      const trimmed = (identityName ?? '').trim();
+      const next = { ...parsed, displayName: parsed.displayName ?? (trimmed ? trimmed : undefined) };
+      persistIdentity(next);
+      setIdentityName(next.displayName ?? '');
+    } catch (e: any) {
+      setIdentityError(e?.message ?? 'Import fehlgeschlagen');
+    }
+  };
+
+  const handleResetIdentity = () => {
+    clearIdentity();
+    localStorage.removeItem('clover_token');
+    localStorage.removeItem('clover_user');
+    localStorage.removeItem('ct.jwt');
+    localStorage.removeItem('clover_server_password');
+    setIdentityName('');
+    persistIdentity(null);
+  };
+
+  const handleSaveIdentityName = () => {
+    if (!identity) return;
+    const updated: IdentityFile = { ...identity, displayName: identityName || undefined };
+    persistIdentity(updated);
+  };
+
+  const handleSave = async () => {
     updateProfile({ displayName, avatarUrl });
     updateDevices({
       audioInputId: audioInputId || null,
@@ -123,6 +312,8 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
       pushToTalk: pushToTalk || null,
       muteToggle: muteToggle || null,
     });
+    await setPushToTalk(pushToTalkEnabled);
+    await setMuted(locallyMuted);
     onClose();
   };
 
@@ -260,6 +451,216 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
               <HotkeyInput label="Push-to-Talk" value={pushToTalk} onChange={setPushToTalk} />
               <HotkeyInput label="Mute Toggle" value={muteToggle} onChange={setMuteToggle} />
             </div>
+          </section>
+
+          <section className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Talk & Audio-Steuerung</div>
+                <p className="text-gray-400 text-sm">Passe Stummschaltung, Push-to-Talk und Ausgangstest an.</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="space-y-3 p-4 rounded-2xl border border-white/10 bg-white/5">
+                <div className="flex items-center justify-between">
+                  <div className="text-xs uppercase tracking-widest text-gray-500 font-bold flex items-center gap-2">
+                    <Volume2 size={14} /> Eingangspegel
+                  </div>
+                  <span className="text-cyan-400 text-xs font-semibold">{levelPercent}%</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min={0.5}
+                    max={2}
+                    step={0.1}
+                    value={sensitivity}
+                    onChange={(e) => setSensitivity(Number(e.target.value))}
+                    className="flex-1 accent-cyan-500"
+                  />
+                  <div className="text-[11px] text-gray-400 w-24 text-right">Empfindlichkeit: {sensitivity.toFixed(1)}x</div>
+                </div>
+                <div className="h-3 rounded-full bg-white/5 overflow-hidden border border-white/10">
+                  <div
+                    className="h-full bg-gradient-to-r from-green-400 via-yellow-400 to-red-500 transition-all"
+                    style={{ width: `${levelPercent}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-gray-500">
+                  <span className={meterError ? 'text-red-400' : ''}>
+                    {meterError || 'Sprich, um den Pegel zu prüfen.'}
+                  </span>
+                  <span className="text-cyan-400 font-semibold">{levelPercent}%</span>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10">
+                  <div>
+                    <div className="text-sm font-semibold text-white">Push-to-Talk</div>
+                    <p className="text-xs text-gray-400">Wenn aktiv, sendest du nur während der Tastenkombination.</p>
+                  </div>
+                  <button
+                    onClick={() => setPushToTalkEnabled((v) => !v)}
+                    className={`px-4 py-2 rounded-xl border ${pushToTalkEnabled ? 'border-cyan-400 bg-cyan-500/20 text-cyan-200' : 'border-white/10 text-gray-300 hover:text-white hover:border-white/30'}`}
+                  >
+                    {pushToTalkEnabled ? 'Aktiv' : 'Aus'}
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10">
+                  <div>
+                    <div className="text-sm font-semibold text-white">Gesamt-Stummschaltung</div>
+                    <p className="text-xs text-gray-400">Schalte dein Mikrofon dauerhaft stumm oder frei.</p>
+                  </div>
+                  <button
+                    onClick={() => setLocallyMuted((v) => !v)}
+                    className={`px-4 py-2 rounded-xl border ${locallyMuted ? 'border-red-400 bg-red-500/20 text-red-200' : 'border-green-400 bg-green-500/20 text-green-100'}`}
+                  >
+                    {locallyMuted ? 'Stumm' : 'Aktiv'}
+                  </button>
+                </div>
+
+                <div className="p-4 rounded-2xl border border-white/10 bg-white/5 space-y-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold text-white">Ausgabe testen</div>
+                      <p className="text-xs text-gray-400">Spiele einen kurzen Ton über den gewählten Lautsprecher ab.</p>
+                    </div>
+                    <button
+                      onClick={handleTestOutput}
+                      disabled={isTestingOutput}
+                      className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white flex items-center gap-2"
+                    >
+                      <Play size={16} /> {isTestingOutput ? 'Test läuft' : 'Testton'}
+                    </button>
+                  </div>
+                  {outputError && <div className="text-xs text-red-400">{outputError}</div>}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-4">
+            <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Identity</div>
+            <p className="text-gray-400 text-sm">Verwalte deine lokale Clover Identity direkt aus den Einstellungen.</p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-xs uppercase font-bold text-gray-400 block">Anzeigename (optional)</label>
+                <input
+                  type="text"
+                  value={identityName}
+                  onChange={(e) => setIdentityName(e.target.value)}
+                  placeholder="z.B. jusbe"
+                  className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                />
+                <button
+                  className="text-sm text-indigo-400 hover:text-indigo-300"
+                  onClick={handleSaveIdentityName}
+                  disabled={!identity}
+                >
+                  Anzeigename speichern
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-2 p-4 rounded-2xl bg-white/5 border border-white/10">
+                <div className="text-gray-400 text-sm">Fingerprint</div>
+                <div className="font-mono break-all text-gray-200 text-xs">
+                  {fingerprint ? formatFingerprint(fingerprint) : '–'}
+                </div>
+              </div>
+            </div>
+
+            {!identity ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  className="px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 transition text-white font-medium"
+                  onClick={handleCreateIdentity}
+                >
+                  Identity erstellen
+                </button>
+
+                <label className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition cursor-pointer text-center text-white font-medium">
+                  <div className="flex items-center justify-center gap-2">
+                    <Upload size={18} />
+                    <span>Identity importieren</span>
+                  </div>
+                  <input
+                    type="file"
+                    accept="application/json"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleImportIdentity(f);
+                    }}
+                  />
+                </label>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="text-sm bg-white/[0.02] border border-white/5 rounded-xl p-3">
+                    <div className="text-gray-400 mb-1">Erstellt</div>
+                    <div className="text-gray-200">{identity.createdAt ? new Date(identity.createdAt).toLocaleString() : '–'}</div>
+                  </div>
+
+                  <div className="text-sm bg-white/[0.02] border border-white/5 rounded-xl p-3">
+                    <div className="text-gray-400 mb-1">Public Key</div>
+                    <div className="font-mono break-all text-gray-200 text-xs">{identity.publicKeyB64}</div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs uppercase font-bold text-gray-400 block mb-1">Backup-Passphrase (optional)</label>
+                  <input
+                    type="password"
+                    value={backupPassphrase}
+                    onChange={(e) => setBackupPassphrase(e.target.value)}
+                    placeholder="Leer lassen für Klartext-Export"
+                    className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                  />
+                  <p className="text-[11px] text-gray-500 mt-1">Wenn gesetzt, wird dein Backup AES-GCM verschlüsselt (PBKDF2).</p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition text-white font-medium flex items-center justify-center gap-2"
+                    onClick={handleExportIdentity}
+                  >
+                    <Download size={18} />
+                    Export / Backup
+                  </button>
+
+                  <label className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition cursor-pointer text-center text-white font-medium">
+                    <div className="flex items-center justify-center gap-2">
+                      <Upload size={18} />
+                      <span>Import (ersetzen)</span>
+                    </div>
+                    <input
+                      type="file"
+                      accept="application/json"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleImportIdentity(f);
+                      }}
+                    />
+                  </label>
+
+                  <button
+                    className="px-4 py-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 transition text-red-100 font-medium flex items-center justify-center gap-2 sm:col-span-2"
+                    onClick={handleResetIdentity}
+                  >
+                    <ShieldAlert size={18} />
+                    Identity zurücksetzen
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {identityError && <div className="text-red-400 text-sm">{identityError}</div>}
           </section>
         </div>
 

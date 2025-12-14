@@ -1,17 +1,13 @@
 import { useMemo, useState } from 'react';
-import { Mic, Headphones, Settings, Shield } from 'lucide-react';
+import { Headphones, Settings } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import { UserSettingsModal } from '../modals/UserSettingsModal';
-import { TalkSettingsModal } from '../modals/TalkSettingsModal';
-import { IdentityModal } from '../modals/IdentityModal';
 import { useVoice } from '../../context/voice-state';
 
 export const UserBottomBar = () => {
   const { settings } = useSettings();
   const user = useMemo(() => JSON.parse(localStorage.getItem('clover_user') || '{}'), []);
   const [showSettings, setShowSettings] = useState(false);
-  const [showTalkSettings, setShowTalkSettings] = useState(false);
-  const [showIdentity, setShowIdentity] = useState(false);
 
   const { muted, setMuted } = useVoice();
 
@@ -39,23 +35,9 @@ export const UserBottomBar = () => {
           <button
             className={`p-1 rounded ${muted ? 'text-red-400 hover:text-red-300 bg-red-500/10' : 'text-gray-500 hover:text-cyan-400 hover:bg-cyan-900/30'}`}
             onClick={() => setMuted(!muted)}
-            title={muted ? 'Mikrofon aktivieren' : 'Mikrofon stummschalten'}
-          >
-            <Mic size={14} />
-          </button>
-          <button
-            className="p-1 hover:bg-cyan-900/30 rounded text-gray-500 hover:text-cyan-400"
-            onClick={() => setShowTalkSettings(true)}
-            title="Talk Settings"
+            title={muted ? 'Audio wieder einschalten' : 'Alles stummschalten'}
           >
             <Headphones size={14} />
-          </button>
-          <button
-            className="p-1 hover:bg-cyan-900/30 rounded text-gray-500 hover:text-cyan-400"
-            onClick={() => setShowIdentity(true)}
-            title="Identität"
-          >
-            <Shield size={14} />
           </button>
           <button
             className="p-1 hover:bg-cyan-900/30 rounded text-gray-500 hover:text-cyan-400"
@@ -68,13 +50,6 @@ export const UserBottomBar = () => {
       </div>
 
       {showSettings && <UserSettingsModal onClose={() => setShowSettings(false)} />}
-      {showTalkSettings && <TalkSettingsModal onClose={() => setShowTalkSettings(false)} />}
-      {showIdentity && (
-        <IdentityModal
-          onClose={() => setShowIdentity(false)}
-          onIdentityChanged={() => {}}
-        />
-      )}
     </>
   );
 };
