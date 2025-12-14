@@ -15,9 +15,10 @@ interface ChannelSidebarProps {
   activeChannelId: number | null;
   onSelectChannel: (channel: Channel) => void;
   onOpenServerSettings: () => void;
+  onResolveFallback?: (channel: Channel | null) => void;
 }
 
-export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onOpenServerSettings }: ChannelSidebarProps) => {
+export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onOpenServerSettings, onResolveFallback }: ChannelSidebarProps) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [uncategorized, setUncategorized] = useState<Channel[]>([]);
   const [serverName, setServerName] = useState('Server');
@@ -51,11 +52,23 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
       const srvRes = await apiFetch<any[]>(`/api/servers`);
       const current = srvRes.find((s: any) => s.id === serverId);
       if (current) setServerName(current.name);
-      const structRes = await apiFetch<{ categories: Category[]; uncategorized: Channel[] }>(`/api/servers/${serverId}/structure`);
+      const structRes = await apiFetch<{ categories: Category[]; uncategorized: Channel[]; fallbackChannelId?: number | null }>(`/api/servers/${serverId}/structure`);
       setCategories(structRes.categories);
       setUncategorized(structRes.uncategorized);
+
+      const allChannels = [...structRes.uncategorized, ...structRes.categories.flatMap((c) => c.channels)];
+      const fallbackChannel =
+        allChannels.find((c) => c.id === (structRes.fallbackChannelId ?? null) && c.type !== 'voice') ||
+        allChannels.find((c) => c.type !== 'voice') ||
+        null;
+
+      onResolveFallback?.(fallbackChannel ?? null);
+
+      if (!activeChannelId && fallbackChannel) {
+        onSelectChannel(fallbackChannel);
+      }
     } catch (e) {}
-  }, [serverId]);
+  }, [activeChannelId, onResolveFallback, onSelectChannel, serverId]);
   useEffect(() => { fetchData(); }, [fetchData]);
 
   // Click Handler: Voice Logik in den Hintergrund schieben

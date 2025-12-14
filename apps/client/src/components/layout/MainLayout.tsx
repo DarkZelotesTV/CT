@@ -22,7 +22,7 @@ import { ServerSettingsModal } from '../modals/ServerSettingsModal';
 import { CreateServerModal } from '../modals/CreateServerModal';
 import { JoinServerModal } from '../modals/JoinServerModal';
 
-import { useVoice } from '../../context/voice-state';
+import { useVoice, type VoiceContextType } from '../../context/voice-state';
 
 const defaultChannelWidth = 256;
 const defaultMemberWidth = 256;
@@ -52,6 +52,7 @@ export const MainLayout = () => {
   const dragState = useRef<{ startX: number; startWidth: number }>({ startX: 0, startWidth: 0 });
   const [selectedServerId, setSelectedServerId] = useState<number | null>(null);
   const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
+  const [fallbackChannel, setFallbackChannel] = useState<Channel | null>(null);
   const [homeView, setHomeView] = useState<'home' | 'friends'>('home');
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showServerSettings, setShowServerSettings] = useState(false);
@@ -59,7 +60,7 @@ export const MainLayout = () => {
   const [showJoinServer, setShowJoinServer] = useState(false);
 
   // Voice Context holen
-  const { activeRoom } = useVoice();
+  const { activeRoom, connectionState } = useVoice();
 
   const computedMaxSidebarWidth = useMemo(() => {
     if (!containerWidth) return maxSidebarWidth;
@@ -145,6 +146,26 @@ export const MainLayout = () => {
   }, [activeChannel?.id]);
 
   useEffect(() => {
+    if (!activeChannel && fallbackChannel) {
+      setActiveChannel(fallbackChannel);
+    }
+  }, [activeChannel, fallbackChannel]);
+
+  const previousConnectionState = useRef<VoiceContextType['connectionState'] | null>(null);
+
+  useEffect(() => {
+    const prev = previousConnectionState.current;
+
+    if (prev && prev !== 'disconnected' && connectionState === 'disconnected' && activeChannel?.type === 'voice') {
+      if (fallbackChannel) {
+        setActiveChannel(fallbackChannel);
+      }
+    }
+
+    previousConnectionState.current = connectionState;
+  }, [activeChannel, connectionState, fallbackChannel]);
+
+  useEffect(() => {
     // One-time tutorial after the first successful start.
     if (!localStorage.getItem('ct.onboarding.v1.done')) {
       setShowOnboarding(true);
@@ -191,6 +212,7 @@ export const MainLayout = () => {
   const handleServerSelect = (id: number | null) => {
     setSelectedServerId(id);
     setActiveChannel(null);
+    setFallbackChannel(null);
     setHomeView('home');
     setShowServerSettings(false);
   };
@@ -353,6 +375,7 @@ export const MainLayout = () => {
                 }
               }}
               onOpenServerSettings={() => setShowServerSettings(true)}
+              onResolveFallback={setFallbackChannel}
             />
           ) : (
             <DashboardSidebar />
