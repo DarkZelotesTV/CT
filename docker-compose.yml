@@ -1,10 +1,40 @@
 version: "3.9"
 
-# Dienste für lokale Entwicklung/Deployments. Starte mysql/redis/livekit vor dem
-# Server-Build (`npm run build --workspace apps/server`) und der Migration über
-# `npm run start --workspace apps/server`.
+# Dienste für lokale Entwicklung/Deployments.
+# HINWEIS: Der 'server' Service wurde ergänzt, damit die Config-Variable automatisch
+# an die App übergeben wird.
 
 services:
+  # --- Deine App (Node.js Server) ---
+  server:
+    # 'build: .' sucht nach einem Dockerfile im Hauptverzeichnis
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      # Datenbank-Verbindung (nutzt die Service-Namen als Host)
+      MYSQL_HOST: mysql
+      MYSQL_USER: clover_user
+      MYSQL_PASSWORD: clover_password
+      MYSQL_DATABASE: clover_talk
+      
+      # Redis-Verbindung
+      REDIS_HOST: redis
+      
+      # LiveKit API Keys (Müssen mit deiner livekit.yaml / .env übereinstimmen!)
+      LIVEKIT_API_KEY: devkey
+      LIVEKIT_API_SECRET: secret
+      
+      # WICHTIG: Hier ist die URL, die an den Client gesendet wird!
+      LIVEKIT_PUBLIC_URL: wss://mini.zimply.network:7880
+      
+    depends_on:
+      - mysql
+      - redis
+      - livekit
+
+  # --- LiveKit (Voice Server) ---
   livekit:
     image: livekit/livekit-server:v1.9.4
     command: --config /etc/livekit.yaml
@@ -18,6 +48,7 @@ services:
       - ./livekit.yaml:/etc/livekit.yaml:ro
     restart: unless-stopped
 
+  # --- Redis (Cache & Message Bus) ---
   redis:
     image: redis:7-alpine
     command: redis-server --save 60 1 --loglevel warning
@@ -27,11 +58,10 @@ services:
       - redis_data:/data
     restart: unless-stopped
 
+  # --- MySQL (Datenbank) ---
   mysql:
     image: mysql:8.0
     command: --default-authentication-plugin=mysql_native_password
-    # Nach dem Hochfahren kann der Server per `npm run start --workspace apps/server`
-    # die Tabellen via Sequelize-Sync anlegen.
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: clover_talk
@@ -43,6 +73,7 @@ services:
       - mysql_data:/var/lib/mysql
     restart: unless-stopped
 
+  # --- Admin Tool ---
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:latest
     depends_on:
@@ -55,7 +86,6 @@ services:
       PMA_USER: root
       PMA_PASSWORD: rootpassword
     restart: unless-stopped
-
 
 volumes:
   redis_data:
