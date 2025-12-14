@@ -282,7 +282,7 @@ export const ServerSettingsModal = ({ serverId, onClose }: ServerSettingsProps) 
   ];
 
   return createPortal(
-    <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center animate-in fade-in">
+    <div className="fixed inset-0 bg-gray-900 z-[100] flex items-center justify-center animate-in fade-in">
       <div className="bg-dark-100 w-[980px] h-[650px] rounded-lg shadow-2xl flex overflow-hidden border border-dark-400">
         <div className="w-64 bg-dark-200 p-4 flex flex-col">
           <h2 className="font-bold text-gray-400 uppercase text-xs mb-4 px-2">Einstellungen</h2>
