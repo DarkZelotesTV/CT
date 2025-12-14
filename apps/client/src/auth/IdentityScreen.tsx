@@ -6,9 +6,10 @@ import { IdentityModal } from "../components/modals/IdentityModal";
 
 type Props = {
   onAuthed: (user: { id: number; username?: string | null; displayName: string | null; fingerprint: string }) => void;
+  onIdentityChanged?: (identity: IdentityFile | null) => void;
 };
 
-export function IdentityScreen({ onAuthed }: Props) {
+export function IdentityScreen({ onAuthed, onIdentityChanged }: Props) {
   const [identity, setIdentity] = useState<IdentityFile | null>(() => loadIdentity());
   const [displayName, setDisplayName] = useState(identity?.displayName ?? "");
   const [busy, setBusy] = useState(false);
@@ -24,6 +25,7 @@ export function IdentityScreen({ onAuthed }: Props) {
     setDisplayName(next?.displayName ?? "");
     setErr(null);
     if (next) setShowIdentityModal(false);
+    onIdentityChanged?.(next);
   };
 
   async function handleLogin() {
@@ -54,6 +56,27 @@ export function IdentityScreen({ onAuthed }: Props) {
     }
   }
 
+  async function handleSkip() {
+    if (!identity) {
+      setErr("Bitte erst eine Identity erstellen oder importieren.");
+      setShowIdentityModal(true);
+      return;
+    }
+
+    const updated: IdentityFile = { ...identity, displayName: displayName || undefined };
+    saveIdentity(updated);
+    setIdentity(updated);
+    onIdentityChanged?.(updated);
+
+    const username = updated.displayName ?? (fp ? `local_${fp.slice(0, 6)}` : "offline_user");
+    onAuthed({
+      id: -1,
+      username,
+      displayName: updated.displayName ?? null,
+      fingerprint: computeFingerprint(updated),
+    });
+  }
+
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-[#050507] text-gray-200 p-6">
       <div className="w-full max-w-xl bg-white/[0.03] border border-white/10 rounded-3xl p-6">
@@ -61,23 +84,6 @@ export function IdentityScreen({ onAuthed }: Props) {
         <p className="text-sm text-gray-400 mb-6">
           Keine E-Mail, kein Passwort. Deine Identität ist ein lokaler Schlüssel (wie TS3).
         </p>
-
-        <label className="block text-sm text-gray-300 mb-2">Server Adresse</label>
-        <input
-          className="w-full rounded-xl bg-black/40 border border-white/10 p-3 mb-4 outline-none"
-          value={serverHost}
-          onChange={(e) => setServerHost(e.target.value)}
-          placeholder="http://localhost:3001"
-        />
-
-        <label className="block text-sm text-gray-300 mb-2">Server Passwort (optional)
-        </label>
-        <input
-          className="w-full rounded-xl bg-black/40 border border-white/10 p-3 mb-4 outline-none"
-          value={serverPassword}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Leer lassen wenn keins"
-        />
 
         <label className="block text-sm text-gray-300 mb-2">Anzeigename (optional)</label>
         <input
@@ -91,14 +97,12 @@ export function IdentityScreen({ onAuthed }: Props) {
           <div className="flex-1 text-sm">
             <div className="text-gray-400">Aktuelle Identity</div>
             {identity ? (
-              <div className="mt-1 font-mono break-all text-gray-200">
-                {formatFingerprint(fp!)}
-              </div>
+              <div className="mt-1 font-mono break-all text-gray-200">{formatFingerprint(fp!)}</div>
             ) : (
               <div className="mt-1 text-yellow-300">Keine Identity vorhanden.</div>
             )}
             <p className="text-gray-500 mt-2">
-              Du kannst deine Identity jederzeit verwalten oder importieren, ohne diese Seite zu verlassen.
+              Erstelle oder importiere zuerst eine Identity. Danach kannst du dich mit einem Server verbinden.
             </p>
           </div>
 
@@ -110,6 +114,31 @@ export function IdentityScreen({ onAuthed }: Props) {
           </button>
         </div>
 
+        {identity && (
+          <>
+            <label className="block text-sm text-gray-300 mb-2">Server Adresse</label>
+            <input
+              className="w-full rounded-xl bg-black/40 border border-white/10 p-3 mb-4 outline-none"
+              value={serverHost}
+              onChange={(e) => setServerHost(e.target.value)}
+              placeholder="http://localhost:3001"
+            />
+
+            <label className="block text-sm text-gray-300 mb-2">Server Passwort (optional)
+            </label>
+            <input
+              className="w-full rounded-xl bg-black/40 border border-white/10 p-3 mb-4 outline-none"
+              value={serverPassword}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Leer lassen wenn keins"
+            />
+          </>
+        )}
+
+        <div className="text-xs text-gray-500 mb-4">
+          Du kannst die Server-Verbindung überspringen und später in den Einstellungen setzen.
+        </div>
+
         <div className="flex flex-wrap gap-3">
           <button
             className="px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 transition disabled:opacity-50"
@@ -117,6 +146,13 @@ export function IdentityScreen({ onAuthed }: Props) {
             disabled={busy || !identity}
           >
             {busy ? "Verbinde..." : "Verbinden"}
+          </button>
+          <button
+            className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition disabled:opacity-50"
+            onClick={handleSkip}
+            disabled={!identity}
+          >
+            Später verbinden
           </button>
         </div>
 

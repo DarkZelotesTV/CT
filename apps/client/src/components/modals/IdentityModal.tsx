@@ -1,85 +1,12 @@
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Upload, ShieldAlert, Download } from 'lucide-react';
-import {
-  clearIdentity,
-  computeFingerprint,
-  createIdentity,
-  formatFingerprint,
-  loadIdentity,
-  saveIdentity,
-  type IdentityFile
-} from '../../auth/identity';
+import { clearIdentity, computeFingerprint, createIdentity, formatFingerprint, loadIdentity, saveIdentity, type IdentityFile } from '../../auth/identity';
+import { buildBackupPayload, getBackupFilename, parseIdentityBackup } from '../../auth/identityBackup';
 
 interface IdentityModalProps {
   onClose: () => void;
   onIdentityChanged?: (identity: IdentityFile | null) => void;
-}
-
-type EncryptedBackupV1 = {
-  kind: 'clover-identity-backup';
-  version: 1;
-  encrypted: true;
-  kdf: 'PBKDF2-SHA256';
-  iterations: number;
-  saltB64: string;
-  ivB64: string;
-  ciphertextB64: string;
-};
-
-const enc = new TextEncoder();
-const dec = new TextDecoder();
-
-function b64FromBytes(u8: Uint8Array): string {
-  let s = '';
-  for (let i = 0; i < u8.length; i++) s += String.fromCharCode(u8[i]);
-  return btoa(s);
-}
-
-function bytesFromB64(b64: string): Uint8Array {
-  const bin = atob(b64);
-  const out = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-  return out;
-}
-
-async function deriveAesKey(passphrase: string, salt: Uint8Array, iterations: number) {
-  const baseKey = await crypto.subtle.importKey('raw', enc.encode(passphrase), { name: 'PBKDF2' }, false, ['deriveKey']);
-  return crypto.subtle.deriveKey(
-    { name: 'PBKDF2', salt, iterations, hash: 'SHA-256' },
-    baseKey,
-    { name: 'AES-GCM', length: 256 },
-    false,
-    ['encrypt', 'decrypt']
-  );
-}
-
-async function encryptBackup(plaintext: string, passphrase: string): Promise<EncryptedBackupV1> {
-  const iterations = 150_000;
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const key = await deriveAesKey(passphrase, salt, iterations);
-  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(plaintext));
-  return {
-    kind: 'clover-identity-backup',
-    version: 1,
-    encrypted: true,
-    kdf: 'PBKDF2-SHA256',
-    iterations,
-    saltB64: b64FromBytes(salt),
-    ivB64: b64FromBytes(iv),
-    ciphertextB64: b64FromBytes(new Uint8Array(ct)),
-  };
-}
-
-async function decryptBackup(backup: EncryptedBackupV1, passphrase: string): Promise<string> {
-  const salt = bytesFromB64(backup.saltB64);
-  const iv = bytesFromB64(backup.ivB64);
-  const ct = bytesFromB64(backup.ciphertextB64);
-  const iterations = Number(backup.iterations) || 150_000;
-  const key = await deriveAesKey(passphrase, salt, iterations);
-  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
-  return dec.decode(pt);
 }
 
 export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps) => {
@@ -110,15 +37,13 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
     if (!identity) return;
     const pass = backupPassphrase.trim();
     const doExport = async () => {
-      const payload = pass
-        ? await encryptBackup(JSON.stringify(identity), pass)
-        : identity;
+      const payload = await buildBackupPayload(identity, pass);
 
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = pass ? 'clover-identity.backup.encrypted.json' : 'clover-identity.cloverid.json';
+      a.download = getBackupFilename(!!pass);
       a.click();
       URL.revokeObjectURL(url);
     };
@@ -129,20 +54,9 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
     setError(null);
     try {
       const text = await file.text();
-      const parsedAny: any = JSON.parse(text);
-
-      // Encrypted backup format
-      let parsed: any = parsedAny;
-      if (parsedAny?.kind === 'clover-identity-backup' && parsedAny?.encrypted) {
-        const pass = window.prompt('Passphrase für dieses Backup?') || '';
-        if (!pass.trim()) throw new Error('Passphrase fehlt');
-        const decrypted = await decryptBackup(parsedAny, pass.trim());
-        parsed = JSON.parse(decrypted);
-      }
-
-      if (!parsed?.publicKeyB64 || !parsed?.privateKeyB64) throw new Error('Ungültige Identity-Datei');
+      const parsed = await parseIdentityBackup(text, () => window.prompt('Passphrase für dieses Backup?'));
       const trimmed = (displayName ?? "").trim();
-      const next = { ...parsed, displayName: parsed.displayName ?? (trimmed ? trimmed : undefined) }; 
+      const next = { ...parsed, displayName: parsed.displayName ?? (trimmed ? trimmed : undefined) };
       persistIdentity(next);
       setDisplayName(next.displayName ?? '');
     } catch (e: any) {
