@@ -1,16 +1,15 @@
 const SERVER_PASSWORD_KEY = 'clover_server_password';
+const LIVEKIT_URL_KEY = 'clover_livekit_url'; // Neuer Key für LocalStorage
 
 const getAppOrigin = () => {
   if (typeof window !== "undefined" && window.location?.origin) {
     return window.location.origin;
   }
-
   return "";
 };
 
 const getDefaultServerUrl = () => {
   // Wenn keine Server-URL gesetzt ist, verwenden wir die Herkunft der geladenen App.
-  // So verbindet sich der Client automatisch mit der Instanz, von der aus er aufgerufen wurde.
   return getAppOrigin() || 'http://localhost:3001';
 };
 
@@ -43,8 +42,6 @@ const normalizeServerUrl = (rawUrl: string) => {
   try {
     return asUrl(sanitizedUrl);
   } catch (_err) {
-    // Allow users to omit the protocol (e.g. "example.com" or "10.0.0.5:3001").
-    // Default to the protocol of the loaded app (falls back to HTTP if unavailable)
     const fallbackProtocol = (typeof window !== "undefined" && window.location?.protocol) || 'http:';
     try {
       return asUrl(`${fallbackProtocol}//${sanitizedUrl}`);
@@ -72,14 +69,44 @@ export const getServerWebSocketUrl = () => {
 
 // --- LiveKit Configuration ---
 
-// Standard STUN-Server, damit Verbindungen auch ohne eigene Config meistens klappen
+// Standard STUN-Server
 const DEFAULT_ICE_SERVERS = [
   { urls: "stun:stun.l.google.com:19302" },
   { urls: "stun:stun1.l.google.com:19302" },
 ];
 
 export const getLiveKitConfig = () => {
-  // 1. URL aus Environment oder Fallback basierend auf der ausgewählten Server-URL
+  // ICE Server Konfiguration laden (gilt für beide Varianten)
+  let iceServers = DEFAULT_ICE_SERVERS;
+  const envIceServers = import.meta.env.VITE_ICE_SERVERS;
+
+  if (envIceServers) {
+    try {
+      const parsed = JSON.parse(envIceServers);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        iceServers = parsed;
+      }
+    } catch (e) {
+      console.error("Failed to parse VITE_ICE_SERVERS from .env", e);
+    }
+  }
+
+  // 1. NEU: Prüfen, ob wir eine dynamische URL vom Server erhalten haben
+  // Diese hat die allerhöchste Priorität!
+  const dynamicUrl = localStorage.getItem(LIVEKIT_URL_KEY);
+  
+  if (dynamicUrl && dynamicUrl.trim() !== "") {
+    return {
+      serverUrl: dynamicUrl,
+      connectOptions: {
+        rtcConfig: {
+          iceServers: iceServers,
+        },
+      },
+    };
+  }
+
+  // 2. Fallback: Alte Logik (Environment Variable oder Server-Host Ableitung)
   let url = import.meta.env.VITE_LIVEKIT_URL;
   const serverUrl = getServerUrlObject();
   const isSecure = serverUrl.protocol === 'https:' || serverUrl.protocol === 'wss:';
@@ -96,23 +123,8 @@ export const getLiveKitConfig = () => {
     }
   } else {
     url = fallbackUrl;
-    console.warn(`VITE_LIVEKIT_URL not set. Defaulting to ${url}`);
-  }
-
-  // 2. ICE Server Konfiguration laden
-  // Erlaubt das Überschreiben via .env (z.B. für eigene TURN Server)
-  let iceServers = DEFAULT_ICE_SERVERS;
-  const envIceServers = import.meta.env.VITE_ICE_SERVERS;
-
-  if (envIceServers) {
-    try {
-      const parsed = JSON.parse(envIceServers);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        iceServers = parsed;
-      }
-    } catch (e) {
-      console.error("Failed to parse VITE_ICE_SERVERS from .env", e);
-    }
+    // Warnung nur lokal interessant
+    // console.warn(`VITE_LIVEKIT_URL not set. Defaulting to ${url}`);
   }
 
   return {

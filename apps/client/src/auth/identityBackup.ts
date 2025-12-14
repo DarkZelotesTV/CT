@@ -1,97 +1,67 @@
-import { IdentityFile } from "./identity";
+import { IdentityFile, computeFingerprint, signMessage } from "./identity";
+import { getServerUrl, getServerPassword } from "../utils/apiConfig";
 
-export type EncryptedBackupV1 = {
-  kind: "clover-identity-backup";
-  version: 1;
-  encrypted: true;
-  kdf: "PBKDF2-SHA256";
-  iterations: number;
-  saltB64: string;
-  ivB64: string;
-  ciphertextB64: string;
-};
-
-const enc = new TextEncoder();
-const dec = new TextDecoder();
-
-function b64FromBytes(u8: Uint8Array): string {
-  let s = "";
-  for (let i = 0; i < u8.length; i++) s += String.fromCharCode(u8[i]);
-  return btoa(s);
+// Hilfs-Interface für die erweiterte Server-Antwort
+interface HandshakeResponse {
+  user: { id: number; username?: string | null; displayName: string | null; fingerprint: string };
+  access: { passwordRequired: boolean };
+  config?: { livekitUrl?: string }; // Das Feld ist optional, falls ältere Server antworten
 }
 
-function bytesFromB64(b64: string): Uint8Array {
-  const bin = atob(b64);
-  const out = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-  return out;
+async function postJson<T>(baseUrl: string, path: string, body: any): Promise<T> {
+  const res = await fetch(`${baseUrl}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}`);
+  return json as T;
 }
 
-const toArrayBuffer = (view: Uint8Array): ArrayBuffer => {
-  const copy = new Uint8Array(view.byteLength);
-  copy.set(view);
-  return copy.buffer;
-};
+export async function performHandshake(id: IdentityFile, serverPassword?: string) {
+  const serverUrl = getServerUrl();
+  const { signatureB64, timestamp } = await signMessage(id, "handshake");
 
-async function deriveAesKey(passphrase: string, salt: Uint8Array, iterations: number) {
-  const baseKey = await crypto.subtle.importKey("raw", enc.encode(passphrase), { name: "PBKDF2" }, false, ["deriveKey"]);
-  return crypto.subtle.deriveKey(
-    { name: "PBKDF2", salt: toArrayBuffer(salt), iterations, hash: "SHA-256" },
-    baseKey,
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["encrypt", "decrypt"]
-  );
-}
-
-export async function encryptBackup(plaintext: string, passphrase: string): Promise<EncryptedBackupV1> {
-  const iterations = 150_000;
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const key = await deriveAesKey(passphrase, salt, iterations);
-  const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, enc.encode(plaintext));
-  return {
-    kind: "clover-identity-backup",
-    version: 1,
-    encrypted: true,
-    kdf: "PBKDF2-SHA256",
-    iterations,
-    saltB64: b64FromBytes(salt),
-    ivB64: b64FromBytes(iv),
-    ciphertextB64: b64FromBytes(new Uint8Array(ct)),
+  const payload = {
+    publicKey: id.publicKeyB64,
+    fingerprint: computeFingerprint(id),
+    displayName: id.displayName ?? null,
+    serverPassword: serverPassword || null,
+    signature: signatureB64,
+    timestamp,
   };
-}
 
-export async function decryptBackup(backup: EncryptedBackupV1, passphrase: string): Promise<string> {
-  const salt = bytesFromB64(backup.saltB64);
-  const iv = bytesFromB64(backup.ivB64);
-  const ct = bytesFromB64(backup.ciphertextB64);
-  const iterations = Number(backup.iterations) || 150_000;
-  const key = await deriveAesKey(passphrase, salt, iterations);
-  const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: toArrayBuffer(iv) }, key, toArrayBuffer(ct));
-  return dec.decode(pt);
-}
+  // Wir nutzen den generischen Typ HandshakeResponse
+  const response = await postJson<HandshakeResponse>(serverUrl, "/api/auth/handshake", payload);
 
-export function getBackupFilename(encrypted: boolean) {
-  return encrypted ? "clover-identity.backup.encrypted.json" : "clover-identity.cloverid.json";
-}
-
-export async function parseIdentityBackup(text: string, askPassphrase?: () => string | null): Promise<IdentityFile> {
-  const parsedAny: any = JSON.parse(text);
-  let parsed: any = parsedAny;
-
-  if (parsedAny?.kind === "clover-identity-backup" && parsedAny?.encrypted) {
-    const pass = (askPassphrase?.() ?? "").trim();
-    if (!pass) throw new Error("Passphrase fehlt");
-    const decrypted = await decryptBackup(parsedAny, pass);
-    parsed = JSON.parse(decrypted);
+  // NEU: Wenn der Server eine LiveKit URL mitsendet, speichern wir sie lokal
+  if (response.config?.livekitUrl) {
+    console.log("[Auth] Received Voice Config from Server:", response.config.livekitUrl);
+    localStorage.setItem('clover_livekit_url', response.config.livekitUrl);
+  } else {
+    // Falls der Server nichts schickt (oder leer), entfernen wir alte Einträge, um Konflikte zu vermeiden
+    localStorage.removeItem('clover_livekit_url');
   }
 
-  if (!parsed?.publicKeyB64 || !parsed?.privateKeyB64) throw new Error("Ungültige Identity-Datei");
-  return parsed as IdentityFile;
+  return response;
 }
 
-export async function buildBackupPayload(identity: IdentityFile, passphrase?: string) {
-  if (!passphrase?.trim()) return identity;
-  return encryptBackup(JSON.stringify(identity), passphrase.trim());
+export async function buildIdentityHeaders(): Promise<Headers> {
+  const headers = new Headers();
+  const storedPassword = getServerPassword();
+  const rawIdentity = localStorage.getItem("ct.identity.v1");
+  if (!rawIdentity) return headers;
+
+  const identity = JSON.parse(rawIdentity) as IdentityFile;
+  const { signatureB64, timestamp } = await signMessage(identity, "handshake");
+
+  headers.set("X-Server-Password", storedPassword || "");
+  headers.set("X-Identity-PublicKey", identity.publicKeyB64);
+  headers.set("X-Identity-Fingerprint", computeFingerprint(identity));
+  headers.set("X-Identity-DisplayName", identity.displayName ?? "");
+  headers.set("X-Identity-Signature", signatureB64);
+  headers.set("X-Identity-Timestamp", String(timestamp));
+
+  return headers;
 }
