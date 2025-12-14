@@ -94,9 +94,10 @@ export const VoiceMediaStage = ({ layout }: { layout: LayoutMode }) => {
         >
           <ParticipantTile
             trackRef={{ participant, source: Track.Source.ScreenShare }}
-            className="min-h-[240px]"
+            className="min-h-[240px] w-full h-full"
+            style={{ width: '100%', height: '100%' }}
           />
-          <div className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 text-xs text-white">
+          <div className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 text-xs text-white pointer-events-none">
             <Monitor size={14} />
             <span className="font-semibold truncate">
               Screenshare: {participant.name || participant.identity || 'Unbekannt'}
@@ -113,9 +114,10 @@ export const VoiceMediaStage = ({ layout }: { layout: LayoutMode }) => {
                 participant: focusParticipant,
                 source: focusParticipant.isScreenShareEnabled ? Track.Source.ScreenShare : Track.Source.Camera,
               }}
-              className="h-full"
+              className="h-full w-full"
+              style={{ width: '100%', height: '100%' }}
             />
-            <div className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 text-xs text-white">
+            <div className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 text-xs text-white pointer-events-none">
               <Volume2 size={14} className="text-green-400" />
               <span className="font-semibold truncate">
                 {focusParticipant.name || focusParticipant.identity || (focusParticipant.isLocal ? 'Du' : 'Teilnehmer')}
@@ -128,9 +130,13 @@ export const VoiceMediaStage = ({ layout }: { layout: LayoutMode }) => {
               .map((participant: any) => (
                 <div
                   key={participant.sid || participant.identity}
-                  className="rounded-2xl overflow-hidden border border-white/10 bg-black/30 min-h-[160px]"
+                  className="relative rounded-2xl overflow-hidden border border-white/10 bg-black/30 min-h-[160px]"
                 >
-                  <ParticipantTile trackRef={{ participant, source: Track.Source.Camera }} />
+                  <ParticipantTile 
+                    trackRef={{ participant, source: Track.Source.Camera }}
+                    className="w-full h-full absolute inset-0"
+                    style={{ width: '100%', height: '100%' }}
+                  />
                 </div>
               ))}
           </div>
@@ -140,11 +146,15 @@ export const VoiceMediaStage = ({ layout }: { layout: LayoutMode }) => {
           {videoParticipants.map((participant: any) => (
             <div
               key={participant.sid || participant.identity || participant.name}
-              className={`rounded-2xl overflow-hidden border border-white/10 bg-black/30 min-h-[200px] ${
+              className={`relative rounded-2xl overflow-hidden border border-white/10 bg-black/30 min-h-[200px] ${
                 participant.sid === localParticipantId ? 'shadow-lg shadow-cyan-500/20' : ''
               }`}
             >
-              <ParticipantTile trackRef={{ participant, source: Track.Source.Camera }} />
+              <ParticipantTile 
+                trackRef={{ participant, source: Track.Source.Camera }} 
+                className="w-full h-full absolute inset-0"
+                style={{ width: '100%', height: '100%' }}
+              />
             </div>
           ))}
         </div>

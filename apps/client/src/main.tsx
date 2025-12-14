@@ -2,6 +2,12 @@ import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 
+// --------------------------------------------------------
+// FÜGE DIESE ZEILE HINZU (Fix für schwarze Videos):
+import '@livekit/components-styles'; 
+import '@livekit/components-styles/prefabs'; // Optional, für bessere Layouts
+// --------------------------------------------------------
+
 import { IdentityGate } from './auth/IdentityGate';
 import { SocketProvider } from './context/SocketContext.tsx';
 import { SettingsProvider } from './context/SettingsContext';

@@ -68,3 +68,17 @@ label,
 .cursor-pointer {
   -webkit-app-region: no-drag !important;
 }
+
+video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* oder cover, je nach Bedarf */
+}
+
+/* Spezifisch für LiveKit Tiles */
+.lk-participant-tile video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
