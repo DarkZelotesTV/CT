@@ -3,18 +3,28 @@ import { io, Socket } from 'socket.io-client';
 import { getServerPassword, getServerUrl } from '../utils/apiConfig';
 import { computeFingerprint, signMessage } from '../auth/identity';
 
+export interface ChannelPresenceUser {
+  id: number;
+  username: string;
+  avatar_url?: string;
+  status?: 'online' | 'offline';
+  isSpeaking?: boolean;
+}
+
 interface SocketContextType {
   socket: Socket | null;
   isConnected: boolean;
+  channelPresence: Record<number, ChannelPresenceUser[]>;
 }
 
-const SocketContext = createContext<SocketContextType>({ socket: null, isConnected: false });
+const SocketContext = createContext<SocketContextType>({ socket: null, isConnected: false, channelPresence: {} });
 
 export const useSocket = () => useContext(SocketContext);
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [channelPresence, setChannelPresence] = useState<Record<number, ChannelPresenceUser[]>>({});
 
   useEffect(() => {
     const rawIdentity = localStorage.getItem('ct.identity.v1');
@@ -42,6 +52,37 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       socketInstance.on('disconnect', () => {
         console.log("Socket getrennt.");
         setIsConnected(false);
+        setChannelPresence({});
+      });
+
+      socketInstance.on('channel_presence_snapshot', ({ channelId, users }) => {
+        setChannelPresence((prev) => ({ ...prev, [channelId]: users }));
+      });
+
+      socketInstance.on('channel_presence_join', ({ channelId, user }) => {
+        setChannelPresence((prev) => {
+          const existing = prev[channelId] || [];
+          if (existing.some((u) => u.id === user.id)) return prev;
+          return { ...prev, [channelId]: [...existing, user] };
+        });
+      });
+
+      socketInstance.on('channel_presence_leave', ({ channelId, userId }) => {
+        setChannelPresence((prev) => {
+          const existing = prev[channelId] || [];
+          return { ...prev, [channelId]: existing.filter((u) => u.id !== userId) };
+        });
+      });
+
+      socketInstance.on('user_status_change', ({ userId, status }) => {
+        setChannelPresence((prev) => {
+          const next: Record<number, ChannelPresenceUser[]> = { ...prev };
+          Object.entries(prev).forEach(([chId, users]) => {
+            const updatedUsers = users.map((u) => (u.id === userId ? { ...u, status } : u));
+            next[Number(chId)] = updatedUsers;
+          });
+          return next;
+        });
       });
 
       setSocket(socketInstance);
@@ -58,7 +99,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <SocketContext.Provider value={{ socket, isConnected }}>
+    <SocketContext.Provider value={{ socket, isConnected, channelPresence }}>
       {children}
     </SocketContext.Provider>
   );
