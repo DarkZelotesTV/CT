@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, PhoneOff } from 'lucide-react';
+import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, PhoneOff, Camera, ScreenShare } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { CreateChannelModal } from '../modals/CreateChannelModal';
 import { UserBottomBar } from './UserBottomBar';
@@ -28,7 +28,21 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   const [hoveredChannelId, setHoveredChannelId] = useState<number | null>(null);
 
   // CONTEXT NUTZEN
-  const { connectToChannel, activeChannelId: voiceChannelId, connectionState, activeChannelName, disconnect } = useVoice();
+  const {
+    connectToChannel,
+    activeChannelId: voiceChannelId,
+    connectionState,
+    activeChannelName,
+    disconnect,
+    isCameraEnabled,
+    isScreenSharing,
+    toggleCamera,
+    toggleScreenShare,
+    cameraError,
+    screenShareError,
+    isPublishingCamera,
+    isPublishingScreen,
+  } = useVoice();
   const { channelPresence } = useSocket();
 
   const fetchData = useCallback(async () => {
@@ -164,22 +178,62 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
 
         {/* --- STATUS PANEL (Verbindung) --- */}
         {connectionState === 'connected' && (
-           <div className="bg-[#111214] border-t border-b border-white/5 p-2.5 flex items-center justify-between">
-               <div className="flex flex-col overflow-hidden mr-2">
-                   <div className="text-green-500 text-[10px] font-bold uppercase flex items-center gap-1.5 mb-0.5">
-                      <Mic size={10} className="animate-pulse" /> Verbunden
-                   </div>
-                   <div className="text-white text-xs font-bold truncate">{activeChannelName}</div>
-               </div>
-               
-               <button 
-                  onClick={(e) => { e.stopPropagation(); disconnect().catch(console.error); }}
+          <div className="bg-[#111214] border-t border-b border-white/5 p-2.5 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-col overflow-hidden mr-2">
+                <div className="text-green-500 text-[10px] font-bold uppercase flex items-center gap-1.5 mb-0.5">
+                  <Mic size={10} className="animate-pulse" /> Verbunden
+                </div>
+                <div className="text-white text-xs font-bold truncate">{activeChannelName}</div>
+                {(cameraError || screenShareError) && (
+                  <div className="text-[10px] text-red-400 truncate">{cameraError || screenShareError}</div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleCamera().catch(console.error);
+                  }}
+                  className={`w-8 h-8 flex items-center justify-center rounded-lg border text-xs transition-colors ${
+                    isCameraEnabled
+                      ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-200'
+                      : 'bg-white/5 border-white/10 text-gray-300 hover:text-white'
+                  } ${isPublishingCamera ? 'opacity-60 cursor-wait' : ''}`}
+                  title={isCameraEnabled ? 'Kamera stoppen' : 'Kamera starten'}
+                  disabled={isPublishingCamera}
+                >
+                  <Camera size={14} />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleScreenShare().catch(console.error);
+                  }}
+                  className={`w-8 h-8 flex items-center justify-center rounded-lg border text-xs transition-colors ${
+                    isScreenSharing
+                      ? 'bg-indigo-500/10 border-indigo-500/40 text-indigo-200'
+                      : 'bg-white/5 border-white/10 text-gray-300 hover:text-white'
+                  } ${isPublishingScreen ? 'opacity-60 cursor-wait' : ''}`}
+                  title={isScreenSharing ? 'Screen-Sharing stoppen' : 'Screen teilen'}
+                  disabled={isPublishingScreen}
+                >
+                  <ScreenShare size={14} />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    disconnect().catch(console.error);
+                  }}
                   className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"
                   title="Auflegen"
-               >
+                >
                   <PhoneOff size={16} />
-               </button>
-           </div>
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         <VoiceParticipantsPanel />

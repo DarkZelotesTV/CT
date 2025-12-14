@@ -15,6 +15,7 @@ import { FriendListStage } from '../dashboard/FriendListStage';
 import { WebChannelView } from '../server/WebChannelView';
 import { HomeOnboardingStage } from '../dashboard/HomeOnboardingStage';
 import { ChatChannelView } from '../server/ChatChannelView';
+import { VoiceChannelView } from '../voice/VoiceChannelView';
 
 import { OnboardingModal } from '../modals/OnboardingModal';
 import { ServerSettingsModal } from '../modals/ServerSettingsModal';
@@ -276,6 +277,10 @@ export const MainLayout = () => {
           onOpenMembers={() => setShowMemberSheet(true)}
         />
       );
+    }
+
+    if (activeChannel?.type === 'voice') {
+      return <VoiceChannelView channelName={activeChannel.name} />;
     }
 
     return (
