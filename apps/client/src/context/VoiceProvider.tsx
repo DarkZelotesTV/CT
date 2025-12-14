@@ -38,11 +38,32 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
 
   const isConnecting = useRef(false);
   const attemptRef = useRef(0);
+  const reconnectAttemptsRef = useRef(0);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const manualDisconnectRef = useRef(false);
+  const lastChannelRef = useRef<{ id: number; name: string } | null>(null);
+  const lastDisconnectReasonRef = useRef<string | null>(null);
+  const desiredMediaStateRef = useRef({
+    muted: settings.talk.muted,
+    micMuted: settings.talk.micMuted,
+    pushToTalk: settings.talk.pushToTalkEnabled,
+    cameraEnabled: false,
+    screenSharing: false,
+  });
+
+  const MAX_RECONNECT_ATTEMPTS = 3;
+  const BASE_RECONNECT_DELAY = 1000;
 
   useEffect(() => {
     setMutedState(settings.talk.muted);
     setMicMutedState(settings.talk.micMuted);
     setUsePushToTalkState(settings.talk.pushToTalkEnabled);
+    desiredMediaStateRef.current = {
+      ...desiredMediaStateRef.current,
+      muted: settings.talk.muted,
+      micMuted: settings.talk.micMuted,
+      pushToTalk: settings.talk.pushToTalkEnabled,
+    };
   }, [settings.talk.micMuted, settings.talk.muted, settings.talk.pushToTalkEnabled]);
 
   const syncLocalMediaState = useCallback((room: Room | null) => {
@@ -50,6 +71,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       setIsCameraEnabled(false);
       setIsScreenSharing(false);
       setLocalParticipantId(null);
+      desiredMediaStateRef.current = { ...desiredMediaStateRef.current, cameraEnabled: false, screenSharing: false };
       return;
     }
 
@@ -57,6 +79,11 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
     setIsCameraEnabled(!!local?.isCameraEnabled);
     setIsScreenSharing(!!local?.isScreenShareEnabled);
     setLocalParticipantId(local?.sid || local?.identity || null);
+    desiredMediaStateRef.current = {
+      ...desiredMediaStateRef.current,
+      cameraEnabled: !!local?.isCameraEnabled,
+      screenSharing: !!local?.isScreenShareEnabled,
+    };
   }, []);
 
   const applyMicrophoneState = useCallback(
@@ -81,6 +108,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       setMutedState(nextMuted);
       updateTalk({ muted: nextMuted });
       if (nextMuted) setIsTalking(false);
+       desiredMediaStateRef.current = { ...desiredMediaStateRef.current, muted: nextMuted };
       if (activeRoom) await applyMicrophoneState(activeRoom, { muted: nextMuted, talking: false });
     },
     [activeRoom, applyMicrophoneState, updateTalk]
@@ -91,6 +119,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       setMicMutedState(nextMuted);
       updateTalk({ micMuted: nextMuted });
       if (nextMuted) setIsTalking(false);
+      desiredMediaStateRef.current = { ...desiredMediaStateRef.current, micMuted: nextMuted };
       if (activeRoom) await applyMicrophoneState(activeRoom, { micMuted: nextMuted, talking: false });
     },
     [activeRoom, applyMicrophoneState, updateTalk]
@@ -101,6 +130,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       setUsePushToTalkState(enabled);
       updateTalk({ pushToTalkEnabled: enabled });
       if (!enabled) setIsTalking(false);
+      desiredMediaStateRef.current = { ...desiredMediaStateRef.current, pushToTalk: enabled };
       if (activeRoom) await applyMicrophoneState(activeRoom, { pushToTalk: enabled, talking: false });
     },
     [activeRoom, applyMicrophoneState, updateTalk]
@@ -117,8 +147,9 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
   }, [activeRoom, applyMicrophoneState]);
 
   const startCamera = useCallback(
-    async (quality: 'low' | 'medium' | 'high' = 'medium') => {
-      if (!activeRoom) {
+    async (quality: 'low' | 'medium' | 'high' = 'medium', targetRoom?: Room | null) => {
+      const roomToUse = targetRoom ?? activeRoom;
+      if (!roomToUse) {
         setCameraError('Keine aktive Voice-Verbindung für Video verfügbar.');
         return;
       }
@@ -128,12 +159,13 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
 
       try {
         const preset = qualityPresets[quality] || qualityPresets.medium;
-        await activeRoom.localParticipant.setCameraEnabled(true, {
+        await roomToUse.localParticipant.setCameraEnabled(true, {
           deviceId: settings.devices.videoInputId ?? undefined,
           resolution: preset.resolution,
           frameRate: preset.frameRate,
         });
-        syncLocalMediaState(activeRoom);
+        desiredMediaStateRef.current = { ...desiredMediaStateRef.current, cameraEnabled: true };
+        syncLocalMediaState(roomToUse);
       } catch (err: any) {
         console.error('Kamera konnte nicht gestartet werden', err);
         setCameraError(err?.message || 'Kamera konnte nicht gestartet werden.');
@@ -154,6 +186,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
     setIsPublishingCamera(true);
     try {
       await activeRoom.localParticipant.setCameraEnabled(false);
+      desiredMediaStateRef.current = { ...desiredMediaStateRef.current, cameraEnabled: false };
       syncLocalMediaState(activeRoom);
     } catch (err: any) {
       console.error('Kamera konnte nicht gestoppt werden', err);
@@ -172,14 +205,18 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
   }, [isCameraEnabled, startCamera, stopCamera]);
 
   const startScreenShare = useCallback(
-    async (options?: {
-      sourceId?: string;
-      quality?: 'low' | 'medium' | 'high';
-      frameRate?: number;
-      track?: MediaStreamTrack;
-      withAudio?: boolean;
-    }) => {
-      if (!activeRoom) {
+    async (
+      options?: {
+        sourceId?: string;
+        quality?: 'low' | 'medium' | 'high';
+        frameRate?: number;
+        track?: MediaStreamTrack;
+        withAudio?: boolean;
+      },
+      targetRoom?: Room | null
+    ) => {
+      const roomToUse = targetRoom ?? activeRoom;
+      if (!roomToUse) {
         setScreenShareError('Keine aktive Voice-Verbindung für Screen-Sharing.');
         return;
       }
@@ -265,7 +302,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
             throw new Error('Kein Videotrack für Screenshare gefunden.');
           }
 
-          await activeRoom.localParticipant.publishTrack(selectedTrack, {
+          await roomToUse.localParticipant.publishTrack(selectedTrack, {
             name: 'screen_share',
             source: Track.Source.ScreenShare,
           });
@@ -273,7 +310,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
           if (shouldShareAudio) {
             const filteredAudioTrack = applySystemAudioFilter(systemAudioTrack);
             if (filteredAudioTrack && filteredAudioTrack.readyState !== 'ended') {
-              await activeRoom.localParticipant.publishTrack(filteredAudioTrack, {
+              await roomToUse.localParticipant.publishTrack(filteredAudioTrack, {
                 name: 'screen_share_audio',
                 source: Track.Source.ScreenShareAudio,
               });
@@ -286,7 +323,8 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
 
           publishedScreenTracksRef.current.push(selectedTrack);
 
-          syncLocalMediaState(activeRoom);
+          desiredMediaStateRef.current = { ...desiredMediaStateRef.current, screenSharing: true };
+          syncLocalMediaState(roomToUse);
         } catch (err: any) {
           console.error('Electron Screenshare Error', err);
           setScreenShareError(err?.message || 'Konnte Screenshare in App nicht starten.');
@@ -332,7 +370,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
           throw new Error('Kein Videotrack für Screenshare gefunden.');
         }
 
-        await activeRoom.localParticipant.publishTrack(videoTrack, {
+        await roomToUse.localParticipant.publishTrack(videoTrack, {
           name: 'screen_share',
           source: Track.Source.ScreenShare,
         });
@@ -340,7 +378,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         if (shouldShareAudio) {
           const filteredAudioTrack = applySystemAudioFilter(audioTrack);
           if (filteredAudioTrack && filteredAudioTrack.readyState !== 'ended') {
-            await activeRoom.localParticipant.publishTrack(filteredAudioTrack, {
+            await roomToUse.localParticipant.publishTrack(filteredAudioTrack, {
               name: 'screen_share_audio',
               source: Track.Source.ScreenShareAudio,
             });
@@ -353,7 +391,8 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
 
         publishedScreenTracksRef.current.push(videoTrack);
 
-        syncLocalMediaState(activeRoom);
+        desiredMediaStateRef.current = { ...desiredMediaStateRef.current, screenSharing: true };
+        syncLocalMediaState(roomToUse);
       } catch (err: any) {
         console.error('Screenshare konnte nicht gestartet werden', err);
         setScreenShareError(err?.message || 'Screenshare konnte nicht gestartet werden.');
@@ -389,9 +428,11 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         }
         publishedScreenTracksRef.current = [];
         setScreenShareAudioError(null);
+        desiredMediaStateRef.current = { ...desiredMediaStateRef.current, screenSharing: false };
         syncLocalMediaState(activeRoom);
       } else {
         await activeRoom.localParticipant.setScreenShareEnabled(false);
+        desiredMediaStateRef.current = { ...desiredMediaStateRef.current, screenSharing: false };
         syncLocalMediaState(activeRoom);
       }
     } catch (err: any) {
@@ -412,6 +453,12 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
 
   const disconnect = useCallback(async () => {
     console.warn('[voice] disconnect() called', new Error().stack);
+    manualDisconnectRef.current = true;
+    reconnectAttemptsRef.current = 0;
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
     isConnecting.current = false;
     if (activeRoom) {
       await activeRoom.disconnect();
@@ -440,96 +487,215 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
     setLocalParticipantId(null);
   }, [activeRoom]);
 
-  const connectToChannel = useCallback(async (channelId: number, channelName: string) => {
-    const attempt = ++attemptRef.current;
-    if (activeChannelId === channelId && connectionState === 'connected') return;
-    if (isConnecting.current) return;
-
-    if (activeRoom) {
-      await activeRoom.disconnect();
-    }
-
-    isConnecting.current = true;
-    setConnectionState('connecting');
-    setError(null);
-
-    try {
-      const lkConfig = getLiveKitConfig(); // Config laden
-      const roomName = `channel_${channelId}`;
-
-      const res = await apiFetch<{ token: string }>(`/api/livekit/token?room=${roomName}`);
-      const newToken = res.token;
-      setToken(newToken);
-
-      // Room Instanz mit den konfigurierten ICE-Servern erstellen
-      const room = new Room({
-        adaptiveStream: true,
-        dynacast: true,
-        publishDefaults: { simulcast: true },
-      });
-
-      room.on(RoomEvent.Disconnected, (reason) => {
-        console.warn('[voice] Room disconnected', reason);
-        setConnectionState('disconnected');
-        setActiveRoom(null);
-        setActiveChannelId(null);
-        setActiveChannelName(null);
-        syncLocalMediaState(null);
-        isConnecting.current = false;
-      });
-
-      room.on(RoomEvent.Connected, () => {
-        setConnectionState('connected');
-        isConnecting.current = false;
-        syncLocalMediaState(room);
-      });
-
-      room.on(RoomEvent.ConnectionStateChanged, (state) => {
-        console.warn('[voice] ConnectionState', state);
-      });
-
-      room.on(RoomEvent.Reconnecting, () => setConnectionState('reconnecting'));
-      room.on(RoomEvent.Reconnected, () => setConnectionState('connected'));
-      room.on(RoomEvent.Reconnecting, () => console.warn('[voice] Reconnecting'));
-      room.on(RoomEvent.Reconnected, () => console.warn('[voice] Reconnected'));
-
-      const handleTrackChange = () => syncLocalMediaState(room);
-      room.on(RoomEvent.LocalTrackPublished, handleTrackChange);
-      room.on(RoomEvent.LocalTrackUnpublished, handleTrackChange);
-      room.on(RoomEvent.TrackMuted, handleTrackChange);
-      room.on(RoomEvent.TrackUnmuted, handleTrackChange);
-
-      // Verbinden mit der sicheren URL
-      await room.connect(lkConfig.serverUrl, newToken, lkConfig.connectOptions);
-      if (settings.devices.audioInputId) {
-        await room.switchActiveDevice('audioinput', settings.devices.audioInputId, true);
-      }
-      if (settings.devices.audioOutputId) {
-        await room.switchActiveDevice('audiooutput', settings.devices.audioOutputId, true);
-      }
-      if (settings.devices.videoInputId) {
-        await room.switchActiveDevice('videoinput', settings.devices.videoInputId, true);
-      }
-      if (attemptRef.current !== attempt) {
-        room.disconnect();
-        return;
-      }
-      await applyMicrophoneState(room);
-
-      setActiveRoom(room);
-      setActiveChannelId(channelId);
-      setActiveChannelName(channelName);
-      
-    } catch (err: any) {
-      console.error("Voice Connection Failed:", err);
-      setError(err.message || 'Verbindung fehlgeschlagen');
+  const finalizeDisconnection = useCallback(
+    (message: string | null) => {
       setConnectionState('disconnected');
+      setActiveRoom(null);
+      setActiveChannelId(null);
+      setActiveChannelName(null);
+      setToken(null);
+      setError(message ?? null);
       syncLocalMediaState(null);
-      setIsPublishingCamera(false);
-      setIsPublishingScreen(false);
       isConnecting.current = false;
-    }
-  }, [activeChannelId, activeRoom, applyMicrophoneState, connectionState, settings.devices.audioInputId, settings.devices.audioOutputId, settings.devices.videoInputId]);
+    },
+    [syncLocalMediaState]
+  );
+
+  const restoreMediaState = useCallback(
+    async (room: Room) => {
+      const desired = desiredMediaStateRef.current;
+      await applyMicrophoneState(room, {
+        muted: desired.muted,
+        micMuted: desired.micMuted,
+        pushToTalk: desired.pushToTalk,
+        talking: false,
+      });
+
+      if (desired.cameraEnabled && !room.localParticipant.isCameraEnabled) {
+        await startCamera('medium', room);
+      }
+
+      if (desired.screenSharing && !room.localParticipant.isScreenShareEnabled) {
+        await startScreenShare(undefined, room);
+      }
+    },
+    [applyMicrophoneState, startCamera, startScreenShare]
+  );
+
+  const connectToChannel = useCallback(
+    async (channelId: number, channelName: string, options?: { isReconnect?: boolean }) => {
+      const attempt = ++attemptRef.current;
+      if (activeChannelId === channelId && connectionState === 'connected') return;
+      if (isConnecting.current) return;
+
+      manualDisconnectRef.current = false;
+      lastChannelRef.current = { id: channelId, name: channelName };
+      reconnectAttemptsRef.current = options?.isReconnect ? reconnectAttemptsRef.current : 0;
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+
+      if (activeRoom) {
+        await activeRoom.disconnect();
+      }
+
+      isConnecting.current = true;
+      setConnectionState(options?.isReconnect ? 'reconnecting' : 'connecting');
+      setError(null);
+
+      try {
+        const lkConfig = getLiveKitConfig(); // Config laden
+        const roomName = `channel_${channelId}`;
+
+        const res = await apiFetch<{ token: string }>(`/api/livekit/token?room=${roomName}`);
+        const newToken = res.token;
+        setToken(newToken);
+
+        // Room Instanz mit den konfigurierten ICE-Servern erstellen
+        const room = new Room({
+          adaptiveStream: true,
+          dynacast: true,
+          publishDefaults: { simulcast: true },
+        });
+
+        room.on(RoomEvent.Disconnected, (reason) => {
+          const disconnectReason =
+            typeof reason === 'string'
+              ? reason
+              : (reason as any)?.reason || (reason as any)?.message || 'Unbekannter Verbindungsfehler';
+          lastDisconnectReasonRef.current = disconnectReason;
+          console.warn('[voice] Room disconnected', disconnectReason, reason);
+          isConnecting.current = false;
+
+          if (manualDisconnectRef.current) {
+            finalizeDisconnection(null);
+            return;
+          }
+
+          const channel = lastChannelRef.current;
+          if (!channel) {
+            finalizeDisconnection(disconnectReason);
+            return;
+          }
+
+          const attemptReconnect = () => {
+            if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) {
+              finalizeDisconnection(
+                `Verbindung getrennt (${disconnectReason}). Erneute Verbindung nicht möglich. Letzter Fehler: ${
+                  lastDisconnectReasonRef.current || disconnectReason
+                }`
+              );
+              return;
+            }
+
+            reconnectAttemptsRef.current += 1;
+            const delay = reconnectAttemptsRef.current === 1
+              ? 0
+              : Math.min(5000, BASE_RECONNECT_DELAY * 2 ** (reconnectAttemptsRef.current - 1));
+            setConnectionState('reconnecting');
+            setError(null);
+            console.warn(
+              `[voice] Reconnect attempt ${reconnectAttemptsRef.current}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`
+            );
+            reconnectTimeoutRef.current = setTimeout(async () => {
+              try {
+                await connectToChannel(channel.id, channel.name, { isReconnect: true });
+              } catch (reconnectError: any) {
+                lastDisconnectReasonRef.current = reconnectError?.message ?? disconnectReason;
+                setError(reconnectError?.message || disconnectReason);
+                attemptReconnect();
+              }
+            }, delay);
+          };
+
+          attemptReconnect();
+        });
+
+        room.on(RoomEvent.Connected, async () => {
+          setConnectionState('connected');
+          setError(null);
+          reconnectAttemptsRef.current = 0;
+          if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current);
+            reconnectTimeoutRef.current = null;
+          }
+          isConnecting.current = false;
+          syncLocalMediaState(room);
+          await restoreMediaState(room);
+        });
+
+        room.on(RoomEvent.ConnectionStateChanged, (state) => {
+          console.warn('[voice] ConnectionState', state);
+        });
+
+        room.on(RoomEvent.Reconnecting, () => setConnectionState('reconnecting'));
+        room.on(RoomEvent.Reconnected, async () => {
+          setConnectionState('connected');
+          setError(null);
+          reconnectAttemptsRef.current = 0;
+          if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current);
+            reconnectTimeoutRef.current = null;
+          }
+          await restoreMediaState(room);
+        });
+        room.on(RoomEvent.Reconnecting, () => console.warn('[voice] Reconnecting'));
+        room.on(RoomEvent.Reconnected, () => console.warn('[voice] Reconnected'));
+
+        const handleTrackChange = () => syncLocalMediaState(room);
+        room.on(RoomEvent.LocalTrackPublished, handleTrackChange);
+        room.on(RoomEvent.LocalTrackUnpublished, handleTrackChange);
+        room.on(RoomEvent.TrackMuted, handleTrackChange);
+        room.on(RoomEvent.TrackUnmuted, handleTrackChange);
+
+        // Verbinden mit der sicheren URL
+        await room.connect(lkConfig.serverUrl, newToken, lkConfig.connectOptions);
+        if (settings.devices.audioInputId) {
+          await room.switchActiveDevice('audioinput', settings.devices.audioInputId, true);
+        }
+        if (settings.devices.audioOutputId) {
+          await room.switchActiveDevice('audiooutput', settings.devices.audioOutputId, true);
+        }
+        if (settings.devices.videoInputId) {
+          await room.switchActiveDevice('videoinput', settings.devices.videoInputId, true);
+        }
+        if (attemptRef.current !== attempt) {
+          room.disconnect();
+          return;
+        }
+        await applyMicrophoneState(room);
+
+        setActiveRoom(room);
+        setActiveChannelId(channelId);
+        setActiveChannelName(channelName);
+
+      } catch (err: any) {
+        console.error("Voice Connection Failed:", err);
+        setError(err.message || 'Verbindung fehlgeschlagen');
+        setConnectionState(options?.isReconnect ? 'reconnecting' : 'disconnected');
+        syncLocalMediaState(null);
+        setIsPublishingCamera(false);
+        setIsPublishingScreen(false);
+        isConnecting.current = false;
+        if (options?.isReconnect) {
+          lastDisconnectReasonRef.current = err?.message || null;
+          throw err;
+        }
+      }
+    },
+    [
+      activeChannelId,
+      activeRoom,
+      applyMicrophoneState,
+      connectionState,
+      finalizeDisconnection,
+      settings.devices.audioInputId,
+      settings.devices.audioOutputId,
+      settings.devices.videoInputId,
+      restoreMediaState,
+    ]
+  );
 
   useEffect(() => {
     if (!activeRoom) return;
