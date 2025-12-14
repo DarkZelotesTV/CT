@@ -16,6 +16,7 @@ import { resolveUserFromIdentity } from './utils/identityAuth';
 
 const app = express();
 const httpServer = createServer(app);
+const channelPresence = new Map<number, Set<number>>();
 
 // ==========================================
 // 1. CORS & MIDDLEWARE (Sicherheit lockern)
@@ -73,6 +74,7 @@ io.use(async (socket, next) => {
 io.on('connection', async (socket) => {
   const userId = (socket.data as any).userId;
   const numericUserId = userId ? Number(userId) : null;
+  (socket.data as any).joinedChannels = new Set<number>();
 
   if (numericUserId) {
      console.log(`User ${numericUserId} connected (Socket ID: ${socket.id})`);
@@ -85,8 +87,57 @@ io.on('connection', async (socket) => {
      }
   }
 
-  socket.on('join_channel', (channelId) => {
-    socket.join(`channel_${channelId}`);
+  socket.on('join_channel', async (channelId: number) => {
+    if (!numericUserId) return;
+
+    const joinedChannels: Set<number> = (socket.data as any).joinedChannels;
+    for (const prevChannel of Array.from(joinedChannels)) {
+      if (prevChannel !== channelId) {
+        socket.leave(`channel_${prevChannel}`);
+        const prevSet = channelPresence.get(prevChannel);
+        if (prevSet?.has(numericUserId)) {
+          prevSet.delete(numericUserId);
+          if (!prevSet.size) {
+            channelPresence.delete(prevChannel);
+          }
+          io.to(`channel_${prevChannel}`).emit('channel_presence_leave', { channelId: prevChannel, userId: numericUserId });
+        }
+        joinedChannels.delete(prevChannel);
+      }
+    }
+
+    const room = `channel_${channelId}`;
+    socket.join(room);
+    joinedChannels.add(channelId);
+
+    let channelUsers = channelPresence.get(channelId);
+    if (!channelUsers) {
+      channelUsers = new Set<number>();
+      channelPresence.set(channelId, channelUsers);
+    }
+
+    const wasAlreadyPresent = channelUsers.has(numericUserId);
+    channelUsers.add(numericUserId);
+
+    try {
+      const user = await User.findByPk(numericUserId, {
+        attributes: ['id', 'username', 'avatar_url', 'status'],
+      });
+
+      if (!wasAlreadyPresent && user) {
+        io.to(room).emit('channel_presence_join', { channelId, user });
+      }
+
+      const activeUsers = await User.findAll({
+        where: { id: Array.from(channelUsers) },
+        attributes: ['id', 'username', 'avatar_url', 'status'],
+      });
+
+      socket.emit('channel_presence_snapshot', { channelId, users: activeUsers });
+    } catch (err) {
+      console.error('Fehler bei Channel-Presence:', err);
+    }
+
     console.log(`Socket ${socket.id} joined channel_${channelId}`);
   });
 
@@ -115,6 +166,18 @@ io.on('connection', async (socket) => {
   socket.on('disconnect', async () => {
     if (numericUserId) {
        console.log(`User ${numericUserId} disconnected`);
+
+       const joinedChannels: Set<number> = (socket.data as any).joinedChannels || new Set();
+       for (const ch of Array.from(joinedChannels)) {
+         const presence = channelPresence.get(ch);
+         if (presence?.has(numericUserId)) {
+           presence.delete(numericUserId);
+           if (!presence.size) channelPresence.delete(ch);
+           io.to(`channel_${ch}`).emit('channel_presence_leave', { channelId: ch, userId: numericUserId });
+         }
+         socket.leave(`channel_${ch}`);
+         joinedChannels.delete(ch);
+       }
 
        try {
          await User.update({ status: 'offline' }, { where: { id: numericUserId } });
