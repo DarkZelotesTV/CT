@@ -32,6 +32,18 @@ export const setServerPassword = (password: string) => {
   localStorage.setItem(SERVER_PASSWORD_KEY, password);
 };
 
+// --- LiveKit dynamic configuration persistence ---
+
+export const setLiveKitUrl = (livekitUrl?: string | null) => {
+  const trimmed = livekitUrl?.trim();
+
+  if (trimmed) {
+    localStorage.setItem(LIVEKIT_URL_KEY, trimmed);
+  } else {
+    localStorage.removeItem(LIVEKIT_URL_KEY);
+  }
+};
+
 // --- URL Helpers ---
 
 const asUrl = (url: string) => new URL(url);

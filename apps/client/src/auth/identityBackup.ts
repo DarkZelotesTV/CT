@@ -1,5 +1,5 @@
 import { IdentityFile, computeFingerprint, signMessage } from "./identity";
-import { getServerUrl, getServerPassword } from "../utils/apiConfig";
+import { getServerUrl, getServerPassword, setLiveKitUrl } from "../utils/apiConfig";
 
 // ==========================================
 // 1) HANDSHAKE LOGIK
@@ -44,10 +44,9 @@ export async function performHandshake(id: IdentityFile, serverPassword?: string
   // Optional: LiveKit URL vom Server übernehmen
   if (response.config?.livekitUrl) {
     console.log("[Auth] Received Voice Config from Server:", response.config.livekitUrl);
-    localStorage.setItem("clover_livekit_url", response.config.livekitUrl);
-  } else {
-    localStorage.removeItem("clover_livekit_url");
   }
+
+  setLiveKitUrl(response.config?.livekitUrl);
 
   return response;
 }
