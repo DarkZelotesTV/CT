@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Camera, Grid, Headphones, LayoutList, MicOff, Play, ScreenShare, Settings2, Video, XCircle } from 'lucide-react';
+import { AudioLines, Camera, Grid, Headphones, LayoutList, MicOff, Play, ScreenShare, Settings2, Video, XCircle } from 'lucide-react';
 import { VoiceMediaStage } from './VoiceMediaStage';
 import { useVoice } from '../../context/voice-state';
 import { useSettings } from '../../context/SettingsContext';
@@ -30,11 +30,14 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
     isScreenSharing,
     isPublishingCamera,
     isPublishingScreen,
+    shareSystemAudio,
+    setShareSystemAudio,
     startCamera,
     stopCamera,
     startScreenShare,
     stopScreenShare,
     toggleCamera,
+    screenShareAudioError,
   } = useVoice();
   const { settings, updateDevices } = useSettings();
 
@@ -203,6 +206,7 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
       quality: screenQuality,
       frameRate: screenFrameRate,
       track: screenPreviewTrack || undefined,
+      withAudio: shareSystemAudio,
     });
 
     if (screenPreviewTrack) {
@@ -295,6 +299,18 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
           >
             <ScreenShare size={16} />
             {isPublishingScreen ? 'Teilen...' : isScreenSharing ? 'Screen aktiv' : 'Screen teilen'}
+          </button>
+          <button
+            onClick={() => setShareSystemAudio(!shareSystemAudio)}
+            disabled={!isConnected || isPublishingScreen}
+            className={`px-3 py-2 rounded-lg text-sm font-semibold border transition-colors flex items-center gap-2 ${
+              shareSystemAudio
+                ? 'bg-amber-500/10 border-amber-500/30 text-amber-200'
+                : 'bg-white/5 border-white/10 text-white hover:border-white/20'
+            } ${!isConnected ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <AudioLines size={16} />
+            {shareSystemAudio ? 'Systemaudio an' : 'Systemaudio aus'}
           </button>
         </div>
 
@@ -440,9 +456,9 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
           </div>
         )}
 
-        {(cameraError || screenShareError || deviceError || screenPreviewError) && (
+        {(cameraError || screenShareError || deviceError || screenPreviewError || screenShareAudioError) && (
           <div className="text-xs text-red-400 bg-red-500/5 border border-red-500/20 rounded-lg px-3 py-2">
-            {cameraError || screenShareError || deviceError || screenPreviewError}
+            {cameraError || screenShareError || deviceError || screenPreviewError || screenShareAudioError}
           </div>
         )}
       </div>

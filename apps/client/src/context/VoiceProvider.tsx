@@ -30,7 +30,11 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
   const [isPublishingScreen, setIsPublishingScreen] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [screenShareError, setScreenShareError] = useState<string | null>(null);
+  const [screenShareAudioError, setScreenShareAudioError] = useState<string | null>(null);
   const [localParticipantId, setLocalParticipantId] = useState<string | null>(null);
+  const [shareSystemAudio, setShareSystemAudio] = useState(false);
+
+  const publishedScreenTracksRef = useRef<MediaStreamTrack[]>([]);
 
   const isConnecting = useRef(false);
   const attemptRef = useRef(0);
@@ -168,7 +172,13 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
   }, [isCameraEnabled, startCamera, stopCamera]);
 
   const startScreenShare = useCallback(
-    async (options?: { sourceId?: string; quality?: 'low' | 'medium' | 'high'; frameRate?: number; track?: MediaStreamTrack }) => {
+    async (options?: {
+      sourceId?: string;
+      quality?: 'low' | 'medium' | 'high';
+      frameRate?: number;
+      track?: MediaStreamTrack;
+      withAudio?: boolean;
+    }) => {
       if (!activeRoom) {
         setScreenShareError('Keine aktive Voice-Verbindung für Screen-Sharing.');
         return;
@@ -176,6 +186,8 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
 
       setIsPublishingScreen(true);
       setScreenShareError(null);
+      setScreenShareAudioError(null);
+      publishedScreenTracksRef.current = [];
 
       if (options?.track && options.track.readyState === 'ended') {
         setScreenShareError('Die ausgewählte Bildschirmquelle ist nicht mehr aktiv.');
@@ -185,6 +197,22 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
 
       const preset = options?.quality ? qualityPresets[options.quality] ?? qualityPresets.high : qualityPresets.high;
       const preferredFrameRate = options?.frameRate ?? preset.frameRate;
+      const shouldShareAudio = options?.withAudio ?? shareSystemAudio;
+
+      const applySystemAudioFilter = (track: MediaStreamTrack | null | undefined) => {
+        if (!track) return track;
+        const filterHook = (window as any).ct?.filterSystemAudioTrack || (window as any).clover?.filterSystemAudioTrack;
+        if (typeof filterHook === 'function') {
+          try {
+            const filtered = filterHook(track);
+            if (filtered) return filtered;
+          } catch (err) {
+            console.warn('Systemaudio-Filter konnte nicht angewendet werden', err);
+            setScreenShareAudioError('Systemaudio-Filter konnte nicht angewendet werden. Es wird der Original-Stream genutzt.');
+          }
+        }
+        return track;
+      };
 
       // FIX: Electron Detection & Handling
       if ((window as any).electron && (window as any).electron.getScreenSources) {
@@ -202,9 +230,18 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
           }
 
           let selectedTrack = options?.track;
-          if (!selectedTrack) {
+          let systemAudioTrack: MediaStreamTrack | null = null;
+
+          if (!selectedTrack || (shouldShareAudio && !systemAudioTrack)) {
             const stream = await navigator.mediaDevices.getUserMedia({
-              audio: false,
+              audio: shouldShareAudio
+                ? {
+                    mandatory: {
+                      chromeMediaSource: 'desktop',
+                      ...(options?.sourceId ? { chromeMediaSourceId: options.sourceId } : {}),
+                    },
+                  }
+                : false,
               video: {
                 mandatory: {
                   chromeMediaSource: 'desktop',
@@ -215,7 +252,13 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
                 },
               } as any,
             });
-            selectedTrack = stream.getVideoTracks()[0];
+            const streamVideoTrack = stream.getVideoTracks()[0];
+            selectedTrack = selectedTrack ?? streamVideoTrack;
+            systemAudioTrack = shouldShareAudio ? stream.getAudioTracks()[0] ?? null : null;
+
+            if (streamVideoTrack && selectedTrack !== streamVideoTrack) {
+              streamVideoTrack.stop();
+            }
           }
 
           if (!selectedTrack || selectedTrack.readyState === 'ended') {
@@ -226,6 +269,22 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
             name: 'screen_share',
             source: Track.Source.ScreenShare,
           });
+
+          if (shouldShareAudio) {
+            const filteredAudioTrack = applySystemAudioFilter(systemAudioTrack);
+            if (filteredAudioTrack && filteredAudioTrack.readyState !== 'ended') {
+              await activeRoom.localParticipant.publishTrack(filteredAudioTrack, {
+                name: 'screen_share_audio',
+                source: Track.Source.ScreenShareAudio,
+              });
+              publishedScreenTracksRef.current.push(filteredAudioTrack);
+              setScreenShareAudioError(null);
+            } else {
+              setScreenShareAudioError('Systemaudio konnte nicht aufgenommen werden. Freigabe läuft ohne Ton.');
+            }
+          }
+
+          publishedScreenTracksRef.current.push(selectedTrack);
 
           syncLocalMediaState(activeRoom);
         } catch (err: any) {
@@ -240,11 +299,52 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
 
       // Standard Browser Fallback
       try {
-        await activeRoom.localParticipant.setScreenShareEnabled(true, {
-          audio: false,
-          resolution: preset.resolution,
-          frameRate: preferredFrameRate,
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+          video: {
+            width: preset.resolution.width,
+            height: preset.resolution.height,
+            frameRate: preferredFrameRate,
+          },
+          audio: shouldShareAudio
+            ? {
+                suppressLocalAudioPlayback: false,
+              }
+            : false,
         });
+
+        const streamVideoTrack = stream.getVideoTracks()[0];
+        const videoTrack = options?.track ?? streamVideoTrack;
+        const audioTrack = shouldShareAudio ? stream.getAudioTracks()[0] ?? null : null;
+
+        if (streamVideoTrack && videoTrack !== streamVideoTrack) {
+          streamVideoTrack.stop();
+        }
+
+        if (!videoTrack || videoTrack.readyState === 'ended') {
+          throw new Error('Kein Videotrack für Screenshare gefunden.');
+        }
+
+        await activeRoom.localParticipant.publishTrack(videoTrack, {
+          name: 'screen_share',
+          source: Track.Source.ScreenShare,
+        });
+
+        if (shouldShareAudio) {
+          const filteredAudioTrack = applySystemAudioFilter(audioTrack);
+          if (filteredAudioTrack && filteredAudioTrack.readyState !== 'ended') {
+            await activeRoom.localParticipant.publishTrack(filteredAudioTrack, {
+              name: 'screen_share_audio',
+              source: Track.Source.ScreenShareAudio,
+            });
+            publishedScreenTracksRef.current.push(filteredAudioTrack);
+            setScreenShareAudioError(null);
+          } else {
+            setScreenShareAudioError('Systemaudio konnte nicht aufgenommen werden. Freigabe läuft ohne Ton.');
+          }
+        }
+
+        publishedScreenTracksRef.current.push(videoTrack);
+
         syncLocalMediaState(activeRoom);
       } catch (err: any) {
         console.error('Screenshare konnte nicht gestartet werden', err);
@@ -254,18 +354,38 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         setIsPublishingScreen(false);
       }
     },
-    [activeRoom, syncLocalMediaState]
+    [activeRoom, shareSystemAudio, syncLocalMediaState]
   );
 
   const stopScreenShare = useCallback(async () => {
     if (!activeRoom) {
       setIsScreenSharing(false);
+      setScreenShareAudioError(null);
       return;
     }
     setIsPublishingScreen(true);
     try {
-      await activeRoom.localParticipant.setScreenShareEnabled(false);
-      syncLocalMediaState(activeRoom);
+      const publishedTracks = publishedScreenTracksRef.current;
+      if (publishedTracks.length) {
+        for (const track of publishedTracks) {
+          try {
+            activeRoom.localParticipant.unpublishTrack(track, true);
+          } catch (unpublishError) {
+            console.warn('Track konnte nicht unpublisht werden', unpublishError);
+          }
+          try {
+            track.stop();
+          } catch (stopError) {
+            console.warn('Track konnte nicht gestoppt werden', stopError);
+          }
+        }
+        publishedScreenTracksRef.current = [];
+        setScreenShareAudioError(null);
+        syncLocalMediaState(activeRoom);
+      } else {
+        await activeRoom.localParticipant.setScreenShareEnabled(false);
+        syncLocalMediaState(activeRoom);
+      }
     } catch (err: any) {
       console.error('Screenshare konnte nicht gestoppt werden', err);
       setScreenShareError(err?.message || 'Screenshare konnte nicht gestoppt werden.');
@@ -300,6 +420,15 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
     setIsPublishingScreen(false);
     setCameraError(null);
     setScreenShareError(null);
+    setScreenShareAudioError(null);
+    publishedScreenTracksRef.current.forEach((t) => {
+      try {
+        t.stop();
+      } catch {
+        /* noop */
+      }
+    });
+    publishedScreenTracksRef.current = [];
     setLocalParticipantId(null);
   }, [activeRoom]);
 
@@ -458,10 +587,13 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         startScreenShare,
         stopScreenShare,
         toggleScreenShare,
+        shareSystemAudio,
+        setShareSystemAudio,
         selectedAudioInputId: settings.devices.audioInputId,
         selectedAudioOutputId: settings.devices.audioOutputId,
         selectedVideoInputId: settings.devices.videoInputId,
         localParticipantId,
+        screenShareAudioError,
       }}
     >
       {children}

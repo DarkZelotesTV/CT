@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext, type Dispatch, type SetStateAction } from 'react';
 import { Room } from 'livekit-client';
 
 export interface VoiceContextType {
@@ -33,13 +33,17 @@ export interface VoiceContextType {
     quality?: 'low' | 'medium' | 'high';
     frameRate?: number;
     track?: MediaStreamTrack;
+    withAudio?: boolean;
   }) => Promise<void>;
   stopScreenShare: () => Promise<void>;
   toggleScreenShare: () => Promise<void>;
+  shareSystemAudio: boolean;
+  setShareSystemAudio: Dispatch<SetStateAction<boolean>>;
   selectedAudioInputId: string | null;
   selectedAudioOutputId: string | null;
   selectedVideoInputId: string | null;
   localParticipantId: string | null;
+  screenShareAudioError?: string | null;
 }
 
 export const VoiceContext = createContext<VoiceContextType | null>(null);
