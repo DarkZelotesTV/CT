@@ -14,6 +14,7 @@ import { FriendListStage } from '../dashboard/FriendListStage';
 import { WebChannelView } from '../server/WebChannelView';
 
 import { OnboardingModal } from '../modals/OnboardingModal';
+import { ServerSettingsModal } from '../modals/ServerSettingsModal';
 
 import { useVoice } from '../../context/voice-state';
 
@@ -29,6 +30,7 @@ export const MainLayout = () => {
   const [selectedServerId, setSelectedServerId] = useState<number | null>(null);
   const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showServerSettings, setShowServerSettings] = useState(false);
   const chatBarRef = useRef<BottomChatBarRef>(null);
 
   // Voice Context holen
@@ -52,6 +54,7 @@ export const MainLayout = () => {
   const handleServerSelect = (id: number | null) => {
     setSelectedServerId(id);
     setActiveChannel(null);
+    setShowServerSettings(false);
   };
 
   // Helper: Rendert den Inhalt der Main Stage
@@ -86,6 +89,9 @@ export const MainLayout = () => {
   const ui = (
     <div className="flex h-screen w-screen overflow-hidden relative bg-[#050507] text-gray-200 font-sans">
       {showOnboarding && <OnboardingModal onClose={() => setShowOnboarding(false)} />}
+      {selectedServerId && showServerSettings && (
+        <ServerSettingsModal serverId={selectedServerId} onClose={() => setShowServerSettings(false)} />
+      )}
       {/* 1. SERVER RAIL */}
       <div className="w-[80px] flex-shrink-0 z-50 flex flex-col items-center py-3 h-full">
         <div className="w-full h-full bg-[#0a0a0c]/80 backdrop-blur-xl rounded-2xl border border-white/5 ml-3 shadow-2xl">
@@ -109,6 +115,7 @@ export const MainLayout = () => {
                 if (channel.type === 'voice' || channel.type === 'web') setActiveChannel(channel);
                 else chatBarRef.current?.openChat(channel.id, channel.name);
               }}
+              onOpenServerSettings={() => setShowServerSettings(true)}
             />
           ) : (
             <DashboardSidebar />
