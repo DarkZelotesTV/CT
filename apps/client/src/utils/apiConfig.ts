@@ -3,11 +3,11 @@ const SERVER_PASSWORD_KEY = 'clover_server_password';
 
 export const getServerUrl = (): string => {
   let url = localStorage.getItem('clover_server_url') || DEFAULT_SERVER;
-  return url.trim().replace(/\/$/, "");
+  return url.replace(/\/$/, "");
 };
 
 export const setServerUrl = (url: string) => {
-  localStorage.setItem('clover_server_url', url.trim());
+  localStorage.setItem('clover_server_url', url);
 };
 
 export const getServerPassword = (): string => {
@@ -22,24 +22,14 @@ export const setServerPassword = (password: string) => {
 
 const asUrl = (url: string) => new URL(url);
 
-const normalizeServerUrl = (rawUrl: string) => {
-  const sanitizedUrl = rawUrl.trim();
-
+const getServerUrlObject = () => {
   try {
-    return asUrl(sanitizedUrl);
-  } catch (_err) {
-    // Allow users to omit the protocol (e.g. "example.com" or "10.0.0.5:3001").
-    // Default to HTTP to match the expected unencrypted deployment environment.
-    try {
-      return asUrl(`http://${sanitizedUrl}`);
-    } catch (error) {
-      console.error('Invalid server URL configured, falling back to default.', error);
-      return asUrl(DEFAULT_SERVER);
-    }
+    return asUrl(getServerUrl());
+  } catch (error) {
+    console.error('Invalid server URL configured, falling back to default.', error);
+    return asUrl(DEFAULT_SERVER);
   }
 };
-
-const getServerUrlObject = () => normalizeServerUrl(getServerUrl());
 
 export const getServerWebSocketUrl = () => {
   const serverUrl = getServerUrlObject();
