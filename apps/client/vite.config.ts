@@ -4,6 +4,9 @@ import electron from 'vite-plugin-electron';
 import renderer from 'vite-plugin-electron-renderer';
 
 export default defineConfig({
+  resolve: {
+    dedupe: ['react', 'react-dom'],
+  },
   plugins: [
     react(),
     electron([
@@ -50,6 +53,11 @@ export default defineConfig({
         },
       },
     ]),
-    renderer(),
+    renderer({
+      resolve: {
+        react: { type: 'esm' },
+        'react-dom': { type: 'esm' },
+      },
+    }),
   ],
 });
