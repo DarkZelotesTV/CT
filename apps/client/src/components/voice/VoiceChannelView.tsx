@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Camera, Grid, Headphones, LayoutList, MicOff, ScreenShare, Settings2, Video, XCircle } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Camera, Grid, Headphones, LayoutList, MicOff, Play, ScreenShare, Settings2, Video, XCircle } from 'lucide-react';
 import { VoiceMediaStage } from './VoiceMediaStage';
 import { useVoice } from '../../context/voice-state';
 import { useSettings } from '../../context/SettingsContext';
@@ -8,6 +8,12 @@ const qualityLabels: Record<'low' | 'medium' | 'high', string> = {
   low: '360p',
   medium: '720p',
   high: '1080p',
+};
+
+const screenQualityPresets: Record<'low' | 'medium' | 'high', { resolution: { width: number; height: number }; frameRate: number }> = {
+  low: { resolution: { width: 640, height: 360 }, frameRate: 24 },
+  medium: { resolution: { width: 1280, height: 720 }, frameRate: 30 },
+  high: { resolution: { width: 1920, height: 1080 }, frameRate: 60 },
 };
 
 export const VoiceChannelView = ({ channelName }: { channelName: string | null }) => {
@@ -26,7 +32,8 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
     isPublishingScreen,
     startCamera,
     stopCamera,
-    toggleScreenShare,
+    startScreenShare,
+    stopScreenShare,
     toggleCamera,
   } = useVoice();
   const { settings, updateDevices } = useSettings();
@@ -34,8 +41,16 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedVideo, setSelectedVideo] = useState(settings.devices.videoInputId || '');
   const [quality, setQuality] = useState<'low' | 'medium' | 'high'>('medium');
+  const [screenQuality, setScreenQuality] = useState<'low' | 'medium' | 'high'>('high');
+  const [screenFrameRate, setScreenFrameRate] = useState<number>(30);
+  const [screenSources, setScreenSources] = useState<{ id: string; name: string; thumbnail?: string }[]>([]);
+  const [selectedScreenSource, setSelectedScreenSource] = useState('');
+  const [screenPreviewTrack, setScreenPreviewTrack] = useState<MediaStreamTrack | null>(null);
+  const [screenPreviewError, setScreenPreviewError] = useState<string | null>(null);
   const [layout, setLayout] = useState<'grid' | 'speaker'>('grid');
   const [deviceError, setDeviceError] = useState<string | null>(null);
+
+  const previewVideoRef = useRef<HTMLVideoElement>(null);
 
   const isConnected = connectionState === 'connected';
 
@@ -54,6 +69,49 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
     refreshDevices();
   }, [refreshDevices]);
 
+  const refreshScreenSources = useCallback(async () => {
+    if (!(window as any).electron?.getScreenSources) return;
+    try {
+      const sources = await (window as any).electron.getScreenSources();
+      setScreenSources(sources);
+      if (!selectedScreenSource && sources.length) {
+        setSelectedScreenSource(sources[0].id);
+      }
+    } catch (err: any) {
+      setScreenPreviewError(err?.message || 'Screenshare-Quellen konnten nicht geladen werden.');
+    }
+  }, [selectedScreenSource]);
+
+  useEffect(() => {
+    if (isConnected) {
+      refreshScreenSources();
+    }
+  }, [isConnected, refreshScreenSources]);
+
+  const stopScreenPreviewTrack = useCallback(
+    (stopTrack = true) => {
+      setScreenPreviewTrack((prev) => {
+        if (prev && stopTrack) {
+          prev.stop();
+        }
+        return null;
+      });
+    },
+    []
+  );
+
+  useEffect(() => {
+    return () => {
+      stopScreenPreviewTrack(true);
+    };
+  }, [stopScreenPreviewTrack]);
+
+  useEffect(() => {
+    if (!isScreenSharing) {
+      stopScreenPreviewTrack(true);
+    }
+  }, [isScreenSharing, stopScreenPreviewTrack]);
+
   const handleVideoDeviceChange = async (deviceId: string) => {
     setSelectedVideo(deviceId);
     updateDevices({ videoInputId: deviceId || null });
@@ -67,6 +125,88 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
     setQuality(next);
     if (isCameraEnabled) {
       await startCamera(next);
+    }
+  };
+
+  const handleStartScreenPreview = async () => {
+    stopScreenPreviewTrack();
+    setScreenPreviewError(null);
+    const preset = screenQualityPresets[screenQuality] ?? screenQualityPresets.high;
+    const requestedFrameRate = screenFrameRate || preset.frameRate;
+
+    try {
+      if ((window as any).electron?.getScreenSources) {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {
+            mandatory: {
+              chromeMediaSource: 'desktop',
+              ...(selectedScreenSource ? { chromeMediaSourceId: selectedScreenSource } : {}),
+              maxWidth: preset.resolution.width,
+              maxHeight: preset.resolution.height,
+              maxFrameRate: requestedFrameRate,
+            },
+          } as any,
+        });
+        stream.getAudioTracks().forEach((t) => t.stop());
+        const track = stream.getVideoTracks()[0];
+        if (!track) throw new Error('Kein Videotrack für die Vorschau gefunden.');
+        setScreenPreviewTrack((prev) => {
+          if (prev) prev.stop();
+          return track;
+        });
+        return;
+      }
+
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: {
+          width: preset.resolution.width,
+          height: preset.resolution.height,
+          frameRate: requestedFrameRate,
+        },
+        audio: false,
+      });
+      stream.getAudioTracks().forEach((t) => t.stop());
+      const track = stream.getVideoTracks()[0];
+      if (!track) throw new Error('Kein Videotrack für die Vorschau gefunden.');
+      setScreenPreviewTrack((prev) => {
+        if (prev) prev.stop();
+        return track;
+      });
+    } catch (err: any) {
+      setScreenPreviewError(err?.message || 'Vorschau konnte nicht gestartet werden.');
+      stopScreenPreviewTrack();
+    }
+  };
+
+  useEffect(() => {
+    const videoEl = previewVideoRef.current;
+    if (!videoEl) return;
+    if (screenPreviewTrack) {
+      const stream = new MediaStream([screenPreviewTrack]);
+      videoEl.srcObject = stream;
+      videoEl.play().catch(() => undefined);
+    } else {
+      videoEl.srcObject = null;
+    }
+  }, [screenPreviewTrack]);
+
+  const handleStartScreenShare = async () => {
+    if (isScreenSharing) {
+      stopScreenPreviewTrack(true);
+      await stopScreenShare();
+      return;
+    }
+
+    await startScreenShare({
+      sourceId: selectedScreenSource || undefined,
+      quality: screenQuality,
+      frameRate: screenFrameRate,
+      track: screenPreviewTrack || undefined,
+    });
+
+    if (screenPreviewTrack) {
+      setScreenPreviewTrack(null);
     }
   };
 
@@ -145,7 +285,7 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
             {isPublishingCamera ? 'Startet...' : isCameraEnabled ? 'Kamera an' : 'Kamera starten'}
           </button>
           <button
-            onClick={toggleScreenShare}
+            onClick={handleStartScreenShare}
             disabled={!isConnected || isPublishingScreen}
             className={`px-3 py-2 rounded-lg text-sm font-semibold border transition-colors flex items-center gap-2 ${
               isScreenSharing
@@ -192,6 +332,68 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
             </select>
           </div>
 
+          <div className="flex items-center gap-2">
+            <ScreenShare size={16} className="text-gray-400" />
+            <select
+              value={selectedScreenSource}
+              onChange={(e) => setSelectedScreenSource(e.target.value)}
+              className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs min-w-[200px]"
+              disabled={!isConnected || (!!screenSources.length && isPublishingScreen)}
+            >
+              <option value="">Quelle im Freigabe-Dialog wählen</option>
+              {screenSources.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Settings2 size={16} className="text-gray-400" />
+            <select
+              value={screenQuality}
+              onChange={(e) => setScreenQuality(e.target.value as 'low' | 'medium' | 'high')}
+              className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs"
+              disabled={!isConnected}
+            >
+              {(['low', 'medium', 'high'] as const).map((q) => (
+                <option key={q} value={q}>
+                  Bildschirm {qualityLabels[q]}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Settings2 size={16} className="text-gray-400" />
+            <select
+              value={screenFrameRate}
+              onChange={(e) => setScreenFrameRate(Number(e.target.value))}
+              className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs"
+              disabled={!isConnected}
+            >
+              {[24, 30, 60].map((fps) => (
+                <option key={fps} value={fps}>
+                  {fps} FPS
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            onClick={handleStartScreenPreview}
+            disabled={!isConnected || isPublishingScreen || isScreenSharing}
+            className={`px-3 py-2 rounded-lg text-sm font-semibold border transition-colors flex items-center gap-2 ${
+              screenPreviewTrack
+                ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-100'
+                : 'bg-white/5 border-white/10 text-white hover:border-white/20'
+            } ${!isConnected ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <Play size={16} />
+            {screenPreviewTrack ? 'Vorschau aktiv' : 'Vorschau starten'}
+          </button>
+
           <div className="flex items-center gap-1 ml-auto">
             <span className="text-xs uppercase text-gray-500">Layout</span>
             <button
@@ -217,9 +419,30 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
           </div>
         </div>
 
-        {(cameraError || screenShareError || deviceError) && (
+        {screenPreviewTrack && !isScreenSharing && (
+          <div className="bg-white/5 border border-white/10 rounded-lg p-3 space-y-2">
+            <div className="flex items-center justify-between text-xs text-gray-300">
+              <span>Vorschau der Bildschirmfreigabe (noch nicht live)</span>
+              <button
+                onClick={() => stopScreenPreviewTrack(true)}
+                className="px-2 py-1 text-[11px] font-semibold border border-white/10 rounded-md hover:border-white/30"
+              >
+                Vorschau schließen
+              </button>
+            </div>
+            <div className="relative w-full overflow-hidden rounded-md border border-white/10 bg-black/60">
+              <video ref={previewVideoRef} muted playsInline className="w-full h-52 object-contain bg-black" />
+              <div className="absolute bottom-2 left-2 right-2 text-[11px] text-gray-300 bg-black/60 px-2 py-1 rounded">
+                Quelle: {selectedScreenSource ? 'Desktop-Quelle ausgewählt' : 'Auswahl erfolgt im Browser-Freigabe-Dialog'} |{' '}
+                Auflösung: {qualityLabels[screenQuality]} | {screenFrameRate} FPS
+              </div>
+            </div>
+          </div>
+        )}
+
+        {(cameraError || screenShareError || deviceError || screenPreviewError) && (
           <div className="text-xs text-red-400 bg-red-500/5 border border-red-500/20 rounded-lg px-3 py-2">
-            {cameraError || screenShareError || deviceError}
+            {cameraError || screenShareError || deviceError || screenPreviewError}
           </div>
         )}
       </div>
