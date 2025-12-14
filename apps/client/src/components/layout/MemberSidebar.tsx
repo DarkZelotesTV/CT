@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { User, Shield, Crown } from 'lucide-react';
 import { apiFetch } from '../../api/http';
+import { useSocket } from '../../context/SocketContext';
 
 interface Member {
   userId: number;
@@ -15,23 +16,51 @@ interface Member {
 export const MemberSidebar = ({ serverId }: { serverId: number }) => {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);
+  const { socket } = useSocket();
 
   // --- API LOGIC: Mitglieder Laden ---
   useEffect(() => {
+    let isActive = true;
     const fetchMembers = async () => {
       setLoading(true);
       try {
         const res = await apiFetch<Member[]>(`/api/servers/${serverId}/members`);
-        setMembers(res);
+        if (isActive) setMembers(res);
       } catch (err) {
         console.error("Fehler beim Laden der Member:", err);
       } finally {
-        setLoading(false);
+        if (isActive) setLoading(false);
       }
     };
 
-    if (serverId) fetchMembers();
+    if (serverId) {
+      fetchMembers();
+      const intervalId = setInterval(fetchMembers, 60_000);
+
+      return () => {
+        isActive = false;
+        clearInterval(intervalId);
+      };
+    }
+
+    return () => {
+      isActive = false;
+    };
   }, [serverId]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleStatusChange = ({ userId, status }: { userId: number; status: 'online' | 'offline' }) => {
+      setMembers(prev => prev.map((member) => member.userId === userId ? { ...member, User: { ...member.User, status } } : member));
+    };
+
+    socket.on('user_status_change', handleStatusChange);
+
+    return () => {
+      socket.off('user_status_change', handleStatusChange);
+    };
+  }, [socket]);
 
   // Gruppenlogik (Online / Offline)
   const onlineMembers = members.filter(m => m.User?.status === 'online');
