@@ -43,6 +43,18 @@ export const BottomChatBar = forwardRef<BottomChatBarRef, {}>((props, ref) => {
 
   // --- Actions ---
   const closeChat = (id: number) => setChats(chats.filter(c => c.id !== id));
+
+  const popOutChat = (chat: ChatWindowData) => {
+    const targetHash = `#/popout/${chat.id}?name=${encodeURIComponent(chat.name)}`;
+
+    if (window.electron?.openChatWindow) {
+      window.electron.openChatWindow(chat.id, chat.name);
+    } else {
+      window.open(targetHash, "_blank", "width=420,height=640");
+    }
+
+    closeChat(chat.id);
+  };
   
   const toggleMinimize = (id: number) => {
     setChats(chats.map(c => c.id === id ? { ...c, minimized: !c.minimized } : c));
@@ -107,7 +119,14 @@ export const BottomChatBar = forwardRef<BottomChatBarRef, {}>((props, ref) => {
                 <span className="font-bold text-white text-sm truncate"># {chat.name}</span>
               </div>
               <div className="flex items-center gap-1">
-                <button 
+                <button
+                  onClick={(e) => { e.stopPropagation(); popOutChat(chat); }}
+                  className="p-1 hover:bg-dark-300 rounded text-gray-400"
+                  title="Chat als Fenster öffnen"
+                >
+                  <ExternalLink size={14} />
+                </button>
+                <button
                   onClick={(e) => { e.stopPropagation(); toggleMinimize(chat.id); }}
                   className="p-1 hover:bg-dark-300 rounded text-gray-400"
                 >

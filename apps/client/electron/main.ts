@@ -18,6 +18,7 @@ const RENDERER_DIST = path.join(__dirname, "..", "dist");
 const INDEX_HTML = path.join(RENDERER_DIST, "index.html");
 
 let mainWindow: BrowserWindow | null = null;
+const chatWindows = new Map<string, BrowserWindow>();
 
 /**
  * Simple JSON Store als Ersatz für SQLite (Settings/Cache).
@@ -122,6 +123,62 @@ function registerIpc() {
       return app.getPath(name as any);
     } catch {
       return null;
+    }
+  });
+
+  ipcMain.handle("chat:openWindow", async (_event, chatId: string | number, chatName: string) => {
+    const id = String(chatId);
+    const existing = chatWindows.get(id);
+    if (existing) {
+      existing.focus();
+      return;
+    }
+
+    const chatWindow = new BrowserWindow({
+      width: 420,
+      height: 640,
+      minWidth: 360,
+      minHeight: 480,
+      title: chatName,
+      backgroundColor: "#050507",
+      autoHideMenuBar: true,
+      webPreferences: {
+        preload: PRELOAD_PATH,
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: false,
+      },
+    });
+
+    chatWindows.set(id, chatWindow);
+
+    chatWindow.on("closed", () => {
+      chatWindows.delete(id);
+    });
+
+    const hashPath = `/popout/${encodeURIComponent(id)}?name=${encodeURIComponent(chatName)}`;
+
+    if (isDev) {
+      chatWindow
+        .loadURL(`${DEV_SERVER_URL}#${hashPath}`)
+        .catch((e) => console.error("[electron] failed to load chat window:", e));
+    } else {
+      chatWindow
+        .loadFile(INDEX_HTML, { hash: hashPath })
+        .catch((e) => console.error("[electron] failed to load chat window:", e));
+    }
+  });
+
+  ipcMain.handle("chat:dockWindow", async (event, chatId: string | number, chatName: string) => {
+    const id = String(chatId);
+    const target = chatWindows.get(id) || BrowserWindow.fromWebContents(event.sender);
+    target?.close();
+    chatWindows.delete(id);
+
+    if (mainWindow) {
+      mainWindow.webContents.send("chat:docked", Number(chatId), chatName);
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
     }
   });
 }

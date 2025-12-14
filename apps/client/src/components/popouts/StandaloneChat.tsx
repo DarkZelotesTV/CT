@@ -7,7 +7,7 @@ export const StandaloneChat = () => {
   const chatName = searchParams.get('name') || 'Chat';
 
   const handleDock = () => {
-    if (chatId) {
+    if (chatId && window.electron?.dockChatWindow) {
       // Sende Signal an Electron
       window.electron.dockChatWindow(chatId, chatName);
     }
