@@ -22,14 +22,22 @@ export const setServerPassword = (password: string) => {
 
 const asUrl = (url: string) => new URL(url);
 
-const getServerUrlObject = () => {
+const normalizeServerUrl = (rawUrl: string) => {
   try {
-    return asUrl(getServerUrl());
-  } catch (error) {
-    console.error('Invalid server URL configured, falling back to default.', error);
-    return asUrl(DEFAULT_SERVER);
+    return asUrl(rawUrl);
+  } catch (_err) {
+    // Allow users to omit the protocol (e.g. "example.com" or "10.0.0.5:3001").
+    // We prefer HTTPS by default because LiveKit typically runs with TLS in production.
+    try {
+      return asUrl(`https://${rawUrl}`);
+    } catch (error) {
+      console.error('Invalid server URL configured, falling back to default.', error);
+      return asUrl(DEFAULT_SERVER);
+    }
   }
 };
+
+const getServerUrlObject = () => normalizeServerUrl(getServerUrl());
 
 export const getServerWebSocketUrl = () => {
   const serverUrl = getServerUrlObject();
