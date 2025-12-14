@@ -27,10 +27,16 @@ function bytesFromB64(b64: string): Uint8Array {
   return out;
 }
 
+const toArrayBuffer = (view: Uint8Array): ArrayBuffer => {
+  const copy = new Uint8Array(view.byteLength);
+  copy.set(view);
+  return copy.buffer;
+};
+
 async function deriveAesKey(passphrase: string, salt: Uint8Array, iterations: number) {
   const baseKey = await crypto.subtle.importKey("raw", enc.encode(passphrase), { name: "PBKDF2" }, false, ["deriveKey"]);
   return crypto.subtle.deriveKey(
-    { name: "PBKDF2", salt, iterations, hash: "SHA-256" },
+    { name: "PBKDF2", salt: toArrayBuffer(salt), iterations, hash: "SHA-256" },
     baseKey,
     { name: "AES-GCM", length: 256 },
     false,
@@ -62,7 +68,7 @@ export async function decryptBackup(backup: EncryptedBackupV1, passphrase: strin
   const ct = bytesFromB64(backup.ciphertextB64);
   const iterations = Number(backup.iterations) || 150_000;
   const key = await deriveAesKey(passphrase, salt, iterations);
-  const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ct);
+  const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: toArrayBuffer(iv) }, key, toArrayBuffer(ct));
   return dec.decode(pt);
 }
 

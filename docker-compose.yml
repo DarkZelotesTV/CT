@@ -1,5 +1,9 @@
 version: "3.9"
 
+# Dienste für lokale Entwicklung/Deployments. Starte mysql/redis/livekit vor dem
+# Server-Build (`npm run build --workspace apps/server`) und der Migration über
+# `npm run start --workspace apps/server`.
+
 services:
   livekit:
     image: livekit/livekit-server:v1.9.4
@@ -26,6 +30,8 @@ services:
   mysql:
     image: mysql:8.0
     command: --default-authentication-plugin=mysql_native_password
+    # Nach dem Hochfahren kann der Server per `npm run start --workspace apps/server`
+    # die Tabellen via Sequelize-Sync anlegen.
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: clover_talk

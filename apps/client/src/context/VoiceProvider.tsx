@@ -108,9 +108,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       const room = new Room({
         adaptiveStream: true,
         dynacast: true,
-        useSinglePeerConnection: true,
         publishDefaults: { simulcast: true },
-        rtcConfig: lkConfig.connectOptions.rtcConfig,
       });
 
       room.on(RoomEvent.Disconnected, (reason) => {
@@ -137,7 +135,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       room.on(RoomEvent.Reconnected, () => console.warn('[voice] Reconnected'));
 
       // Verbinden mit der sicheren URL
-      await room.connect(lkConfig.serverUrl, newToken);
+      await room.connect(lkConfig.serverUrl, newToken, lkConfig.connectOptions);
       if (settings.devices.audioInputId) {
         await room.switchActiveDevice('audioinput', settings.devices.audioInputId, true);
       }

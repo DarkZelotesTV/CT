@@ -5,7 +5,8 @@
   "main": "dist-electron/main.cjs",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && electron-builder"
+    "build": "tsc -p tsconfig.json && vite build",
+    "package": "npm run build && electron-builder"
   },
   "dependencies": {
     "@discord-clone/shared": "*",
@@ -28,10 +29,47 @@
     "@types/react": "^18.2.15",
     "autoprefixer": "^10.4.22",
     "electron": "^39.2.7",
+    "electron-builder": "^26.0.12",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
     "vite": "^7.2.7",
     "vite-plugin-electron": "^0.12.0",
     "vite-plugin-electron-renderer": "^0.14.5"
+  },
+  "build": {
+    "appId": "com.clovertalk.desktop",
+    "productName": "CloverTalk",
+    "directories": {
+      "output": "release",
+      "buildResources": "electron/resources"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "electron/database/**/*",
+      "package.json"
+    ],
+    "extraMetadata": {
+      "main": "dist-electron/main.cjs"
+    },
+    "asar": true,
+    "win": {
+      "target": [
+        "nsis",
+        "zip"
+      ]
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "zip"
+      ]
+    }
   }
 }
