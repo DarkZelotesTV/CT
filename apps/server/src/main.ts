@@ -11,13 +11,71 @@ import friendsRoutes from './routes/friends';
 import livekitRoutes from './routes/livekit'; // WICHTIG: Sicherstellen, dass diese Datei existiert!
 
 // Models Importe (für Socket Logik)
-import { Message, User } from './models';
+import { Message, User, ServerMember, MemberRole, Role } from './models';
 import { resolveUserFromIdentity } from './utils/identityAuth';
 
 const app = express();
 const httpServer = createServer(app);
 const channelPresence = new Map<number, Set<number>>();
 const channelPublicKeys = new Map<number, Map<number, string>>();
+const userChannelMemberships = new Map<number, Set<number>>();
+
+const HEARTBEAT_INTERVAL_MS = 15_000;
+const OFFLINE_GRACE_MS = 30_000;
+const offlineTimers = new Map<number, NodeJS.Timeout>();
+
+const clearOfflineTimer = (userId: number) => {
+  const existing = offlineTimers.get(userId);
+  if (existing) {
+    clearTimeout(existing);
+    offlineTimers.delete(userId);
+  }
+};
+
+const removeUserFromChannels = (userId: number) => {
+  for (const [channelId, users] of channelPresence.entries()) {
+    if (users.has(userId)) {
+      users.delete(userId);
+      if (!users.size) channelPresence.delete(channelId);
+      io.to(`channel_${channelId}`).emit('channel_presence_leave', { channelId, userId });
+    }
+
+    const keys = channelPublicKeys.get(channelId);
+    if (keys?.has(userId)) {
+      keys.delete(userId);
+      if (!keys.size) channelPublicKeys.delete(channelId);
+    }
+  }
+
+  userChannelMemberships.delete(userId);
+};
+
+const markUserOffline = async (userId: number) => {
+  clearOfflineTimer(userId);
+
+  removeUserFromChannels(userId);
+
+  try {
+    await User.update({ status: 'offline' }, { where: { id: userId } });
+    io.emit('user_status_change', { userId, status: 'offline' });
+  } catch (err) {
+    console.error("Fehler beim Setzen des Offline-Status:", err);
+  }
+};
+
+const scheduleOfflineCheck = (userId: number) => {
+  clearOfflineTimer(userId);
+  offlineTimers.set(userId, setTimeout(() => markUserOffline(userId), OFFLINE_GRACE_MS));
+};
+
+const sendPresenceSnapshot = async (socket: any) => {
+  try {
+    const users = await User.findAll({ attributes: ['id', 'username', 'avatar_url', 'status'] });
+    socket.emit('presence_snapshot', { users });
+  } catch (err) {
+    console.error('Fehler beim Senden des Presence-Snapshots:', err);
+  }
+};
 
 // ==========================================
 // 1. CORS & MIDDLEWARE (Sicherheit lockern)
@@ -76,22 +134,41 @@ io.on('connection', async (socket) => {
   const userId = (socket.data as any).userId;
   const numericUserId = userId ? Number(userId) : null;
   (socket.data as any).joinedChannels = new Set<number>();
+  (socket.data as any).heartbeatInterval = null;
+  (socket.data as any).presenceSnapshotInterval = null;
 
   if (numericUserId) {
      console.log(`User ${numericUserId} connected (Socket ID: ${socket.id})`);
 
      try {
+       clearOfflineTimer(numericUserId);
        await User.update({ status: 'online' }, { where: { id: numericUserId } });
-       socket.broadcast.emit('user_status_change', { userId: numericUserId, status: 'online' });
+       io.emit('user_status_change', { userId: numericUserId, status: 'online' });
+       scheduleOfflineCheck(numericUserId);
+       await sendPresenceSnapshot(socket);
      } catch (err) {
        console.error("Fehler beim Setzen des Online-Status:", err);
      }
+
+     (socket.data as any).heartbeatInterval = setInterval(() => {
+       socket.emit('presence_ping');
+     }, HEARTBEAT_INTERVAL_MS);
+
+     (socket.data as any).presenceSnapshotInterval = setInterval(() => {
+       sendPresenceSnapshot(socket);
+     }, HEARTBEAT_INTERVAL_MS * 2);
   }
+
+  socket.on('presence_ack', () => {
+    if (!numericUserId) return;
+    scheduleOfflineCheck(numericUserId);
+  });
 
   socket.on('join_channel', async (channelId: number) => {
     if (!numericUserId) return;
 
     const joinedChannels: Set<number> = (socket.data as any).joinedChannels;
+    const globalChannels = userChannelMemberships.get(numericUserId) || new Set<number>();
     for (const prevChannel of Array.from(joinedChannels)) {
       if (prevChannel !== channelId) {
         socket.leave(`channel_${prevChannel}`);
@@ -104,12 +181,15 @@ io.on('connection', async (socket) => {
           io.to(`channel_${prevChannel}`).emit('channel_presence_leave', { channelId: prevChannel, userId: numericUserId });
         }
         joinedChannels.delete(prevChannel);
+        globalChannels.delete(prevChannel);
       }
     }
 
     const room = `channel_${channelId}`;
     socket.join(room);
     joinedChannels.add(channelId);
+    globalChannels.add(channelId);
+    userChannelMemberships.set(numericUserId, globalChannels);
 
     let channelUsers = channelPresence.get(channelId);
     if (!channelUsers) {
@@ -176,6 +256,45 @@ io.on('connection', async (socket) => {
     });
   });
 
+  socket.on('request_server_members', async (payload: { serverId?: number }) => {
+    if (!payload?.serverId) return;
+
+    try {
+      const members = await ServerMember.findAll({
+        where: { server_id: payload.serverId },
+        include: [{
+          model: User,
+          as: 'user',
+          attributes: ['id', 'username', 'avatar_url', 'status']
+        }]
+      });
+
+      const assignments = await MemberRole.findAll({
+        where: { server_id: payload.serverId },
+        include: [{ model: Role, as: 'role' }]
+      });
+
+      const rolesByUser: Record<number, any[]> = {};
+      assignments.forEach((a: any) => {
+        rolesByUser[a.user_id] = rolesByUser[a.user_id] || [];
+        if (a.role) rolesByUser[a.user_id].push(a.role);
+      });
+
+      const memberPayload = members.map((m: any) => ({
+        userId: m.user.id,
+        username: m.user.username,
+        avatarUrl: m.user.avatar_url,
+        status: m.user.status,
+        joinedAt: m.createdAt,
+        roles: rolesByUser[m.user.id] || [],
+      }));
+
+      socket.emit('server_members_snapshot', { serverId: payload.serverId, members: memberPayload });
+    } catch (err) {
+      console.error('Fehler beim Senden der Member Snapshot:', err);
+    }
+  });
+
   socket.on('send_message', async (data) => {
     try {
         const senderId = numericUserId;
@@ -223,6 +342,14 @@ io.on('connection', async (socket) => {
       channelKeys.delete(numericUserId);
       if (!channelKeys.size) channelPublicKeys.delete(channelId);
     }
+
+    const globalChannels = userChannelMemberships.get(numericUserId);
+    if (globalChannels?.has(channelId)) {
+      globalChannels.delete(channelId);
+      if (!globalChannels.size) {
+        userChannelMemberships.delete(numericUserId);
+      }
+    }
   });
 
   socket.on('disconnect', async () => {
@@ -231,28 +358,18 @@ io.on('connection', async (socket) => {
 
        const joinedChannels: Set<number> = (socket.data as any).joinedChannels || new Set();
        for (const ch of Array.from(joinedChannels)) {
-         const presence = channelPresence.get(ch);
-         if (presence?.has(numericUserId)) {
-           presence.delete(numericUserId);
-           if (!presence.size) channelPresence.delete(ch);
-           io.to(`channel_${ch}`).emit('channel_presence_leave', { channelId: ch, userId: numericUserId });
-         }
          socket.leave(`channel_${ch}`);
-         joinedChannels.delete(ch);
-
-         const channelKeys = channelPublicKeys.get(ch);
-         if (channelKeys?.has(numericUserId)) {
-           channelKeys.delete(numericUserId);
-           if (!channelKeys.size) channelPublicKeys.delete(ch);
-         }
        }
 
-       try {
-         await User.update({ status: 'offline' }, { where: { id: numericUserId } });
-         socket.broadcast.emit('user_status_change', { userId: numericUserId, status: 'offline' });
-       } catch (err) {
-         console.error("Fehler beim Setzen des Offline-Status:", err);
+       if ((socket.data as any).heartbeatInterval) {
+         clearInterval((socket.data as any).heartbeatInterval);
        }
+
+       if ((socket.data as any).presenceSnapshotInterval) {
+         clearInterval((socket.data as any).presenceSnapshotInterval);
+       }
+
+       scheduleOfflineCheck(numericUserId);
     }
   });
 });
