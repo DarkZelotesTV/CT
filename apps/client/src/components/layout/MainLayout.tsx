@@ -1,7 +1,7 @@
 import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Users } from 'lucide-react';
 import { RoomAudioRenderer, RoomContext } from '@livekit/components-react';
 import '@livekit/components-styles';
 
@@ -27,7 +27,6 @@ const defaultChannelWidth = 256;
 const defaultMemberWidth = 256;
 const minSidebarWidth = 200;
 const maxSidebarWidth = 420;
-const clampSidebarWidth = (value: number) => Math.min(Math.max(value, minSidebarWidth), maxSidebarWidth);
 
 interface Channel {
   id: number;
@@ -36,26 +35,19 @@ interface Channel {
 }
 
 export const MainLayout = () => {
+  const [showServerRail, setShowServerRail] = useState(() => (typeof window === 'undefined' ? true : window.innerWidth >= 1024));
   const [showLeftSidebar, setShowLeftSidebar] = useState(true);
   const [showRightSidebar, setShowRightSidebar] = useState(true);
-  const [leftSidebarWidth, setLeftSidebarWidth] = useState(() => {
-    if (typeof window === 'undefined') return defaultChannelWidth;
-    const stored = localStorage.getItem('ct.layout.left_width');
-    if (!stored) return defaultChannelWidth;
-    const parsed = Number(stored);
-    return Number.isFinite(parsed) ? clampSidebarWidth(parsed) : defaultChannelWidth;
-  });
-  const [rightSidebarWidth, setRightSidebarWidth] = useState(() => {
-    if (typeof window === 'undefined') return defaultMemberWidth;
-    const stored = localStorage.getItem('ct.layout.right_width');
-    if (!stored) return defaultMemberWidth;
-    const parsed = Number(stored);
-    return Number.isFinite(parsed) ? clampSidebarWidth(parsed) : defaultMemberWidth;
-  });
+  const [containerWidth, setContainerWidth] = useState(() => (typeof window === 'undefined' ? 0 : window.innerWidth));
+  const [leftSidebarWidth, setLeftSidebarWidth] = useState(defaultChannelWidth);
+  const [rightSidebarWidth, setRightSidebarWidth] = useState(defaultMemberWidth);
   const [isDraggingLeft, setIsDraggingLeft] = useState(false);
   const [isDraggingRight, setIsDraggingRight] = useState(false);
+  const [isNarrow, setIsNarrow] = useState(() => (typeof window === 'undefined' ? false : window.innerWidth < 1024));
+  const [showMemberSheet, setShowMemberSheet] = useState(false);
   const leftSidebarRef = useRef<HTMLDivElement>(null);
   const rightSidebarRef = useRef<HTMLDivElement>(null);
+  const layoutRef = useRef<HTMLDivElement>(null);
   const dragState = useRef<{ startX: number; startWidth: number }>({ startX: 0, startWidth: 0 });
   const [selectedServerId, setSelectedServerId] = useState<number | null>(null);
   const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
@@ -68,13 +60,88 @@ export const MainLayout = () => {
   // Voice Context holen
   const { activeRoom } = useVoice();
 
-  useEffect(() => {
-    localStorage.setItem('ct.layout.left_width', String(leftSidebarWidth));
-  }, [leftSidebarWidth]);
+  const computedMaxSidebarWidth = useMemo(() => {
+    if (!containerWidth) return maxSidebarWidth;
+    const dynamicMax = Math.floor(containerWidth * 0.4);
+    return Math.max(minSidebarWidth, Math.min(maxSidebarWidth, dynamicMax));
+  }, [containerWidth]);
+
+  const clampSidebarWidth = useCallback(
+    (value: number) => Math.min(Math.max(value, minSidebarWidth), computedMaxSidebarWidth),
+    [computedMaxSidebarWidth]
+  );
 
   useEffect(() => {
-    localStorage.setItem('ct.layout.right_width', String(rightSidebarWidth));
-  }, [rightSidebarWidth]);
+    if (typeof window === 'undefined') return;
+    const storedLeft = localStorage.getItem('ct.layout.left_width');
+    if (storedLeft) {
+      const parsed = Number(storedLeft);
+      setLeftSidebarWidth(Number.isFinite(parsed) ? clampSidebarWidth(parsed) : defaultChannelWidth);
+    }
+
+    const storedRight = localStorage.getItem('ct.layout.right_width');
+    if (storedRight) {
+      const parsed = Number(storedRight);
+      setRightSidebarWidth(Number.isFinite(parsed) ? clampSidebarWidth(parsed) : defaultMemberWidth);
+    }
+  }, [clampSidebarWidth]);
+
+  useEffect(() => {
+    localStorage.setItem('ct.layout.left_width', String(clampSidebarWidth(leftSidebarWidth)));
+  }, [clampSidebarWidth, leftSidebarWidth]);
+
+  useEffect(() => {
+    localStorage.setItem('ct.layout.right_width', String(clampSidebarWidth(rightSidebarWidth)));
+  }, [clampSidebarWidth, rightSidebarWidth]);
+
+  useEffect(() => {
+    setLeftSidebarWidth((width) => clampSidebarWidth(width));
+    setRightSidebarWidth((width) => clampSidebarWidth(width));
+  }, [clampSidebarWidth]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const handleResize = () => {
+      setIsNarrow(window.innerWidth < 1024);
+      setContainerWidth(window.innerWidth);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (!layoutRef.current || typeof ResizeObserver === 'undefined') return undefined;
+
+    const observer = new ResizeObserver((entries) => {
+      if (!entries.length) return;
+      setContainerWidth(entries[0].contentRect.width);
+    });
+
+    observer.observe(layoutRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (isNarrow) {
+      setShowLeftSidebar(false);
+      setShowRightSidebar(false);
+      setShowServerRail(false);
+    } else {
+      setShowServerRail(true);
+    }
+  }, [isNarrow]);
+
+  useEffect(() => {
+    if (!isNarrow) {
+      setShowMemberSheet(false);
+    }
+  }, [isNarrow]);
+
+  useEffect(() => {
+    setShowMemberSheet(false);
+  }, [activeChannel?.id]);
 
   useEffect(() => {
     // One-time tutorial after the first successful start.
@@ -201,7 +268,14 @@ export const MainLayout = () => {
     }
 
     if (activeChannel?.type === 'text') {
-      return <ChatChannelView channelId={activeChannel.id} channelName={activeChannel.name} />;
+      return (
+        <ChatChannelView
+          channelId={activeChannel.id}
+          channelName={activeChannel.name}
+          isCompact={isNarrow}
+          onOpenMembers={() => setShowMemberSheet(true)}
+        />
+      );
     }
 
     return (
@@ -220,7 +294,7 @@ export const MainLayout = () => {
 
   // Dein komplettes UI bleibt gleich – nur ohne LiveKitRoom wrapper
   const ui = (
-    <div className="flex h-screen w-screen overflow-hidden relative bg-[#050507] text-gray-200 font-sans">
+    <div ref={layoutRef} className="flex h-screen w-screen overflow-hidden relative bg-[#050507] text-gray-200 font-sans">
       {showOnboarding && <OnboardingModal onClose={() => setShowOnboarding(false)} />}
       {showCreateServer && (
         <CreateServerModal
@@ -244,20 +318,23 @@ export const MainLayout = () => {
         <ServerSettingsModal serverId={selectedServerId} onClose={() => setShowServerSettings(false)} />
       )}
       {/* 1. SERVER RAIL */}
-      <div className="w-[80px] flex-shrink-0 z-50 flex flex-col items-center py-3 h-full">
-        <div className="w-full h-full bg-[#0a0a0c]/80 backdrop-blur-xl rounded-2xl border border-white/5 ml-3 shadow-2xl">
-          <ServerRail selectedServerId={selectedServerId} onSelectServer={handleServerSelect} />
+      {showServerRail && (
+        <div className="w-[80px] flex-shrink-0 z-50 flex flex-col items-center py-3 h-full transition-transform duration-500">
+          <div className="w-full h-full bg-[#0a0a0c]/80 backdrop-blur-xl rounded-2xl border border-white/5 ml-3 shadow-2xl">
+            <ServerRail selectedServerId={selectedServerId} onSelectServer={handleServerSelect} />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 2. SIDEBAR */}
       <div
         ref={leftSidebarRef}
         className={classNames(
           'transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] relative z-40 h-full py-3 pl-3',
-          showLeftSidebar ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10 pl-0'
+          showLeftSidebar ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10 pl-0',
+          isNarrow && 'fixed inset-y-3 left-3 right-3 z-50'
         )}
-        style={{ width: showLeftSidebar ? leftSidebarWidth : 0 }}
+        style={{ width: showLeftSidebar && !isNarrow ? leftSidebarWidth : isNarrow && showLeftSidebar ? 'auto' : 0 }}
       >
         <div className="w-full h-full bg-[#0e0e11]/60 backdrop-blur-xl rounded-2xl border border-white/5 overflow-hidden">
           {selectedServerId ? (
@@ -266,6 +343,9 @@ export const MainLayout = () => {
               activeChannelId={activeChannel?.id || null}
               onSelectChannel={(channel) => {
                 setActiveChannel(channel);
+                if (isNarrow) {
+                  setShowLeftSidebar(false);
+                }
               }}
               onOpenServerSettings={() => setShowServerSettings(true)}
             />
@@ -273,7 +353,7 @@ export const MainLayout = () => {
             <DashboardSidebar />
           )}
         </div>
-        {showLeftSidebar && (
+        {showLeftSidebar && !isNarrow && (
           <div
             className="absolute top-0 right-0 h-full w-2 cursor-ew-resize bg-transparent hover:bg-white/5"
             onMouseDown={startDragLeft}
@@ -283,12 +363,31 @@ export const MainLayout = () => {
 
       {/* 3. MAIN STAGE */}
       <div className="flex-1 flex flex-col min-w-0 relative h-full py-3 px-3 overflow-hidden">
-        <button
-          onClick={() => setShowLeftSidebar(!showLeftSidebar)}
-          className="absolute left-3 top-1/2 -translate-y-1/2 z-50 w-6 h-12 bg-black/50 hover:bg-indigo-600 rounded-r-xl backdrop-blur-md flex items-center justify-center text-white/50 hover:text-white transition-all cursor-pointer shadow-lg"
-        >
-          {showLeftSidebar ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
-        </button>
+        {!isNarrow && (
+          <button
+            onClick={() => setShowLeftSidebar(!showLeftSidebar)}
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-50 w-6 h-12 bg-black/50 hover:bg-indigo-600 rounded-r-xl backdrop-blur-md flex items-center justify-center text-white/50 hover:text-white transition-all cursor-pointer shadow-lg"
+          >
+            {showLeftSidebar ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+          </button>
+        )}
+
+        {isNarrow && (
+          <div className="absolute top-4 left-4 z-40 flex gap-2">
+            <button
+              onClick={() => setShowServerRail((value) => !value)}
+              className="px-3 py-2 rounded-full bg-black/40 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 backdrop-blur-md shadow-lg"
+            >
+              {showServerRail ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+            </button>
+            <button
+              onClick={() => setShowLeftSidebar(true)}
+              className="px-3 py-2 rounded-full bg-black/40 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 backdrop-blur-md shadow-lg"
+            >
+              Channels
+            </button>
+          </div>
+        )}
 
         <div className="flex-1 bg-[#09090b] rounded-2xl border border-white/5 relative overflow-hidden shadow-2xl flex flex-col">
           {renderContent()}
@@ -298,7 +397,7 @@ export const MainLayout = () => {
           />
         </div>
 
-        {selectedServerId && (
+        {selectedServerId && !isNarrow && (
           <button
             onClick={() => setShowRightSidebar(!showRightSidebar)}
             className="absolute right-3 top-1/2 -translate-y-1/2 z-50 w-6 h-12 bg-black/50 hover:bg-indigo-600 rounded-l-xl backdrop-blur-md flex items-center justify-center text-white/50 hover:text-white transition-all cursor-pointer shadow-lg"
@@ -310,7 +409,7 @@ export const MainLayout = () => {
       </div>
 
       {/* 4. MEMBER SIDEBAR */}
-      {selectedServerId && (
+      {selectedServerId && !isNarrow && (
         <div
           ref={rightSidebarRef}
           className={classNames(
@@ -328,6 +427,35 @@ export const MainLayout = () => {
               onMouseDown={startDragRight}
             />
           )}
+        </div>
+      )}
+
+      {/* MOBILE MEMBER SHEET */}
+      {selectedServerId && isNarrow && (
+        <div
+          className={classNames(
+            'fixed inset-x-0 bottom-0 z-50 transition-transform duration-500',
+            showMemberSheet ? 'translate-y-0' : 'translate-y-full'
+          )}
+        >
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowMemberSheet(false)} />
+          <div className="relative bg-[#0e0e11]/95 border-t border-white/10 rounded-t-3xl overflow-hidden shadow-2xl">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
+              <div className="flex items-center gap-2 text-sm font-semibold text-white">
+                <Users size={16} />
+                Mitglieder
+              </div>
+              <button
+                onClick={() => setShowMemberSheet(false)}
+                className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-gray-200 transition-colors"
+              >
+                <ChevronDown size={16} />
+              </button>
+            </div>
+            <div className="max-h-[70vh] h-[60vh] overflow-y-auto custom-scrollbar px-3 pb-6">
+              <MemberSidebar serverId={selectedServerId} />
+            </div>
+          </div>
         </div>
       )}
 
