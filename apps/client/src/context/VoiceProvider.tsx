@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Room, RoomEvent, Track } from 'livekit-client';
+import { Room, RoomEvent, Track, DisconnectReason } from 'livekit-client';
 import { getLiveKitConfig } from '../utils/apiConfig';
 import { VoiceContext, VoiceContextType } from './voice-state';
 import { apiFetch } from '../api/http';
@@ -560,6 +560,13 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         });
 
         room.on(RoomEvent.Disconnected, (reason) => {
+          // CRITICAL FIX: Prevent Reconnect Loop on Duplicate Identity
+          if (reason === DisconnectReason.DUPLICATE_IDENTITY) {
+            console.warn('[voice] Disconnected due to DUPLICATE_IDENTITY. Stopping reconnect loop.');
+            finalizeDisconnection('Verbindung beendet: Sie haben sich von einem anderen Gerät angemeldet.');
+            return;
+          }
+
           const disconnectReason =
             typeof reason === 'string'
               ? reason
