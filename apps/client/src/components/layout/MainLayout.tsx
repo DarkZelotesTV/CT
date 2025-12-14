@@ -98,9 +98,11 @@ export const MainLayout = () => {
       setActiveChannel({ id: Number(chatId), name: chatName, type: 'text' });
     });
 
-    return () => {
-      unsubscribe?.();
-    };
+    if (typeof unsubscribe === 'function') {
+      return () => unsubscribe();
+    }
+
+    return undefined;
   }, []);
 
   const handleServerSelect = (id: number | null) => {

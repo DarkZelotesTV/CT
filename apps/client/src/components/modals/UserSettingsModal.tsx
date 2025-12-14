@@ -94,7 +94,7 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
     muted,
     setMuted,
     usePushToTalk,
-    setPushToTalk,
+    setPushToTalk: setPushToTalkEnabledFlag,
     selectedAudioInputId,
     selectedAudioOutputId,
   } = useVoice();
@@ -103,7 +103,7 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
   const [audioInputId, setAudioInputId] = useState(settings.devices.audioInputId || selectedAudioInputId || '');
   const [audioOutputId, setAudioOutputId] = useState(settings.devices.audioOutputId || selectedAudioOutputId || '');
   const [videoInputId, setVideoInputId] = useState(settings.devices.videoInputId || '');
-  const [pushToTalk, setPushToTalk] = useState(settings.hotkeys.pushToTalk || '');
+  const [pushToTalk, setPushToTalkHotkey] = useState(settings.hotkeys.pushToTalk || '');
   const [muteToggle, setMuteToggle] = useState(settings.hotkeys.muteToggle || '');
   const [deviceLists, setDeviceLists] = useState<DeviceLists>({ audioInputs: [], audioOutputs: [], videoInputs: [] });
   const [deviceError, setDeviceError] = useState<string | null>(null);
@@ -312,7 +312,7 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
       pushToTalk: pushToTalk || null,
       muteToggle: muteToggle || null,
     });
-    await setPushToTalk(pushToTalkEnabled);
+    await setPushToTalkEnabledFlag(pushToTalkEnabled);
     await setMuted(locallyMuted);
     onClose();
   };
@@ -448,7 +448,7 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
             <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Hotkeys</div>
             <p className="text-gray-400 text-sm">Lege Tasten für Push-to-Talk oder schnelles Muten fest.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <HotkeyInput label="Push-to-Talk" value={pushToTalk} onChange={setPushToTalk} />
+              <HotkeyInput label="Push-to-Talk" value={pushToTalk} onChange={setPushToTalkHotkey} />
               <HotkeyInput label="Mute Toggle" value={muteToggle} onChange={setMuteToggle} />
             </div>
           </section>
