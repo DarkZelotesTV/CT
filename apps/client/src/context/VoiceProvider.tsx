@@ -299,25 +299,33 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
 
       // Standard Browser Fallback
       try {
-        const stream = await navigator.mediaDevices.getDisplayMedia({
-          video: {
-            width: preset.resolution.width,
-            height: preset.resolution.height,
-            frameRate: preferredFrameRate,
-          },
-          audio: shouldShareAudio
-            ? ({
-                suppressLocalAudioPlayback: false,
-              } as MediaTrackConstraints)
-            : false,
-        });
+        let stream: MediaStream | null = null;
+        let videoTrack: MediaStreamTrack | null = null;
+        let audioTrack: MediaStreamTrack | null = null;
 
-        const streamVideoTrack = stream.getVideoTracks()[0];
-        const videoTrack = options?.track ?? streamVideoTrack;
-        const audioTrack = shouldShareAudio ? stream.getAudioTracks()[0] ?? null : null;
+        if (!shouldShareAudio && options?.track) {
+          videoTrack = options.track;
+        } else {
+          stream = await navigator.mediaDevices.getDisplayMedia({
+            video: {
+              width: preset.resolution.width,
+              height: preset.resolution.height,
+              frameRate: preferredFrameRate,
+            },
+            audio: shouldShareAudio
+              ? ({
+                  suppressLocalAudioPlayback: false,
+                } as MediaTrackConstraints)
+              : false,
+          });
 
-        if (streamVideoTrack && videoTrack !== streamVideoTrack) {
-          streamVideoTrack.stop();
+          const streamVideoTrack = stream.getVideoTracks()[0];
+          videoTrack = options?.track ?? streamVideoTrack;
+          audioTrack = shouldShareAudio ? stream.getAudioTracks()[0] ?? null : null;
+
+          if (streamVideoTrack && videoTrack !== streamVideoTrack) {
+            streamVideoTrack.stop();
+          }
         }
 
         if (!videoTrack || videoTrack.readyState === 'ended') {
