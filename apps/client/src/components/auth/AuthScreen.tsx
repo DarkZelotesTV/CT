@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Mail, Lock, User, Loader2, ArrowRight, Clover, Server, CheckCircle2 } from 'lucide-react';
-import { getServerUrl, setServerUrl, DEFAULT_SERVER } from '../../utils/apiConfig';
+import { getServerUrl, setServerUrl } from '../../utils/apiConfig';
 
 interface AuthScreenProps {
   onLoginSuccess: (token: string, userData: any) => void;
@@ -19,7 +19,7 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
 
   // Server Settings State
   const [showServerSettings, setShowServerSettings] = useState(false);
-  const [serverAddress, setServerAddress] = useState(DEFAULT_SERVER);
+  const [serverAddress, setServerAddress] = useState(() => getServerUrl());
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'checking' | 'ok' | 'error'>('idle');
 
   // Beim Start: Gespeicherte Server-URL laden
