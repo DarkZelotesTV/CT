@@ -12,6 +12,7 @@
   },
   "devDependencies": {
     "concurrently": "^8.0.0",
+    "electron": "39.2.7",
     "typescript": "^5.0.0"
   },
   "dependencies": {
