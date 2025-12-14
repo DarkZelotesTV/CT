@@ -108,9 +108,24 @@ router.put('/servers/:serverId', authenticateRequest, async (req: AuthRequest, r
       return res.status(403).json({ error: 'Fehlende Berechtigung' });
     }
 
-    const { name, icon_url } = req.body as { name?: string; icon_url?: string };
+    const { name, icon_url, fallbackChannelId } = req.body as { name?: string; icon_url?: string; fallbackChannelId?: number | null };
     if (typeof name === 'string' && name.trim()) server.name = name.trim();
     if (typeof icon_url === 'string') server.icon_url = icon_url;
+
+    if (typeof fallbackChannelId !== 'undefined') {
+      if (fallbackChannelId === null) {
+        server.fallback_channel_id = null;
+      } else {
+        const targetChannel = await Channel.findByPk(fallbackChannelId);
+        if (!targetChannel || targetChannel.server_id !== server.id) {
+          return res.status(400).json({ error: 'Ungültiger Fallback-Kanal' });
+        }
+        if (targetChannel.type === 'voice') {
+          return res.status(400).json({ error: 'Fallback-Kanal muss Text oder Web sein' });
+        }
+        server.fallback_channel_id = fallbackChannelId;
+      }
+    }
     await server.save();
 
     res.json(server);
@@ -172,8 +187,11 @@ router.post('/servers', authenticateRequest, async (req: AuthRequest, res) => {
     ]);
 
     // Standard-Kanäle erstellen
-    await Channel.create({ name: 'allgemein', type: 'text', server_id: server.id });
+    const defaultText = await Channel.create({ name: 'allgemein', type: 'text', server_id: server.id });
     await Channel.create({ name: 'Lobby', type: 'voice', server_id: server.id });
+
+    server.fallback_channel_id = defaultText.id;
+    await server.save();
 
     res.json(server);
   } catch (err) {
@@ -211,6 +229,8 @@ router.get('/servers/:serverId/structure', authenticateRequest, async (req, res)
   try {
     const { serverId } = req.params;
 
+    const server = await Server.findByPk(serverId);
+
     const categories = await Category.findAll({
       where: { server_id: serverId },
       order: [['position', 'ASC']],
@@ -226,7 +246,7 @@ router.get('/servers/:serverId/structure', authenticateRequest, async (req, res)
       order: [['position', 'ASC']]
     });
 
-    res.json({ categories, uncategorized });
+    res.json({ categories, uncategorized, fallbackChannelId: server?.fallback_channel_id ?? null });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Fehler beim Laden der Struktur" });

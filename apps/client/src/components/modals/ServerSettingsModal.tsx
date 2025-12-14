@@ -53,8 +53,9 @@ export const ServerSettingsModal = ({ serverId, onClose }: ServerSettingsProps) 
   const [members, setMembers] = useState<any[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
   const [serverName, setServerName] = useState('');
+  const [fallbackChannelId, setFallbackChannelId] = useState<number | null>(null);
   const [loadingMembers, setLoadingMembers] = useState(false);
-  const [structure, setStructure] = useState<{ categories: Category[]; uncategorized: Channel[] }>({ categories: [], uncategorized: [] });
+  const [structure, setStructure] = useState<{ categories: Category[]; uncategorized: Channel[]; fallbackChannelId?: number | null }>({ categories: [], uncategorized: [], fallbackChannelId: null });
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newChannelType, setNewChannelType] = useState<'text' | 'voice' | 'web'>('text');
   const [selectedChannelForOverrides, setSelectedChannelForOverrides] = useState<number | null>(null);
@@ -68,10 +69,17 @@ export const ServerSettingsModal = ({ serverId, onClose }: ServerSettingsProps) 
       try {
         const res = await apiFetch<any[]>(`/api/servers`);
         const myServer = res.find((s: any) => s.id === serverId);
-        if (myServer) setServerName(myServer.name);
+        if (myServer) {
+          setServerName(myServer.name);
+          setFallbackChannelId(myServer.fallback_channel_id ?? null);
+        }
       } catch (e) {}
     };
     loadDetails();
+  }, [serverId]);
+
+  useEffect(() => {
+    loadStructure();
   }, [serverId]);
 
   useEffect(() => {
@@ -121,8 +129,11 @@ export const ServerSettingsModal = ({ serverId, onClose }: ServerSettingsProps) 
 
   const loadStructure = async () => {
     try {
-      const res = await apiFetch<{ categories: Category[]; uncategorized: Channel[] }>(`/api/servers/${serverId}/structure`);
+      const res = await apiFetch<{ categories: Category[]; uncategorized: Channel[]; fallbackChannelId?: number | null }>(`/api/servers/${serverId}/structure`);
       setStructure(res);
+      if (typeof res.fallbackChannelId !== 'undefined') {
+        setFallbackChannelId(res.fallbackChannelId ?? null);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -140,9 +151,9 @@ export const ServerSettingsModal = ({ serverId, onClose }: ServerSettingsProps) 
   // Actions
   const handleSaveServer = async () => {
     try {
-      await apiFetch(`/api/servers/${serverId}`, { method: 'PUT', body: JSON.stringify({ name: serverName }) });
+      await apiFetch(`/api/servers/${serverId}`, { method: 'PUT', body: JSON.stringify({ name: serverName, fallbackChannelId }) });
       // Optional: Toast notification instead of alert
-      window.location.reload(); 
+      window.location.reload();
     } catch (e) {
       alert('Fehler beim Speichern');
     }
@@ -369,6 +380,26 @@ export const ServerSettingsModal = ({ serverId, onClose }: ServerSettingsProps) 
                         className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
                         placeholder="Mein cooler Server"
                       />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs text-gray-400 uppercase font-semibold">Fallback-Kanal</label>
+                      <select
+                        value={fallbackChannelId ?? ''}
+                        onChange={(e) => setFallbackChannelId(e.target.value ? Number(e.target.value) : null)}
+                        className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                      >
+                        <option value="">Keiner</option>
+                        {[...structure.uncategorized, ...structure.categories.flatMap((c) => c.channels)]
+                          .filter((c) => c.type !== 'voice')
+                          .map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name} ({c.type === 'web' ? 'Web' : 'Text'})
+                            </option>
+                          ))}
+                      </select>
+                      <p className="text-[11px] text-gray-500 leading-relaxed">
+                        Dieser Text- oder Webkanal wird automatisch geöffnet, wenn Mitglieder dem Server beitreten oder einen Sprachkanal verlassen.
+                      </p>
                     </div>
                     <div className="flex justify-end">
                       <button

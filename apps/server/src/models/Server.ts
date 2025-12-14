@@ -6,6 +6,7 @@ export class Server extends Model {
   public name!: string;
   public icon_url!: string;
   public owner_id!: number;
+  public fallback_channel_id!: number | null;
 }
 
 Server.init({
@@ -13,4 +14,5 @@ Server.init({
   name: { type: DataTypes.STRING, allowNull: false },
   icon_url: { type: DataTypes.STRING, allowNull: true },
   owner_id: { type: DataTypes.INTEGER, allowNull: false },
+  fallback_channel_id: { type: DataTypes.INTEGER, allowNull: true },
 }, { sequelize, tableName: 'servers' });
