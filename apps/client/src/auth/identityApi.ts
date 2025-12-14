@@ -1,5 +1,5 @@
 import { IdentityFile, computeFingerprint, signMessage } from "./identity";
-import { getServerUrl, getServerPassword } from "../utils/apiConfig";
+import { getServerUrl, getServerPassword, setLiveKitUrl } from "../utils/apiConfig";
 
 async function postJson<T>(baseUrl: string, path: string, body: any): Promise<T> {
   const res = await fetch(`${baseUrl}${path}`, {
@@ -25,10 +25,15 @@ export async function performHandshake(id: IdentityFile, serverPassword?: string
     timestamp,
   };
 
-  return postJson<{
+  const response = await postJson<{
     user: { id: number; username?: string | null; displayName: string | null; fingerprint: string };
     access: { passwordRequired: boolean };
+    config?: { livekitUrl?: string };
   }>(serverUrl, "/api/auth/handshake", payload);
+
+  setLiveKitUrl(response.config?.livekitUrl);
+
+  return response;
 }
 
 export async function buildIdentityHeaders(): Promise<Headers> {
