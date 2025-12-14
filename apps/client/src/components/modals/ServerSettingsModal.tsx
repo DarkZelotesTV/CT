@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Trash2, Shield, Save, Loader2, Plus, ArrowUp, ArrowDown, Settings2 } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { CreateChannelModal } from './CreateChannelModal';
@@ -280,7 +281,7 @@ export const ServerSettingsModal = ({ serverId, onClose }: ServerSettingsProps) 
     { key: 'members', label: 'Mitglieder' },
   ];
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center animate-in fade-in">
       <div className="bg-dark-100 w-[980px] h-[650px] rounded-lg shadow-2xl flex overflow-hidden border border-dark-400">
         <div className="w-64 bg-dark-200 p-4 flex flex-col">
@@ -307,7 +308,7 @@ export const ServerSettingsModal = ({ serverId, onClose }: ServerSettingsProps) 
         </div>
 
         <div className="flex-1 bg-dark-100 p-6 md:p-8 relative overflow-hidden flex flex-col">
-          <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white flex flex-col items-center">
+      <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white flex flex-col items-center">
             <div className="border-2 border-gray-400 rounded-full p-1 mb-1">
               <X size={16} />
             </div>
@@ -802,6 +803,7 @@ export const ServerSettingsModal = ({ serverId, onClose }: ServerSettingsProps) 
           onCreated={loadStructure}
         />
       )}
-    </div>
+    </div>,
+    document.body
   );
 };

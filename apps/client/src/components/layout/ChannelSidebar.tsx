@@ -3,22 +3,25 @@ import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, P
 import { apiFetch } from '../../api/http';
 import { CreateChannelModal } from '../modals/CreateChannelModal';
 import { UserBottomBar } from './UserBottomBar';
-import { ServerSettingsModal } from '../modals/ServerSettingsModal';
 import { useVoice } from '../../context/voice-state'; // Importieren
 import { VoiceParticipantsPanel } from "../voice/VoiceParticipantsPanel";
 
 // ... (Interfaces Channel, Category wie gehabt) ...
 interface Channel { id: number; name: string; type: 'text' | 'voice' | 'web'; custom_icon?: string; }
 interface Category { id: number; name: string; channels: Channel[]; }
-interface ChannelSidebarProps { serverId: number | null; activeChannelId: number | null; onSelectChannel: (channel: Channel) => void; }
+interface ChannelSidebarProps {
+  serverId: number | null;
+  activeChannelId: number | null;
+  onSelectChannel: (channel: Channel) => void;
+  onOpenServerSettings: () => void;
+}
 
-export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel }: ChannelSidebarProps) => {
+export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onOpenServerSettings }: ChannelSidebarProps) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [uncategorized, setUncategorized] = useState<Channel[]>([]);
   const [serverName, setServerName] = useState('Server');
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [createType, setCreateType] = useState<any>('text');
   const [createCategoryId, setCreateCategoryId] = useState<number | null>(null);
 
@@ -74,7 +77,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel }: C
     <div className="flex flex-col h-full bg-transparent">
         {/* Header */}
         <div
-          onClick={() => setShowSettingsModal(true)}
+          onClick={onOpenServerSettings}
           className="h-12 flex items-center gap-2 px-4 border-b border-white/5 cursor-pointer hover:bg-white/5 transition-colors no-drag"
         >
           <span className="font-bold text-white truncate flex-1">{serverName}</span>
@@ -151,7 +154,6 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel }: C
 
       {/* Modals */}
       {showCreateModal && <CreateChannelModal serverId={serverId!} categoryId={createCategoryId} defaultType={createType} onClose={() => setShowCreateModal(false)} onCreated={fetchData} />}
-      {showSettingsModal && <ServerSettingsModal serverId={serverId!} onClose={() => setShowSettingsModal(false)} />}
     </div>
   );
 };
