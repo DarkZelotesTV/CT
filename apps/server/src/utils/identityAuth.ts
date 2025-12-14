@@ -3,14 +3,24 @@ import { User } from '../models/User';
 
 let edPromise: Promise<typeof import('@noble/ed25519')> | null = null;
 
+// NOTE:
+// TypeScript will downlevel `import()` to `require()` when compiling with `module: commonjs`.
+// That breaks when importing ESM-only packages like `@noble/ed25519` (Node will throw ERR_REQUIRE_ESM).
+// Using `new Function('p', 'return import(p)')` preserves a real dynamic import at runtime even in CJS output.
+const dynamicImport = new Function('p', 'return import(p)') as (p: string) => Promise<any>;
+
 async function getEd() {
   if (!edPromise) {
-    edPromise = import('@noble/ed25519').then((mod) => {
-      // noble braucht sha512 (Node liefert das über crypto)
-      mod.hashes.sha512 = (msg: Uint8Array) =>
-        new Uint8Array(crypto.createHash('sha512').update(msg).digest());
-      mod.hashes.sha512Async = async (msg: Uint8Array) =>
-        new Uint8Array(crypto.createHash('sha512').update(msg).digest());
+    edPromise = dynamicImport('@noble/ed25519').then((mod) => {
+      // noble requires sha512 implementation (Node provides it via crypto)
+      // API: https://jsr.io/@noble/ed25519/doc#hashes
+      const m: any = mod;
+      if (m?.hashes) {
+        m.hashes.sha512 = (msg: Uint8Array) =>
+          new Uint8Array(crypto.createHash('sha512').update(msg).digest());
+        m.hashes.sha512Async = async (msg: Uint8Array) =>
+          new Uint8Array(crypto.createHash('sha512').update(msg).digest());
+      }
       return mod;
     });
   }
