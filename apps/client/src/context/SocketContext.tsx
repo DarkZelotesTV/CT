@@ -11,13 +11,21 @@ export interface ChannelPresenceUser {
   isSpeaking?: boolean;
 }
 
+export interface PresenceUserSnapshot {
+  id: number;
+  username: string;
+  avatar_url?: string;
+  status?: 'online' | 'offline';
+}
+
 interface SocketContextType {
   socket: Socket | null;
   isConnected: boolean;
   channelPresence: Record<number, ChannelPresenceUser[]>;
+  presenceSnapshot: Record<number, PresenceUserSnapshot>;
 }
 
-const SocketContext = createContext<SocketContextType>({ socket: null, isConnected: false, channelPresence: {} });
+const SocketContext = createContext<SocketContextType>({ socket: null, isConnected: false, channelPresence: {}, presenceSnapshot: {} });
 
 export const useSocket = () => useContext(SocketContext);
 
@@ -25,6 +33,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [channelPresence, setChannelPresence] = useState<Record<number, ChannelPresenceUser[]>>({});
+  const [presenceSnapshot, setPresenceSnapshot] = useState<Record<number, PresenceUserSnapshot>>({});
 
   useEffect(() => {
     const rawIdentity = localStorage.getItem('ct.identity.v1');
@@ -47,12 +56,18 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       socketInstance.on('connect', () => {
         console.log("Socket verbunden:", socketInstance.id);
         setIsConnected(true);
+        socketInstance.emit('presence_ack');
       });
 
       socketInstance.on('disconnect', () => {
         console.log("Socket getrennt.");
         setIsConnected(false);
         setChannelPresence({});
+        setPresenceSnapshot({});
+      });
+
+      socketInstance.on('presence_ping', () => {
+        socketInstance.emit('presence_ack');
       });
 
       socketInstance.on('channel_presence_snapshot', ({ channelId, users }) => {
@@ -83,6 +98,19 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           });
           return next;
         });
+
+        setPresenceSnapshot((prev) => {
+          if (!prev[userId]) return prev;
+          return { ...prev, [userId]: { ...prev[userId], status } };
+        });
+      });
+
+      socketInstance.on('presence_snapshot', ({ users }) => {
+        const normalized: Record<number, PresenceUserSnapshot> = {};
+        (users || []).forEach((user: PresenceUserSnapshot) => {
+          normalized[user.id] = user;
+        });
+        setPresenceSnapshot(normalized);
       });
 
       setSocket(socketInstance);
@@ -99,7 +127,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <SocketContext.Provider value={{ socket, isConnected, channelPresence }}>
+    <SocketContext.Provider value={{ socket, isConnected, channelPresence, presenceSnapshot }}>
       {children}
     </SocketContext.Provider>
   );
