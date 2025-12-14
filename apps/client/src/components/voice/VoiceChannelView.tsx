@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AudioLines, Camera, Grid, Headphones, LayoutList, MicOff, Play, ScreenShare, Settings2, Video, XCircle } from 'lucide-react';
+import { LiveKitRoom, RoomAudioRenderer } from '@livekit/components-react';
 import { VoiceMediaStage } from './VoiceMediaStage';
 import { useVoice } from '../../context/voice-state';
 import { useSettings } from '../../context/SettingsContext';
@@ -18,6 +19,7 @@ const screenQualityPresets: Record<'low' | 'medium' | 'high', { resolution: { wi
 
 export const VoiceChannelView = ({ channelName }: { channelName: string | null }) => {
   const {
+    activeRoom,
     connectionState,
     error,
     cameraError,
@@ -248,7 +250,14 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
         </div>
       </div>
 
-      <VoiceMediaStage layout={layout} />
+      {activeRoom ? (
+        <LiveKitRoom room={activeRoom} connect={false} audio>
+          <VoiceMediaStage layout={layout} />
+          <RoomAudioRenderer />
+        </LiveKitRoom>
+      ) : (
+        <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">Verbinde Voice...</div>
+      )}
 
       <div className="border-t border-white/5 bg-black/40 px-4 py-3 flex flex-col gap-3">
         <div className="flex flex-wrap gap-2 items-center">
