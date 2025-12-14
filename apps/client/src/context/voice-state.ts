@@ -9,7 +9,7 @@ export interface VoiceContextType {
   error: string | null;
   cameraError: string | null;
   screenShareError: string | null;
-  connectToChannel: (channelId: number, channelName: string) => Promise<void>;
+  connectToChannel: (channelId: number, channelName: string, options?: { isReconnect?: boolean }) => Promise<void>;
   disconnect: () => Promise<void>;
   token: string | null;
   muted: boolean;
@@ -25,16 +25,19 @@ export interface VoiceContextType {
   setPushToTalk: (enabled: boolean) => Promise<void>;
   startTalking: () => Promise<void>;
   stopTalking: () => Promise<void>;
-  startCamera: (quality?: 'low' | 'medium' | 'high') => Promise<void>;
+  startCamera: (quality?: 'low' | 'medium' | 'high', targetRoom?: Room | null) => Promise<void>;
   stopCamera: () => Promise<void>;
   toggleCamera: () => Promise<void>;
-  startScreenShare: (options?: {
-    sourceId?: string;
-    quality?: 'low' | 'medium' | 'high';
-    frameRate?: number;
-    track?: MediaStreamTrack;
-    withAudio?: boolean;
-  }) => Promise<void>;
+  startScreenShare: (
+    options?: {
+      sourceId?: string;
+      quality?: 'low' | 'medium' | 'high';
+      frameRate?: number;
+      track?: MediaStreamTrack;
+      withAudio?: boolean;
+    },
+    targetRoom?: Room | null
+  ) => Promise<void>;
   stopScreenShare: () => Promise<void>;
   toggleScreenShare: () => Promise<void>;
   shareSystemAudio: boolean;
