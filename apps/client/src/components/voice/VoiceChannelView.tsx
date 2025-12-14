@@ -1,10 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AudioLines, Camera, Grid, Headphones, LayoutList, MicOff, Play, ScreenShare, Settings2, Video, XCircle } from 'lucide-react';
-import { LiveKitRoom, RoomAudioRenderer } from '@livekit/components-react';
+// NOTE:
+// We intentionally do NOT use <LiveKitRoom> here.
+// The app already connects/disconnects the Room inside VoiceProvider and exposes it via RoomContext
+// (see MainLayout).
+//
+// Rendering <LiveKitRoom connect={false}> will actively disconnect the room (LiveKitRoom treats
+// the `connect` prop as the desired connection state). That creates an immediate disconnect/reconnect loop.
+// RoomAudioRenderer is rendered globally in MainLayout when a room exists.
 import { VoiceMediaStage } from './VoiceMediaStage';
 import { useVoice } from '../../context/voice-state';
 import { useSettings } from '../../context/SettingsContext';
-import { getLiveKitConfig } from '../../utils/apiConfig';
 
 const qualityLabels: Record<'low' | 'medium' | 'high', string> = {
   low: '360p',
@@ -41,10 +47,9 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
     stopScreenShare,
     toggleCamera,
     screenShareAudioError,
-    token,
   } = useVoice();
   const { settings, updateDevices } = useSettings();
-  const { serverUrl } = useMemo(() => getLiveKitConfig(), []);
+  // serverUrl/token are managed by VoiceProvider. We only need the active Room from context.
 
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedVideo, setSelectedVideo] = useState(settings.devices.videoInputId || '');
@@ -253,11 +258,10 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
         </div>
       </div>
 
-      {activeRoom && token ? (
-        <LiveKitRoom room={activeRoom} connect={false} audio serverUrl={serverUrl} token={token}>
+      {activeRoom ? (
+        <>
           <VoiceMediaStage layout={layout} />
-          <RoomAudioRenderer />
-        </LiveKitRoom>
+        </>
       ) : (
         <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">Verbinde Voice...</div>
       )}
