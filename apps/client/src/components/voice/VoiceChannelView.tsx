@@ -4,6 +4,7 @@ import { LiveKitRoom, RoomAudioRenderer } from '@livekit/components-react';
 import { VoiceMediaStage } from './VoiceMediaStage';
 import { useVoice } from '../../context/voice-state';
 import { useSettings } from '../../context/SettingsContext';
+import { getLiveKitConfig } from '../../utils/apiConfig';
 
 const qualityLabels: Record<'low' | 'medium' | 'high', string> = {
   low: '360p',
@@ -40,8 +41,10 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
     stopScreenShare,
     toggleCamera,
     screenShareAudioError,
+    token,
   } = useVoice();
   const { settings, updateDevices } = useSettings();
+  const { serverUrl } = useMemo(() => getLiveKitConfig(), []);
 
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedVideo, setSelectedVideo] = useState(settings.devices.videoInputId || '');
@@ -250,8 +253,8 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
         </div>
       </div>
 
-      {activeRoom ? (
-        <LiveKitRoom room={activeRoom} connect={false} audio>
+      {activeRoom && token ? (
+        <LiveKitRoom room={activeRoom} connect={false} audio serverUrl={serverUrl} token={token}>
           <VoiceMediaStage layout={layout} />
           <RoomAudioRenderer />
         </LiveKitRoom>
