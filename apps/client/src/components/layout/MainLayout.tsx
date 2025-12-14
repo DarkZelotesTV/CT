@@ -51,6 +51,18 @@ export const MainLayout = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.electron?.onChatDocked) return;
+
+    const unsubscribe = window.electron.onChatDocked((chatId, chatName) => {
+      chatBarRef.current?.openChat(Number(chatId), chatName);
+    });
+
+    return () => {
+      unsubscribe?.();
+    };
+  }, []);
+
   const handleServerSelect = (id: number | null) => {
     setSelectedServerId(id);
     setActiveChannel(null);

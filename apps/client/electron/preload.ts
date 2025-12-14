@@ -7,4 +7,18 @@ contextBridge.exposeInMainWorld("ct", {
   getPath: (name: string) => ipcRenderer.invoke("app:getPath", name),
 });
 
+contextBridge.exposeInMainWorld("electron", {
+  openChatWindow: (chatId: string | number, chatName: string) =>
+    ipcRenderer.invoke("chat:openWindow", chatId, chatName),
+  dockChatWindow: (chatId: string | number, chatName: string) =>
+    ipcRenderer.invoke("chat:dockWindow", chatId, chatName),
+  onChatDocked: (callback: (chatId: number, chatName: string) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, chatId: number, chatName: string) =>
+      callback(chatId, chatName);
+
+    ipcRenderer.on("chat:docked", listener);
+    return () => ipcRenderer.removeListener("chat:docked", listener);
+  },
+});
+
 export {};
