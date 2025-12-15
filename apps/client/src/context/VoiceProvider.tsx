@@ -11,6 +11,12 @@ const qualityPresets = {
   high: { resolution: { width: 1920, height: 1080 }, frameRate: 60 },
 };
 
+const bitrateProfiles = {
+  low: { maxBitrate: 800_000 },
+  standard: { maxBitrate: 1_800_000 },
+  high: { maxBitrate: 3_500_000 },
+};
+
 export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
   const { settings, updateTalk } = useSettings();
 
@@ -212,6 +218,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         frameRate?: number;
         track?: MediaStreamTrack;
         withAudio?: boolean;
+        bitrateProfile?: 'low' | 'standard' | 'high';
       },
       targetRoom?: Room | null
     ) => {
@@ -235,6 +242,18 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       const preset = options?.quality ? qualityPresets[options.quality] ?? qualityPresets.high : qualityPresets.high;
       const preferredFrameRate = options?.frameRate ?? preset.frameRate;
       const shouldShareAudio = options?.withAudio ?? shareSystemAudio;
+      const bitrateProfile = options?.bitrateProfile ?? settings.talk.screenBitrateProfile ?? 'standard';
+      const selectedBitrate = bitrateProfiles[bitrateProfile] ?? bitrateProfiles.standard;
+
+      const applySenderBitrate = (sender?: RTCRtpSender | null) => {
+        if (!sender) return;
+        const params = sender.getParameters();
+        if (!params.encodings || params.encodings.length === 0) return;
+        const nextEncodings = params.encodings.map((encoding) => ({ ...encoding, maxBitrate: selectedBitrate.maxBitrate }));
+        sender
+          .setParameters({ ...params, encodings: nextEncodings })
+          .catch((err) => console.warn('Konnte RTCRtpSendParameters nicht setzen', err));
+      };
 
       const applySystemAudioFilter = (track: MediaStreamTrack | null | undefined) => {
         if (!track) return track;
@@ -302,10 +321,15 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
             throw new Error('Kein Videotrack für Screenshare gefunden.');
           }
 
-          await roomToUse.localParticipant.publishTrack(selectedTrack, {
+          const publication = await roomToUse.localParticipant.publishTrack(selectedTrack, {
             name: 'screen_share',
             source: Track.Source.ScreenShare,
+            videoEncoding: {
+              maxBitrate: selectedBitrate.maxBitrate,
+              maxFramerate: preferredFrameRate,
+            },
           });
+          applySenderBitrate((publication as any)?.track?.sender ?? (publication as any)?.sender);
 
           if (shouldShareAudio) {
             const filteredAudioTrack = applySystemAudioFilter(systemAudioTrack);
@@ -370,10 +394,15 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
           throw new Error('Kein Videotrack für Screenshare gefunden.');
         }
 
-        await roomToUse.localParticipant.publishTrack(videoTrack, {
+        const publication = await roomToUse.localParticipant.publishTrack(videoTrack, {
           name: 'screen_share',
           source: Track.Source.ScreenShare,
+          videoEncoding: {
+            maxBitrate: selectedBitrate.maxBitrate,
+            maxFramerate: preferredFrameRate,
+          },
         });
+        applySenderBitrate((publication as any)?.track?.sender ?? (publication as any)?.sender);
 
         if (shouldShareAudio) {
           const filteredAudioTrack = applySystemAudioFilter(audioTrack);
@@ -401,7 +430,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         setIsPublishingScreen(false);
       }
     },
-    [activeRoom, shareSystemAudio, syncLocalMediaState]
+    [activeRoom, settings.talk.screenBitrateProfile, shareSystemAudio, syncLocalMediaState]
   );
 
   const stopScreenShare = useCallback(async () => {
