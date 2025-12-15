@@ -32,6 +32,12 @@ const SCREEN_QUALITY_PRESETS: Record<'low' | 'medium' | 'high', { resolution: { 
   high: { resolution: { width: 1920, height: 1080 }, frameRate: 60 },
 };
 
+const BITRATE_PROFILES: Record<'low' | 'standard' | 'high', { label: string; bitrateKbps: number; description: string }> = {
+  low: { label: 'Niedrig', bitrateKbps: 800, description: 'Schonend für langsame Verbindungen' },
+  standard: { label: 'Standard', bitrateKbps: 1800, description: 'Gutes Gleichgewicht aus Qualität und Bandbreite' },
+  high: { label: 'Hoch', bitrateKbps: 3500, description: 'Maximale Details bei höheren Bitraten' },
+};
+
 export const VoiceChannelView = ({ channelName }: { channelName: string | null }) => {
   const {
     activeRoom,
@@ -56,7 +62,7 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
     toggleCamera,
     disconnect, // <--- WICHTIG: Importieren der zentralen Disconnect-Funktion
   } = useVoice();
-  const { settings, updateDevices } = useSettings();
+  const { settings, updateDevices, updateTalk } = useSettings();
 
   // --- State ---
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
@@ -64,9 +70,12 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
   const [selectedVideo, setSelectedVideo] = useState(settings.devices.videoInputId || '');
   const [selectedAudioInput, setSelectedAudioInput] = useState(settings.devices.audioInputId || '');
   
-  const [quality, setQuality] = useState<'low' | 'medium' | 'high'>('medium');
-  const [screenQuality, setScreenQuality] = useState<'low' | 'medium' | 'high'>('high');
-  const [screenFrameRate, setScreenFrameRate] = useState<number>(30);
+  const [quality, setQuality] = useState<'low' | 'medium' | 'high'>(settings.talk.cameraQuality ?? 'medium');
+  const [screenQuality, setScreenQuality] = useState<'low' | 'medium' | 'high'>(settings.talk.screenQuality ?? 'high');
+  const [screenFrameRate, setScreenFrameRate] = useState<number>(settings.talk.screenFrameRate ?? 30);
+  const [screenBitrateProfile, setScreenBitrateProfile] = useState<'low' | 'standard' | 'high'>(
+    settings.talk.screenBitrateProfile ?? 'standard'
+  );
   
   const [screenSources, setScreenSources] = useState<{ id: string; name: string; thumbnail?: string }[]>([]);
   const [selectedScreenSource, setSelectedScreenSource] = useState('');
@@ -93,6 +102,29 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
   }, []);
 
   useEffect(() => { refreshDevices(); }, [refreshDevices]);
+
+  useEffect(() => {
+    setQuality(settings.talk.cameraQuality ?? 'medium');
+    setScreenQuality(settings.talk.screenQuality ?? 'high');
+    setScreenFrameRate(settings.talk.screenFrameRate ?? 30);
+    setScreenBitrateProfile(settings.talk.screenBitrateProfile ?? 'standard');
+  }, [settings.talk.cameraQuality, settings.talk.screenBitrateProfile, settings.talk.screenFrameRate, settings.talk.screenQuality]);
+
+  useEffect(() => {
+    updateTalk({ cameraQuality: quality });
+  }, [quality, updateTalk]);
+
+  useEffect(() => {
+    updateTalk({ screenQuality });
+  }, [screenQuality, updateTalk]);
+
+  useEffect(() => {
+    updateTalk({ screenFrameRate });
+  }, [screenFrameRate, updateTalk]);
+
+  useEffect(() => {
+    updateTalk({ screenBitrateProfile });
+  }, [screenBitrateProfile, updateTalk]);
 
   // Screen Sources (Electron)
   const refreshScreenSources = useCallback(async () => {
@@ -168,7 +200,8 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
         sourceId: selectedScreenSource || undefined,
         quality: screenQuality,
         frameRate: screenFrameRate,
-        withAudio: shareSystemAudio
+        withAudio: shareSystemAudio,
+        bitrateProfile: screenBitrateProfile,
     });
     setActiveMenu(null);
    };
@@ -382,10 +415,20 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
                         {renderSectionHeader('Übertragungsqualität')}
                         {Object.entries(QUALITY_LABELS).map(([key, label]) => (
                             renderMenuItem(
-                                label, 
-                                () => setScreenQuality(key as any), 
+                                label,
+                                () => setScreenQuality(key as any),
                                 screenQuality === key,
                                 `${SCREEN_QUALITY_PRESETS[key as 'low'|'medium'|'high'].resolution.height}p`
+                            )
+                        ))}
+                        {renderSeparator()}
+                        {renderSectionHeader('Bitrate-Profil')}
+                        {Object.entries(BITRATE_PROFILES).map(([key, profile]) => (
+                            renderMenuItem(
+                                profile.label,
+                                () => setScreenBitrateProfile(key as 'low' | 'standard' | 'high'),
+                                screenBitrateProfile === key,
+                                `${profile.bitrateKbps} kbps · ${profile.description}`
                             )
                         ))}
                         {renderSeparator()}

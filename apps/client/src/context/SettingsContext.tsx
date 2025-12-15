@@ -20,6 +20,10 @@ export type TalkSettings = {
   muted: boolean;
   micMuted: boolean;
   pushToTalkEnabled: boolean;
+  cameraQuality?: 'low' | 'medium' | 'high';
+  screenQuality?: 'low' | 'medium' | 'high';
+  screenFrameRate?: number;
+  screenBitrateProfile?: 'low' | 'standard' | 'high';
 };
 
 export type SettingsState = {
@@ -49,6 +53,10 @@ const defaultSettings: SettingsState = {
     muted: false,
     micMuted: false,
     pushToTalkEnabled: false,
+    cameraQuality: 'medium',
+    screenQuality: 'high',
+    screenFrameRate: 30,
+    screenBitrateProfile: 'standard',
   },
 };
 
