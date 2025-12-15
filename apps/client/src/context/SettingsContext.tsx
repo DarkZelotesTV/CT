@@ -24,6 +24,7 @@ export type TalkSettings = {
   screenQuality?: 'low' | 'medium' | 'high';
   screenFrameRate?: number;
   screenBitrateProfile?: 'low' | 'standard' | 'high';
+  participantVolumes?: Record<string, number>;
 };
 
 export type SettingsState = {
@@ -57,6 +58,7 @@ const defaultSettings: SettingsState = {
     screenQuality: 'high',
     screenFrameRate: 30,
     screenBitrateProfile: 'standard',
+    participantVolumes: {},
   },
 };
 

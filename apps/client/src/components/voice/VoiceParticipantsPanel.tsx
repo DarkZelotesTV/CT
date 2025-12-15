@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MicOff, Monitor, Video, Volume2 } from 'lucide-react';
-import { RoomEvent } from 'livekit-client';
+import { RemoteAudioTrack, RoomEvent, Track } from 'livekit-client';
 import { useVoice } from '../../context/voice-state';
+import { useSettings } from '../../context/SettingsContext';
 
 type VoicePerson = {
   sid: string;
@@ -17,6 +18,7 @@ type VoicePerson = {
  */
 export const VoiceParticipantsPanel = () => {
   const { activeRoom, connectionState } = useVoice();
+  const { settings, updateTalk } = useSettings();
   const [people, setPeople] = useState<VoicePerson[]>([]);
   const [activeSpeakerSids, setActiveSpeakerSids] = useState<Set<string>>(new Set());
 
@@ -54,6 +56,43 @@ export const VoiceParticipantsPanel = () => {
     setPeople(next);
   };
 
+  const savedVolumes = settings.talk.participantVolumes || {};
+
+  const applyVolumeToParticipant = useCallback(
+    (sid: string, volumeOverride?: number) => {
+      if (!activeRoom) return;
+      const participant = activeRoom.remoteParticipants.get(sid);
+      if (!participant) return;
+
+      const volume = volumeOverride ?? savedVolumes[sid] ?? 1;
+
+      participant
+        .getTracks()
+        .filter((pub) => pub.kind === Track.Kind.Audio)
+        .forEach((pub) => {
+          const audioTrack = pub.audioTrack as RemoteAudioTrack | null;
+          if (audioTrack?.setVolume) {
+            audioTrack.setVolume(volume);
+          }
+        });
+    },
+    [activeRoom, savedVolumes]
+  );
+
+  const handleVolumeChange = useCallback(
+    (sid: string, volumePercent: number) => {
+      const volume = Math.max(0, Math.min(2, volumePercent / 100));
+      updateTalk({
+        participantVolumes: {
+          ...savedVolumes,
+          [sid]: volume,
+        },
+      });
+      applyVolumeToParticipant(sid, volume);
+    },
+    [applyVolumeToParticipant, savedVolumes, updateTalk]
+  );
+
   useEffect(() => {
     if (!activeRoom || connectionState !== 'connected') {
       setPeople([]);
@@ -67,6 +106,12 @@ export const VoiceParticipantsPanel = () => {
       setActiveSpeakerSids(new Set((speakers || []).map((s) => String(s?.sid))));
     };
 
+    const handleTrackSubscribed = (track: any, publication: any, participant: any) => {
+      if (participant && !participant.isLocal && track.kind === Track.Kind.Audio) {
+        applyVolumeToParticipant(participant.sid);
+      }
+    };
+
     activeRoom.on(RoomEvent.ParticipantConnected, refresh);
     activeRoom.on(RoomEvent.ParticipantDisconnected, refresh);
     activeRoom.on(RoomEvent.LocalTrackPublished, refresh);
@@ -76,6 +121,7 @@ export const VoiceParticipantsPanel = () => {
     activeRoom.on(RoomEvent.TrackMuted, refresh);
     activeRoom.on(RoomEvent.TrackUnmuted, refresh);
     activeRoom.on(RoomEvent.ActiveSpeakersChanged, handleSpeakers);
+    activeRoom.on(RoomEvent.TrackSubscribed, handleTrackSubscribed);
 
     return () => {
       activeRoom.off(RoomEvent.ParticipantConnected, refresh);
@@ -87,9 +133,17 @@ export const VoiceParticipantsPanel = () => {
       activeRoom.off(RoomEvent.TrackMuted, refresh);
       activeRoom.off(RoomEvent.TrackUnmuted, refresh);
       activeRoom.off(RoomEvent.ActiveSpeakersChanged, handleSpeakers);
+      activeRoom.off(RoomEvent.TrackSubscribed, handleTrackSubscribed);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeRoom, connectionState]);
+  }, [activeRoom, applyVolumeToParticipant, connectionState]);
+
+  useEffect(() => {
+    if (!activeRoom || connectionState !== 'connected') return;
+    Array.from(activeRoom.remoteParticipants.values()).forEach((p) => {
+      applyVolumeToParticipant(p.sid);
+    });
+  }, [activeRoom, applyVolumeToParticipant, connectionState, savedVolumes]);
 
   const countLabel = useMemo(() => {
     if (!people.length) return '';
@@ -144,6 +198,23 @@ export const VoiceParticipantsPanel = () => {
                   <MicOff size={14} className="text-red-400" />
                 )}
               </div>
+
+              {!p.isLocal && (
+                <div className="flex items-center gap-2 pl-2 min-w-[120px]">
+                  <input
+                    type="range"
+                    min={0}
+                    max={200}
+                    value={Math.round((savedVolumes[p.sid] ?? 1) * 100)}
+                    onChange={(e) => handleVolumeChange(p.sid, Number(e.target.value))}
+                    className="w-24 accent-cyan-400"
+                    title="Lautstärke anpassen"
+                  />
+                  <span className="text-[10px] text-gray-400 w-8 text-right">
+                    {Math.round((savedVolumes[p.sid] ?? 1) * 100)}%
+                  </span>
+                </div>
+              )}
             </div>
           );
         })}
