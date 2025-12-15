@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ParticipantTile } from '@livekit/components-react';
 import { RoomEvent, Track } from 'livekit-client';
 import { useVoice } from '../../context/voice-state';
-import { Monitor, Video, Volume2 } from 'lucide-react';
+import { Monitor, User, MicOff } from 'lucide-react';
 
 type LayoutMode = 'grid' | 'speaker';
 
@@ -27,6 +27,8 @@ export const VoiceMediaStage = ({ layout }: { layout: LayoutMode }) => {
     activeRoom.on(RoomEvent.LocalTrackPublished, bump);
     activeRoom.on(RoomEvent.LocalTrackUnpublished, bump);
     activeRoom.on(RoomEvent.ActiveSpeakersChanged, handleSpeakers);
+    activeRoom.on(RoomEvent.TrackMuted, bump);
+    activeRoom.on(RoomEvent.TrackUnmuted, bump);
 
     handleSpeakers(activeRoom.activeSpeakers || []);
 
@@ -38,23 +40,20 @@ export const VoiceMediaStage = ({ layout }: { layout: LayoutMode }) => {
       activeRoom.off(RoomEvent.LocalTrackPublished, bump);
       activeRoom.off(RoomEvent.LocalTrackUnpublished, bump);
       activeRoom.off(RoomEvent.ActiveSpeakersChanged, handleSpeakers);
+      activeRoom.off(RoomEvent.TrackMuted, bump);
+      activeRoom.off(RoomEvent.TrackUnmuted, bump);
     };
   }, [activeRoom]);
 
   const participants = useMemo(() => {
     if (!activeRoom) return [] as any[];
-
     const remoteMap: Map<string, any> = (activeRoom as any).participants ?? (activeRoom as any).remoteParticipants ?? new Map();
     const remotes = Array.from(remoteMap.values());
     const locals = (activeRoom as any).localParticipant ? [(activeRoom as any).localParticipant] : [];
     return [...locals, ...remotes];
   }, [activeRoom, refreshToken]);
 
-  const screenParticipants = useMemo(
-    () => participants.filter((p: any) => !!p?.isScreenShareEnabled),
-    [participants]
-  );
-  const videoParticipants = useMemo(() => participants.filter((p: any) => !!p?.isCameraEnabled), [participants]);
+  const screenParticipants = useMemo(() => participants.filter((p: any) => !!p?.isScreenShareEnabled), [participants]);
 
   const focusParticipant = useMemo(() => {
     if (screenParticipants.length) return screenParticipants[0];
@@ -66,99 +65,90 @@ export const VoiceMediaStage = ({ layout }: { layout: LayoutMode }) => {
   }, [activeSpeakerSid, participants, screenParticipants]);
 
   if (!activeRoom || connectionState !== 'connected') {
-    return (
-      <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">
-        Verbinde Voice...
-      </div>
-    );
+    return null; 
   }
 
-  if (!screenParticipants.length && !videoParticipants.length) {
+  // Helper für individuelle Kacheln
+  const renderTile = (participant: any, isScreenShare = false) => {
+    const isSpeaking = activeSpeakerSid === (participant.sid || participant.identity) && !participant.isLocal;
+    const isLocal = participant.isLocal;
+    const hasVideo = isScreenShare ? participant.isScreenShareEnabled : participant.isCameraEnabled;
+    const isMicMuted = participant.isMicrophoneEnabled === false;
+    
+    // Discord Style Border Color
+    const borderColor = isSpeaking ? 'border-green-500 shadow-[0_0_0_2px_#22c55e]' : 'border-[#202225] hover:border-[#404249]';
+
     return (
-      <div className="flex-1 flex flex-col items-center justify-center text-gray-400 text-sm gap-2 py-8">
-        <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-          <Video />
-        </div>
-        <div className="font-semibold">Noch keine Video- oder Screen-Streams</div>
-        <div className="text-xs text-gray-500">Starte deine Kamera oder den Screenshare, um loszulegen.</div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4">
-      {screenParticipants.map((participant: any) => (
-        <div
-          key={`screen-${participant.sid || participant.identity}`}
-          className="relative rounded-2xl overflow-hidden border border-cyan-500/30 bg-black/40"
-        >
-          <ParticipantTile
-            trackRef={{ participant, source: Track.Source.ScreenShare }}
-            className="min-h-[240px] w-full h-full"
-            style={{ width: '100%', height: '100%' }}
-          />
-          <div className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 text-xs text-white pointer-events-none">
-            <Monitor size={14} />
-            <span className="font-semibold truncate">
-              Screenshare: {participant.name || participant.identity || 'Unbekannt'}
-            </span>
-          </div>
-        </div>
-      ))}
-
-      {layout === 'speaker' && focusParticipant ? (
-        <div className="grid grid-cols-12 gap-3">
-          <div className="col-span-12 lg:col-span-8 relative rounded-2xl overflow-hidden border border-white/10 bg-black/40 min-h-[260px]">
-            <ParticipantTile
-              trackRef={{
-                participant: focusParticipant,
-                source: focusParticipant.isScreenShareEnabled ? Track.Source.ScreenShare : Track.Source.Camera,
-              }}
-              className="h-full w-full"
+      <div
+        key={`${participant.sid}-${isScreenShare ? 'screen' : 'cam'}`}
+        className={`relative rounded-xl overflow-hidden bg-[#2b2d31] transition-all duration-200 border-2 ${borderColor} group w-full h-full flex flex-col`}
+      >
+        {hasVideo ? (
+           <ParticipantTile
+              trackRef={{ participant, source: isScreenShare ? Track.Source.ScreenShare : Track.Source.Camera }}
+              className="w-full h-full object-cover bg-black"
               style={{ width: '100%', height: '100%' }}
             />
-            <div className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 text-xs text-white pointer-events-none">
-              <Volume2 size={14} className="text-green-400" />
-              <span className="font-semibold truncate">
-                {focusParticipant.name || focusParticipant.identity || (focusParticipant.isLocal ? 'Du' : 'Teilnehmer')}
-              </span>
+        ) : (
+            // Avatar Placeholder (Discord Style)
+            <div className="w-full h-full flex items-center justify-center bg-[#2b2d31]">
+                 <div className={`rounded-full p-6 bg-[#5865f2] ${isSpeaking ? 'animate-pulse ring-4 ring-green-500/30' : ''}`}>
+                    <User size={48} className="text-white" />
+                 </div>
             </div>
-          </div>
-          <div className="col-span-12 lg:col-span-4 grid gap-3 md:grid-cols-2 lg:grid-cols-1">
-            {videoParticipants
-              .filter((p) => p !== focusParticipant)
-              .map((participant: any) => (
-                <div
-                  key={participant.sid || participant.identity}
-                  className="relative rounded-2xl overflow-hidden border border-white/10 bg-black/30 min-h-[160px]"
-                >
-                  <ParticipantTile 
-                    trackRef={{ participant, source: Track.Source.Camera }}
-                    className="w-full h-full absolute inset-0"
-                    style={{ width: '100%', height: '100%' }}
-                  />
-                </div>
-              ))}
-          </div>
+        )}
+
+        {/* Name Tag Overlay (Discord Style: Bottom Left, Darker bg) */}
+        <div className="absolute bottom-2 left-2 flex items-center gap-2 px-2 py-1 rounded-md bg-black/60 backdrop-blur-sm text-white max-w-[80%] pointer-events-none z-10">
+            {isScreenShare ? <Monitor size={12} className="text-gray-300" /> : isMicMuted ? <MicOff size={12} className="text-red-400"/> : null}
+            <span className="text-xs font-semibold truncate leading-tight shadow-sm">
+                {participant.name || participant.identity || (isLocal ? 'Du' : 'Benutzer')}
+            </span>
         </div>
-      ) : (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {videoParticipants.map((participant: any) => (
-            <div
-              key={participant.sid || participant.identity || participant.name}
-              className={`relative rounded-2xl overflow-hidden border border-white/10 bg-black/30 min-h-[200px] ${
-                participant.sid === localParticipantId ? 'shadow-lg shadow-cyan-500/20' : ''
-              }`}
-            >
-              <ParticipantTile 
-                trackRef={{ participant, source: Track.Source.Camera }} 
-                className="w-full h-full absolute inset-0"
-                style={{ width: '100%', height: '100%' }}
-              />
+        
+        {/* Speaking Indicator (Green Circle in Corner if Video is on) */}
+        {hasVideo && isSpeaking && (
+            <div className="absolute top-2 right-2 w-3 h-3 bg-green-500 rounded-full border-2 border-[#2b2d31] shadow-lg z-10" />
+        )}
+      </div>
+    );
+  };
+
+  if (layout === 'speaker' && focusParticipant) {
+    return (
+        <div className="flex h-full p-4 gap-4">
+            {/* Main Stage */}
+            <div className="flex-1 rounded-xl overflow-hidden shadow-2xl bg-black relative">
+                 {renderTile(focusParticipant, focusParticipant.isScreenShareEnabled)}
             </div>
-          ))}
+            
+            {/* Sidebar List */}
+            <div className="w-64 flex flex-col gap-2 overflow-y-auto pr-1 custom-scrollbar">
+                {participants.filter(p => p !== focusParticipant).map(p => (
+                    <div key={p.sid} className="h-32 flex-none">
+                        {renderTile(p)}
+                    </div>
+                ))}
+            </div>
         </div>
-      )}
+    )
+  }
+
+  // Grid Layout (Standard)
+  // Dynamische Grid-Größenberechnung
+  const gridClass = participants.length <= 1 ? 'grid-cols-1 max-w-4xl mx-auto h-[80%]' 
+                  : participants.length === 2 ? 'grid-cols-1 md:grid-cols-2 max-w-5xl mx-auto h-[60%]'
+                  : participants.length <= 4 ? 'grid-cols-2 max-w-5xl mx-auto'
+                  : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4';
+
+  return (
+    <div className="flex-1 overflow-y-auto p-4 flex items-center justify-center">
+        <div className={`grid gap-3 w-full ${gridClass} auto-rows-fr aspect-video max-h-full`}>
+            {participants.map((participant: any) => renderTile(participant, false))}
+            
+            {/* Separate Tiles for Screen Shares */}
+            {screenParticipants.map((participant: any) => renderTile(participant, true))}
+        </div>
     </div>
   );
 };
