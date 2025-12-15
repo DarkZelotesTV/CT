@@ -20,8 +20,8 @@ export class Role extends Model {
 }
 
 Role.init({
-  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-  server_id: { type: DataTypes.INTEGER, allowNull: false },
+  id: { type: DataTypes.INTEGER.UNSIGNED, autoIncrement: true, primaryKey: true },
+  server_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
   name: { type: DataTypes.STRING, allowNull: false },
   color: { type: DataTypes.STRING, allowNull: true },
   position: { type: DataTypes.INTEGER, defaultValue: 0 },

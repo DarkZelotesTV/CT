@@ -10,8 +10,9 @@ export class Message extends Model {
 }
 
 Message.init({
-  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+  id: { type: DataTypes.INTEGER.UNSIGNED, autoIncrement: true, primaryKey: true },
   content: { type: DataTypes.TEXT, allowNull: false },
-  user_id: { type: DataTypes.INTEGER, allowNull: false },
-  channel_id: { type: DataTypes.INTEGER, allowNull: false },
+  // WICHTIG: UNSIGNED
+  user_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+  channel_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
 }, { sequelize, tableName: 'messages' });

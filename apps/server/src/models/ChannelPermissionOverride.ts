@@ -10,9 +10,10 @@ export class ChannelPermissionOverride extends Model {
 }
 
 ChannelPermissionOverride.init({
-  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-  channel_id: { type: DataTypes.INTEGER, allowNull: false },
-  role_id: { type: DataTypes.INTEGER, allowNull: false },
+  id: { type: DataTypes.INTEGER.UNSIGNED, autoIncrement: true, primaryKey: true },
+  // WICHTIG: UNSIGNED
+  channel_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+  role_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
   allow: { type: DataTypes.JSON, defaultValue: {} },
   deny: { type: DataTypes.JSON, defaultValue: {} },
 }, { sequelize, tableName: 'channel_permission_overrides' });

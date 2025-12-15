@@ -10,9 +10,9 @@ export class Server extends Model {
 }
 
 Server.init({
-  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+  id: { type: DataTypes.INTEGER.UNSIGNED, autoIncrement: true, primaryKey: true },
   name: { type: DataTypes.STRING, allowNull: false },
   icon_url: { type: DataTypes.STRING, allowNull: true },
-  owner_id: { type: DataTypes.INTEGER, allowNull: false },
-  fallback_channel_id: { type: DataTypes.INTEGER, allowNull: true },
+  owner_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+  fallback_channel_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
 }, { sequelize, tableName: 'servers' });
