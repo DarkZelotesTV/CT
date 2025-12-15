@@ -54,6 +54,7 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
     startScreenShare,
     stopScreenShare,
     toggleCamera,
+    disconnect, // <--- WICHTIG: Importieren der zentralen Disconnect-Funktion
   } = useVoice();
   const { settings, updateDevices } = useSettings();
 
@@ -70,7 +71,6 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
   const [screenSources, setScreenSources] = useState<{ id: string; name: string; thumbnail?: string }[]>([]);
   const [selectedScreenSource, setSelectedScreenSource] = useState('');
   
-  // Screen Preview State (nicht zwingend nötig für das Menü, aber gut für UX)
   const [screenPreviewTrack, setScreenPreviewTrack] = useState<MediaStreamTrack | null>(null);
   const [screenPreviewError, setScreenPreviewError] = useState<string | null>(null);
   
@@ -100,7 +100,6 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
      try {
        const sources = await (window as any).electron.getScreenSources();
        setScreenSources(sources);
-       // Auto-select first if none selected
        if (!selectedScreenSource && sources.length) {
          setSelectedScreenSource(sources[0].id);
        }
@@ -109,18 +108,15 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
      }
    }, [selectedScreenSource]);
  
-   // Refresh screen sources when menu opens
    useEffect(() => { 
        if (isConnected && activeMenu === 'screen') {
            refreshScreenSources();
        }
    }, [isConnected, activeMenu, refreshScreenSources]);
 
-  // Click Outside to close menus
+  // Click Outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      // Prüfen, ob der Klick innerhalb eines Menüs ODER eines Toggle-Buttons war
-      // Da die Buttons eigene onClick Handler haben, reicht es meist, das Menü zu prüfen
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setActiveMenu(null);
       }
@@ -130,11 +126,18 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
   }, []);
 
   const toggleMenu = (menu: 'mic' | 'camera' | 'screen') => {
-    // Wenn das Menü bereits offen ist, schließen. Sonst öffnen.
     setActiveMenu(prev => (prev === menu ? null : menu));
   };
 
   // --- Handlers ---
+  
+  // KORREKTUR: Wir nutzen nun disconnect() aus dem Context, 
+  // welches `manualDisconnectRef` setzt und den Reconnect verhindert.
+  const handleDisconnect = async () => {
+    console.log("Manuelles Trennen der Verbindung...");
+    await disconnect();
+  };
+
   const handleVideoDeviceChange = async (deviceId: string) => {
     setSelectedVideo(deviceId);
     updateDevices({ videoInputId: deviceId || null });
@@ -175,8 +178,7 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
   const renderMenu = (content: React.ReactNode, width = "w-64") => (
     <div 
         ref={menuRef}
-        className={`absolute bottom-[115%] left-1/2 -translate-x-1/2 ${width} bg-[#2b2d31] border border-[#1e1f22] rounded-lg shadow-2xl overflow-hidden z-50 text-left animate-in fade-in slide-in-from-bottom-2 duration-200`}
-        // prevent click propagation to allow interaction within menu
+        className={`absolute bottom-[115%] left-1/2 -translate-x-1/2 ${width} bg-[#2b2d31] border border-[#1e1f22] rounded-lg shadow-2xl z-50 text-left animate-in fade-in slide-in-from-bottom-2 duration-200`}
         onMouseDown={(e) => e.stopPropagation()} 
     >
         <div className="max-h-[400px] overflow-y-auto custom-scrollbar py-2">
@@ -254,8 +256,7 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
       <div className="bg-[#111214] flex-none flex justify-center items-center pb-6 pt-3 z-30 shadow-[0_-10px_40px_rgba(0,0,0,0.3)] border-t border-white/5">
         <div className="flex items-center gap-4 px-6 py-3 rounded-2xl bg-[#1e1f22] border border-[#2b2d31] shadow-2xl relative">
             
-            {/* MICROPHONE BUTTON & MENU */}
-            {/* WICHTIG: overflow-hidden entfernt, damit das Menü sichtbar ist */}
+            {/* MICROPHONE */}
             <div className="relative group flex items-center bg-[#2b2d31] border border-black/20 hover:border-gray-600 transition-colors rounded-lg">
                 <button
                     onClick={() => setMicMuted(!micMuted)}
@@ -292,7 +293,7 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
                 )}
             </div>
 
-            {/* DEAFEN BUTTON (Toggle Only) */}
+            {/* DEAFEN */}
             <button
                 onClick={() => setMuted(!muted)}
                 disabled={!isConnected}
@@ -306,7 +307,7 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
                 {muted ? <Headphones size={22} className="opacity-50" /> : <Headphones size={22} />}
             </button>
 
-            {/* CAMERA BUTTON & MENU */}
+            {/* CAMERA */}
             <div className="relative group flex items-center bg-[#2b2d31] border border-black/20 hover:border-gray-600 transition-colors rounded-lg">
                 <button
                     onClick={toggleCamera}
@@ -331,7 +332,6 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
                             () => handleVideoDeviceChange(d.deviceId), 
                             selectedVideo === d.deviceId
                         ))}
-                        
                         {renderSeparator()}
                         {renderSectionHeader('Auflösung')}
                         {Object.entries(QUALITY_LABELS).map(([key, label]) => (
@@ -341,7 +341,7 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
                 )}
             </div>
 
-            {/* SCREEN SHARE BUTTON & MENU (FULL SETTINGS) */}
+            {/* SCREEN SHARE */}
             <div className="relative group flex items-center bg-[#2b2d31] border border-black/20 hover:border-gray-600 transition-colors rounded-lg">
                 <button
                     onClick={handleStartScreenShare}
@@ -361,7 +361,6 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
 
                 {activeMenu === 'screen' && renderMenu(
                     <>  
-                         {/* 1. SECTION: SOURCE SELECT (Electron only usually) */}
                         {renderSectionHeader('Quelle (Anwendung / Screen)')}
                         {screenSources.length > 0 ? (
                             screenSources.map((s) => (
@@ -379,10 +378,7 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
                                 <span>Auswahl im Browser-Dialog...</span>
                              </div>
                         )}
-
                         {renderSeparator()}
-
-                        {/* 2. SECTION: QUALITY */}
                         {renderSectionHeader('Übertragungsqualität')}
                         {Object.entries(QUALITY_LABELS).map(([key, label]) => (
                             renderMenuItem(
@@ -392,32 +388,17 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
                                 `${SCREEN_QUALITY_PRESETS[key as 'low'|'medium'|'high'].resolution.height}p`
                             )
                         ))}
-                        
                         {renderSeparator()}
-
-                        {/* 3. SECTION: FPS */}
                         {renderSectionHeader('Bildrate')}
                         {[15, 30, 60].map(fps => (
-                            renderMenuItem(
-                                `${fps} FPS`, 
-                                () => setScreenFrameRate(fps), 
-                                screenFrameRate === fps,
-                                fps === 60 ? 'Smoother' : fps === 15 ? 'Bandbreite sparen' : 'Standard'
-                            )
+                            renderMenuItem(`${fps} FPS`, () => setScreenFrameRate(fps), screenFrameRate === fps)
                         ))}
-
                         {renderSeparator()}
-
-                        {/* 4. SECTION: SYSTEM AUDIO */}
-                        {renderSectionHeader('Audio')}
                         {renderMenuItem(
                             shareSystemAudio ? 'System-Audio übertragen' : 'Kein System-Audio', 
                             () => setShareSystemAudio(!shareSystemAudio), 
-                            shareSystemAudio,
-                            shareSystemAudio ? 'Ton wird gesendet' : 'Nur Bild wird gesendet'
+                            shareSystemAudio
                         )}
-                        
-                        {/* LIVE GEHEN BUTTON IM MENU */}
                         {!isScreenSharing && (
                             <div className="p-2 mt-1 sticky bottom-0 bg-[#2b2d31] border-t border-white/5">
                                 <button 
@@ -429,13 +410,14 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
                             </div>
                         )}
                     </>,
-                    "w-72" // Breiteres Menü für Screen Settings
+                    "w-72"
                 )}
             </div>
 
             {/* DISCONNECT BUTTON */}
             <div className="ml-2 pl-4 border-l border-white/10">
                  <button
+                    onClick={handleDisconnect}
                     className="h-12 w-14 rounded-lg bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-lg transition-transform active:scale-95"
                     title="Verbindung trennen"
                 >
