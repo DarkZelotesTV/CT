@@ -9,8 +9,9 @@ export class Friendship extends Model {
 }
 
 Friendship.init({
-  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-  requester_id: { type: DataTypes.INTEGER, allowNull: false },
-  addressee_id: { type: DataTypes.INTEGER, allowNull: false },
+  id: { type: DataTypes.INTEGER.UNSIGNED, autoIncrement: true, primaryKey: true },
+  // WICHTIG: Muss UNSIGNED sein, damit es zur User.id passt!
+  requester_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+  addressee_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
   status: { type: DataTypes.ENUM('pending', 'accepted', 'blocked'), defaultValue: 'pending' },
 }, { sequelize, tableName: 'friendships' });

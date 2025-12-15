@@ -34,6 +34,7 @@ User.init({
   avatar_url: { type: DataTypes.STRING(512), allowNull: true },
 
   // Identity login
+  // unique: true erstellt bereits den notwendigen Index
   public_key: { type: DataTypes.STRING(64), allowNull: true, unique: true },
   identity_fingerprint: { type: DataTypes.STRING(64), allowNull: true, unique: true },
   display_name: { type: DataTypes.STRING(64), allowNull: true },
@@ -55,9 +56,5 @@ User.init({
         user.password_hash = await bcrypt.hash(user.password_hash, salt);
       }
     }
-  },
-  indexes: [
-    { unique: true, fields: ['public_key'] },
-    { unique: true, fields: ['identity_fingerprint'] },
-  ]
+  }
 });
