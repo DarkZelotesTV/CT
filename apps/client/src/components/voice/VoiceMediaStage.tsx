@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ParticipantTile } from '@livekit/components-react';
 import { RoomEvent, Track, LocalParticipant, RemoteParticipant, TrackPublication } from 'livekit-client';
 import { useVoice } from '../../context/voice-state';
-import { Monitor, User, MicOff, AlertCircle, Maximize2, Minimize2, Dock, Move } from 'lucide-react';
+import { Monitor, User, MicOff, AlertCircle, Maximize2, Minimize2, Dock, Move, Maximize, Minimize } from 'lucide-react';
 
 type LayoutMode = 'grid' | 'speaker';
 
@@ -21,7 +21,10 @@ export const VoiceMediaStage = ({
   const [overlayPosition, setOverlayPosition] = useState({ x: 0, y: 0 });
   const [isOverlayMaximized, setIsOverlayMaximized] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const [fullscreenElement, setFullscreenElement] = useState<Element | null>(null);
   const dragStartRef = useRef<{ x: number; y: number; baseX: number; baseY: number } | null>(null);
+  const stageScreenRef = useRef<HTMLDivElement | null>(null);
+  const floatingOverlayRef = useRef<HTMLDivElement | null>(null);
 
   // Re-Render Trigger bei Room-Events
   useEffect(() => {
@@ -91,6 +94,28 @@ export const VoiceMediaStage = ({
     }
   }, [showFloatingOverlay]);
 
+  useEffect(() => {
+    const handleFullscreenChange = () => setFullscreenElement(document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreenFor = async (target: HTMLElement | null) => {
+    if (!target) return;
+    try {
+      if (document.fullscreenElement === target) {
+        await document.exitFullscreen();
+      } else {
+        if (document.fullscreenElement) await document.exitFullscreen();
+        await target.requestFullscreen();
+      }
+    } catch (err) {
+      console.error('Fullscreen toggle failed', err);
+    }
+  };
+
+  const isFullscreenTarget = (target: Element | null | undefined) => document.fullscreenElement === target;
+
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (isOverlayMaximized) return;
     setDragging(true);
@@ -118,7 +143,12 @@ export const VoiceMediaStage = ({
   };
 
   // Render Funktion für einzelne Kacheln
-  const renderTile = (participant: LocalParticipant | RemoteParticipant, isScreenShare = false) => {
+  const renderTile = (
+    participant: LocalParticipant | RemoteParticipant,
+    isScreenShare = false,
+    fullscreenRef?: React.RefObject<HTMLDivElement>,
+    allowFullscreen = false,
+  ) => {
     const isSpeaking = activeSpeakerSid === (participant.sid || participant.identity) && !participant.isLocal;
     const isLocal = participant.isLocal;
     
@@ -142,13 +172,14 @@ export const VoiceMediaStage = ({
     const bgColor = isScreenShare ? 'bg-[#000000]' : 'bg-[#2b2d31]';
 
     return (
-      <div 
-        key={`${participant.sid}-${isScreenShare ? 'scr' : 'cam'}`} 
+      <div
+        key={`${participant.sid}-${isScreenShare ? 'scr' : 'cam'}`}
+        ref={fullscreenRef}
         className={`relative rounded-xl overflow-hidden ${bgColor} transition-all border-2 ${borderColor} w-full h-full group shadow-md flex flex-col`}
       >
         {isTrackEnabled ? (
            <ParticipantTile
-              trackRef={{ 
+              trackRef={{
                 participant, 
                 source: isScreenShare ? Track.Source.ScreenShare : Track.Source.Camera,
                 publication: publication // <--- FIX: Explizite Publication übergeben
@@ -182,6 +213,16 @@ export const VoiceMediaStage = ({
             </span>
         </div>
 
+        {isScreenShare && allowFullscreen && (
+          <button
+            className="absolute top-2 right-2 z-30 p-2 rounded-lg bg-black/60 text-white hover:bg-black/80 transition"
+            onClick={(e) => { e.stopPropagation(); toggleFullscreenFor(fullscreenRef?.current || null); }}
+            title={isFullscreenTarget(fullscreenRef?.current) ? 'Vollbild verlassen' : 'Bildschirmübertragung im Vollbild ansehen'}
+          >
+            {isFullscreenTarget(fullscreenRef?.current) ? <Minimize size={16} /> : <Maximize size={16} />}
+          </button>
+        )}
+
         {/* Warnung bei gemutetem Video Track (selten, aber möglich) */}
         {publication && publication.isMuted && isScreenShare && (
              <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-10 backdrop-blur-sm">
@@ -203,7 +244,12 @@ export const VoiceMediaStage = ({
         <div className="flex flex-col lg:flex-row h-full p-4 gap-3 relative">
             {/* Main Stage (Großes Bild) */}
             <div className="flex-1 rounded-2xl overflow-hidden shadow-2xl bg-[#000000] border border-white/5 relative">
-                 {renderTile(focusParticipant, focusParticipant.isScreenShareEnabled)}
+                 {renderTile(
+                   focusParticipant,
+                   focusParticipant.isScreenShareEnabled,
+                   focusParticipant.isScreenShareEnabled ? stageScreenRef : undefined,
+                   focusParticipant.isScreenShareEnabled,
+                 )}
             </div>
 
             {/* Sidebar (Andere Teilnehmer) */}
@@ -218,7 +264,9 @@ export const VoiceMediaStage = ({
             {showFloatingOverlay && floatingParticipant && (
               <FloatingOverlay
                 isMaximized={isOverlayMaximized}
+                isFullscreen={isFullscreenTarget(floatingOverlayRef.current)}
                 onToggleMaximize={() => setIsOverlayMaximized((prev) => !prev)}
+                onToggleFullscreen={() => toggleFullscreenFor(floatingOverlayRef.current)}
                 onAnchor={onRequestAnchor}
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
@@ -226,6 +274,7 @@ export const VoiceMediaStage = ({
                 onPointerLeave={stopDragging}
                 overlayPosition={overlayPosition}
                 dragging={dragging}
+                containerRef={floatingOverlayRef}
               >
                 {renderTile(floatingParticipant, true)}
               </FloatingOverlay>
@@ -246,13 +295,15 @@ export const VoiceMediaStage = ({
             {participantsWithoutScreens.map((p) => renderTile(p, false))}
 
             {/* 2. Dann alle Screen Shares (inkl. eigenem) rendern */}
-            {screenParticipantsForStage.map((p) => renderTile(p, true))}
+            {screenParticipantsForStage.map((p, index) => renderTile(p, true, index === 0 ? stageScreenRef : undefined, index === 0))}
         </div>
 
         {showFloatingOverlay && floatingParticipant && (
           <FloatingOverlay
             isMaximized={isOverlayMaximized}
+            isFullscreen={isFullscreenTarget(floatingOverlayRef.current)}
             onToggleMaximize={() => setIsOverlayMaximized((prev) => !prev)}
+            onToggleFullscreen={() => toggleFullscreenFor(floatingOverlayRef.current)}
             onAnchor={onRequestAnchor}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
@@ -260,6 +311,7 @@ export const VoiceMediaStage = ({
             onPointerLeave={stopDragging}
             overlayPosition={overlayPosition}
             dragging={dragging}
+            containerRef={floatingOverlayRef}
           >
             {renderTile(floatingParticipant, true)}
           </FloatingOverlay>
@@ -270,7 +322,9 @@ export const VoiceMediaStage = ({
 
 type FloatingOverlayProps = {
   isMaximized: boolean;
+  isFullscreen: boolean;
   onToggleMaximize: () => void;
+  onToggleFullscreen: () => void;
   onAnchor?: () => void;
   onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
   onPointerMove: (event: React.PointerEvent<HTMLDivElement>) => void;
@@ -279,11 +333,13 @@ type FloatingOverlayProps = {
   overlayPosition: { x: number; y: number };
   dragging: boolean;
   children: React.ReactNode;
+  containerRef?: React.RefObject<HTMLDivElement>;
 };
 
-const FloatingOverlay = ({ isMaximized, onToggleMaximize, onAnchor, onPointerDown, onPointerMove, onPointerUp, onPointerLeave, overlayPosition, dragging, children }: FloatingOverlayProps) => {
+const FloatingOverlay = ({ isMaximized, isFullscreen, onToggleMaximize, onToggleFullscreen, onAnchor, onPointerDown, onPointerMove, onPointerUp, onPointerLeave, overlayPosition, dragging, children, containerRef }: FloatingOverlayProps) => {
   return (
     <div
+      ref={containerRef}
       className={`fixed md:absolute z-40 ${isMaximized ? 'inset-4 md:inset-6' : 'bottom-6 right-6 w-72 md:w-96 aspect-video'} rounded-2xl overflow-hidden border border-white/10 bg-black/70 shadow-2xl backdrop-blur-lg transition-all duration-200 relative`}
       style={!isMaximized ? { transform: `translate3d(${overlayPosition.x}px, ${overlayPosition.y}px, 0)` } : undefined}
     >
@@ -299,6 +355,13 @@ const FloatingOverlay = ({ isMaximized, onToggleMaximize, onAnchor, onPointerDow
           <span>Screen Share PiP</span>
         </div>
         <div className="flex items-center gap-1">
+          <button
+            onClick={onToggleFullscreen}
+            className="p-1 rounded bg-white/10 hover:bg-white/20 text-white transition-colors"
+            title={isFullscreen ? 'Vollbild verlassen' : 'Vollbild'}
+          >
+            {isFullscreen ? <Minimize size={14} /> : <Maximize size={14} />}
+          </button>
           <button
             onClick={onToggleMaximize}
             className="p-1 rounded bg-white/10 hover:bg-white/20 text-white transition-colors"
