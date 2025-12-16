@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Socket } from 'socket.io-client';
 import { apiFetch } from '../api/http';
 import { useSocket } from '../context/SocketContext';
 
@@ -23,7 +24,7 @@ interface UseChatChannelResult {
   inputText: string;
   setInputText: (value: string) => void;
   handleKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-  sendMessage: () => Promise<void>;
+  sendMessage: (contentOverride?: string) => Promise<void>;
   loadMore: () => Promise<void>;
 }
 
@@ -119,6 +120,18 @@ const decryptMessage = async (message: ChatMessage, channelId: number): Promise<
     console.error('Decrypt error', err);
     return { ...message, content: 'Unable to decrypt message' };
   }
+};
+
+export const sendEncryptedChannelMessage = async (
+  socket: Socket | null,
+  channelId: number | null,
+  content: string
+) => {
+  if (!socket || channelId === null || !content.trim()) return;
+  const user = JSON.parse(localStorage.getItem('clover_user') || '{}');
+  const bundle = await ensureKeyBundle(channelId);
+  const encrypted = await encryptWithChannelKey(bundle.channelKey, content);
+  socket.emit('send_message', { content: { ciphertext: encrypted.ciphertext, iv: encrypted.iv }, channelId, userId: user.id });
 };
 
 const deriveSharedKey = async (privateKey: CryptoKey, peerPublicKeyB64: string) => {
@@ -324,12 +337,10 @@ export const useChatChannel = (channelId: number | null): UseChatChannelResult =
     }
   };
 
-  const sendMessage = async () => {
-    if (!inputText.trim() || !socket || channelId === null) return;
-    const user = JSON.parse(localStorage.getItem('clover_user') || '{}');
-    const bundle = await ensureKeyBundle(channelId);
-    const encrypted = await encryptWithChannelKey(bundle.channelKey, inputText);
-    socket.emit('send_message', { content: { ciphertext: encrypted.ciphertext, iv: encrypted.iv }, channelId, userId: user.id });
+  const sendMessage = async (contentOverride?: string) => {
+    const content = contentOverride ?? inputText;
+    if (!content.trim()) return;
+    await sendEncryptedChannelMessage(socket, channelId, content);
     setInputText('');
   };
 

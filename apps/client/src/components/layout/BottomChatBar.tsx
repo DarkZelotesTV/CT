@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Send } from 'lucide-react';
 import { useSocket } from '../../context/SocketContext';
+import { sendEncryptedChannelMessage } from '../../hooks/useChatChannel';
 
 interface BottomChatBarProps {
   channelId: number | null;
@@ -19,15 +20,14 @@ export const BottomChatBar = ({ channelId, channelName }: BottomChatBarProps) =>
 
   if (!channelId || !channelName) return null;
 
-  const sendMessage = (content: string) => {
-    if (!content.trim() || !socket) return;
-    const user = JSON.parse(localStorage.getItem('clover_user') || '{}');
-    socket.emit('send_message', { content, channelId, userId: user.id });
+  const sendMessage = async (content: string) => {
+    if (!channelId) return;
+    await sendEncryptedChannelMessage(socket, channelId, content);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    sendMessage(text);
+    await sendMessage(text);
     setText('');
   };
 
