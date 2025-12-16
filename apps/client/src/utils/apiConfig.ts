@@ -8,7 +8,7 @@ const getAppOrigin = () => {
   return "";
 };
 
-const getDefaultServerUrl = () => {
+export const getDefaultServerUrl = () => {
   // Wenn keine Server-URL gesetzt ist, verwenden wir die Herkunft der geladenen App.
   return getAppOrigin() || 'http://localhost:3001';
 };
@@ -42,6 +42,12 @@ export const setLiveKitUrl = (livekitUrl?: string | null) => {
   } else {
     localStorage.removeItem(LIVEKIT_URL_KEY);
   }
+};
+
+export const resetServerSettings = () => {
+  localStorage.removeItem('clover_server_url');
+  localStorage.removeItem(SERVER_PASSWORD_KEY);
+  localStorage.removeItem(LIVEKIT_URL_KEY);
 };
 
 // --- URL Helpers ---

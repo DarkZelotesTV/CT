@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Mail, Lock, User, Loader2, ArrowRight, Clover, Server, CheckCircle2 } from 'lucide-react';
-import { getServerUrl, setServerUrl } from '../../utils/apiConfig';
+import { Mail, Lock, User, Loader2, ArrowRight, Clover, Server, CheckCircle2, RefreshCw } from 'lucide-react';
+import { getDefaultServerUrl, getServerPassword, getServerUrl, resetServerSettings, setServerPassword, setServerUrl } from '../../utils/apiConfig';
 
 interface AuthScreenProps {
   onLoginSuccess: (token: string, userData: any) => void;
@@ -20,11 +20,13 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
   // Server Settings State
   const [showServerSettings, setShowServerSettings] = useState(false);
   const [serverAddress, setServerAddress] = useState(() => getServerUrl());
+  const [serverPassword, setServerPasswordState] = useState(() => getServerPassword());
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'checking' | 'ok' | 'error'>('idle');
 
   // Beim Start: Gespeicherte Server-URL laden
   useEffect(() => {
     setServerAddress(getServerUrl());
+    setServerPasswordState(getServerPassword());
   }, []);
 
   // Server-Verbindung testen (Ping)
@@ -40,9 +42,17 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
       });
       setConnectionStatus('ok');
       setServerUrl(url); // Speichern, wenn erfolgreich
+      setServerPassword(serverPassword);
     } catch (err) {
       setConnectionStatus('error');
     }
+  };
+
+  const handleRestoreServerSettings = () => {
+    resetServerSettings();
+    setServerAddress(getDefaultServerUrl());
+    setServerPasswordState('');
+    setConnectionStatus('idle');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,13 +61,15 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
     setError('');
 
     // WICHTIG: Wir nutzen jetzt die dynamische Server-Adresse!
-    const baseUrl = getServerUrl(); 
+    const baseUrl = getServerUrl();
     const endpoint = isRegistering ? '/api/auth/register' : '/api/auth/login';
     const payload = isRegistering 
       ? { email, password, username } 
       : { email, password };
 
     try {
+      setServerUrl(serverAddress);
+      setServerPassword(serverPassword);
       const res = await axios.post(`${baseUrl}${endpoint}`, payload);
       
       if (isRegistering) {
@@ -112,16 +124,28 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
         </div>
 
         {/* SERVER SETTINGS BEREICH (Collapsible) */}
-        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showServerSettings ? 'max-h-40 mb-6 opacity-100' : 'max-h-0 opacity-0'}`}>
-            <div className="bg-black/30 rounded-xl p-4 border border-white/10">
-                <label className="text-xs font-bold text-gray-400 uppercase mb-2 block flex justify-between">
+        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showServerSettings ? 'max-h-80 mb-6 opacity-100' : 'max-h-0 opacity-0'}`}>
+            <div className="bg-black/30 rounded-xl p-4 border border-white/10 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase block">
                     Server Adresse
+                    <div className="text-[10px] text-gray-500 font-normal normal-case mt-1">Hoste deinen eigenen CloverTalk Server und verbinde dich hier.</div>
+                  </label>
+                  <div className="flex items-center gap-2 text-xs">
                     {connectionStatus === 'ok' && <span className="text-green-400 flex items-center gap-1"><CheckCircle2 size={12}/> Online</span>}
                     {connectionStatus === 'error' && <span className="text-red-400">Offline</span>}
-                </label>
+                    <button
+                      type="button"
+                      onClick={handleRestoreServerSettings}
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300"
+                    >
+                      <RefreshCw size={12} /> Zurücksetzen
+                    </button>
+                  </div>
+                </div>
                 <div className="flex gap-2">
-                    <input 
-                        type="text" 
+                    <input
+                        type="text"
                         value={serverAddress}
                         onChange={(e) => setServerAddress(e.target.value)}
                         onBlur={() => { setServerUrl(serverAddress); checkServerConnection(serverAddress); }}
@@ -129,9 +153,18 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
                         placeholder="http://localhost:3001"
                     />
                 </div>
-                <p className="text-[10px] text-gray-500 mt-2">
-                    Hoste deinen eigenen CloverTalk Server und verbinde dich hier.
-                </p>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-400 uppercase block">Server Passwort (optional)</label>
+                  <input
+                    type="password"
+                    value={serverPassword}
+                    onChange={(e) => setServerPasswordState(e.target.value)}
+                    onBlur={() => setServerPassword(serverPassword)}
+                    className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-green-500 outline-none"
+                    placeholder="Leer lassen wenn keins"
+                  />
+                  <p className="text-[10px] text-gray-500">Für private Installationen kannst du hier das Server-Passwort hinterlegen.</p>
+                </div>
             </div>
         </div>
 
