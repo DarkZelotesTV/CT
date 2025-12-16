@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { 
   X, 
@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { CreateChannelModal } from './CreateChannelModal';
+import { defaultServerTheme, deriveServerThemeFromSettings, type ServerTheme } from '../../theme/serverTheme';
 
 interface ServerSettingsProps {
   serverId: number;
@@ -57,11 +58,13 @@ export const ServerSettingsModal = ({ serverId, onClose }: ServerSettingsProps) 
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [structure, setStructure] = useState<{ categories: Category[]; uncategorized: Channel[]; fallbackChannelId?: number | null }>({ categories: [], uncategorized: [], fallbackChannelId: null });
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [serverTheme, setServerTheme] = useState<ServerTheme>(defaultServerTheme);
   const [newChannelType, setNewChannelType] = useState<'text' | 'voice' | 'web'>('text');
   const [selectedChannelForOverrides, setSelectedChannelForOverrides] = useState<number | null>(null);
   const [overrides, setOverrides] = useState<any[]>([]);
   const [selectedOverrideRole, setSelectedOverrideRole] = useState<number | null>(null);
   const [overrideDraft, setOverrideDraft] = useState<{ allow: Record<string, boolean>; deny: Record<string, boolean> }>({ allow: {}, deny: {} });
+  const modalPortalRef = useRef<HTMLDivElement>(null);
 
   // Initial Data Loading
   useEffect(() => {
@@ -72,6 +75,7 @@ export const ServerSettingsModal = ({ serverId, onClose }: ServerSettingsProps) 
         if (myServer) {
           setServerName(myServer.name);
           setFallbackChannelId(myServer.fallback_channel_id ?? null);
+          setServerTheme(deriveServerThemeFromSettings(myServer.settings || myServer.theme));
         }
       } catch (e) {}
     };
@@ -310,7 +314,12 @@ export const ServerSettingsModal = ({ serverId, onClose }: ServerSettingsProps) 
   ];
 
   return createPortal(
-    <div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 relative">
+      <div
+        ref={modalPortalRef}
+        className="absolute inset-0"
+        style={{ pointerEvents: showCreateModal ? 'auto' : 'none' }}
+      />
       <div className="bg-[#0f1014] w-full max-w-4xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
         
         {/* Header */}
@@ -689,6 +698,8 @@ export const ServerSettingsModal = ({ serverId, onClose }: ServerSettingsProps) 
         <CreateChannelModal
           serverId={serverId!}
           defaultType={newChannelType}
+          theme={serverTheme}
+          portalTarget={modalPortalRef.current}
           onClose={() => setShowCreateModal(false)}
           onCreated={loadStructure}
         />
