@@ -1,15 +1,27 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ParticipantTile, useTracks } from '@livekit/components-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ParticipantTile } from '@livekit/components-react';
 import { RoomEvent, Track, LocalParticipant, RemoteParticipant, TrackPublication } from 'livekit-client';
 import { useVoice } from '../../context/voice-state';
-import { Monitor, User, MicOff, AlertCircle } from 'lucide-react';
+import { Monitor, User, MicOff, AlertCircle, Maximize2, Minimize2, Dock, Move } from 'lucide-react';
 
 type LayoutMode = 'grid' | 'speaker';
 
-export const VoiceMediaStage = ({ layout }: { layout: LayoutMode }) => {
+export const VoiceMediaStage = ({
+  layout,
+  floatingScreenShare,
+  onRequestAnchor,
+}: {
+  layout: LayoutMode;
+  floatingScreenShare?: boolean;
+  onRequestAnchor?: () => void;
+}) => {
   const { activeRoom, connectionState } = useVoice();
   const [refreshToken, setRefreshToken] = useState(0);
   const [activeSpeakerSid, setActiveSpeakerSid] = useState<string | null>(null);
+  const [overlayPosition, setOverlayPosition] = useState({ x: 0, y: 0 });
+  const [isOverlayMaximized, setIsOverlayMaximized] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const dragStartRef = useRef<{ x: number; y: number; baseX: number; baseY: number } | null>(null);
 
   // Re-Render Trigger bei Room-Events
   useEffect(() => {
@@ -46,21 +58,64 @@ export const VoiceMediaStage = ({ layout }: { layout: LayoutMode }) => {
   }, [activeRoom, refreshToken]);
 
   // Filter für Screen-Shares (inkl. Local User)
-  const screenParticipants = useMemo(() => 
-    participants.filter((p) => p.isScreenShareEnabled), 
+  const screenParticipants = useMemo(() =>
+    participants.filter((p) => p.isScreenShareEnabled),
   [participants]);
+
+  const showFloatingOverlay = floatingScreenShare && screenParticipants.length > 0;
+  const floatingParticipant = showFloatingOverlay ? screenParticipants[0] : null;
+  const participantsWithoutScreens = useMemo(
+    () => (showFloatingOverlay ? participants.filter((p) => !p.isScreenShareEnabled) : participants),
+    [participants, showFloatingOverlay],
+  );
+  const screenParticipantsForStage = showFloatingOverlay ? [] : screenParticipants;
 
   // Fokus-Teilnehmer ermitteln (für Speaker View)
   const focusParticipant = useMemo(() => {
-    if (screenParticipants.length) return screenParticipants[0];
+    const availableParticipants = participantsWithoutScreens;
+    if (availableParticipants.length === 0 && floatingParticipant) return floatingParticipant;
+    if (screenParticipantsForStage.length) return screenParticipantsForStage[0];
     if (activeSpeakerSid) {
-      const active = participants.find((p) => (p.sid || p.identity) === activeSpeakerSid);
+      const active = availableParticipants.find((p) => (p.sid || p.identity) === activeSpeakerSid);
       if (active) return active;
     }
-    return participants[0] || null;
-  }, [activeSpeakerSid, participants, screenParticipants]);
+    return availableParticipants[0] || null;
+  }, [activeSpeakerSid, floatingParticipant, participantsWithoutScreens, screenParticipantsForStage]);
 
   if (!activeRoom || connectionState !== 'connected') return null;
+
+  useEffect(() => {
+    if (!showFloatingOverlay) {
+      setOverlayPosition({ x: 0, y: 0 });
+      setIsOverlayMaximized(false);
+    }
+  }, [showFloatingOverlay]);
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (isOverlayMaximized) return;
+    setDragging(true);
+    dragStartRef.current = {
+      x: event.clientX,
+      y: event.clientY,
+      baseX: overlayPosition.x,
+      baseY: overlayPosition.y,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragging || !dragStartRef.current) return;
+    const dx = event.clientX - dragStartRef.current.x;
+    const dy = event.clientY - dragStartRef.current.y;
+    setOverlayPosition({ x: dragStartRef.current.baseX + dx, y: dragStartRef.current.baseY + dy });
+  };
+
+  const stopDragging = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (dragging) {
+      setDragging(false);
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
 
   // Render Funktion für einzelne Kacheln
   const renderTile = (participant: LocalParticipant | RemoteParticipant, isScreenShare = false) => {
@@ -145,38 +200,126 @@ export const VoiceMediaStage = ({ layout }: { layout: LayoutMode }) => {
   // SPEAKER VIEW
   if (layout === 'speaker' && focusParticipant) {
     return (
-        <div className="flex flex-col lg:flex-row h-full p-4 gap-3">
+        <div className="flex flex-col lg:flex-row h-full p-4 gap-3 relative">
             {/* Main Stage (Großes Bild) */}
             <div className="flex-1 rounded-2xl overflow-hidden shadow-2xl bg-[#000000] border border-white/5 relative">
                  {renderTile(focusParticipant, focusParticipant.isScreenShareEnabled)}
             </div>
-            
+
             {/* Sidebar (Andere Teilnehmer) */}
             <div className="h-32 lg:h-auto lg:w-64 flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto lg:pr-1 custom-scrollbar">
-                {participants.filter(p => p !== focusParticipant).map(p => (
+                {participantsWithoutScreens.filter(p => p !== focusParticipant).map(p => (
                     <div key={p.sid} className="w-48 lg:w-full h-full lg:h-36 flex-none">
                         {renderTile(p, false)}
                     </div>
                 ))}
             </div>
+
+            {showFloatingOverlay && floatingParticipant && (
+              <FloatingOverlay
+                isMaximized={isOverlayMaximized}
+                onToggleMaximize={() => setIsOverlayMaximized((prev) => !prev)}
+                onAnchor={onRequestAnchor}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={stopDragging}
+                onPointerLeave={stopDragging}
+                overlayPosition={overlayPosition}
+                dragging={dragging}
+              >
+                {renderTile(floatingParticipant, true)}
+              </FloatingOverlay>
+            )}
         </div>
     )
   }
 
   // GRID VIEW (Standard)
-  const gridCols = participants.length === 1 ? 'grid-cols-1 max-w-4xl' 
-                 : participants.length === 2 ? 'grid-cols-1 md:grid-cols-2 max-w-6xl'
+  const gridCols = participantsWithoutScreens.length === 1 ? 'grid-cols-1 max-w-4xl'
+                 : participantsWithoutScreens.length === 2 ? 'grid-cols-1 md:grid-cols-2 max-w-6xl'
                  : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4';
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 flex items-center justify-center">
+    <div className="flex-1 overflow-y-auto p-4 flex items-center justify-center relative">
         <div className={`grid gap-3 w-full ${gridCols} auto-rows-[minmax(200px,1fr)] md:auto-rows-fr aspect-video max-h-full`}>
             {/* 1. Erst alle Kameras rendern */}
-            {participants.map((p) => renderTile(p, false))}
-            
+            {participantsWithoutScreens.map((p) => renderTile(p, false))}
+
             {/* 2. Dann alle Screen Shares (inkl. eigenem) rendern */}
-            {screenParticipants.map((p) => renderTile(p, true))}
+            {screenParticipantsForStage.map((p) => renderTile(p, true))}
         </div>
+
+        {showFloatingOverlay && floatingParticipant && (
+          <FloatingOverlay
+            isMaximized={isOverlayMaximized}
+            onToggleMaximize={() => setIsOverlayMaximized((prev) => !prev)}
+            onAnchor={onRequestAnchor}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={stopDragging}
+            onPointerLeave={stopDragging}
+            overlayPosition={overlayPosition}
+            dragging={dragging}
+          >
+            {renderTile(floatingParticipant, true)}
+          </FloatingOverlay>
+        )}
+    </div>
+  );
+};
+
+type FloatingOverlayProps = {
+  isMaximized: boolean;
+  onToggleMaximize: () => void;
+  onAnchor?: () => void;
+  onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
+  onPointerMove: (event: React.PointerEvent<HTMLDivElement>) => void;
+  onPointerUp: (event: React.PointerEvent<HTMLDivElement>) => void;
+  onPointerLeave: (event: React.PointerEvent<HTMLDivElement>) => void;
+  overlayPosition: { x: number; y: number };
+  dragging: boolean;
+  children: React.ReactNode;
+};
+
+const FloatingOverlay = ({ isMaximized, onToggleMaximize, onAnchor, onPointerDown, onPointerMove, onPointerUp, onPointerLeave, overlayPosition, dragging, children }: FloatingOverlayProps) => {
+  return (
+    <div
+      className={`fixed md:absolute z-40 ${isMaximized ? 'inset-4 md:inset-6' : 'bottom-6 right-6 w-72 md:w-96 aspect-video'} rounded-2xl overflow-hidden border border-white/10 bg-black/70 shadow-2xl backdrop-blur-lg transition-all duration-200 relative`}
+      style={!isMaximized ? { transform: `translate3d(${overlayPosition.x}px, ${overlayPosition.y}px, 0)` } : undefined}
+    >
+      <div
+        className={`absolute top-0 left-0 right-0 flex items-center justify-between gap-2 px-3 py-2 bg-black/60 text-white text-xs font-semibold ${isMaximized ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}`}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerLeave={onPointerLeave}
+      >
+        <div className="flex items-center gap-1 text-[11px] tracking-wide uppercase">
+          <Move size={14} className={`text-gray-300 ${dragging ? 'animate-pulse' : ''}`} />
+          <span>Screen Share PiP</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={onToggleMaximize}
+            className="p-1 rounded bg-white/10 hover:bg-white/20 text-white transition-colors"
+            title={isMaximized ? 'Floating-Ansicht' : 'Maximieren'}
+          >
+            {isMaximized ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+          </button>
+          {onAnchor && (
+            <button
+              onClick={onAnchor}
+              className="p-1 rounded bg-white/10 hover:bg-white/20 text-white transition-colors"
+              title="In Layout verankern"
+            >
+              <Dock size={14} />
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="w-full h-full pt-8">
+        {children}
+      </div>
     </div>
   );
 };

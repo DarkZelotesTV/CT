@@ -82,8 +82,9 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
   
   const [screenPreviewTrack, setScreenPreviewTrack] = useState<MediaStreamTrack | null>(null);
   const [screenPreviewError, setScreenPreviewError] = useState<string | null>(null);
-  
+
   const [layout, setLayout] = useState<'grid' | 'speaker'>('grid');
+  const [floatingScreenShare, setFloatingScreenShare] = useState(false);
   const [activeMenu, setActiveMenu] = useState<'mic' | 'camera' | 'screen' | null>(null);
 
   const menuRef = useRef<HTMLDivElement>(null);
@@ -274,7 +275,15 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
 
       {/* Main Stage */}
       <div className="flex-1 relative overflow-hidden flex flex-col">
-        {activeRoom ? <VoiceMediaStage layout={layout} /> : <div className="flex-1 flex items-center justify-center text-gray-600 animate-pulse">Lade Voice Umgebung...</div>}
+        {activeRoom ? (
+          <VoiceMediaStage
+            layout={layout}
+            floatingScreenShare={floatingScreenShare}
+            onRequestAnchor={() => setFloatingScreenShare(false)}
+          />
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-gray-600 animate-pulse">Lade Voice Umgebung...</div>
+        )}
         
         {/* Error Toasts */}
         {(error || cameraError || screenShareError || screenPreviewError) && (
@@ -438,13 +447,20 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
                         ))}
                         {renderSeparator()}
                         {renderMenuItem(
-                            shareSystemAudio ? 'System-Audio übertragen' : 'Kein System-Audio', 
-                            () => setShareSystemAudio(!shareSystemAudio), 
+                            shareSystemAudio ? 'System-Audio übertragen' : 'Kein System-Audio',
+                            () => setShareSystemAudio(!shareSystemAudio),
                             shareSystemAudio
+                        )}
+                        {renderSeparator()}
+                        {renderMenuItem(
+                            floatingScreenShare ? 'PiP / Floating aktiviert' : 'Standard-Layout',
+                            () => setFloatingScreenShare((prev) => !prev),
+                            floatingScreenShare,
+                            floatingScreenShare ? 'Screen-Share als bewegliches Overlay anzeigen' : 'Screen-Share im Layout verankern'
                         )}
                         {!isScreenSharing && (
                             <div className="p-2 mt-1 sticky bottom-0 bg-[#2b2d31] border-t border-white/5">
-                                <button 
+                                <button
                                     onClick={() => { handleStartScreenShare(); setActiveMenu(null); }}
                                     className="w-full py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded text-xs font-bold uppercase tracking-wide transition-colors"
                                 >
