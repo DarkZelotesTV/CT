@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MicOff, Monitor, Video, Volume2 } from 'lucide-react';
-import { RemoteAudioTrack, RoomEvent, Track } from 'livekit-client';
+import { RoomEvent, Track } from 'livekit-client';
 import { useVoice } from '../../context/voice-state';
 import { useSettings } from '../../context/SettingsContext';
 
@@ -66,15 +66,7 @@ export const VoiceParticipantsPanel = () => {
 
       const volume = volumeOverride ?? savedVolumes[sid] ?? 1;
 
-      participant
-        .getTracks()
-        .filter((pub) => pub.kind === Track.Kind.Audio)
-        .forEach((pub) => {
-          const audioTrack = pub.audioTrack as RemoteAudioTrack | null;
-          if (audioTrack?.setVolume) {
-            audioTrack.setVolume(volume);
-          }
-        });
+      participant.setVolume(volume);
     },
     [activeRoom, savedVolumes]
   );

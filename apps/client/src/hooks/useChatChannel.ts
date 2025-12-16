@@ -35,7 +35,7 @@ interface UseChatChannelResult {
   loadingMore: boolean;
   hasMore: boolean;
   inputText: string;
-  setInputText: (value: string) => void;
+  setInputText: React.Dispatch<React.SetStateAction<string>>;
   handleKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   sendMessage: (contentOverride?: string | ChatMessageContent) => Promise<void>;
   loadMore: () => Promise<void>;
@@ -125,7 +125,8 @@ const decryptWithChannelKey = async (channelKey: CryptoKey, ciphertext: string, 
 const decryptMessage = async (message: ChatMessage, channelId: number): Promise<ChatMessage> => {
   try {
     const bundle = await ensureKeyBundle(channelId);
-    const parsed = JSON.parse(message.content || '{}');
+    const rawContent = typeof message.content === 'string' ? message.content : JSON.stringify(message.content);
+    const parsed = JSON.parse(rawContent || '{}');
     if (!parsed.ciphertext || !parsed.iv) return message;
     const decryptedContent = await decryptWithChannelKey(bundle.channelKey, parsed.ciphertext, parsed.iv);
     try {

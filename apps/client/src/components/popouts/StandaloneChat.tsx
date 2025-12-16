@@ -72,7 +72,7 @@ export const StandaloneChat = () => {
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
           />
-          <button className="no-drag text-gray-400 hover:text-primary p-1" onClick={sendMessage}>
+          <button className="no-drag text-gray-400 hover:text-primary p-1" onClick={() => sendMessage()}>
             <Send size={18} />
           </button>
         </div>
