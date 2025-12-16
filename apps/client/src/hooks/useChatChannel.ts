@@ -3,9 +3,22 @@ import { Socket } from 'socket.io-client';
 import { apiFetch } from '../api/http';
 import { useSocket } from '../context/SocketContext';
 
+export interface ChatAttachment {
+  name: string;
+  size: number;
+  type: string;
+  dataUrl: string;
+}
+
+export interface ChatMessageContent {
+  text?: string;
+  attachments?: ChatAttachment[];
+  giphy?: { id: string; url: string; previewUrl?: string };
+}
+
 export interface ChatMessage {
   id: number;
-  content: string;
+  content: string | ChatMessageContent;
   createdAt: string;
   channel_id?: number;
   channelId?: number;
@@ -24,7 +37,7 @@ interface UseChatChannelResult {
   inputText: string;
   setInputText: (value: string) => void;
   handleKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-  sendMessage: (contentOverride?: string) => Promise<void>;
+  sendMessage: (contentOverride?: string | ChatMessageContent) => Promise<void>;
   loadMore: () => Promise<void>;
 }
 
@@ -115,6 +128,14 @@ const decryptMessage = async (message: ChatMessage, channelId: number): Promise<
     const parsed = JSON.parse(message.content || '{}');
     if (!parsed.ciphertext || !parsed.iv) return message;
     const decryptedContent = await decryptWithChannelKey(bundle.channelKey, parsed.ciphertext, parsed.iv);
+    try {
+      const structured = JSON.parse(decryptedContent);
+      if (structured && (structured.text || structured.attachments || structured.giphy)) {
+        return { ...message, content: structured };
+      }
+    } catch (err) {
+      // plain text fallback
+    }
     return { ...message, content: decryptedContent };
   } catch (err) {
     console.error('Decrypt error', err);
@@ -125,12 +146,13 @@ const decryptMessage = async (message: ChatMessage, channelId: number): Promise<
 export const sendEncryptedChannelMessage = async (
   socket: Socket | null,
   channelId: number | null,
-  content: string
+  content: string | ChatMessageContent
 ) => {
-  if (!socket || channelId === null || !content.trim()) return;
+  const payload = typeof content === 'string' ? content : JSON.stringify(content);
+  if (!socket || channelId === null || !payload.trim()) return;
   const user = JSON.parse(localStorage.getItem('clover_user') || '{}');
   const bundle = await ensureKeyBundle(channelId);
-  const encrypted = await encryptWithChannelKey(bundle.channelKey, content);
+  const encrypted = await encryptWithChannelKey(bundle.channelKey, payload);
   socket.emit('send_message', { content: { ciphertext: encrypted.ciphertext, iv: encrypted.iv }, channelId, userId: user.id });
 };
 
@@ -337,9 +359,11 @@ export const useChatChannel = (channelId: number | null): UseChatChannelResult =
     }
   };
 
-  const sendMessage = async (contentOverride?: string) => {
+  const sendMessage = async (contentOverride?: string | ChatMessageContent) => {
     const content = contentOverride ?? inputText;
-    if (!content.trim()) return;
+    if (typeof content === 'string') {
+      if (!content.trim()) return;
+    }
     await sendEncryptedChannelMessage(socket, channelId, content);
     setInputText('');
   };
