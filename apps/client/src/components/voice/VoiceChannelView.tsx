@@ -344,7 +344,7 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
                     ? 'bg-[#2b2d31] text-red-400 border-red-500/30' 
                     : 'bg-[#2b2d31] text-gray-300 hover:bg-[#35373c] hover:text-white'
                 }`}
-                title={muted ? 'Audio aktivieren' : 'Stumm schalten (Deafen)'}
+                title={muted ? 'Audioausgabe und Mikrofon aktivieren' : 'Ein- & Ausgabe stummschalten (Deafen)'}
             >
                 {muted ? <Headphones size={22} className="opacity-50" /> : <Headphones size={22} />}
             </button>

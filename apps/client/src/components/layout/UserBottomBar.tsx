@@ -55,7 +55,7 @@ export const UserBottomBar = () => {
           <button
             className={`p-1 rounded ${muted ? 'text-red-400 hover:text-red-300 bg-red-500/10' : 'text-gray-500 hover:text-cyan-400 hover:bg-cyan-900/30'}`}
             onClick={() => setMuted(!muted)}
-            title={muted ? 'Audio wieder einschalten' : 'Gesamten Voice-Chat stummschalten'}
+            title={muted ? 'Audio und Mikrofon wieder aktivieren' : 'Alle Ein- und Ausgänge stummschalten'}
           >
             <Headphones size={14} />
           </button>
