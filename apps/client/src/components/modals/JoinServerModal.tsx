@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { X, Loader2, Compass, Shield, Globe } from 'lucide-react';
+import { Loader2, Compass, Shield, Globe } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { IdentityModal } from './IdentityModal';
 import { computeFingerprint, formatFingerprint, loadIdentity, type IdentityFile } from '../../auth/identity';
 import { addPinnedServer, normalizeInstanceUrl } from '../../utils/pinnedServers';
 import { getServerUrl, setServerUrl } from '../../utils/apiConfig';
+import { ModalLayout } from './ModalLayout';
 
 interface JoinServerModalProps {
   onClose: () => void;
@@ -110,29 +110,39 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
     }
   };
 
-  return createPortal(
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] flex items-center justify-center animate-in fade-in duration-200">
-      <div className="bg-dark-200 w-full max-w-md rounded-lg shadow-2xl border border-dark-400 overflow-hidden">
-        {/* Header */}
-        <div className="p-6 text-center relative">
-          <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white">
-            <X size={24} />
-          </button>
-          <h2 className="text-2xl font-bold text-white">Server beitreten</h2>
-          <p className="text-gray-400 mt-2 text-sm">Gib die Server-ID ein oder einen Einladungs-Link.</p>
-        </div>
-
-        {/* Body */}
-        <form onSubmit={handleSubmit} className="p-6 pt-0 space-y-4">
-          <div className="flex justify-center mb-4">
-            <div className="w-20 h-20 rounded-full bg-dark-300 flex items-center justify-center text-green-500">
-              <Compass size={40} />
+  return (
+    <>
+      <ModalLayout
+        title="Server beitreten"
+        description="Gib die Server-ID ein oder einen Einladungs-Link."
+        onClose={onClose}
+        bodyClassName="p-6 pt-0 space-y-4"
+        footer={
+          <div className="flex justify-between items-center">
+            <button onClick={onClose} className="text-white hover:underline text-sm font-medium px-4">
+              Abbrechen
+            </button>
+            <button
+              onClick={() => handleSubmit()}
+              disabled={loading || !serverInput || !identity}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-lg font-bold disabled:opacity-50 flex items-center gap-2 transition-all active:scale-[0.98]"
+            >
+              {loading && <Loader2 className="animate-spin" size={16} />}
+              Beitreten
+            </button>
+          </div>
+        }
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="flex justify-center">
+            <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-indigo-400">
+              <Compass size={32} />
             </div>
           </div>
 
           {error && <div className="text-red-400 text-sm text-center bg-red-500/10 p-2 rounded">{error}</div>}
 
-          <div>
+          <div className="space-y-1">
             <label className="text-xs font-bold text-gray-400 uppercase mb-1 block">Invite / Server ID</label>
             <input
               autoFocus
@@ -140,11 +150,11 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
               value={serverInput}
               onChange={(e) => setServerInput(e.target.value)}
               placeholder="z.B. 1 oder https://example.com/invite/1"
-              className="w-full bg-dark-400 text-white p-2.5 rounded border-none focus:ring-2 focus:ring-green-500 outline-none"
+              className="w-full bg-black/30 text-white p-3 rounded-xl border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-600 font-medium"
             />
           </div>
 
-          <div>
+          <div className="space-y-1">
             <label className="text-xs font-bold text-gray-400 uppercase mb-1 block flex items-center gap-2">
               <Globe size={14} />
               Instanz URL (optional)
@@ -154,13 +164,13 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
               value={instanceUrl}
               onChange={(e) => setInstanceUrlState(e.target.value)}
               placeholder="z.B. https://mein-server.tld"
-              className="w-full bg-dark-400 text-white p-2.5 rounded border-none focus:ring-2 focus:ring-green-500 outline-none"
+              className="w-full bg-black/30 text-white p-3 rounded-xl border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-600 font-medium"
             />
             <p className="text-[10px] text-gray-500 mt-1">Leer lassen, um die aktuelle Instanz zu nutzen.</p>
           </div>
 
-          <div className="rounded-lg border border-dark-400 bg-dark-300/50 p-3 flex items-start gap-3">
-            <div className="p-2 rounded-full bg-dark-400 text-green-400">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 flex items-start gap-3">
+            <div className="p-2 rounded-full bg-white/5 text-indigo-400">
               <Shield size={18} />
             </div>
             <div className="flex-1">
@@ -180,27 +190,11 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
             </div>
           </div>
         </form>
-
-        {/* Footer */}
-        <div className="bg-dark-300 p-4 flex justify-between items-center">
-          <button onClick={onClose} className="text-white hover:underline text-sm font-medium px-4">
-            Abbrechen
-          </button>
-          <button
-            onClick={() => handleSubmit()}
-            disabled={loading || !serverInput || !identity}
-            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-medium disabled:opacity-50 flex items-center gap-2"
-          >
-            {loading && <Loader2 className="animate-spin" size={16} />}
-            Beitreten
-          </button>
-        </div>
-      </div>
+      </ModalLayout>
 
       {showIdentityModal && (
         <IdentityModal onClose={() => setShowIdentityModal(false)} onIdentityChanged={handleIdentityChanged} />
       )}
-    </div>,
-    document.body
+    </>
   );
 };
