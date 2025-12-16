@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, PhoneOff, Camera, ScreenShare } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { CreateChannelModal } from '../modals/CreateChannelModal';
@@ -6,6 +6,7 @@ import { UserBottomBar } from './UserBottomBar';
 import { useVoice } from '../../context/voice-state'; // Importieren
 import { VoiceParticipantsPanel } from "../voice/VoiceParticipantsPanel";
 import { useSocket } from '../../context/SocketContext';
+import { defaultServerTheme, deriveServerThemeFromSettings, type ServerTheme } from '../../theme/serverTheme';
 
 // ... (Interfaces Channel, Category wie gehabt) ...
 interface Channel { id: number; name: string; type: 'text' | 'voice' | 'web'; custom_icon?: string; }
@@ -22,11 +23,13 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   const [categories, setCategories] = useState<Category[]>([]);
   const [uncategorized, setUncategorized] = useState<Channel[]>([]);
   const [serverName, setServerName] = useState('Server');
+  const [serverTheme, setServerTheme] = useState<ServerTheme>(defaultServerTheme);
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createType, setCreateType] = useState<any>('text');
   const [createCategoryId, setCreateCategoryId] = useState<number | null>(null);
   const [hoveredChannelId, setHoveredChannelId] = useState<number | null>(null);
+  const modalPortalRef = useRef<HTMLDivElement>(null);
 
   // CONTEXT NUTZEN
   const {
@@ -51,7 +54,10 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
     try {
       const srvRes = await apiFetch<any[]>(`/api/servers`);
       const current = srvRes.find((s: any) => s.id === serverId);
-      if (current) setServerName(current.name);
+      if (current) {
+        setServerName(current.name);
+        setServerTheme(deriveServerThemeFromSettings(current.settings || current.theme));
+      }
       const structRes = await apiFetch<{ categories: Category[]; uncategorized: Channel[]; fallbackChannelId?: number | null }>(`/api/servers/${serverId}/structure`);
       setCategories(structRes.categories);
       setUncategorized(structRes.uncategorized);
@@ -135,8 +141,13 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   const toggleCategory = (id: number) => setCollapsed(prev => ({ ...prev, [id]: !prev[id] }));
 
   return (
-    <div className="flex flex-col h-full bg-transparent">
-        {/* Header */}
+    <div className="flex flex-col h-full bg-transparent relative">
+      <div
+        ref={modalPortalRef}
+        className="absolute inset-0"
+        style={{ pointerEvents: showCreateModal ? 'auto' : 'none' }}
+      />
+      {/* Header */}
         <div
           onClick={onOpenServerSettings}
           className="h-12 flex items-center gap-2 px-4 border-b border-white/5 cursor-pointer hover:bg-white/5 transition-colors no-drag"
@@ -254,7 +265,17 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
         <UserBottomBar />
 
       {/* Modals */}
-      {showCreateModal && <CreateChannelModal serverId={serverId!} categoryId={createCategoryId} defaultType={createType} onClose={() => setShowCreateModal(false)} onCreated={fetchData} />}
+      {showCreateModal && (
+        <CreateChannelModal
+          serverId={serverId!}
+          categoryId={createCategoryId}
+          defaultType={createType}
+          theme={serverTheme}
+          portalTarget={modalPortalRef.current}
+          onClose={() => setShowCreateModal(false)}
+          onCreated={fetchData}
+        />
+      )}
     </div>
   );
 };
