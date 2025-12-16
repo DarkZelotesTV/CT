@@ -20,9 +20,13 @@ export interface VoiceContextType {
   isScreenSharing: boolean;
   isPublishingCamera: boolean;
   isPublishingScreen: boolean;
+  rnnoiseEnabled: boolean;
+  rnnoiseAvailable: boolean;
+  rnnoiseError: string | null;
   setMuted: (muted: boolean) => Promise<void>;
   setMicMuted: (muted: boolean) => Promise<void>;
   setPushToTalk: (enabled: boolean) => Promise<void>;
+  setRnnoiseEnabled: (enabled: boolean) => Promise<void>;
   startTalking: () => Promise<void>;
   stopTalking: () => Promise<void>;
   startCamera: (quality?: 'low' | 'medium' | 'high', targetRoom?: Room | null) => Promise<void>;

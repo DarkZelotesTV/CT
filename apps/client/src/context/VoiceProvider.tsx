@@ -1,9 +1,10 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Room, RoomEvent, Track, DisconnectReason } from 'livekit-client';
+import { Room, RoomEvent, Track, DisconnectReason, LocalTrackPublication } from 'livekit-client';
 import { getLiveKitConfig } from '../utils/apiConfig';
 import { VoiceContext, VoiceContextType } from './voice-state';
 import { apiFetch } from '../api/http';
 import { useSettings } from './SettingsContext';
+import rnnoiseWorkletUrl from '../audio/rnnoise-worklet.js?url';
 
 const qualityPresets = {
   low: { resolution: { width: 640, height: 360 }, frameRate: 24 },
@@ -39,8 +40,21 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
   const [screenShareAudioError, setScreenShareAudioError] = useState<string | null>(null);
   const [localParticipantId, setLocalParticipantId] = useState<string | null>(null);
   const [shareSystemAudio, setShareSystemAudio] = useState(false);
+  const [rnnoiseEnabled, setRnnoiseEnabledState] = useState(settings.talk.rnnoiseEnabled ?? false);
+  const [rnnoiseAvailable, setRnnoiseAvailable] = useState(true);
+  const [rnnoiseError, setRnnoiseError] = useState<string | null>(null);
 
   const publishedScreenTracksRef = useRef<MediaStreamTrack[]>([]);
+  const rnnoiseResourcesRef = useRef<{
+    context: AudioContext;
+    source: MediaStreamAudioSourceNode;
+    destination: MediaStreamAudioDestinationNode;
+    rnnoiseNode: AudioWorkletNode | null;
+    processedTrack: MediaStreamTrack;
+    rawTrack: MediaStreamTrack;
+    rawStream: MediaStream;
+    publication: LocalTrackPublication | null;
+  } | null>(null);
 
   const isConnecting = useRef(false);
   const attemptRef = useRef(0);
@@ -57,6 +71,151 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
     screenSharing: false,
   });
 
+  useEffect(() => {
+    if (typeof AudioContext === 'undefined' || typeof AudioWorkletNode === 'undefined') {
+      setRnnoiseAvailable(false);
+      setRnnoiseError('RNNoise erfordert AudioWorklet-Unterstützung.');
+    }
+  }, []);
+
+  const stopRnnoisePipeline = useCallback(
+    async (room?: Room | null) => {
+      const resources = rnnoiseResourcesRef.current;
+      if (!resources) return;
+
+      rnnoiseResourcesRef.current = null;
+
+      const { context, source, destination, rnnoiseNode, processedTrack, rawTrack, rawStream, publication } = resources;
+
+      if (room && publication) {
+        try {
+          room.localParticipant.unpublishTrack(processedTrack, true);
+        } catch (err) {
+          console.warn('RNNoise-Track konnte nicht entfernt werden', err);
+        }
+      }
+
+      try {
+        processedTrack.stop();
+      } catch (err) {
+        console.warn('Gefilterter Track konnte nicht gestoppt werden', err);
+      }
+
+      try {
+        rawTrack.stop();
+      } catch (err) {
+        console.warn('Quelltrack konnte nicht gestoppt werden', err);
+      }
+
+      try {
+        rawStream.getTracks().forEach((t) => {
+          if (t !== rawTrack) {
+            t.stop();
+          }
+        });
+      } catch (err) {
+        console.warn('Quellstream konnte nicht bereinigt werden', err);
+      }
+
+      try {
+        source.disconnect();
+        rnnoiseNode?.disconnect();
+        destination.disconnect();
+      } catch (err) {
+        console.warn('RNNoise-Knoten konnte nicht getrennt werden', err);
+      }
+
+      try {
+        await context.close();
+      } catch (err) {
+        console.warn('Audiokontext konnte nicht geschlossen werden', err);
+      }
+    },
+    []
+  );
+
+  const enableMicrophoneWithRnnoise = useCallback(
+    async (room: Room) => {
+      if (!rnnoiseEnabled) return false;
+
+      if (typeof AudioContext === 'undefined' || typeof AudioWorkletNode === 'undefined') {
+        setRnnoiseAvailable(false);
+        setRnnoiseError('RNNoise wird von diesem Browser nicht unterstützt.');
+        return false;
+      }
+
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setRnnoiseAvailable(false);
+        setRnnoiseError('Audioaufnahme wird von diesem Gerät nicht unterstützt.');
+        return false;
+      }
+
+      try {
+        setRnnoiseAvailable(true);
+        await stopRnnoisePipeline(room);
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: { deviceId: settings.devices.audioInputId || undefined },
+          video: false,
+        });
+
+        const rawTrack = stream.getAudioTracks()[0];
+        if (!rawTrack) {
+          throw new Error('Kein Audiotrack gefunden.');
+        }
+
+        const audioContext = new AudioContext();
+        await audioContext.audioWorklet.addModule(rnnoiseWorkletUrl);
+        const rawStream = new MediaStream([rawTrack]);
+        const source = audioContext.createMediaStreamSource(rawStream);
+        const rnnoiseNode = new AudioWorkletNode(audioContext, 'rnnoise-processor');
+
+        rnnoiseNode.port.onmessage = (event) => {
+          if (event?.data?.type === 'error') {
+            setRnnoiseError(event.data.message || 'RNNoise Fehler.');
+          }
+        };
+
+        const destination = audioContext.createMediaStreamDestination();
+        source.connect(rnnoiseNode).connect(destination);
+        const processedTrack = destination.stream.getAudioTracks()[0];
+
+        if (!processedTrack) {
+          throw new Error('Gefilterter Audiotrack konnte nicht erstellt werden.');
+        }
+
+        await audioContext.resume();
+        await room.localParticipant.setMicrophoneEnabled(false);
+
+        const publication = await room.localParticipant.publishTrack(processedTrack, {
+          name: 'microphone_rnnoise',
+          source: Track.Source.Microphone,
+        });
+
+        rnnoiseResourcesRef.current = {
+          context: audioContext,
+          source,
+          destination,
+          rnnoiseNode,
+          processedTrack,
+          rawTrack,
+          rawStream,
+          publication,
+        };
+
+        setRnnoiseError(null);
+        return true;
+      } catch (err: any) {
+        console.warn('RNNoise konnte nicht initialisiert werden', err);
+        setRnnoiseError(err?.message || 'RNNoise konnte nicht initialisiert werden.');
+        setRnnoiseAvailable(false);
+        await stopRnnoisePipeline(room);
+        return false;
+      }
+    },
+    [rnnoiseEnabled, settings.devices.audioInputId, stopRnnoisePipeline]
+  );
+
   const MAX_RECONNECT_ATTEMPTS = 3;
   const BASE_RECONNECT_DELAY = 1000;
 
@@ -64,13 +223,14 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
     setMutedState(settings.talk.muted);
     setMicMutedState(settings.talk.micMuted);
     setUsePushToTalkState(settings.talk.pushToTalkEnabled);
+    setRnnoiseEnabledState(settings.talk.rnnoiseEnabled ?? false);
     desiredMediaStateRef.current = {
       ...desiredMediaStateRef.current,
       muted: settings.talk.muted,
       micMuted: settings.talk.micMuted,
       pushToTalk: settings.talk.pushToTalkEnabled,
     };
-  }, [settings.talk.micMuted, settings.talk.muted, settings.talk.pushToTalkEnabled]);
+  }, [settings.talk.micMuted, settings.talk.muted, settings.talk.pushToTalkEnabled, settings.talk.rnnoiseEnabled]);
 
   const syncLocalMediaState = useCallback((room: Room | null) => {
     if (!room) {
@@ -102,11 +262,23 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       const talking = options?.talking ?? isTalking;
       const pushToTalk = options?.pushToTalk ?? usePushToTalk;
       const shouldEnable = !isMuted && !isMicMuted && (!pushToTalk || talking);
-      if (room) {
-        await room.localParticipant.setMicrophoneEnabled(shouldEnable);
+      if (!room) return;
+
+      if (!shouldEnable) {
+        await stopRnnoisePipeline(room);
+        await room.localParticipant.setMicrophoneEnabled(false);
+        return;
       }
+
+      if (rnnoiseEnabled) {
+        const success = await enableMicrophoneWithRnnoise(room);
+        if (success) return;
+      }
+
+      await stopRnnoisePipeline(room);
+      await room.localParticipant.setMicrophoneEnabled(true);
     },
-    [isTalking, micMuted, muted, usePushToTalk]
+    [enableMicrophoneWithRnnoise, isTalking, micMuted, muted, rnnoiseEnabled, stopRnnoisePipeline, usePushToTalk]
   );
 
   const setMuted = useCallback(
@@ -114,7 +286,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       setMutedState(nextMuted);
       updateTalk({ muted: nextMuted });
       if (nextMuted) setIsTalking(false);
-       desiredMediaStateRef.current = { ...desiredMediaStateRef.current, muted: nextMuted };
+      desiredMediaStateRef.current = { ...desiredMediaStateRef.current, muted: nextMuted };
       if (activeRoom) await applyMicrophoneState(activeRoom, { muted: nextMuted, talking: false });
     },
     [activeRoom, applyMicrophoneState, updateTalk]
@@ -140,6 +312,30 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       if (activeRoom) await applyMicrophoneState(activeRoom, { pushToTalk: enabled, talking: false });
     },
     [activeRoom, applyMicrophoneState, updateTalk]
+  );
+
+  const setRnnoiseEnabled = useCallback(
+    async (enabled: boolean) => {
+      setRnnoiseEnabledState(enabled);
+      updateTalk({ rnnoiseEnabled: enabled });
+      if (!enabled) {
+        setRnnoiseAvailable(true);
+        setRnnoiseError(null);
+        await stopRnnoisePipeline(activeRoom);
+        if (activeRoom) {
+          const shouldEnable = !muted && !micMuted && (!usePushToTalk || isTalking);
+          await activeRoom.localParticipant.setMicrophoneEnabled(shouldEnable);
+        }
+        return;
+      }
+
+      setRnnoiseAvailable(true);
+      setRnnoiseError(null);
+      if (activeRoom) {
+        await applyMicrophoneState(activeRoom, { talking: isTalking });
+      }
+    },
+    [activeRoom, applyMicrophoneState, isTalking, micMuted, muted, stopRnnoisePipeline, updateTalk, usePushToTalk]
   );
 
   const startTalking = useCallback(async () => {
@@ -489,6 +685,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       reconnectTimeoutRef.current = null;
     }
     isConnecting.current = false;
+    await stopRnnoisePipeline(activeRoom);
     if (activeRoom) {
       await activeRoom.disconnect();
     }
@@ -566,6 +763,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       if (activeRoom) {
+        await stopRnnoisePipeline(activeRoom);
         await activeRoom.disconnect();
       }
 
@@ -726,6 +924,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       applyMicrophoneState,
       connectionState,
       finalizeDisconnection,
+      stopRnnoisePipeline,
       settings.devices.audioInputId,
       settings.devices.audioOutputId,
       settings.devices.videoInputId,
@@ -786,9 +985,13 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         isScreenSharing,
         isPublishingCamera,
         isPublishingScreen,
+        rnnoiseEnabled,
+        rnnoiseAvailable,
+        rnnoiseError,
         setMuted,
         setMicMuted,
         setPushToTalk,
+        setRnnoiseEnabled,
         startTalking,
         stopTalking,
         startCamera,

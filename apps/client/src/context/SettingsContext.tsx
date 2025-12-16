@@ -25,6 +25,7 @@ export type TalkSettings = {
   screenFrameRate?: number;
   screenBitrateProfile?: 'low' | 'standard' | 'high';
   participantVolumes?: Record<string, number>;
+  rnnoiseEnabled?: boolean;
 };
 
 export type SettingsState = {
@@ -59,6 +60,7 @@ const defaultSettings: SettingsState = {
     screenFrameRate: 30,
     screenBitrateProfile: 'standard',
     participantVolumes: {},
+    rnnoiseEnabled: false,
   },
 };
 
