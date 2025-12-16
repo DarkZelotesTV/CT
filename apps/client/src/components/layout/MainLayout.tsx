@@ -58,7 +58,7 @@ export const MainLayout = () => {
   const [showJoinServer, setShowJoinServer] = useState(false);
 
   // Voice Context holen
-  const { activeRoom, connectionState } = useVoice();
+  const { activeRoom, connectionState, muted } = useVoice();
 
   const computedMaxSidebarWidth = useMemo(() => {
     if (!containerWidth) return maxSidebarWidth;
@@ -476,7 +476,7 @@ export const MainLayout = () => {
       )}
 
       {/* 5. AUDIO RENDERER (Unsichtbar, aber spielt Sound ab) */}
-      {activeRoom && <RoomAudioRenderer />}
+      {activeRoom && !muted && <RoomAudioRenderer />}
     </div>
   );
 

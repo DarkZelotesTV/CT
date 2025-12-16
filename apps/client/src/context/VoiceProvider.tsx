@@ -1,5 +1,13 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Room, RoomEvent, Track, DisconnectReason, LocalTrackPublication } from 'livekit-client';
+import {
+  Room,
+  RoomEvent,
+  Track,
+  DisconnectReason,
+  LocalTrackPublication,
+  RemoteAudioTrack,
+  RemoteTrack,
+} from 'livekit-client';
 import { getLiveKitConfig } from '../utils/apiConfig';
 import { VoiceContext, VoiceContextType } from './voice-state';
 import { apiFetch } from '../api/http';
@@ -337,6 +345,42 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
     },
     [activeRoom, applyMicrophoneState, isTalking, micMuted, muted, stopRnnoisePipeline, updateTalk, usePushToTalk]
   );
+
+  const applyOutputMuteState = useCallback(
+    (room: Room | null, shouldEnable: boolean) => {
+      if (!room) return;
+
+      room.remoteParticipants.forEach((participant) => {
+        participant.trackPublications.forEach((publication) => {
+          const audioTrack = publication.audioTrack;
+          if (audioTrack?.mediaStreamTrack) {
+            audioTrack.mediaStreamTrack.enabled = shouldEnable;
+          }
+        });
+      });
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (!activeRoom) return;
+
+    applyOutputMuteState(activeRoom, !muted);
+
+    const handleTrackSubscribed = (track: RemoteTrack) => {
+      if (track.kind === Track.Kind.Audio) {
+        const audioTrack = track as RemoteAudioTrack;
+        if (audioTrack.mediaStreamTrack) {
+          audioTrack.mediaStreamTrack.enabled = !muted;
+        }
+      }
+    };
+
+    activeRoom.on(RoomEvent.TrackSubscribed, handleTrackSubscribed);
+    return () => {
+      activeRoom.off(RoomEvent.TrackSubscribed, handleTrackSubscribed);
+    };
+  }, [activeRoom, applyOutputMuteState, muted]);
 
   const startTalking = useCallback(async () => {
     setIsTalking(true);
