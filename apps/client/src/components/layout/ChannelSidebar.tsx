@@ -144,13 +144,13 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
     <div className="flex flex-col h-full bg-transparent relative">
       <div
         ref={modalPortalRef}
-        className="absolute inset-0"
+        className={`absolute inset-0 ${showCreateModal ? 'z-50' : '-z-10'}`}
         style={{ pointerEvents: showCreateModal ? 'auto' : 'none' }}
       />
       {/* Header */}
         <div
           onClick={onOpenServerSettings}
-          className="h-12 flex items-center gap-2 px-4 border-b border-white/5 cursor-pointer hover:bg-white/5 transition-colors no-drag"
+          className="h-12 flex items-center gap-2 px-4 border-b border-white/5 cursor-pointer hover:bg-white/5 transition-colors no-drag relative z-10"
         >
           <span className="font-bold text-white truncate flex-1">{serverName}</span>
 
@@ -172,7 +172,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
         </div>
 
         {/* Liste */}
-        <div className="flex-1 overflow-y-auto pt-4 px-2 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto pt-4 px-2 custom-scrollbar relative z-0">
            {uncategorized.map(c => renderChannel(c, false))}
            {categories.map(cat => (
              <div key={cat.id} className="mt-4">
@@ -202,7 +202,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
 
         {/* --- STATUS PANEL (Verbindung) --- */}
         {connectionState === 'connected' && (
-          <div className="bg-[#111214] border-t border-b border-white/5 p-2.5 space-y-2">
+          <div className="bg-[#111214] border-t border-b border-white/5 p-2.5 space-y-2 relative z-10">
             <div className="flex items-center justify-between gap-2">
               <div className="flex flex-col overflow-hidden mr-2">
                 <div className="text-green-500 text-[10px] font-bold uppercase flex items-center gap-1.5 mb-0.5">
@@ -260,9 +260,13 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
           </div>
         )}
 
-        <VoiceParticipantsPanel />
+        <div className="relative z-10">
+          <VoiceParticipantsPanel />
+        </div>
 
-        <UserBottomBar />
+        <div className="relative z-10">
+          <UserBottomBar />
+        </div>
 
       {/* Modals */}
       {showCreateModal && (

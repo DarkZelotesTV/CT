@@ -214,6 +214,23 @@ export const MainLayout = () => {
     setShowServerSettings(false);
   };
 
+  // FIX: Stabile Referenz für Channel Selection, damit ChannelSidebar nicht rerendert/fetchet
+  const handleChannelSelect = useCallback((channel: Channel) => {
+    setActiveChannel(channel);
+    if (isNarrow) {
+      setShowLeftSidebar(false);
+    }
+  }, [isNarrow]);
+
+  // FIX: Stabile Referenz und Check auf ID-Gleichheit, um Endlos-Loop zu verhindern
+  const handleResolveFallback = useCallback((channel: Channel | null) => {
+    setFallbackChannel((prev) => {
+      // Wenn die IDs gleich sind, nicht aktualisieren -> verhindert Re-Render Loop
+      if (prev?.id === channel?.id) return prev;
+      return channel;
+    });
+  }, []);
+
   const announceServerChange = () => {
     window.dispatchEvent(new Event('ct-servers-changed'));
   };
@@ -356,14 +373,9 @@ export const MainLayout = () => {
             <ChannelSidebar
               serverId={selectedServerId}
               activeChannelId={activeChannel?.id || null}
-              onSelectChannel={(channel) => {
-                setActiveChannel(channel);
-                if (isNarrow) {
-                  setShowLeftSidebar(false);
-                }
-              }}
+              onSelectChannel={handleChannelSelect} // Verwendet jetzt die stabile Referenz
               onOpenServerSettings={() => setShowServerSettings(true)}
-              onResolveFallback={setFallbackChannel}
+              onResolveFallback={handleResolveFallback} // Verwendet jetzt die stabile Referenz
             />
           ) : (
             <DashboardSidebar />
