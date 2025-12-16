@@ -3,10 +3,9 @@ import { Compass, Home, Layers, MessageSquare, PlusCircle, Users } from 'lucide-
 interface HomeOnboardingStageProps {
   onCreateServer: () => void;
   onJoinServer: () => void;
-  onOpenFriends: () => void;
 }
 
-export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenFriends }: HomeOnboardingStageProps) => {
+export const HomeOnboardingStage = ({ onCreateServer, onJoinServer }: HomeOnboardingStageProps) => {
   const steps = [
     {
       title: '1. Server entdecken oder erstellen',
@@ -60,13 +59,6 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenFriend
             >
               <Compass size={18} /> Server beitreten
             </button>
-            <button
-              type="button"
-              onClick={onOpenFriends}
-              className="px-4 py-2.5 text-gray-300 hover:text-white rounded-xl border border-white/10 hover:border-white/20 flex items-center gap-2 transition-colors"
-            >
-              <MessageSquare size={18} /> Freunde anzeigen
-            </button>
           </div>
 
           <div className="grid sm:grid-cols-3 gap-4 pt-2">
@@ -102,12 +94,6 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenFriend
             </ul>
           </div>
 
-          <div className="rounded-xl border border-white/5 p-4 bg-indigo-500/5">
-            <div className="text-xs uppercase tracking-wide text-indigo-200 font-semibold mb-2">Freunde</div>
-            <p className="text-xs text-gray-200 leading-relaxed">
-              Unsere neue Startseite ersetzt vorerst die Freundeliste. Du kannst sie jederzeit über "Freunde anzeigen" öffnen und später wieder direkt dorthin zurückkehren.
-            </p>
-          </div>
         </div>
       </div>
     </div>

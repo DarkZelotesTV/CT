@@ -11,7 +11,6 @@ import { MemberSidebar } from './MemberSidebar';
 import { ChannelSidebar } from './ChannelSidebar';
 
 import { DashboardSidebar } from '../dashboard/DashboardSidebar';
-import { FriendListStage } from '../dashboard/FriendListStage';
 import { WebChannelView } from '../server/WebChannelView';
 import { HomeOnboardingStage } from '../dashboard/HomeOnboardingStage';
 import { ChatChannelView } from '../server/ChatChannelView';
@@ -53,7 +52,6 @@ export const MainLayout = () => {
   const [selectedServerId, setSelectedServerId] = useState<number | null>(null);
   const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
   const [fallbackChannel, setFallbackChannel] = useState<Channel | null>(null);
-  const [homeView, setHomeView] = useState<'home' | 'friends'>('home');
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showServerSettings, setShowServerSettings] = useState(false);
   const [showCreateServer, setShowCreateServer] = useState(false);
@@ -213,7 +211,6 @@ export const MainLayout = () => {
     setSelectedServerId(id);
     setActiveChannel(null);
     setFallbackChannel(null);
-    setHomeView('home');
     setShowServerSettings(false);
   };
 
@@ -267,20 +264,11 @@ export const MainLayout = () => {
   // Helper: Rendert den Inhalt der Main Stage
   const renderContent = () => {
     if (!selectedServerId) {
-      if (homeView === 'friends') {
-        return (
-          <div className="flex-1 relative h-full">
-            <FriendListStage onBackToHome={() => setHomeView('home')} />
-          </div>
-        );
-      }
-
       return (
         <div className="flex-1 relative h-full">
           <HomeOnboardingStage
             onCreateServer={() => setShowCreateServer(true)}
             onJoinServer={() => setShowJoinServer(true)}
-            onOpenFriends={() => setHomeView('friends')}
           />
         </div>
       );
