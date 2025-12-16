@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
-import { ChatMessage } from '../../hooks/useChatChannel';
+import { ChatMessage, ChatMessageContent } from '../../hooks/useChatChannel';
 
 interface ChatMessageListProps {
   messages: ChatMessage[];
@@ -95,6 +95,13 @@ export const ChatMessageList = ({
 
       {messages.map((msg, i) => {
         const isSameSender = i > 0 && messages[i - 1].sender.id === msg.sender.id;
+        const isRichContent = (content: ChatMessage['content']): content is ChatMessageContent =>
+          typeof content === 'object' && content !== null;
+
+        const rich = isRichContent(msg.content) ? msg.content : null;
+        const textContent = rich ? rich.text ?? '' : (msg.content as string);
+        const attachments = rich?.attachments || [];
+        const giphy = rich?.giphy;
         return (
           <div
             key={msg.id}
@@ -127,9 +134,48 @@ export const ChatMessageList = ({
                   </span>
                 </div>
               )}
-              <p className="text-gray-300 text-[15px] leading-relaxed whitespace-pre-wrap break-words">
-                {msg.content}
-              </p>
+              {textContent && (
+                <p className="text-gray-300 text-[15px] leading-relaxed whitespace-pre-wrap break-words">
+                  {textContent}
+                </p>
+              )}
+
+              {attachments.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {attachments.map((file, idx) => (
+                    <a
+                      key={`${file.name}-${idx}`}
+                      href={file.dataUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="group/att rounded-lg border border-white/10 bg-white/[0.03] overflow-hidden hover:border-primary/60 transition-colors"
+                    >
+                      {file.type.startsWith('image/') ? (
+                        <img
+                          src={file.dataUrl}
+                          alt={file.name}
+                          className="max-h-32 max-w-xs object-cover block"
+                        />
+                      ) : (
+                        <div className="px-3 py-2 text-xs text-gray-200 flex items-center gap-2">
+                          <span className="truncate max-w-[12rem]">{file.name}</span>
+                          <span className="text-[10px] text-gray-500">{Math.round(file.size / 1024)} KB</span>
+                        </div>
+                      )}
+                    </a>
+                  ))}
+                </div>
+              )}
+
+              {giphy?.url && (
+                <div className="mt-2">
+                  <img
+                    src={giphy.previewUrl || giphy.url}
+                    alt="GIF"
+                    className="max-h-48 rounded-lg border border-white/10 shadow-lg"
+                  />
+                </div>
+              )}
             </div>
           </div>
         );
