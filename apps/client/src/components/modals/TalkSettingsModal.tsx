@@ -81,6 +81,10 @@ export const TalkSettingsModal = ({ onClose }: { onClose: () => void }) => {
     setMuted,
     setMicMuted,
     setPushToTalk,
+    rnnoiseEnabled,
+    rnnoiseAvailable,
+    rnnoiseError,
+    setRnnoiseEnabled,
     selectedAudioInputId,
     selectedAudioOutputId,
   } = useVoice();
@@ -92,6 +96,7 @@ export const TalkSettingsModal = ({ onClose }: { onClose: () => void }) => {
   const [pushToTalkEnabled, setPushToTalkEnabled] = useState(usePushToTalk);
   const [locallyMuted, setLocallyMuted] = useState(muted);
   const [locallyMicMuted, setLocallyMicMuted] = useState(micMuted);
+  const [useRnnoise, setUseRnnoise] = useState(rnnoiseEnabled);
   const [inputLevel, setInputLevel] = useState(0);
   const [sensitivity, setSensitivity] = useState(1);
   const [meterError, setMeterError] = useState<string | null>(null);
@@ -117,6 +122,10 @@ export const TalkSettingsModal = ({ onClose }: { onClose: () => void }) => {
   useEffect(() => {
     refreshDevices();
   }, [refreshDevices]);
+
+  useEffect(() => {
+    setUseRnnoise(rnnoiseEnabled);
+  }, [rnnoiseEnabled]);
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -215,6 +224,7 @@ export const TalkSettingsModal = ({ onClose }: { onClose: () => void }) => {
     await setPushToTalk(pushToTalkEnabled);
     await setMuted(locallyMuted);
     await setMicMuted(locallyMicMuted);
+    await setRnnoiseEnabled(useRnnoise);
     onClose();
   };
 
@@ -371,6 +381,33 @@ export const TalkSettingsModal = ({ onClose }: { onClose: () => void }) => {
                   className={`px-4 py-2 rounded-xl border ${locallyMicMuted ? 'border-red-400 bg-red-500/20 text-red-200' : 'border-green-400 bg-green-500/20 text-green-100'}`}
                 >
                   {locallyMicMuted ? 'Stumm' : 'Aktiv'}
+                </button>
+              </div>
+
+              <div className="flex items-start justify-between gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
+                <div className="flex-1">
+                  <div className="text-sm font-semibold text-white">RNNoise Rauschunterdrückung</div>
+                  <p className="text-xs text-gray-400">
+                    Verarbeitet dein Mikrofon über den RNNoise-Audioknoten. Bei fehlender Unterstützung wird automatisch der
+                    Original-Stream genutzt.
+                  </p>
+                  {!rnnoiseAvailable && (
+                    <div className="text-[11px] text-amber-300 mt-1">
+                      RNNoise ist in dieser Umgebung nicht verfügbar. Die Aufnahme läuft ohne zusätzliche Filter.
+                    </div>
+                  )}
+                  {rnnoiseError && <div className="text-[11px] text-red-400 mt-1">{rnnoiseError}</div>}
+                </div>
+                <button
+                  onClick={() => setUseRnnoise((v) => !v)}
+                  disabled={!rnnoiseAvailable}
+                  className={`px-4 py-2 rounded-xl border ${
+                    useRnnoise
+                      ? 'border-cyan-400 bg-cyan-500/20 text-cyan-200'
+                      : 'border-white/10 text-gray-300 hover:text-white hover:border-white/30'
+                  } ${!rnnoiseAvailable ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {useRnnoise ? 'Aktiv' : 'Aus'}
                 </button>
               </div>
             </div>
