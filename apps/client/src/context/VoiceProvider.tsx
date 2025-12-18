@@ -529,24 +529,25 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
           let systemAudioTrack: MediaStreamTrack | null = null;
 
           if (!selectedTrack || (shouldShareAudio && !systemAudioTrack)) {
-            const stream = await navigator.mediaDevices.getUserMedia({
-              audio: shouldShareAudio
-                ? ({
-                    mandatory: {
-                      chromeMediaSource: 'desktop',
-                      ...(options?.sourceId ? { chromeMediaSourceId: options.sourceId } : {}),
-                    },
-                  } as MediaTrackConstraints)
-                : false,
-              video: {
-                mandatory: {
+            const videoConstraints: MediaTrackConstraints = {
+              width: preset.resolution.width,
+              height: preset.resolution.height,
+              frameRate: { ideal: preferredFrameRate, max: preferredFrameRate },
+              ...(options?.sourceId
+                ? { chromeMediaSource: 'desktop', chromeMediaSourceId: options.sourceId }
+                : {}),
+            };
+
+            const audioConstraints: MediaTrackConstraints = shouldShareAudio
+              ? {
                   chromeMediaSource: 'desktop',
                   ...(options?.sourceId ? { chromeMediaSourceId: options.sourceId } : {}),
-                  maxWidth: preset.resolution.width,
-                  maxHeight: preset.resolution.height,
-                },
-                frameRate: { ideal: preferredFrameRate, max: preferredFrameRate },
-              } as any,
+                }
+              : {};
+
+            const stream = await navigator.mediaDevices.getUserMedia({
+              audio: shouldShareAudio ? audioConstraints : false,
+              video: videoConstraints as any,
             });
             const streamVideoTrack = stream.getVideoTracks()[0];
             selectedTrack = selectedTrack ?? streamVideoTrack;
