@@ -290,6 +290,15 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
 
   const toggleCategory = (id: number) => setCollapsed(prev => ({ ...prev, [id]: !prev[id] }));
 
+  const handleServerSettingsClick = useCallback(() => {
+    if (!serverId) {
+      alert('Bitte wähle zuerst einen Server aus.');
+      return;
+    }
+
+    onOpenServerSettings();
+  }, [onOpenServerSettings, serverId]);
+
   return (
     <div className="flex flex-col h-full bg-transparent relative">
       <div
@@ -301,8 +310,9 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
         <div className="h-12 flex items-center gap-2 px-4 border-b border-white/5 transition-colors no-drag relative z-10">
           <button
             type="button"
-            onClick={onOpenServerSettings}
-            className="group flex items-center gap-2 flex-1 text-left rounded-md px-2 py-2 hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0c10]"
+            onClick={handleServerSettingsClick}
+            disabled={!serverId}
+            className="group flex items-center gap-2 flex-1 text-left rounded-md px-2 py-2 hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0c10] disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Servereinstellungen öffnen"
           >
             <span className="font-bold text-white truncate flex-1">{serverName}</span>
