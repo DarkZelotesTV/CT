@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import DOMPurify, { type Config as DOMPurifyConfig } from 'dompurify';
 import { Globe, Edit, Save, X, LayoutGrid, Columns, Image, FileInput, Eye } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 
@@ -66,7 +67,8 @@ const widgetSnippets: Record<string, string> = {
 </a>`
 };
 
-const placeholderHtml = '<div class="text-center text-gray-500 mt-10"><h1>Willkommen</h1><p>Diese Seite ist noch leer.</p></div>';
+const placeholderHtml =
+  '<div class="text-center text-gray-500 mt-10"><h1>Willkommen</h1><p>Diese Seite ist noch leer.</p></div>';
 
 export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) => {
   const [htmlContent, setHtmlContent] = useState('');
@@ -79,18 +81,29 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
   const [layoutExtras, setLayoutExtras] = useState('');
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
+  const sanitizerConfig: DOMPurifyConfig = useMemo(
+    () => ({
+      ADD_ATTR: ['data-layout', 'data-widget'],
+      ADD_TAGS: ['section']
+    }),
+    []
+  );
+
+  const sanitizeContent = (value: string) => DOMPurify.sanitize(value, sanitizerConfig);
+
   const buildDocument = (body: string, layout: LayoutMode, extras = '') => {
     const layoutClassNames = ['web-channel-layout', LAYOUT_CLASSES[layout], extras]
       .filter(Boolean)
       .join(' ');
-    const safeBody = body?.trim() ? body : placeholderHtml;
+    const sanitizedBody = sanitizeContent(body || '');
+    const safeBody = sanitizedBody?.trim() ? sanitizedBody : placeholderHtml;
     const layoutWrapperPattern = /<[^>]*data-layout=/;
 
-    if (layoutWrapperPattern.test(body)) {
-      return body;
+    if (layoutWrapperPattern.test(sanitizedBody)) {
+      return sanitizeContent(sanitizedBody);
     }
 
-    return `<section data-layout="${layout}" class="${layoutClassNames}">${safeBody}</section>`;
+    return sanitizeContent(`<section data-layout="${layout}" class="${layoutClassNames}">${safeBody}</section>`);
   };
 
   const parseContent = (content?: string) => {
@@ -111,15 +124,15 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
 
         return {
           layout: (['stack', 'two-column', 'grid'].includes(detectedLayout) ? detectedLayout : 'stack') as LayoutMode,
-          body: layoutNode.innerHTML?.trim() || '',
+          body: sanitizeContent(layoutNode.innerHTML?.trim() || ''),
           extras: extraClassNames
         };
       }
 
-      return { layout: 'stack' as LayoutMode, body: content, extras: '' };
+      return { layout: 'stack' as LayoutMode, body: sanitizeContent(content), extras: '' };
     } catch (err) {
       console.error('Parsing error', err);
-      return { layout: 'stack' as LayoutMode, body: content, extras: '' };
+      return { layout: 'stack' as LayoutMode, body: sanitizeContent(content || ''), extras: '' };
     }
   };
 
@@ -133,9 +146,14 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
     const doc = parser.parseFromString(html, 'text/html');
     const parserError = doc.querySelector('parsererror');
 
-    const strippedText = rawBody.replace(/<[^>]*>/g, '').trim();
-    const hasInteractiveElements = /<(iframe|video|audio|form|input|textarea|select|button|img)[^>]*>/i.test(rawBody);
-    const hasLinks = /<a\s[^>]*href=/i.test(rawBody);
+    const sanitizedBody = sanitizeContent(rawBody);
+    const strippedText = sanitizedBody.replace(/<[^>]*>/g, '').trim();
+    const hasInteractiveElements = /<(iframe|video|audio|form|input|textarea|select|button|img)[^>]*>/i.test(sanitizedBody);
+    const hasLinks = /<a\s[^>]*href=/i.test(sanitizedBody);
+
+    if (/(<script|on\w+=|javascript:)/i.test(rawBody)) {
+      return 'Unsichere Skripte und Event-Handler sind nicht erlaubt.';
+    }
 
     if (!strippedText && !hasInteractiveElements && !hasLinks) {
       return 'Der Inhalt darf nicht leer sein. Bitte füge Text, ein Widget oder einen Link hinzu.';
@@ -159,9 +177,9 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
 
         setLayoutMode(layout);
         setLayoutExtras(extras);
-        setContentBody(body);
+        setContentBody(sanitizeContent(body));
         setHtmlContent(wrappedContent);
-        setEditValue(body);
+        setEditValue(sanitizeContent(body));
         setIsEditing(false);
       } catch (err: any) {
         setError(err?.message || 'Fehler beim Laden des Inhalts');
