@@ -544,8 +544,8 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
                   ...(options?.sourceId ? { chromeMediaSourceId: options.sourceId } : {}),
                   maxWidth: preset.resolution.width,
                   maxHeight: preset.resolution.height,
-                  maxFrameRate: preferredFrameRate,
                 },
+                frameRate: { ideal: preferredFrameRate, max: preferredFrameRate },
               } as any,
             });
             const streamVideoTrack = stream.getVideoTracks()[0];
@@ -617,7 +617,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
             video: {
               width: preset.resolution.width,
               height: preset.resolution.height,
-              frameRate: preferredFrameRate,
+              frameRate: { ideal: preferredFrameRate, max: preferredFrameRate },
             },
             audio: shouldShareAudio
               ? ({
