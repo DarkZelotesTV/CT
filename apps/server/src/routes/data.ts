@@ -1,9 +1,8 @@
 import { Router } from 'express';
 import { RoomServiceClient } from 'livekit-server-sdk';
-import { Server, Channel, Message, User, ServerMember, Category, Role, MemberRole, ChannelPermissionOverride, ServerBan } from '../models';
+import { Server, Channel, ServerMember, Category, Role, MemberRole, ChannelPermissionOverride, ServerBan } from '../models';
 import { authenticateRequest, AuthRequest } from '../middleware/authMiddleware';
 import { PermissionKey } from '../models/Role';
-import { Op } from 'sequelize';
 import { emitToUser, getUserChannelIds, removeUserFromAllChannels, removeUserFromChannel } from '../realtime/registry';
 
 const router = Router();
@@ -173,8 +172,7 @@ router.delete('/servers/:serverId', authenticateRequest, async (req: AuthRequest
     const channelIds = channels.map((c: any) => c.id);
 
     if (channelIds.length) {
-      await ChannelPermissionOverride.destroy({ where: { channel_id: { [Op.in]: channelIds } } });
-      await Message.destroy({ where: { channel_id: { [Op.in]: channelIds } } });
+      await ChannelPermissionOverride.destroy({ where: { channel_id: channelIds } });
     }
 
     await Channel.destroy({ where: { server_id: serverId } });
@@ -376,8 +374,7 @@ router.get('/servers/:serverId/members', authenticateRequest, async (req, res) =
     const members = await ServerMember.findAll({
       where: { server_id: serverId },
       include: [{
-        model: User,
-        as: 'user',
+        association: 'user',
         attributes: ['id', 'username', 'avatar_url', 'status']
       }]
     });
@@ -563,35 +560,6 @@ router.post('/servers/:serverId/members/:userId/move', authenticateRequest, asyn
     res.json({ success: true });
   } catch (err: any) {
     res.status(statusForError(err)).json({ error: err?.message || 'Konnte Teilnehmer nicht verschieben' });
-  }
-});
-
-// 8. Nachrichten laden (History)
-router.get('/channels/:channelId/messages', authenticateRequest, async (req, res) => {
-  try {
-    const channelId = Number(req.params.channelId);
-    const limitParam = Number(req.query.limit);
-    const limit = Number.isFinite(limitParam) ? Math.min(Math.max(limitParam, 1), 200) : 50;
-    const before = req.query.before ? new Date(String(req.query.before)) : null;
-
-    const where: any = { channel_id: channelId };
-    if (before && !isNaN(before.getTime())) {
-      where.createdAt = { [Op.lt]: before };
-    }
-
-    const messages = await Message.findAll({
-      where,
-      include: [{ model: User, as: 'sender', attributes: ['username', 'avatar_url', 'id'] }],
-      order: [['createdAt', 'DESC']],
-      limit: limit + 1,
-    });
-
-    const hasMore = messages.length > limit;
-    const limited = hasMore ? messages.slice(0, limit) : messages;
-
-    res.json({ messages: limited.reverse(), hasMore });
-  } catch (err) {
-    res.status(500).json({ error: "Fehler beim Laden der Nachrichten" });
   }
 });
 
