@@ -386,7 +386,7 @@ export const MainLayout = () => {
   };
 
   const ui = (
-    <div ref={layoutRef} className="flex h-screen w-screen overflow-hidden relative bg-[#050507] text-gray-200 font-sans">
+    <div ref={layoutRef} className="flex h-screen w-screen overflow-auto relative bg-[#050507] text-gray-200 font-sans">
       {showOnboarding && <OnboardingModal onClose={() => setShowOnboarding(false)} />}
       {showCreateServer && (
         <CreateServerModal
@@ -454,7 +454,7 @@ export const MainLayout = () => {
       )}
 
       {/* 3. MAIN STAGE */}
-      <div className="flex-1 flex flex-col min-w-0 relative h-full py-3 px-3 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 relative h-full py-3 px-3 overflow-auto">
         {/* Chevron nur anzeigen, wenn auch eine Sidebar existiert (also wenn ein Server ausgewählt ist) */}
         {!isNarrow && selectedServerId && (
           <button
@@ -485,7 +485,7 @@ export const MainLayout = () => {
           </div>
         )}
 
-        <div className="flex-1 bg-[#09090b] rounded-2xl border border-white/5 relative overflow-hidden shadow-2xl flex flex-col">
+        <div className="flex-1 bg-[#09090b] rounded-2xl border border-white/5 relative overflow-auto shadow-2xl flex flex-col">
           {renderContent()}
         </div>
 
