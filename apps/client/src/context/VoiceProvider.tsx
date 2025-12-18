@@ -932,12 +932,16 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
           console.warn('[voice] Room disconnected', disconnectReason, reason);
           isConnecting.current = false;
 
+          const channel = lastChannelRef.current;
+          if (channel) {
+            leavePresenceChannel(channel.id);
+          }
+
           if (manualDisconnectRef.current) {
             finalizeDisconnection(null);
             return;
           }
 
-          const channel = lastChannelRef.current;
           if (!channel) {
             finalizeDisconnection(disconnectReason);
             return;
