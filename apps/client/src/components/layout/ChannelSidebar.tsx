@@ -28,7 +28,6 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createType, setCreateType] = useState<any>('text');
   const [createCategoryId, setCreateCategoryId] = useState<number | null>(null);
-  const [hoveredChannelId, setHoveredChannelId] = useState<number | null>(null);
   const modalPortalRef = useRef<HTMLDivElement>(null);
 
   // CONTEXT NUTZEN
@@ -92,15 +91,10 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
     const isActive = activeChannelId === c.id;
     const isConnected = c.type === 'voice' && voiceChannelId === c.id; // Bin ich hier verbunden?
     const presenceList = channelPresence[c.id] || [];
-    const presenceCount = presenceList.length;
+    const hasPresence = presenceList.length > 0;
 
     return (
-      <div
-        key={c.id}
-        onMouseEnter={() => setHoveredChannelId(c.id)}
-        onMouseLeave={() => setHoveredChannelId((prev) => (prev === c.id ? null : prev))}
-        className="relative"
-      >
+      <div key={c.id} className="relative">
         <div
           onClick={() => handleChannelClick(c)}
           className={`flex items-center no-drag px-2 py-1.5 mb-0.5 cursor-pointer group select-none rounded-md transition-colors
@@ -110,28 +104,27 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
         >
           <Icon size={16} className={`mr-2 ${isConnected ? 'text-green-500' : ''}`} />
           <span className={`text-sm truncate flex-1 font-medium ${isConnected ? 'text-green-400' : ''}`}>{c.name}</span>
-          {presenceCount > 0 && (
-            <div className="ml-2 px-1.5 py-0.5 rounded-full bg-white/10 text-xs text-gray-200 min-w-[24px] text-center">
-              {presenceCount}
-            </div>
-          )}
         </div>
 
-        {hoveredChannelId === c.id && presenceCount > 0 && (
-          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-[#111214] border border-white/10 rounded-lg shadow-lg p-3 z-20 w-60">
-            <div className="text-xs font-semibold text-gray-300 mb-2">Im Kanal</div>
-            <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
-              {presenceList.map((user) => (
-                <div key={user.id} className="flex items-center gap-2 text-xs text-gray-200">
-                  <span
-                    className={`w-2 h-2 rounded-full ${user.status === 'online' ? 'bg-green-500' : 'bg-gray-500'}`}
-                    title={user.status === 'online' ? 'Online' : 'Offline'}
-                  />
-                  <span className="font-medium truncate flex-1" title={user.username}>{user.username}</span>
-                  <span className="text-[10px] uppercase text-gray-400">{user.status === 'online' ? 'Online' : 'Offline'}</span>
-                </div>
-              ))}
-            </div>
+        {c.type === 'voice' && (
+          <div className={`${isInside ? 'ml-8' : 'ml-6'} mr-2 mb-1 rounded-md border border-white/5 bg-white/5 px-2 py-1.5`}>
+            <div className="text-[10px] uppercase tracking-[0.08em] text-gray-500 mb-1 font-bold">Im Kanal</div>
+            {hasPresence ? (
+              <div className="space-y-1">
+                {presenceList.map((user) => (
+                  <div key={user.id} className="flex items-center gap-2 text-xs text-gray-200">
+                    <span
+                      className={`w-2 h-2 rounded-full ${user.status === 'online' ? 'bg-green-500' : 'bg-gray-500'}`}
+                      title={user.status === 'online' ? 'Online' : 'Offline'}
+                    />
+                    <span className="font-medium truncate flex-1" title={user.username}>{user.username}</span>
+                    <span className="text-[10px] uppercase text-gray-400">{user.status === 'online' ? 'Online' : 'Offline'}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-[11px] text-gray-500 py-0.5">Niemand im Kanal</div>
+            )}
           </div>
         )}
       </div>
