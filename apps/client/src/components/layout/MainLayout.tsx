@@ -1,7 +1,7 @@
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
-import { ChevronDown, ChevronLeft, ChevronRight, Users } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, LogIn, MessageSquare, SquareArrowOutUpRight, Users } from 'lucide-react';
 import { RoomAudioRenderer, RoomContext } from '@livekit/components-react';
 import '@livekit/components-styles';
 
@@ -57,6 +57,10 @@ export const MainLayout = () => {
   const [showServerSettings, setShowServerSettings] = useState(false);
   const [showCreateServer, setShowCreateServer] = useState(false);
   const [showJoinServer, setShowJoinServer] = useState(false);
+  const [showChatPanel, setShowChatPanel] = useState(true);
+  const [chatCollapsed, setChatCollapsed] = useState(false);
+  const [isChatDetached, setIsChatDetached] = useState(false);
+  const activeTextChannel = activeChannel?.type === 'text' ? activeChannel : null;
 
   // Voice Context holen
   const { activeRoom, connectionState, muted } = useVoice();
@@ -150,6 +154,16 @@ export const MainLayout = () => {
     }
   }, [activeChannel, fallbackChannel]);
 
+  useEffect(() => {
+    if (activeChannel?.type === 'text') {
+      setShowChatPanel(true);
+    } else {
+      setShowChatPanel(false);
+      setChatCollapsed(false);
+      setIsChatDetached(false);
+    }
+  }, [activeChannel]);
+
   const previousConnectionState = useRef<VoiceContextType['connectionState'] | null>(null);
 
   useEffect(() => {
@@ -183,6 +197,9 @@ export const MainLayout = () => {
 
     const unsubscribe = window.electron.onChatDocked((chatId, chatName) => {
       setActiveChannel({ id: Number(chatId), name: chatName, type: 'text' });
+      setIsChatDetached(false);
+      setChatCollapsed(false);
+      setShowChatPanel(true);
     });
 
     if (typeof unsubscribe === 'function') {
@@ -200,6 +217,9 @@ export const MainLayout = () => {
       const data = event.data as { type?: string; chatId?: number; chatName?: string };
       if (data?.type === 'chat:docked' && data.chatId) {
         setActiveChannel({ id: Number(data.chatId), name: data.chatName || 'Channel', type: 'text' });
+        setIsChatDetached(false);
+        setChatCollapsed(false);
+        setShowChatPanel(true);
       }
     };
 
@@ -220,6 +240,24 @@ export const MainLayout = () => {
       setShowLeftSidebar(false);
     }
   }, [isNarrow]);
+
+  const handleDetachChat = useCallback(() => {
+    if (activeChannel?.type !== 'text') return;
+
+    setIsChatDetached(true);
+    const url = `#/popout/${activeChannel.id}?name=${encodeURIComponent(activeChannel.name)}`;
+    if (window.electron?.openChatWindow) {
+      window.electron.openChatWindow(activeChannel.id, activeChannel.name);
+      return;
+    }
+
+    window.open(url, '_blank', 'noopener,noreferrer,width=480,height=720');
+  }, [activeChannel]);
+
+  const handleDockChat = useCallback(() => {
+    setIsChatDetached(false);
+    setChatCollapsed(false);
+  }, []);
 
   const handleResolveFallback = useCallback((channel: Channel | null) => {
     setFallbackChannel((prev) => {
@@ -293,12 +331,18 @@ export const MainLayout = () => {
 
     if (activeChannel?.type === 'text') {
       return (
-        <ChatChannelView
-          channelId={activeChannel.id}
-          channelName={activeChannel.name}
-          isCompact={isNarrow}
-          onOpenMembers={() => setShowMemberSheet(true)}
-        />
+        <div className="flex-1 flex items-center justify-center relative h-full">
+          <div
+            className="absolute inset-0 opacity-[0.03]"
+            style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }}
+          />
+          <div className="text-center p-10 bg-white/[0.02] rounded-3xl border border-white/5 backdrop-blur-sm">
+            <h2 className="text-xl font-bold text-white mb-2">Chatpanel aktiv</h2>
+            <p className="text-gray-500 text-sm max-w-md">
+              Der Chat wird als schwebendes Panel angezeigt. Du kannst ihn unten rechts öffnen, ausklappen oder in ein separates Fenster ziehen.
+            </p>
+          </div>
+        </div>
       );
     }
 
@@ -416,6 +460,80 @@ export const MainLayout = () => {
 
         <div className="flex-1 bg-[#09090b] rounded-2xl border border-white/5 relative overflow-hidden shadow-2xl flex flex-col">
           {renderContent()}
+          {activeTextChannel && (
+            <div className={classNames('absolute z-40 flex flex-col gap-2 transition-all duration-300', isNarrow ? 'left-3 right-3 bottom-3' : 'left-6 bottom-6')}>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setShowChatPanel((value) => !value);
+                    setChatCollapsed(false);
+                  }}
+                  className="px-3 py-2 rounded-full bg-black/50 border border-white/10 text-gray-200 hover:text-white hover:bg-white/10 backdrop-blur-md shadow-lg flex items-center gap-2"
+                >
+                  <MessageSquare size={16} />
+                  {showChatPanel && !isChatDetached ? 'Chat ausblenden' : 'Chat anzeigen'}
+                </button>
+                {isChatDetached && (
+                  <button
+                    onClick={handleDockChat}
+                    className="px-3 py-2 rounded-full bg-primary/20 border border-primary/40 text-white hover:bg-primary/30 backdrop-blur-md shadow-lg flex items-center gap-2"
+                  >
+                    <LogIn size={16} />
+                    Andocken
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+          {activeTextChannel && showChatPanel && !isChatDetached && (
+            <div
+              className={classNames(
+                'absolute z-30 transition-all duration-300',
+                isNarrow ? 'left-3 right-3 bottom-3' : 'right-6 bottom-6 w-[520px] max-w-[95vw]'
+              )}
+            >
+              <div
+                className={classNames(
+                  'bg-[#0d0d10]/95 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-xl overflow-hidden',
+                  chatCollapsed ? 'h-14' : 'h-[70vh] max-h-[80vh]'
+                )}
+              >
+                <ChatChannelView
+                  channelId={activeTextChannel.id}
+                  channelName={activeTextChannel.name}
+                  isCompact={isNarrow}
+                  onOpenMembers={() => setShowMemberSheet(true)}
+                  onPopout={handleDetachChat}
+                  onDock={handleDockChat}
+                  isCollapsed={chatCollapsed}
+                  onToggleCollapse={() => setChatCollapsed((value) => !value)}
+                  isDetached={isChatDetached}
+                />
+              </div>
+            </div>
+          )}
+          {activeTextChannel && isChatDetached && (
+            <div
+              className={classNames(
+                'absolute z-30',
+                isNarrow ? 'left-3 right-3 bottom-3' : 'right-6 bottom-6 w-[360px] max-w-[90vw]'
+              )}
+            >
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-xl shadow-2xl flex items-center justify-between">
+                <div className="flex flex-col text-sm text-gray-200">
+                  <span className="font-semibold text-white">Chat im Popout</span>
+                  <span className="text-gray-400">Klicke unten, um das Panel wieder anzudocken.</span>
+                </div>
+                <button
+                  onClick={handleDockChat}
+                  className="px-3 py-2 rounded-lg bg-primary/20 text-primary hover:bg-primary/30 border border-primary/40 transition-colors flex items-center gap-2"
+                >
+                  <LogIn size={16} />
+                  Andocken
+                </button>
+              </div>
+            </div>
+          )}
           <BottomChatBar
             channelId={activeChannel?.type === 'text' ? activeChannel.id : null}
             channelName={activeChannel?.type === 'text' ? activeChannel.name : undefined}
