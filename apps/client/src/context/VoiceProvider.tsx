@@ -12,6 +12,7 @@ import { getLiveKitConfig } from '../utils/apiConfig';
 import { VoiceContext, VoiceContextType } from './voice-state';
 import { apiFetch } from '../api/http';
 import { useSettings } from './SettingsContext';
+import { useSocket } from './SocketContext';
 import rnnoiseWorkletUrl from '../audio/rnnoise-worklet.js?url';
 
 const qualityPresets = {
@@ -28,6 +29,7 @@ const bitrateProfiles = {
 
 export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
   const { settings, updateTalk } = useSettings();
+  const { socket } = useSocket();
 
   const [activeRoom, setActiveRoom] = useState<Room | null>(null);
   const [activeChannelId, setActiveChannelId] = useState<number | null>(null);
@@ -788,6 +790,41 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
     },
     [syncLocalMediaState]
   );
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleForceDisconnect = (payload?: { reason?: string }) => {
+      const reason = payload?.reason || 'Du wurdest aus dem Talk entfernt.';
+      disconnect().catch(() => {});
+      finalizeDisconnection(reason);
+      setError(reason);
+    };
+
+    const handleForceMove = (payload?: { toChannelId?: number; toChannelName?: string }) => {
+      if (!payload?.toChannelId) return;
+      const targetName = payload.toChannelName || `Talk ${payload.toChannelId}`;
+      connectToChannel(payload.toChannelId, targetName).catch((err: any) => {
+        const message = err?.message || 'Konnte den Talk nicht betreten.';
+        setError(message);
+      });
+    };
+
+    const handleForceMute = () => {
+      setMicMuted(true);
+      setMuted(true);
+    };
+
+    socket.on('voice:force-disconnect', handleForceDisconnect);
+    socket.on('voice:force-move', handleForceMove);
+    socket.on('voice:force-mute', handleForceMute);
+
+    return () => {
+      socket.off('voice:force-disconnect', handleForceDisconnect);
+      socket.off('voice:force-move', handleForceMove);
+      socket.off('voice:force-mute', handleForceMute);
+    };
+  }, [socket, disconnect, finalizeDisconnection, connectToChannel, setMicMuted, setMuted]);
 
   const restoreMediaState = useCallback(
     async (room: Room) => {
