@@ -39,7 +39,7 @@ export interface VoiceContextType {
       frameRate?: number;
       track?: MediaStreamTrack;
       withAudio?: boolean;
-      bitrateProfile?: 'low' | 'standard' | 'high';
+      bitrateProfile?: 'low' | 'medium' | 'high';
     },
     targetRoom?: Room | null
   ) => Promise<void>;

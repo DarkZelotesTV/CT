@@ -32,10 +32,10 @@ const SCREEN_QUALITY_PRESETS: Record<'low' | 'medium' | 'high', { resolution: { 
   high: { resolution: { width: 1920, height: 1080 }, frameRate: 60 },
 };
 
-const BITRATE_PROFILES: Record<'low' | 'standard' | 'high', { label: string; bitrateKbps: number; description: string }> = {
-  low: { label: 'Niedrig', bitrateKbps: 800, description: 'Schonend für langsame Verbindungen' },
-  standard: { label: 'Standard', bitrateKbps: 1800, description: 'Gutes Gleichgewicht aus Qualität und Bandbreite' },
-  high: { label: 'Hoch', bitrateKbps: 3500, description: 'Maximale Details bei höheren Bitraten' },
+const BITRATE_PROFILES: Record<'low' | 'medium' | 'high', { label: string; bitrateKbps: number; description: string }> = {
+  low: { label: 'Niedrig', bitrateKbps: 2500, description: 'Für Bandbreiten bis ca. 2,5 Mbps optimiert' },
+  medium: { label: 'Mittel', bitrateKbps: 5000, description: 'Ausgewogene Qualität bei ~5 Mbps' },
+  high: { label: 'Hoch', bitrateKbps: 10000, description: 'Maximale Details bei ~10 Mbps' },
 };
 
 export const VoiceChannelView = ({ channelName }: { channelName: string | null }) => {
@@ -73,8 +73,8 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
   const [quality, setQuality] = useState<'low' | 'medium' | 'high'>(settings.talk.cameraQuality ?? 'medium');
   const [screenQuality, setScreenQuality] = useState<'low' | 'medium' | 'high'>(settings.talk.screenQuality ?? 'high');
   const [screenFrameRate, setScreenFrameRate] = useState<number>(settings.talk.screenFrameRate ?? 30);
-  const [screenBitrateProfile, setScreenBitrateProfile] = useState<'low' | 'standard' | 'high'>(
-    settings.talk.screenBitrateProfile ?? 'standard'
+  const [screenBitrateProfile, setScreenBitrateProfile] = useState<'low' | 'medium' | 'high'>(
+    settings.talk.screenBitrateProfile ?? 'medium'
   );
   
   const [screenSources, setScreenSources] = useState<{ id: string; name: string; thumbnail?: string }[]>([]);
@@ -108,7 +108,7 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
     setQuality(settings.talk.cameraQuality ?? 'medium');
     setScreenQuality(settings.talk.screenQuality ?? 'high');
     setScreenFrameRate(settings.talk.screenFrameRate ?? 30);
-    setScreenBitrateProfile(settings.talk.screenBitrateProfile ?? 'standard');
+    setScreenBitrateProfile(settings.talk.screenBitrateProfile ?? 'medium');
   }, [settings.talk.cameraQuality, settings.talk.screenBitrateProfile, settings.talk.screenFrameRate, settings.talk.screenQuality]);
 
   useEffect(() => {
@@ -435,7 +435,7 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
                         {Object.entries(BITRATE_PROFILES).map(([key, profile]) => (
                             renderMenuItem(
                                 profile.label,
-                                () => setScreenBitrateProfile(key as 'low' | 'standard' | 'high'),
+                                () => setScreenBitrateProfile(key as 'low' | 'medium' | 'high'),
                                 screenBitrateProfile === key,
                                 `${profile.bitrateKbps} kbps · ${profile.description}`
                             )

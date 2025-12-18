@@ -23,7 +23,7 @@ export type TalkSettings = {
   cameraQuality?: 'low' | 'medium' | 'high';
   screenQuality?: 'low' | 'medium' | 'high';
   screenFrameRate?: number;
-  screenBitrateProfile?: 'low' | 'standard' | 'high';
+  screenBitrateProfile?: 'low' | 'medium' | 'high';
   participantVolumes?: Record<string, number>;
   rnnoiseEnabled?: boolean;
 };
@@ -58,7 +58,7 @@ const defaultSettings: SettingsState = {
     cameraQuality: 'medium',
     screenQuality: 'high',
     screenFrameRate: 30,
-    screenBitrateProfile: 'standard',
+    screenBitrateProfile: 'medium',
     participantVolumes: {},
     rnnoiseEnabled: false,
   },

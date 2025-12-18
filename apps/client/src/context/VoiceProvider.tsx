@@ -21,9 +21,9 @@ const qualityPresets = {
 };
 
 const bitrateProfiles = {
-  low: { maxBitrate: 800_000 },
-  standard: { maxBitrate: 1_800_000 },
-  high: { maxBitrate: 3_500_000 },
+  low: { maxBitrate: 2_500_000 },
+  medium: { maxBitrate: 5_000_000 },
+  high: { maxBitrate: 10_000_000 },
 };
 
 export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
@@ -458,7 +458,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         frameRate?: number;
         track?: MediaStreamTrack;
         withAudio?: boolean;
-        bitrateProfile?: 'low' | 'standard' | 'high';
+        bitrateProfile?: 'low' | 'medium' | 'high';
       },
       targetRoom?: Room | null
     ) => {
@@ -482,8 +482,8 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       const preset = options?.quality ? qualityPresets[options.quality] ?? qualityPresets.high : qualityPresets.high;
       const preferredFrameRate = options?.frameRate ?? preset.frameRate;
       const shouldShareAudio = options?.withAudio ?? shareSystemAudio;
-      const bitrateProfile = options?.bitrateProfile ?? settings.talk.screenBitrateProfile ?? 'standard';
-      const selectedBitrate = bitrateProfiles[bitrateProfile] ?? bitrateProfiles.standard;
+      const bitrateProfile = options?.bitrateProfile ?? settings.talk.screenBitrateProfile ?? 'medium';
+      const selectedBitrate = bitrateProfiles[bitrateProfile] ?? bitrateProfiles.medium;
 
       const applySenderBitrate = (sender?: RTCRtpSender | null) => {
         if (!sender) return;
