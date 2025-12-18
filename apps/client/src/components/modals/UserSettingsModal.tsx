@@ -98,6 +98,10 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
     setMicMuted,
     usePushToTalk,
     setPushToTalk: setPushToTalkEnabledFlag,
+    rnnoiseEnabled,
+    rnnoiseAvailable,
+    rnnoiseError,
+    setRnnoiseEnabled: setRnnoiseEnabledFlag,
     selectedAudioInputId,
     selectedAudioOutputId,
   } = useVoice();
@@ -118,6 +122,7 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
   const [meterError, setMeterError] = useState<string | null>(null);
   const [isTestingOutput, setIsTestingOutput] = useState(false);
   const [outputError, setOutputError] = useState<string | null>(null);
+  const [useRnnoise, setUseRnnoise] = useState(rnnoiseEnabled);
   const [identity, setIdentity] = useState<IdentityFile | null>(() => loadIdentity());
   const [identityName, setIdentityName] = useState(identity?.displayName ?? '');
   const [backupPassphrase, setBackupPassphrase] = useState('');
@@ -158,6 +163,10 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
   useEffect(() => {
     refreshDevices();
   }, [refreshDevices]);
+
+  useEffect(() => {
+    setUseRnnoise(rnnoiseEnabled);
+  }, [rnnoiseEnabled]);
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -332,6 +341,7 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
     await setPushToTalkEnabledFlag(pushToTalkEnabled);
     await setMuted(locallyMuted);
     await setMicMuted(locallyMicMuted);
+    await setRnnoiseEnabledFlag(useRnnoise);
     onClose();
   };
 
@@ -547,31 +557,31 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
                     {/* Audio Steuerung */}
                     <div className="space-y-3">
                       <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Audio-Steuerung</div>
-                      
+
                       {/* Mute Controls */}
                       <div className="flex gap-2">
-                         <button
-                            onClick={() => setLocallyMuted((v) => !v)}
-                            className={`flex-1 px-3 py-3 rounded-xl border text-sm font-medium flex items-center justify-center gap-2 ${locallyMuted ? 'border-red-400 bg-red-500/20 text-red-200' : 'border-white/10 text-gray-300 hover:bg-white/5'}`}
-                          >
-                            <Headphones size={16} />
-                            {locallyMuted ? 'Entstummen' : 'Stumm (Alle)'}
-                          </button>
-                          
-                          <button
-                            onClick={() => setLocallyMicMuted((v) => !v)}
-                            className={`flex-1 px-3 py-3 rounded-xl border text-sm font-medium flex items-center justify-center gap-2 ${locallyMicMuted ? 'border-red-400 bg-red-500/20 text-red-200' : 'border-white/10 text-gray-300 hover:bg-white/5'}`}
-                          >
-                            <Mic size={16} />
-                            {locallyMicMuted ? 'Unmute Mic' : 'Mute Mic'}
-                          </button>
+                        <button
+                          onClick={() => setLocallyMuted((v) => !v)}
+                          className={`flex-1 px-3 py-3 rounded-xl border text-sm font-medium flex items-center justify-center gap-2 ${locallyMuted ? 'border-red-400 bg-red-500/20 text-red-200' : 'border-white/10 text-gray-300 hover:bg-white/5'}`}
+                        >
+                          <Headphones size={16} />
+                          {locallyMuted ? 'Entstummen' : 'Stumm (Alle)'}
+                        </button>
+
+                        <button
+                          onClick={() => setLocallyMicMuted((v) => !v)}
+                          className={`flex-1 px-3 py-3 rounded-xl border text-sm font-medium flex items-center justify-center gap-2 ${locallyMicMuted ? 'border-red-400 bg-red-500/20 text-red-200' : 'border-white/10 text-gray-300 hover:bg-white/5'}`}
+                        >
+                          <Mic size={16} />
+                          {locallyMicMuted ? 'Unmute Mic' : 'Mute Mic'}
+                        </button>
                       </div>
 
                       {/* Output Test */}
                       <div className="p-3 rounded-2xl border border-white/10 bg-white/5 flex items-center justify-between gap-3">
                         <div className="text-xs text-gray-400">
-                           Testton abspielen
-                           {outputError && <span className="block text-red-400">{outputError}</span>}
+                          Testton abspielen
+                          {outputError && <span className="block text-red-400">{outputError}</span>}
                         </div>
                         <button
                           onClick={handleTestOutput}
@@ -581,6 +591,36 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
                           <Play size={14} /> {isTestingOutput ? '...' : 'Test'}
                         </button>
                       </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Audio-Filter</div>
+                    <div className="flex items-start justify-between gap-3 p-4 rounded-2xl bg-white/5 border border-white/10">
+                      <div className="flex-1">
+                        <div className="text-sm font-semibold text-white">RNNoise Rauschunterdrückung</div>
+                        <p className="text-xs text-gray-400">
+                          Verarbeitet dein Mikrofon über den RNNoise-Audioknoten. Bei fehlender Unterstützung wird automatisch der
+                          Original-Stream genutzt.
+                        </p>
+                        {!rnnoiseAvailable && (
+                          <div className="text-[11px] text-amber-300 mt-1">
+                            RNNoise ist in dieser Umgebung nicht verfügbar. Die Aufnahme läuft ohne zusätzliche Filter.
+                          </div>
+                        )}
+                        {rnnoiseError && <div className="text-[11px] text-red-400 mt-1">{rnnoiseError}</div>}
+                      </div>
+                      <button
+                        onClick={() => setUseRnnoise((v) => !v)}
+                        disabled={!rnnoiseAvailable}
+                        className={`px-4 py-2 rounded-xl border ${
+                          useRnnoise
+                            ? 'border-cyan-400 bg-cyan-500/20 text-cyan-200'
+                            : 'border-white/10 text-gray-300 hover:text-white hover:border-white/30'
+                        } ${!rnnoiseAvailable ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        {useRnnoise ? 'Aktiv' : 'Aus'}
+                      </button>
                     </div>
                   </div>
 
