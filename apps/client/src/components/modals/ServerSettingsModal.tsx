@@ -13,7 +13,12 @@ import {
   Hash, 
   Users, 
   Settings,
-  Check
+  Check,
+  Globe,
+  Lock,
+  ListChecks,
+  GripHorizontal,
+  Volume2 as Volume2Icon
 } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { CreateChannelModal } from './CreateChannelModal';
@@ -36,7 +41,7 @@ const PERMISSIONS: { key: string; label: string }[] = [
 interface Channel {
   id: number;
   name: string;
-  type: 'text' | 'voice' | 'web';
+  type: 'text' | 'voice' | 'web' | 'data-transfer' | 'spacer' | 'list';
   category_id?: number | null;
   position?: number;
   default_password?: string | null;
@@ -59,7 +64,7 @@ export const ServerSettingsModal = ({ serverId, onClose }: ServerSettingsProps) 
   const [structure, setStructure] = useState<{ categories: Category[]; uncategorized: Channel[]; fallbackChannelId?: number | null }>({ categories: [], uncategorized: [], fallbackChannelId: null });
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [serverTheme, setServerTheme] = useState<ServerTheme>(defaultServerTheme);
-  const [newChannelType, setNewChannelType] = useState<'text' | 'voice' | 'web'>('text');
+  const [newChannelType, setNewChannelType] = useState<Channel['type']>('text');
   const [selectedChannelForOverrides, setSelectedChannelForOverrides] = useState<number | null>(null);
   const [overrides, setOverrides] = useState<any[]>([]);
   const [selectedOverrideRole, setSelectedOverrideRole] = useState<number | null>(null);
@@ -399,10 +404,10 @@ export const ServerSettingsModal = ({ serverId, onClose }: ServerSettingsProps) 
                       >
                         <option value="">Keiner</option>
                         {[...structure.uncategorized, ...structure.categories.flatMap((c) => c.channels)]
-                          .filter((c) => c.type !== 'voice')
+                          .filter((c) => c.type !== 'voice' && c.type !== 'spacer')
                           .map((c) => (
                             <option key={c.id} value={c.id}>
-                              {c.name} ({c.type === 'web' ? 'Web' : 'Text'})
+                              {c.name} ({c.type === 'web' ? 'Web' : c.type === 'list' ? 'Liste' : c.type === 'data-transfer' ? 'Transfer' : 'Text'})
                             </option>
                           ))}
                       </select>
@@ -495,6 +500,9 @@ export const ServerSettingsModal = ({ serverId, onClose }: ServerSettingsProps) 
                         <option value="text">Text</option>
                         <option value="voice">Voice</option>
                         <option value="web">Web</option>
+                        <option value="list">Liste</option>
+                        <option value="data-transfer">Daten-Transfer</option>
+                        <option value="spacer">Trenner</option>
                       </select>
                       <button
                         onClick={() => setShowCreateModal(true)}
@@ -732,7 +740,19 @@ const ChannelEditor = ({
          <div className="flex flex-col md:flex-row gap-2 md:items-center">
             <div className="flex items-center gap-2 flex-1">
                <span className="text-gray-500">
-                  {channel.type === 'voice' ? <Volume2Icon size={16} /> : <Hash size={16} />}
+                  {channel.type === 'voice' ? (
+                    <Volume2Icon size={16} />
+                  ) : channel.type === 'web' ? (
+                    <Globe size={16} />
+                  ) : channel.type === 'data-transfer' ? (
+                    <Lock size={16} />
+                  ) : channel.type === 'list' ? (
+                    <ListChecks size={16} />
+                  ) : channel.type === 'spacer' ? (
+                    <GripHorizontal size={16} />
+                  ) : (
+                    <Hash size={16} />
+                  )}
                </span>
                <input
                   value={channel.name}
@@ -766,26 +786,31 @@ const ChannelEditor = ({
                   <option value="text">Text</option>
                   <option value="voice">Voice</option>
                   <option value="web">Web</option>
+                  <option value="list">Liste</option>
+                  <option value="data-transfer">Daten-Transfer</option>
+                  <option value="spacer">Trenner</option>
                </select>
             </label>
-            <label className="space-y-1">
+             <label className="space-y-1">
                <span className="text-[10px] uppercase text-gray-500 font-bold">PW (Standard)</span>
                <input
                   value={channel.default_password || ''}
                   onChange={(e) => onChange({...channel, default_password: e.target.value})}
                   className="w-full bg-black/30 text-white text-xs px-2 py-1.5 rounded-lg border border-white/10 outline-none"
-                  placeholder="-"
+                  placeholder={channel.type === 'spacer' ? 'Nicht notwendig' : '-'}
+                  disabled={channel.type === 'spacer'}
                />
-            </label>
-             <label className="space-y-1">
+             </label>
+              <label className="space-y-1">
                <span className="text-[10px] uppercase text-gray-500 font-bold">PW (Join)</span>
                <input
                   value={channel.join_password || ''}
                   onChange={(e) => onChange({...channel, join_password: e.target.value})}
                   className="w-full bg-black/30 text-white text-xs px-2 py-1.5 rounded-lg border border-white/10 outline-none"
-                  placeholder="-"
+                  placeholder={channel.type === 'spacer' ? 'Nicht notwendig' : '-'}
+                  disabled={channel.type === 'spacer'}
                />
-            </label>
+              </label>
          </div>
          
          <div className="flex justify-end pt-1">

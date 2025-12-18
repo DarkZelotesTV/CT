@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, GripVertical } from 'lucide-react';
 import { ChatMessage, ChatMessageContent } from '../../hooks/useChatChannel';
 
 interface ChatMessageListProps {
@@ -10,6 +10,11 @@ interface ChatMessageListProps {
   onLoadMore?: () => void;
   hasMore?: boolean;
   loadingMore?: boolean;
+  isListMode?: boolean;
+  draggingId?: number | null;
+  onDragStart?: (id: number) => void;
+  onDragEnd?: () => void;
+  onReorder?: (fromId: number, toId: number) => void;
 }
 
 export const ChatMessageList = ({
@@ -20,6 +25,11 @@ export const ChatMessageList = ({
   onLoadMore,
   hasMore = false,
   loadingMore = false,
+  isListMode = false,
+  draggingId = null,
+  onDragStart,
+  onDragEnd,
+  onReorder,
 }: ChatMessageListProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const prevHeightRef = useRef(0);
@@ -107,7 +117,24 @@ export const ChatMessageList = ({
             key={msg.id}
             className={`group flex gap-3 sm:gap-4 items-start hover:bg-white/[0.02] px-2 py-0.5 -mx-2 rounded transition-colors ${
               !isSameSender ? 'mt-4' : ''
-            } ${isCompact ? 'flex-wrap' : 'flex-wrap sm:flex-nowrap'}`}
+            } ${isCompact ? 'flex-wrap' : 'flex-wrap sm:flex-nowrap'} ${
+              isListMode && draggingId === msg.id ? 'border border-primary/40 bg-primary/5' : ''
+            }`}
+            draggable={isListMode}
+            onDragStart={() => onDragStart?.(msg.id)}
+            onDragOver={isListMode ? (e) => e.preventDefault() : undefined}
+            onDrop={
+              isListMode
+                ? (e) => {
+                    e.preventDefault();
+                    if (draggingId !== null && draggingId !== msg.id) {
+                      onReorder?.(draggingId, msg.id);
+                    }
+                    onDragEnd?.();
+                  }
+                : undefined
+            }
+            onDragEnd={isListMode ? onDragEnd : undefined}
           >
             {!isSameSender ? (
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex-shrink-0 overflow-hidden cursor-pointer shadow-lg hover:scale-105 transition-transform mt-0.5">
@@ -132,6 +159,12 @@ export const ChatMessageList = ({
                   <span className="text-[10px] text-gray-500">
                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
+                </div>
+              )}
+              {isListMode && (
+                <div className="flex items-center gap-2 text-[10px] uppercase text-gray-500">
+                  <GripVertical size={12} />
+                  Manuell sortierter Eintrag
                 </div>
               )}
               {textContent && (
