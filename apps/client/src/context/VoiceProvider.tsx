@@ -351,6 +351,21 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
     [activeRoom, applyMicrophoneState, isTalking, micMuted, muted, stopRnnoisePipeline, updateTalk, usePushToTalk]
   );
 
+  const applyOutputVolume = useCallback(
+    (room: Room | null, volume: number) => {
+      if (!room) return;
+      const savedVolumes = settings.talk.participantVolumes || {};
+
+      room.remoteParticipants.forEach((participant) => {
+        const baseVolume = savedVolumes[participant.sid] ?? 1;
+        if (typeof participant.setVolume === 'function') {
+          participant.setVolume(baseVolume * volume);
+        }
+      });
+    },
+    [settings.talk.participantVolumes]
+  );
+
   const setOutputVolume = useCallback(
     async (volume: number) => {
       const normalized = Math.max(0, Math.min(2, volume));
@@ -375,21 +390,6 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       });
     },
     []
-  );
-
-  const applyOutputVolume = useCallback(
-    (room: Room | null, volume: number) => {
-      if (!room) return;
-      const savedVolumes = settings.talk.participantVolumes || {};
-
-      room.remoteParticipants.forEach((participant) => {
-        const baseVolume = savedVolumes[participant.sid] ?? 1;
-        if (typeof participant.setVolume === 'function') {
-          participant.setVolume(baseVolume * volume);
-        }
-      });
-    },
-    [settings.talk.participantVolumes]
   );
 
   useEffect(() => {
