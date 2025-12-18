@@ -529,25 +529,32 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
           let systemAudioTrack: MediaStreamTrack | null = null;
 
           if (!selectedTrack || (shouldShareAudio && !systemAudioTrack)) {
-            const videoConstraints: MediaTrackConstraints = {
-              width: preset.resolution.width,
-              height: preset.resolution.height,
-              frameRate: { ideal: preferredFrameRate, max: preferredFrameRate },
-              ...(options?.sourceId
-                ? { chromeMediaSource: 'desktop', chromeMediaSourceId: options.sourceId }
-                : {}),
+            // FIX: Verwende die "mandatory"-Syntax, damit Electron nicht die Webcam nimmt
+            const videoConstraints: any = {
+              mandatory: {
+                chromeMediaSource: 'desktop',
+                chromeMediaSourceId: options?.sourceId,
+                minWidth: preset.resolution.width,
+                maxWidth: preset.resolution.width,
+                minHeight: preset.resolution.height,
+                maxHeight: preset.resolution.height,
+                minFrameRate: preferredFrameRate,
+                maxFrameRate: preferredFrameRate,
+              }
             };
 
-            const audioConstraints: MediaTrackConstraints = shouldShareAudio
+            const audioConstraints: any = shouldShareAudio
               ? {
-                  chromeMediaSource: 'desktop',
-                  ...(options?.sourceId ? { chromeMediaSourceId: options.sourceId } : {}),
+                  mandatory: {
+                    chromeMediaSource: 'desktop',
+                    chromeMediaSourceId: options?.sourceId,
+                  }
                 }
-              : {};
+              : false;
 
             const stream = await navigator.mediaDevices.getUserMedia({
               audio: shouldShareAudio ? audioConstraints : false,
-              video: videoConstraints as any,
+              video: videoConstraints,
             });
             const streamVideoTrack = stream.getVideoTracks()[0];
             selectedTrack = selectedTrack ?? streamVideoTrack;
