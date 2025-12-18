@@ -247,11 +247,10 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
           <span className={`text-sm truncate flex-1 font-medium ${isConnected ? 'text-green-400' : ''}`}>{c.name}</span>
         </div>
 
-        {c.type === 'voice' && (
+        {c.type === 'voice' && hasPresence && (
           <div className={`${isInside ? 'ml-8' : 'ml-6'} mr-2 mb-1 rounded-md border border-white/5 bg-white/5 px-2 py-1.5`}>
             <div className="text-[10px] uppercase tracking-[0.08em] text-gray-500 mb-1 font-bold">Im Kanal</div>
-            {hasPresence ? (
-              <div className="space-y-1">
+            <div className="space-y-1">
                 {presenceList.map((user) => (
                   <div
                     key={user.id}
@@ -281,10 +280,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
                     <span className="text-[10px] uppercase text-gray-400">{user.status === 'online' ? 'Online' : 'Offline'}</span>
                   </div>
                 ))}
-              </div>
-            ) : (
-              <div className="text-[11px] text-gray-500 py-0.5">Niemand im Kanal</div>
-            )}
+            </div>
           </div>
         )}
       </div>
