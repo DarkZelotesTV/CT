@@ -27,6 +27,8 @@ import { defaultServerTheme, deriveServerThemeFromSettings, type ServerTheme } f
 interface ServerSettingsProps {
   serverId: number;
   onClose: () => void;
+  onUpdated?: (payload: { name: string; fallbackChannelId: number | null }) => void;
+  onDeleted?: () => void;
 }
 
 const PERMISSIONS: { key: string; label: string }[] = [
@@ -54,7 +56,7 @@ interface Category {
   channels: Channel[];
 }
 
-export const ServerSettingsModal = ({ serverId, onClose }: ServerSettingsProps) => {
+export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }: ServerSettingsProps) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'channels' | 'roles'>('overview');
   const [members, setMembers] = useState<any[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
@@ -161,8 +163,9 @@ export const ServerSettingsModal = ({ serverId, onClose }: ServerSettingsProps) 
   const handleSaveServer = async () => {
     try {
       await apiFetch(`/api/servers/${serverId}`, { method: 'PUT', body: JSON.stringify({ name: serverName, fallbackChannelId }) });
-      // Optional: Toast notification instead of alert
-      window.location.reload();
+      await loadStructure();
+      onUpdated?.({ name: serverName, fallbackChannelId });
+      onClose();
     } catch (e) {
       alert('Fehler beim Speichern');
     }
@@ -184,7 +187,8 @@ export const ServerSettingsModal = ({ serverId, onClose }: ServerSettingsProps) 
 
     try {
       await apiFetch(`/api/servers/${serverId}`, { method: 'DELETE' });
-      window.location.reload();
+      onDeleted?.();
+      onClose();
     } catch (e) {
       alert('Fehler beim Löschen.');
     }

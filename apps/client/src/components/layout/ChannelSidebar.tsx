@@ -17,9 +17,10 @@ interface ChannelSidebarProps {
   onSelectChannel: (channel: Channel) => void;
   onOpenServerSettings: () => void;
   onResolveFallback?: (channel: Channel | null) => void;
+  refreshKey?: number;
 }
 
-export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onOpenServerSettings, onResolveFallback }: ChannelSidebarProps) => {
+export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onOpenServerSettings, onResolveFallback, refreshKey = 0 }: ChannelSidebarProps) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [uncategorized, setUncategorized] = useState<Channel[]>([]);
   const [serverName, setServerName] = useState('Server');
@@ -95,7 +96,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
         onSelectChannel(fallbackChannel);
       }
     } catch (e) {}
-  }, [activeChannelId, onResolveFallback, onSelectChannel, serverId]);
+  }, [activeChannelId, onResolveFallback, onSelectChannel, refreshKey, serverId]);
   useEffect(() => { fetchData(); }, [fetchData]);
 
   useEffect(() => {
