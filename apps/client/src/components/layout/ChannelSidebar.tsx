@@ -51,6 +51,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
 
   // CONTEXT NUTZEN
   const {
+    activeRoom,
     activeChannelId: voiceChannelId,
     connectionState,
     activeChannelName,
@@ -65,6 +66,9 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
     isPublishingScreen,
   } = useVoice();
   const { channelPresence } = useSocket();
+
+  const participantCount = activeRoom ? activeRoom.participants.size : 0;
+  const shouldShowVoiceParticipants = connectionState === 'connected' && participantCount > 0;
 
   const fetchData = useCallback(async () => {
     if (!serverId) return;
@@ -493,9 +497,11 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
           </div>
         )}
 
-        <div className="relative z-10">
-          <VoiceParticipantsPanel />
-        </div>
+        {shouldShowVoiceParticipants && (
+          <div className="relative z-10">
+            <VoiceParticipantsPanel />
+          </div>
+        )}
 
         <div className="relative z-10">
           <UserBottomBar />

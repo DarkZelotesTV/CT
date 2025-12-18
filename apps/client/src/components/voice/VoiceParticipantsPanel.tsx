@@ -3,7 +3,6 @@ import { MicOff, Monitor, Video, Volume2 } from 'lucide-react';
 import { RoomEvent, Track } from 'livekit-client';
 import { useVoice } from '../../context/voice-state';
 import { useSettings } from '../../context/SettingsContext';
-import { useSocket } from '../../context/SocketContext';
 
 type VoicePerson = {
   sid: string;
@@ -18,16 +17,15 @@ type VoicePerson = {
  * Shows who is currently in the voice call and highlights active speakers.
  */
 export const VoiceParticipantsPanel = () => {
-  const { activeRoom, activeChannelId, connectionState, outputVolume } = useVoice();
+  const { activeRoom, connectionState, outputVolume } = useVoice();
   const { settings, updateTalk } = useSettings();
-  const { channelPresence } = useSocket();
   const [people, setPeople] = useState<VoicePerson[]>([]);
   const [activeSpeakerSids, setActiveSpeakerSids] = useState<Set<string>>(new Set());
 
   const roomAny = activeRoom as any;
 
   const refresh = () => {
-    if (!roomAny) {
+    if (!roomAny || connectionState !== 'connected') {
       setPeople([]);
       return;
     }
@@ -139,29 +137,15 @@ export const VoiceParticipantsPanel = () => {
     });
   }, [activeRoom, applyVolumeToParticipant, connectionState, savedVolumes]);
 
-  const presenceParticipants = useMemo<VoicePerson[]>(() => {
-    if (!activeChannelId) return [];
-    const presenceList = channelPresence[activeChannelId] || [];
-    return presenceList.map((user) => ({
-      sid: String(user.id),
-      label: user.username,
-      isLocal: false,
-      micEnabled: true,
-      cameraEnabled: false,
-      screenShareEnabled: false,
-    }));
-  }, [activeChannelId, channelPresence]);
-
-  const presenceSpeakers = useMemo(() => {
-    if (!activeChannelId) return new Set<string>();
-    const presenceList = channelPresence[activeChannelId] || [];
-    return new Set<string>(presenceList.filter((user) => user.isSpeaking).map((user) => String(user.id)));
-  }, [activeChannelId, channelPresence]);
-
+  const hasRemoteParticipants = useMemo(() => people.some((p) => !p.isLocal), [people]);
   const isConnected = connectionState === 'connected';
-  const displayPeople = isConnected ? people : presenceParticipants;
-  const displaySpeakerSids = isConnected ? activeSpeakerSids : presenceSpeakers;
-  const isReadOnly = !isConnected;
+
+  if (!isConnected || !hasRemoteParticipants) {
+    return null;
+  }
+
+  const displayPeople = people;
+  const displaySpeakerSids = activeSpeakerSids;
 
   const countLabel = useMemo(() => {
     if (!displayPeople.length) return '';
@@ -201,12 +185,12 @@ export const VoiceParticipantsPanel = () => {
               </div>
 
               <div className="flex items-center gap-1">
-                {p.cameraEnabled && !isReadOnly && (
+                {p.cameraEnabled && (
                   <span title="Kamera aktiv">
                     <Video size={14} className="text-cyan-300" />
                   </span>
                 )}
-                {p.screenShareEnabled && !isReadOnly && (
+                {p.screenShareEnabled && (
                   <span title="Screenshare aktiv">
                     <Monitor size={14} className="text-indigo-300" />
                   </span>
@@ -218,7 +202,7 @@ export const VoiceParticipantsPanel = () => {
                 )}
               </div>
 
-              {!p.isLocal && !isReadOnly && (
+              {!p.isLocal && (
                 <div className="flex items-center gap-2 pl-2 min-w-[120px]">
                   <input
                     type="range"
