@@ -14,6 +14,8 @@ import { apiFetch } from '../api/http';
 import { useSettings } from './SettingsContext';
 import { useSocket } from './SocketContext';
 import rnnoiseWorkletUrl from '../audio/rnnoise-worklet.js?url';
+// NEU: Importiere URL für RNNoise-Sync
+import rnnoiseWasmScriptUrl from '@jitsi/rnnoise-wasm/dist/rnnoise-sync.js?url';
 
 const qualityPresets = {
   low: { resolution: { width: 640, height: 360 }, frameRate: 24 },
@@ -29,7 +31,7 @@ const bitrateProfiles = {
 
 export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
   const { settings, updateTalk } = useSettings();
-  const { socket } = useSocket();
+  const { socket, optimisticLeave } = useSocket();
 
   const [activeRoom, setActiveRoom] = useState<Room | null>(null);
   const [activeChannelId, setActiveChannelId] = useState<number | null>(null);
@@ -207,7 +209,13 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         await audioContext.audioWorklet.addModule(rnnoiseWorkletUrl);
         const rawStream = new MediaStream([rawTrack]);
         const source = audioContext.createMediaStreamSource(rawStream);
-        const rnnoiseNode = new AudioWorkletNode(audioContext, 'rnnoise-processor');
+        
+        // NEU: WASM URL über processorOptions übergeben
+        const rnnoiseNode = new AudioWorkletNode(audioContext, 'rnnoise-processor', {
+            processorOptions: {
+                wasmUrl: rnnoiseWasmScriptUrl
+            }
+        });
 
         rnnoiseNode.port.onmessage = (event) => {
           if (event?.data?.type === 'error') {
@@ -800,6 +808,24 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
 
   const disconnect = useCallback(async () => {
     console.warn('[voice] disconnect() called', new Error().stack);
+
+    // FIX START: Optimistic Leave Trigger
+    if (activeChannelId && optimisticLeave) {
+       try {
+         const localUserStr = localStorage.getItem('clover_user');
+         if (localUserStr) {
+           const user = JSON.parse(localUserStr);
+           if (user?.id) {
+             optimisticLeave(activeChannelId, Number(user.id));
+             console.log('[voice] Optimistic Leave performed for user', user.id);
+           }
+         }
+       } catch (e) {
+         console.warn('Could not perform optimistic leave', e);
+       }
+    }
+    // FIX END
+
     manualDisconnectRef.current = true;
     reconnectAttemptsRef.current = 0;
     if (reconnectTimeoutRef.current) {
@@ -834,7 +860,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
     });
     publishedScreenTracksRef.current = [];
     setLocalParticipantId(null);
-  }, [activeRoom, leavePresenceChannel]);
+  }, [activeRoom, leavePresenceChannel, activeChannelId, optimisticLeave]);
 
   const finalizeDisconnection = useCallback(
     (message: string | null) => {
@@ -915,6 +941,9 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
           dynacast: true,
           publishDefaults: { simulcast: true },
         });
+
+        // FIX: Max Listeners Limit erhöhen, um Warnung zu vermeiden
+        room.setMaxListeners(100);
 
         room.on(RoomEvent.Disconnected, (reason) => {
           // CRITICAL FIX: Prevent Reconnect Loop on Duplicate Identity

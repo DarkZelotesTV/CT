@@ -1,17 +1,22 @@
-import rnnoiseModuleUrl from '@jitsi/rnnoise-wasm/dist/rnnoise-sync.js?url';
-
 const FRAME_SIZE = 480;
 
 let modulePromise = null;
 
-const loadRnnoiseModule = () => {
+// Die URL wird nun dynamisch übergeben
+const loadRnnoiseModule = (url) => {
   if (!modulePromise) {
     modulePromise = new Promise((resolve, reject) => {
       try {
-        importScripts(rnnoiseModuleUrl);
+        if (!url) {
+          reject(new Error('RNNoise-WASM URL wurde nicht übergeben.'));
+          return;
+        }
+        // Lädt das Skript global im Worklet-Scope
+        importScripts(url);
+        
         // eslint-disable-next-line no-undef
         if (typeof createRNNWasmModuleSync !== 'function') {
-          reject(new Error('RNNoise-WASM konnte nicht geladen werden.'));
+          reject(new Error('RNNoise-WASM konnte nicht geladen werden (createRNNWasmModuleSync fehlt).'));
           return;
         }
         // eslint-disable-next-line no-undef
@@ -26,7 +31,7 @@ const loadRnnoiseModule = () => {
 };
 
 class RNNoiseProcessor extends AudioWorkletProcessor {
-  constructor() {
+  constructor(options) {
     super();
     this.module = null;
     this.state = null;
@@ -36,7 +41,10 @@ class RNNoiseProcessor extends AudioWorkletProcessor {
     this.outputQueue = [];
     this.ready = false;
 
-    loadRnnoiseModule()
+    // Wir holen die URL aus den processorOptions (vom Main-Thread übergeben)
+    const wasmUrl = options?.processorOptions?.wasmUrl;
+
+    loadRnnoiseModule(wasmUrl)
       .then((module) => {
         this.module = module;
         this.state = module._rnnoise_create();

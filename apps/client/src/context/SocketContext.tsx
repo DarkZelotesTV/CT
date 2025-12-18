@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { getServerPassword, getServerWebSocketUrl } from '../utils/apiConfig';
 import { computeFingerprint, signMessage } from '../auth/identity';
@@ -23,9 +23,16 @@ interface SocketContextType {
   isConnected: boolean;
   channelPresence: Record<number, ChannelPresenceUser[]>;
   presenceSnapshot: Record<number, PresenceUserSnapshot>;
+  optimisticLeave: (channelId: number, userId: number | string) => void;
 }
 
-const SocketContext = createContext<SocketContextType>({ socket: null, isConnected: false, channelPresence: {}, presenceSnapshot: {} });
+const SocketContext = createContext<SocketContextType>({ 
+  socket: null, 
+  isConnected: false, 
+  channelPresence: {}, 
+  presenceSnapshot: {},
+  optimisticLeave: () => {}, 
+});
 
 export const useSocket = () => useContext(SocketContext);
 
@@ -34,6 +41,20 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [channelPresence, setChannelPresence] = useState<Record<number, ChannelPresenceUser[]>>({});
   const [presenceSnapshot, setPresenceSnapshot] = useState<Record<number, PresenceUserSnapshot>>({});
+
+  // FIX: Robuster Vergleich (String vs Number)
+  const optimisticLeave = useCallback((channelId: number, userId: number | string) => {
+    setChannelPresence((prev) => {
+      const existing = prev[channelId];
+      if (!existing) return prev;
+      
+      // Wir konvertieren beides zu String für den Vergleich, um "11" vs 11 Probleme zu vermeiden
+      const targetId = String(userId);
+      const filtered = existing.filter((u) => String(u.id) !== targetId);
+      
+      return { ...prev, [channelId]: filtered };
+    });
+  }, []);
 
   useEffect(() => {
     const rawIdentity = localStorage.getItem('ct.identity.v1');
@@ -124,10 +145,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       teardown.then((cleanup) => cleanup && cleanup()).catch(() => {});
     };
-  }, []);
+  }, [optimisticLeave]);
 
   return (
-    <SocketContext.Provider value={{ socket, isConnected, channelPresence, presenceSnapshot }}>
+    <SocketContext.Provider value={{ socket, isConnected, channelPresence, presenceSnapshot, optimisticLeave }}>
       {children}
     </SocketContext.Provider>
   );
