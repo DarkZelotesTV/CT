@@ -76,6 +76,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
   const manualDisconnectRef = useRef(false);
   const lastChannelRef = useRef<{ id: number; name: string } | null>(null);
   const lastDisconnectReasonRef = useRef<string | null>(null);
+  const joinedPresenceChannelRef = useRef<number | null>(null);
   const desiredMediaStateRef = useRef({
     muted: settings.talk.muted,
     micMuted: settings.talk.micMuted,
@@ -90,6 +91,31 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       setRnnoiseError('RNNoise erfordert AudioWorklet-Unterstützung.');
     }
   }, []);
+
+  const leavePresenceChannel = useCallback(
+    (channelId?: number | null) => {
+      if (!socket) return;
+      const target = channelId ?? joinedPresenceChannelRef.current;
+      if (!target) return;
+      socket.emit('leave_channel', target);
+      if (joinedPresenceChannelRef.current === target) {
+        joinedPresenceChannelRef.current = null;
+      }
+    },
+    [socket]
+  );
+
+  const joinPresenceChannel = useCallback(
+    (channelId: number) => {
+      if (!socket) return;
+      if (joinedPresenceChannelRef.current && joinedPresenceChannelRef.current !== channelId) {
+        socket.emit('leave_channel', joinedPresenceChannelRef.current);
+      }
+      socket.emit('join_channel', channelId);
+      joinedPresenceChannelRef.current = channelId;
+    },
+    [socket]
+  );
 
   const stopRnnoisePipeline = useCallback(
     async (room?: Room | null) => {
@@ -788,6 +814,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
     setActiveRoom(null);
     setActiveChannelId(null);
     setActiveChannelName(null);
+    leavePresenceChannel();
     setToken(null);
     setConnectionState('disconnected');
     setIsTalking(false);
@@ -807,7 +834,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
     });
     publishedScreenTracksRef.current = [];
     setLocalParticipantId(null);
-  }, [activeRoom]);
+  }, [activeRoom, leavePresenceChannel]);
 
   const finalizeDisconnection = useCallback(
     (message: string | null) => {
@@ -815,12 +842,13 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       setActiveRoom(null);
       setActiveChannelId(null);
       setActiveChannelName(null);
+      leavePresenceChannel();
       setToken(null);
       setError(message ?? null);
       syncLocalMediaState(null);
       isConnecting.current = false;
     },
-    [syncLocalMediaState]
+    [leavePresenceChannel, syncLocalMediaState]
   );
 
   const restoreMediaState = useCallback(
@@ -863,6 +891,10 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         await activeRoom.disconnect();
       }
 
+      if (activeChannelId) {
+        leavePresenceChannel(activeChannelId);
+      }
+
       isConnecting.current = true;
       setConnectionState(options?.isReconnect ? 'reconnecting' : 'connecting');
       setError(null);
@@ -874,6 +906,8 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         const res = await apiFetch<{ token: string }>(`/api/livekit/token?room=${roomName}`);
         const newToken = res.token;
         setToken(newToken);
+
+        joinPresenceChannel(channelId);
 
         // Room Instanz mit den konfigurierten ICE-Servern erstellen
         const room = new Room({
@@ -898,12 +932,16 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
           console.warn('[voice] Room disconnected', disconnectReason, reason);
           isConnecting.current = false;
 
+          const channel = lastChannelRef.current;
+          if (channel) {
+            leavePresenceChannel(channel.id);
+          }
+
           if (manualDisconnectRef.current) {
             finalizeDisconnection(null);
             return;
           }
 
-          const channel = lastChannelRef.current;
           if (!channel) {
             finalizeDisconnection(disconnectReason);
             return;
@@ -1008,6 +1046,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         setIsPublishingCamera(false);
         setIsPublishingScreen(false);
         isConnecting.current = false;
+        leavePresenceChannel(channelId);
         if (options?.isReconnect) {
           lastDisconnectReasonRef.current = err?.message || null;
           throw err;
@@ -1025,6 +1064,8 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       settings.devices.audioOutputId,
       settings.devices.videoInputId,
       restoreMediaState,
+      joinPresenceChannel,
+      leavePresenceChannel,
     ]
   );
 
