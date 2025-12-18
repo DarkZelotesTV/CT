@@ -10,7 +10,8 @@ import { BottomChatBar } from './BottomChatBar';
 import { MemberSidebar } from './MemberSidebar';
 import { ChannelSidebar } from './ChannelSidebar';
 
-import { DashboardSidebar } from '../dashboard/DashboardSidebar';
+// DashboardSidebar Import wurde HIER ENTFERNT, da wir die Leiste gelöscht haben
+
 import { WebChannelView } from '../server/WebChannelView';
 import { HomeOnboardingStage } from '../dashboard/HomeOnboardingStage';
 import { ChatChannelView } from '../server/ChatChannelView';
@@ -164,7 +165,6 @@ export const MainLayout = () => {
   }, [activeChannel, connectionState, fallbackChannel]);
 
   useEffect(() => {
-    // One-time tutorial after the first successful start.
     if (!localStorage.getItem('ct.onboarding.v1.done')) {
       setShowOnboarding(true);
     }
@@ -214,7 +214,6 @@ export const MainLayout = () => {
     setShowServerSettings(false);
   };
 
-  // FIX: Stabile Referenz für Channel Selection, damit ChannelSidebar nicht rerendert/fetchet
   const handleChannelSelect = useCallback((channel: Channel) => {
     setActiveChannel(channel);
     if (isNarrow) {
@@ -222,10 +221,8 @@ export const MainLayout = () => {
     }
   }, [isNarrow]);
 
-  // FIX: Stabile Referenz und Check auf ID-Gleichheit, um Endlos-Loop zu verhindern
   const handleResolveFallback = useCallback((channel: Channel | null) => {
     setFallbackChannel((prev) => {
-      // Wenn die IDs gleich sind, nicht aktualisieren -> verhindert Re-Render Loop
       if (prev?.id === channel?.id) return prev;
       return channel;
     });
@@ -278,7 +275,6 @@ export const MainLayout = () => {
     };
   }, [isDraggingLeft, isDraggingRight]);
 
-  // Helper: Rendert den Inhalt der Main Stage
   const renderContent = () => {
     if (!selectedServerId) {
       return (
@@ -324,7 +320,6 @@ export const MainLayout = () => {
     );
   };
 
-  // Dein komplettes UI bleibt gleich – nur ohne LiveKitRoom wrapper
   const ui = (
     <div ref={layoutRef} className="flex h-screen w-screen overflow-hidden relative bg-[#050507] text-gray-200 font-sans">
       {showOnboarding && <OnboardingModal onClose={() => setShowOnboarding(false)} />}
@@ -358,40 +353,39 @@ export const MainLayout = () => {
         </div>
       )}
 
-      {/* 2. SIDEBAR */}
-      <div
-        ref={leftSidebarRef}
-        className={classNames(
-          'transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] relative z-40 h-full py-3 pl-3',
-          showLeftSidebar ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10 pl-0',
-          isNarrow && 'fixed inset-y-3 left-3 right-3 z-50'
-        )}
-        style={{ width: showLeftSidebar && !isNarrow ? leftSidebarWidth : isNarrow && showLeftSidebar ? 'auto' : 0 }}
-      >
-        <div className="w-full h-full bg-[#0e0e11]/60 backdrop-blur-xl rounded-2xl border border-white/5 overflow-hidden">
-          {selectedServerId ? (
+      {/* 2. SIDEBAR - WIRD JETZT NUR ANGEZEIGT, WENN EIN SERVER AUSGEWÄHLT IST */}
+      {selectedServerId && (
+        <div
+          ref={leftSidebarRef}
+          className={classNames(
+            'transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] relative z-40 h-full py-3 pl-3',
+            showLeftSidebar ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10 pl-0',
+            isNarrow && 'fixed inset-y-3 left-3 right-3 z-50'
+          )}
+          style={{ width: showLeftSidebar && !isNarrow ? leftSidebarWidth : isNarrow && showLeftSidebar ? 'auto' : 0 }}
+        >
+          <div className="w-full h-full bg-[#0e0e11]/60 backdrop-blur-xl rounded-2xl border border-white/5 overflow-hidden">
             <ChannelSidebar
               serverId={selectedServerId}
               activeChannelId={activeChannel?.id || null}
-              onSelectChannel={handleChannelSelect} // Verwendet jetzt die stabile Referenz
+              onSelectChannel={handleChannelSelect}
               onOpenServerSettings={() => setShowServerSettings(true)}
-              onResolveFallback={handleResolveFallback} // Verwendet jetzt die stabile Referenz
+              onResolveFallback={handleResolveFallback}
             />
-          ) : (
-            <DashboardSidebar />
+          </div>
+          {showLeftSidebar && !isNarrow && (
+            <div
+              className="absolute top-0 right-0 h-full w-2 cursor-ew-resize bg-transparent hover:bg-white/5"
+              onMouseDown={startDragLeft}
+            />
           )}
         </div>
-        {showLeftSidebar && !isNarrow && (
-          <div
-            className="absolute top-0 right-0 h-full w-2 cursor-ew-resize bg-transparent hover:bg-white/5"
-            onMouseDown={startDragLeft}
-          />
-        )}
-      </div>
+      )}
 
       {/* 3. MAIN STAGE */}
       <div className="flex-1 flex flex-col min-w-0 relative h-full py-3 px-3 overflow-hidden">
-        {!isNarrow && (
+        {/* Chevron nur anzeigen, wenn auch eine Sidebar existiert (also wenn ein Server ausgewählt ist) */}
+        {!isNarrow && selectedServerId && (
           <button
             onClick={() => setShowLeftSidebar(!showLeftSidebar)}
             className="absolute left-3 top-1/2 -translate-y-1/2 z-50 w-6 h-12 bg-black/50 hover:bg-indigo-600 rounded-r-xl backdrop-blur-md flex items-center justify-center text-white/50 hover:text-white transition-all cursor-pointer shadow-lg"
@@ -408,12 +402,15 @@ export const MainLayout = () => {
             >
               {showServerRail ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
             </button>
-            <button
-              onClick={() => setShowLeftSidebar(true)}
-              className="px-3 py-2 rounded-full bg-black/40 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 backdrop-blur-md shadow-lg"
-            >
-              Channels
-            </button>
+            {/* "Channels" Button nur anzeigen, wenn Server ausgewählt ist */}
+            {selectedServerId && (
+              <button
+                onClick={() => setShowLeftSidebar(true)}
+                className="px-3 py-2 rounded-full bg-black/40 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 backdrop-blur-md shadow-lg"
+              >
+                Channels
+              </button>
+            )}
           </div>
         )}
 
@@ -487,14 +484,12 @@ export const MainLayout = () => {
         </div>
       )}
 
-      {/* 5. AUDIO RENDERER (Unsichtbar, aber spielt Sound ab) */}
+      {/* 5. AUDIO RENDERER */}
       {activeRoom && !muted && <RoomAudioRenderer />}
     </div>
   );
 
-  // Wenn kein Room existiert: normal rendern
   if (!activeRoom) return ui;
 
-  // Wenn Room existiert: RoomContext bereitstellen (ohne LiveKitRoom!)
   return <RoomContext.Provider value={activeRoom}>{ui}</RoomContext.Provider>;
 };
