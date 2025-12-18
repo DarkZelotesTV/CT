@@ -27,6 +27,7 @@ export type TalkSettings = {
   screenBitrateProfile?: 'low' | 'medium' | 'high';
   participantVolumes?: Record<string, number>;
   rnnoiseEnabled?: boolean;
+  vadSensitivity?: number; // Hinzugefügt
 };
 
 export type SettingsState = {
@@ -63,6 +64,7 @@ const defaultSettings: SettingsState = {
     screenBitrateProfile: 'medium',
     participantVolumes: {},
     rnnoiseEnabled: false,
+    vadSensitivity: 50, // Standardwert
   },
 };
 

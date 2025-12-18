@@ -329,7 +329,8 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
         className="absolute inset-0"
         style={{ pointerEvents: showCreateModal ? 'auto' : 'none' }}
       />
-      <div className="bg-[#0f1014] w-full max-w-4xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+      {/* Desktop Responsive Container: Wächst mit, maximale Breite begrenzt, fixe Höhe für konsistentes Layout */}
+      <div className="bg-[#0f1014] w-11/12 max-w-5xl h-[85vh] rounded-3xl border border-white/10 shadow-2xl overflow-hidden flex flex-col">
         
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 shrink-0">
@@ -348,15 +349,16 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
         </div>
 
         <div className="flex-1 overflow-hidden">
-          <div className="grid md:grid-cols-[200px,1fr] gap-0 h-full">
+          {/* Responsive Grid: Sidebar links auf Desktop, oben scrollbar auf Mobile */}
+          <div className="grid grid-cols-1 md:grid-cols-[240px,1fr] gap-0 h-full">
             
             {/* Sidebar Navigation */}
-            <nav className="bg-white/5 border-r border-white/10 p-3 flex md:flex-col gap-2 overflow-y-auto">
+            <nav className="bg-white/5 border-b md:border-b-0 md:border-r border-white/10 p-3 flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-y-auto shrink-0 md:shrink">
               {tabs.map((tab) => (
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key as any)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition border w-full text-left ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition border w-auto md:w-full whitespace-nowrap text-left flex-shrink-0 ${
                     activeTab === tab.key
                       ? 'bg-cyan-500/20 border-cyan-400 text-cyan-100'
                       : 'border-transparent text-gray-300 hover:text-white hover:bg-white/10'
@@ -367,19 +369,20 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
                 </button>
               ))}
               
-              <div className="mt-auto pt-4 border-t border-white/10">
+              <div className="md:mt-auto pt-0 md:pt-4 border-l md:border-l-0 md:border-t border-white/10 ml-2 md:ml-0 pl-2 md:pl-0 flex items-center md:block">
                 <button
                   onClick={handleDeleteServer}
-                  className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition border border-transparent w-full text-left text-red-400 hover:bg-red-500/10 hover:border-red-500/30"
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition border border-transparent w-auto md:w-full whitespace-nowrap text-left text-red-400 hover:bg-red-500/10 hover:border-red-500/30"
                 >
                   <Trash2 size={16} />
-                  <span>Server löschen</span>
+                  <span className="hidden md:inline">Server löschen</span>
+                  <span className="md:hidden">Löschen</span>
                 </button>
               </div>
             </nav>
 
-            {/* Main Content */}
-            <div className="p-6 overflow-y-auto custom-scrollbar">
+            {/* Main Content Area */}
+            <div className="p-6 overflow-y-auto custom-scrollbar h-full">
               
               {activeTab === 'overview' && (
                 <div className="space-y-6 animate-in fade-in zoom-in-95 duration-200">

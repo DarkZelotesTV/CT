@@ -1,7 +1,7 @@
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
-import { ChevronDown, ChevronLeft, ChevronRight, Users } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Users, Menu, X } from 'lucide-react';
 import { RoomAudioRenderer, RoomContext } from '@livekit/components-react';
 import '@livekit/components-styles';
 
@@ -9,13 +9,13 @@ import { ServerRail } from './ServerRail';
 import { MemberSidebar } from './MemberSidebar';
 import { ChannelSidebar } from './ChannelSidebar';
 
-// DashboardSidebar Import wurde HIER ENTFERNT, da wir die Leiste gelöscht haben
-
+// Web & Voice Views
 import { WebChannelView } from '../server/WebChannelView';
 import { HomeOnboardingStage } from '../dashboard/HomeOnboardingStage';
 import { VoiceChannelView } from '../voice/VoiceChannelView';
 import { VoicePreJoin } from '../voice/VoicePreJoin';
 
+// Modals
 import { OnboardingModal } from '../modals/OnboardingModal';
 import { ServerSettingsModal } from '../modals/ServerSettingsModal';
 import { CreateServerModal } from '../modals/CreateServerModal';
@@ -28,6 +28,9 @@ const defaultMemberWidth = 256;
 const minSidebarWidth = 200;
 const maxSidebarWidth = 420;
 
+// Breakpoint für Mobile/Desktop Umschaltung (entspricht Tailwind 'lg')
+const MOBILE_BREAKPOINT = 1024; 
+
 interface Channel {
   id: number;
   name: string;
@@ -35,32 +38,40 @@ interface Channel {
 }
 
 export const MainLayout = () => {
-  const [showServerRail, setShowServerRail] = useState(() => (typeof window === 'undefined' ? true : window.innerWidth >= 1024));
-  const [showLeftSidebar, setShowLeftSidebar] = useState(true);
+  // UI State
+  const [showMobileNav, setShowMobileNav] = useState(false); // Neu: Steuert das Menü auf Handy
   const [showRightSidebar, setShowRightSidebar] = useState(true);
   const [containerWidth, setContainerWidth] = useState(() => (typeof window === 'undefined' ? 0 : window.innerWidth));
+  
+  // Resizable Widths (Desktop)
   const [leftSidebarWidth, setLeftSidebarWidth] = useState(defaultChannelWidth);
   const [rightSidebarWidth, setRightSidebarWidth] = useState(defaultMemberWidth);
   const [isDraggingLeft, setIsDraggingLeft] = useState(false);
   const [isDraggingRight, setIsDraggingRight] = useState(false);
-  const [isNarrow, setIsNarrow] = useState(() => (typeof window === 'undefined' ? false : window.innerWidth < 1024));
-  const [showMemberSheet, setShowMemberSheet] = useState(false);
+  
+  // Logic Refs
   const leftSidebarRef = useRef<HTMLDivElement>(null);
   const rightSidebarRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef<HTMLDivElement>(null);
   const dragState = useRef<{ startX: number; startWidth: number }>({ startX: 0, startWidth: 0 });
+  
+  // App Data State
   const [selectedServerId, setSelectedServerId] = useState<number | null>(null);
   const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
   const [fallbackChannel, setFallbackChannel] = useState<Channel | null>(null);
+  
+  // Modals & Popups
+  const [showMemberSheet, setShowMemberSheet] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showServerSettings, setShowServerSettings] = useState(false);
   const [showCreateServer, setShowCreateServer] = useState(false);
   const [showJoinServer, setShowJoinServer] = useState(false);
+  
   const [lastNonVoiceChannel, setLastNonVoiceChannel] = useState<Channel | null>(null);
   const [pendingVoiceChannelId, setPendingVoiceChannelId] = useState<number | null>(null);
   const [serverRefreshKey, setServerRefreshKey] = useState(0);
 
-  // Voice Context holen
+  // Voice Context
   const {
     activeRoom,
     activeChannelId: connectedVoiceChannelId,
@@ -70,6 +81,7 @@ export const MainLayout = () => {
     connectToChannel,
   } = useVoice();
 
+  // --- Width Calculation Logic ---
   const computedMaxSidebarWidth = useMemo(() => {
     if (!containerWidth) return maxSidebarWidth;
     const dynamicMax = Math.floor(containerWidth * 0.4);
@@ -81,19 +93,14 @@ export const MainLayout = () => {
     [computedMaxSidebarWidth]
   );
 
+  // --- LocalStorage für Sidebar Breite ---
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const storedLeft = localStorage.getItem('ct.layout.left_width');
-    if (storedLeft) {
-      const parsed = Number(storedLeft);
-      setLeftSidebarWidth(Number.isFinite(parsed) ? clampSidebarWidth(parsed) : defaultChannelWidth);
-    }
-
+    if (storedLeft) setLeftSidebarWidth(clampSidebarWidth(Number(storedLeft)));
+    
     const storedRight = localStorage.getItem('ct.layout.right_width');
-    if (storedRight) {
-      const parsed = Number(storedRight);
-      setRightSidebarWidth(Number.isFinite(parsed) ? clampSidebarWidth(parsed) : defaultMemberWidth);
-    }
+    if (storedRight) setRightSidebarWidth(clampSidebarWidth(Number(storedRight)));
   }, [clampSidebarWidth]);
 
   useEffect(() => {
@@ -104,55 +111,27 @@ export const MainLayout = () => {
     localStorage.setItem('ct.layout.right_width', String(clampSidebarWidth(rightSidebarWidth)));
   }, [clampSidebarWidth, rightSidebarWidth]);
 
-  useEffect(() => {
-    setLeftSidebarWidth((width) => clampSidebarWidth(width));
-    setRightSidebarWidth((width) => clampSidebarWidth(width));
-  }, [clampSidebarWidth]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
-    const handleResize = () => {
-      setIsNarrow(window.innerWidth < 1024);
-      setContainerWidth(window.innerWidth);
-    };
-
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
+  // --- Resize Observer ---
   useEffect(() => {
     if (!layoutRef.current || typeof ResizeObserver === 'undefined') return undefined;
-
     const observer = new ResizeObserver((entries) => {
       if (!entries.length) return;
       setContainerWidth(entries[0].contentRect.width);
     });
-
     observer.observe(layoutRef.current);
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    if (isNarrow) {
-      setShowLeftSidebar(false);
-      setShowRightSidebar(false);
-      setShowServerRail(false);
-    } else {
-      setShowServerRail(true);
-    }
-  }, [isNarrow]);
-
-  useEffect(() => {
-    if (!isNarrow) {
-      setShowMemberSheet(false);
-    }
-  }, [isNarrow]);
-
+  // --- Auto-Close Mobile Nav on Selection ---
   useEffect(() => {
     setShowMemberSheet(false);
+    // Wenn wir auf dem Handy sind und einen Kanal wählen, Menü schließen
+    if (window.innerWidth < MOBILE_BREAKPOINT) {
+        setShowMobileNav(false);
+    }
   }, [activeChannel?.id]);
 
+  // --- Fallback Channel Logic ---
   useEffect(() => {
     if (!activeChannel && fallbackChannel) {
       setActiveChannel(fallbackChannel);
@@ -163,17 +142,13 @@ export const MainLayout = () => {
     }
   }, [activeChannel, fallbackChannel]);
 
+  // --- Voice Connection Handling ---
   const previousConnectionState = useRef<VoiceContextType['connectionState'] | null>(null);
-
   useEffect(() => {
     const prev = previousConnectionState.current;
-
     if (prev && prev !== 'disconnected' && connectionState === 'disconnected' && activeChannel?.type === 'voice') {
-      if (fallbackChannel) {
-        setActiveChannel(fallbackChannel);
-      }
+      if (fallbackChannel) setActiveChannel(fallbackChannel);
     }
-
     previousConnectionState.current = connectionState;
   }, [activeChannel, connectionState, fallbackChannel]);
 
@@ -188,6 +163,7 @@ export const MainLayout = () => {
     }
   }, [connectedVoiceChannelId, connectionState, pendingVoiceChannelId]);
 
+  // --- Onboarding Check ---
   useEffect(() => {
     if (!localStorage.getItem('ct.onboarding.v1.done')) {
       setShowOnboarding(true);
@@ -202,6 +178,7 @@ export const MainLayout = () => {
     }
   }, []);
 
+  // --- Handlers ---
   const handleServerSelect = useCallback((id: number | null) => {
     setSelectedServerId(id);
     setActiveChannel(null);
@@ -217,24 +194,17 @@ export const MainLayout = () => {
       setPendingVoiceChannelId(null);
       setLastNonVoiceChannel(channel);
     }
-    if (isNarrow) {
-      setShowLeftSidebar(false);
-    }
-  }, [isNarrow]);
-
-  const handleResolveFallback = useCallback((channel: Channel | null) => {
-    setFallbackChannel((prev) => {
-      if (prev?.id === channel?.id) return prev;
-      return channel;
-    });
+    // Auf Mobile Menü schließen nach Auswahl
+    setShowMobileNav(false); 
   }, []);
 
-  const handleVoiceJoin = useCallback(
-    async (channel: Channel) => {
+  const handleResolveFallback = useCallback((channel: Channel | null) => {
+    setFallbackChannel((prev) => (prev?.id === channel?.id ? prev : channel));
+  }, []);
+
+  const handleVoiceJoin = useCallback(async (channel: Channel) => {
       await connectToChannel(channel.id, channel.name);
-    },
-    [connectToChannel]
-  );
+    }, [connectToChannel]);
 
   const handleVoiceCancel = useCallback(() => {
     setPendingVoiceChannelId(null);
@@ -263,8 +233,7 @@ export const MainLayout = () => {
       setServerRefreshKey((value) => value + 1);
       setFallbackChannel((prev) => (prev && prev.id === fallbackChannelId ? prev : null));
       setShowServerSettings(false);
-    },
-    [announceServerChange]
+    }, [announceServerChange]
   );
 
   const handleServerDeleted = useCallback(() => {
@@ -272,6 +241,7 @@ export const MainLayout = () => {
     handleServerSelect(null);
   }, [announceServerChange, handleServerSelect]);
 
+  // --- Dragging Handlers ---
   const startDragLeft = (event: React.MouseEvent) => {
     setIsDraggingLeft(true);
     dragState.current = { startX: event.clientX, startWidth: leftSidebarWidth };
@@ -286,35 +256,30 @@ export const MainLayout = () => {
     const handleMouseMove = (event: MouseEvent) => {
       if (isDraggingLeft) {
         const delta = event.clientX - dragState.current.startX;
-        const nextWidth = clampSidebarWidth(dragState.current.startWidth + delta);
-        setLeftSidebarWidth(nextWidth);
+        setLeftSidebarWidth(clampSidebarWidth(dragState.current.startWidth + delta));
       }
-
       if (isDraggingRight) {
         const delta = event.clientX - dragState.current.startX;
-        const nextWidth = clampSidebarWidth(dragState.current.startWidth - delta);
-        setRightSidebarWidth(nextWidth);
+        setRightSidebarWidth(clampSidebarWidth(dragState.current.startWidth - delta));
       }
     };
-
     const stopDragging = () => {
       setIsDraggingLeft(false);
       setIsDraggingRight(false);
     };
-
     if (isDraggingLeft || isDraggingRight) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', stopDragging);
       document.body.classList.add('select-none');
     }
-
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', stopDragging);
       document.body.classList.remove('select-none');
     };
-  }, [isDraggingLeft, isDraggingRight]);
+  }, [isDraggingLeft, isDraggingRight, clampSidebarWidth]);
 
+  // --- Render Content Logic ---
   const renderContent = () => {
     if (!selectedServerId) {
       return (
@@ -326,39 +291,28 @@ export const MainLayout = () => {
         </div>
       );
     }
-
     if (activeChannel?.type === 'web') {
       return <WebChannelView channelId={activeChannel.id} channelName={activeChannel.name} />;
     }
-
     if (activeChannel?.type === 'text') {
       return (
         <div className="flex-1 flex items-center justify-center relative h-full">
-          <div
-            className="absolute inset-0 opacity-[0.03]"
-            style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }}
-          />
+          <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
           <div className="text-center p-10 bg-white/[0.02] rounded-3xl border border-white/5 backdrop-blur-sm">
             <h2 className="text-xl font-bold text-white mb-2">Textkanal ausgewählt</h2>
-            <p className="text-gray-500 text-sm max-w-md">
-              Textkanäle werden derzeit nicht unterstützt. Bitte wähle einen Sprach- oder Web-Kanal aus, um fortzufahren.
-            </p>
+            <p className="text-gray-500 text-sm max-w-md">Textkanäle werden derzeit nicht unterstützt.</p>
           </div>
         </div>
       );
     }
-
     if (activeChannel?.type === 'voice') {
       const isConnectedToTarget = connectedVoiceChannelId === activeChannel.id && connectionState === 'connected';
-      const isJoiningTarget = pendingVoiceChannelId === activeChannel.id &&
-        (connectionState === 'connecting' || connectionState === 'reconnecting');
-      const connectedElsewhere =
-        connectedVoiceChannelId !== null && connectedVoiceChannelId !== activeChannel.id && connectionState !== 'disconnected';
+      const isJoiningTarget = pendingVoiceChannelId === activeChannel.id && (connectionState === 'connecting' || connectionState === 'reconnecting');
+      const connectedElsewhere = connectedVoiceChannelId !== null && connectedVoiceChannelId !== activeChannel.id && connectionState !== 'disconnected';
 
       if (isConnectedToTarget) {
         return <VoiceChannelView channelName={activeChannel.name} />;
       }
-
       return (
         <VoicePreJoin
           channel={activeChannel}
@@ -370,13 +324,9 @@ export const MainLayout = () => {
         />
       );
     }
-
     return (
       <div className="flex-1 flex items-center justify-center relative h-full">
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }}
-        />
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
         <div className="text-center p-12 bg-white/[0.02] rounded-3xl border border-white/5 backdrop-blur-sm">
           <h2 className="text-2xl font-bold text-white mb-2">Stage Area</h2>
           <p className="text-gray-500 text-sm">Wähle einen Kanal links.</p>
@@ -386,113 +336,116 @@ export const MainLayout = () => {
   };
 
   const ui = (
-    <div ref={layoutRef} className="flex h-screen w-screen overflow-auto relative bg-[#050507] text-gray-200 font-sans">
+    <div ref={layoutRef} className="flex h-screen w-screen overflow-hidden relative bg-[#050507] text-gray-200 font-sans">
+      
+      {/* --- GLOBAL MODALS --- */}
       {showOnboarding && <OnboardingModal onClose={() => setShowOnboarding(false)} />}
-      {showCreateServer && (
-        <CreateServerModal
-          onClose={() => setShowCreateServer(false)}
-          onCreated={() => {
-            announceServerChange();
-            setShowCreateServer(false);
-          }}
-        />
-      )}
-      {showJoinServer && (
-        <JoinServerModal
-          onClose={() => setShowJoinServer(false)}
-          onJoined={() => {
-            announceServerChange();
-            setShowJoinServer(false);
-          }}
-        />
-      )}
+      {showCreateServer && <CreateServerModal onClose={() => setShowCreateServer(false)} onCreated={() => { announceServerChange(); setShowCreateServer(false); }} />}
+      {showJoinServer && <JoinServerModal onClose={() => setShowJoinServer(false)} onJoined={() => { announceServerChange(); setShowJoinServer(false); }} />}
       {selectedServerId && showServerSettings && (
-        <ServerSettingsModal
-          serverId={selectedServerId}
-          onClose={() => setShowServerSettings(false)}
-          onUpdated={handleServerUpdated}
-          onDeleted={handleServerDeleted}
-        />
-      )}
-      {/* 1. SERVER RAIL */}
-      {showServerRail && (
-        <div className="w-[80px] flex-shrink-0 z-50 flex flex-col items-center py-3 h-full transition-transform duration-500">
-          <div className="w-full h-full bg-[#0a0a0c]/80 backdrop-blur-xl rounded-2xl border border-white/5 ml-3 shadow-2xl">
-            <ServerRail selectedServerId={selectedServerId} onSelectServer={handleServerSelect} />
-          </div>
-        </div>
+        <ServerSettingsModal serverId={selectedServerId} onClose={() => setShowServerSettings(false)} onUpdated={handleServerUpdated} onDeleted={handleServerDeleted} />
       )}
 
-      {/* 2. SIDEBAR - WIRD JETZT NUR ANGEZEIGT, WENN EIN SERVER AUSGEWÄHLT IST */}
-      {selectedServerId && (
-        <div
-          ref={leftSidebarRef}
-          className={classNames(
-            'transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] relative z-40 h-full py-3 pl-3',
-            showLeftSidebar ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10 pl-0',
-            isNarrow && 'fixed inset-y-3 left-3 right-3 z-50'
-          )}
-          style={{ width: showLeftSidebar && !isNarrow ? leftSidebarWidth : isNarrow && showLeftSidebar ? 'auto' : 0 }}
-        >
-          <div className="w-full h-full bg-[#0e0e11]/60 backdrop-blur-xl rounded-2xl border border-white/5 overflow-hidden">
-            <ChannelSidebar
-              serverId={selectedServerId}
-              activeChannelId={activeChannel?.id || null}
-              onSelectChannel={handleChannelSelect}
-              onOpenServerSettings={() => setShowServerSettings(true)}
-              onResolveFallback={handleResolveFallback}
-              refreshKey={serverRefreshKey}
-            />
-          </div>
-          {showLeftSidebar && !isNarrow && (
-            <div
-              className="absolute top-0 right-0 h-full w-2 cursor-ew-resize bg-transparent hover:bg-white/5"
-              onMouseDown={startDragLeft}
-            />
-          )}
-        </div>
-      )}
-
-      {/* 3. MAIN STAGE */}
-      <div className="flex-1 flex flex-col min-w-0 relative h-full py-3 px-3 overflow-auto">
-        {/* Chevron nur anzeigen, wenn auch eine Sidebar existiert (also wenn ein Server ausgewählt ist) */}
-        {!isNarrow && selectedServerId && (
-          <button
-            onClick={() => setShowLeftSidebar(!showLeftSidebar)}
-            className="absolute left-3 top-1/2 -translate-y-1/2 z-50 w-6 h-12 bg-black/50 hover:bg-indigo-600 rounded-r-xl backdrop-blur-md flex items-center justify-center text-white/50 hover:text-white transition-all cursor-pointer shadow-lg"
-          >
-            {showLeftSidebar ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
-          </button>
+      {/* === RESPONSIVE NAVIGATION DRAWER === 
+         Desktop First: Standard ist Flex, auf Mobile (max-lg) wird es ein Overlay 
+      */}
+      
+      {/* Overlay Backdrop für Mobile */}
+      <div 
+        className={classNames(
+          "fixed inset-0 bg-black/80 z-40 lg:hidden transition-opacity duration-300",
+          showMobileNav ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         )}
+        onClick={() => setShowMobileNav(false)}
+      />
 
-        {isNarrow && (
-          <div className="absolute top-4 left-4 z-40 flex gap-2">
-            <button
-              onClick={() => setShowServerRail((value) => !value)}
-              className="px-3 py-2 rounded-full bg-black/40 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 backdrop-blur-md shadow-lg"
+      {/* Navigation Container (Server Rail + Channel Sidebar) */}
+      <div className={classNames(
+        "flex h-full z-50 transition-transform duration-300 ease-in-out",
+        // DESKTOP: Relative Position, immer sichtbar
+        "lg:relative lg:translate-x-0",
+        // MOBILE: Fixed Position, Slide-in Animation
+        "fixed inset-y-0 left-0 max-lg:w-[85vw] max-lg:max-w-[320px]",
+        showMobileNav ? "translate-x-0" : "max-lg:-translate-x-full"
+      )}>
+        
+        {/* 1. SERVER RAIL */}
+        <div className="w-[80px] flex-shrink-0 flex flex-col items-center py-3 h-full">
+           <div className="w-full h-full bg-[#0a0a0c]/90 backdrop-blur-xl rounded-2xl border border-white/5 ml-3 shadow-2xl overflow-hidden">
+             <ServerRail selectedServerId={selectedServerId} onSelectServer={handleServerSelect} />
+           </div>
+        </div>
+
+        {/* 2. CHANNEL SIDEBAR (Nur wenn Server ausgewählt) */}
+        {selectedServerId && (
+            <div 
+                ref={leftSidebarRef}
+                className="h-full py-3 pl-3 flex-shrink-0 transition-all duration-300"
+                // Breite auf Mobile: Füllt den Rest des Drawers. Auf Desktop: User-Einstellung.
+                style={{ width: typeof window !== 'undefined' && window.innerWidth < 1024 ? 'calc(100% - 80px)' : leftSidebarWidth }}
             >
-              {showServerRail ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
-            </button>
-            {/* "Channels" Button nur anzeigen, wenn Server ausgewählt ist */}
-            {selectedServerId && (
-              <button
-                onClick={() => setShowLeftSidebar(true)}
-                className="px-3 py-2 rounded-full bg-black/40 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 backdrop-blur-md shadow-lg"
-              >
-                Channels
-              </button>
-            )}
-          </div>
-        )}
+                <div className="w-full h-full bg-[#0e0e11]/90 backdrop-blur-xl rounded-2xl border border-white/5 overflow-hidden flex flex-col relative">
+                    
+                    {/* Mobile Close Button (oben rechts in der Channel Leiste) */}
+                    <button 
+                        onClick={() => setShowMobileNav(false)} 
+                        className="lg:hidden absolute top-4 right-3 z-50 p-1 text-gray-400 hover:text-white"
+                    >
+                        <X size={20} />
+                    </button>
 
-        <div className="flex-1 bg-[#09090b] rounded-2xl border border-white/5 relative overflow-auto shadow-2xl flex flex-col">
+                    <ChannelSidebar
+                        serverId={selectedServerId}
+                        activeChannelId={activeChannel?.id || null}
+                        onSelectChannel={handleChannelSelect}
+                        onOpenServerSettings={() => { setShowServerSettings(true); setShowMobileNav(false); }}
+                        onResolveFallback={handleResolveFallback}
+                        refreshKey={serverRefreshKey}
+                    />
+                </div>
+                
+                {/* Drag Handle (Nur Desktop) */}
+                <div className="hidden lg:block absolute top-0 right-0 h-full w-2 cursor-ew-resize hover:bg-white/5" onMouseDown={startDragLeft} />
+            </div>
+        )}
+      </div>
+
+
+      {/* === MAIN CONTENT AREA === 
+      */}
+      <div className="flex-1 flex flex-col min-w-0 relative h-full py-3 px-3 overflow-hidden">
+        
+        {/* MOBILE HEADER (Nur auf Handy sichtbar) */}
+        <div className="lg:hidden flex items-center gap-3 mb-3 px-1">
+            <button 
+                onClick={() => setShowMobileNav(true)}
+                className="p-2 bg-[#1a1b1e] rounded-xl border border-white/10 text-white shadow-lg active:scale-95 transition-transform"
+            >
+                <Menu size={20} />
+            </button>
+            <span className="font-bold text-white truncate">
+                {activeChannel?.name || "Chat"}
+            </span>
+            {/* Member Toggle Button für Mobile */}
+            {selectedServerId && (
+                <button 
+                    onClick={() => setShowMemberSheet(true)}
+                    className="ml-auto p-2 bg-[#1a1b1e] rounded-xl border border-white/10 text-white shadow-lg"
+                >
+                    <Users size={20} />
+                </button>
+            )}
+        </div>
+
+        <div className="flex-1 bg-[#09090b] rounded-2xl border border-white/5 relative overflow-hidden shadow-2xl flex flex-col">
           {renderContent()}
         </div>
 
-        {selectedServerId && !isNarrow && (
+        {/* Desktop Member Toggle */}
+        {selectedServerId && (
           <button
             onClick={() => setShowRightSidebar(!showRightSidebar)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 z-50 w-6 h-12 bg-black/50 hover:bg-indigo-600 rounded-l-xl backdrop-blur-md flex items-center justify-center text-white/50 hover:text-white transition-all cursor-pointer shadow-lg"
+            className="hidden lg:flex absolute right-3 top-1/2 -translate-y-1/2 z-30 w-6 h-12 bg-black/50 hover:bg-indigo-600 rounded-l-xl backdrop-blur-md items-center justify-center text-white/50 hover:text-white transition-all cursor-pointer shadow-lg"
             style={{ right: showRightSidebar ? 12 : 12 }}
           >
             {showRightSidebar ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
@@ -500,12 +453,14 @@ export const MainLayout = () => {
         )}
       </div>
 
-      {/* 4. MEMBER SIDEBAR */}
-      {selectedServerId && !isNarrow && (
+      {/* === MEMBER SIDEBAR (DESKTOP) === 
+          Wird auf Mobile komplett ausgeblendet (hidden lg:block) 
+      */}
+      {selectedServerId && (
         <div
           ref={rightSidebarRef}
           className={classNames(
-            'transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] relative z-40 h-full py-3 pr-3',
+            'hidden lg:block transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] relative z-40 h-full py-3 pr-3',
             showRightSidebar ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10 pr-0'
           )}
           style={{ width: showRightSidebar ? rightSidebarWidth : 0 }}
@@ -514,49 +469,44 @@ export const MainLayout = () => {
             <MemberSidebar serverId={selectedServerId} />
           </div>
           {showRightSidebar && (
-            <div
-              className="absolute top-0 left-0 h-full w-2 cursor-ew-resize bg-transparent hover:bg-white/5"
-              onMouseDown={startDragRight}
-            />
+            <div className="absolute top-0 left-0 h-full w-2 cursor-ew-resize hover:bg-white/5" onMouseDown={startDragRight} />
           )}
         </div>
       )}
 
-      {/* MOBILE MEMBER SHEET */}
-      {selectedServerId && isNarrow && (
+      {/* === MEMBER SIDEBAR (MOBILE SHEET) === 
+          Bleibt wie gehabt, nur Logik verbessert
+      */}
+      {selectedServerId && (
         <div
           className={classNames(
-            'fixed inset-x-0 bottom-0 z-50 transition-transform duration-500',
+            'lg:hidden fixed inset-x-0 bottom-0 z-[60] transition-transform duration-500',
             showMemberSheet ? 'translate-y-0' : 'translate-y-full'
           )}
         >
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowMemberSheet(false)} />
-          <div className="relative bg-[#0e0e11]/95 border-t border-white/10 rounded-t-3xl overflow-hidden shadow-2xl">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
+          <div className="absolute inset-0 h-screen bg-black/60 backdrop-blur-sm -top-[100vh]" onClick={() => setShowMemberSheet(false)} style={{ display: showMemberSheet ? 'block' : 'none' }} />
+          <div className="relative bg-[#0e0e11] border-t border-white/10 rounded-t-3xl overflow-hidden shadow-2xl h-[70vh] flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-[#1a1b1e]">
               <div className="flex items-center gap-2 text-sm font-semibold text-white">
                 <Users size={16} />
                 Mitglieder
               </div>
-              <button
-                onClick={() => setShowMemberSheet(false)}
-                className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-gray-200 transition-colors"
-              >
+              <button onClick={() => setShowMemberSheet(false)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-gray-200">
                 <ChevronDown size={16} />
               </button>
             </div>
-            <div className="max-h-[70vh] h-[60vh] overflow-y-auto custom-scrollbar px-3 pb-6">
+            <div className="flex-1 overflow-y-auto">
               <MemberSidebar serverId={selectedServerId} />
             </div>
           </div>
         </div>
       )}
 
-      {/* 5. AUDIO RENDERER */}
+      {/* AUDIO RENDERER */}
       {activeRoom && !muted && <RoomAudioRenderer />}
     </div>
   );
 
   if (!activeRoom) return ui;
-
   return <RoomContext.Provider value={activeRoom}>{ui}</RoomContext.Provider>;
 };

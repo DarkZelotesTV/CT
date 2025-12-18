@@ -297,16 +297,19 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
         className={`absolute inset-0 ${showCreateModal ? 'z-50' : '-z-10'}`}
         style={{ pointerEvents: showCreateModal ? 'auto' : 'none' }}
       />
-      {/* Header */}
+      {/* Header - FIX: Flex Layout und shrink behavior angepasst */}
       <div className="h-12 flex items-center gap-2 px-4 border-b border-white/5 transition-colors no-drag relative z-10">
         <div className="flex items-center gap-2 flex-1 overflow-hidden">
-          <span className="font-bold text-white truncate" title={serverName}>
+          <span className="font-bold text-white truncate flex-1 min-w-0" title={serverName}>
             {serverName}
           </span>
           <button
             type="button"
-            onClick={onOpenServerSettings}
-            className="p-2 rounded-md hover:bg-white/5 text-gray-500 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0c10]"
+            onClick={(e) => {
+                e.stopPropagation();
+                onOpenServerSettings();
+            }}
+            className="p-2 flex-shrink-0 rounded-md hover:bg-white/5 text-gray-500 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0c10]"
             title="Servereinstellungen öffnen"
             aria-label="Servereinstellungen öffnen"
           >
@@ -316,7 +319,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
 
         <button
           type="button"
-          className="p-1.5 rounded-md hover:bg-white/10 text-gray-500 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0c10]"
+          className="p-1.5 flex-shrink-0 rounded-md hover:bg-white/10 text-gray-500 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0c10]"
           title="Kanal erstellen"
           aria-label="Neuen Kanal erstellen"
           onClick={(e) => {

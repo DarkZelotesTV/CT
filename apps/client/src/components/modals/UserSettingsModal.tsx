@@ -347,7 +347,7 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
 
   return createPortal(
     <div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-[#0f1014] w-full max-w-4xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+      <div className="bg-[#0f1014] w-11/12 max-w-5xl h-[85vh] rounded-3xl border border-white/10 shadow-2xl overflow-hidden flex flex-col">
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 shrink-0">
           <div>
             <div className="text-xs uppercase tracking-widest text-gray-500 flex items-center gap-2">
@@ -364,13 +364,13 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
         </div>
 
         <div className="flex-1 overflow-hidden">
-          <div className="grid md:grid-cols-[200px,1fr] gap-0 h-full">
-            <nav className="bg-white/5 border-r border-white/10 p-3 flex md:flex-col gap-2 overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-[240px,1fr] gap-0 h-full">
+            <nav className="bg-white/5 border-b md:border-b-0 md:border-r border-white/10 p-3 flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-y-auto shrink-0 md:shrink">
               {categories.map((cat) => (
                 <button
                   key={cat.id}
                   onClick={() => setActiveCategory(cat.id)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition border w-full text-left ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition border w-auto md:w-full whitespace-nowrap text-left flex-shrink-0 ${
                     activeCategory === cat.id
                       ? 'bg-cyan-500/20 border-cyan-400 text-cyan-100'
                       : 'border-transparent text-gray-300 hover:text-white hover:bg-white/10'
@@ -382,7 +382,7 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
               ))}
             </nav>
 
-            <div className="p-6 overflow-y-auto custom-scrollbar">
+            <div className="p-6 overflow-y-auto custom-scrollbar h-full">
               {activeCategory === 'profile' && (
                 <div className="space-y-6 animate-in fade-in zoom-in-95 duration-200">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">

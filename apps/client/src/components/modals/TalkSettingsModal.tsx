@@ -1,439 +1,542 @@
-import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef, type KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, Headphones, Mic, Play, Settings, Volume2, X } from 'lucide-react';
+import { 
+  Check, 
+  X, 
+  Mic, 
+  Video, 
+  Monitor, 
+  ChevronDown,
+  Settings,
+  Volume2
+} from 'lucide-react';
 
 import { useSettings } from '../../context/SettingsContext';
 import { useVoice } from '../../context/voice-state';
 
 const modifierKeys = ['Control', 'Shift', 'Alt', 'Meta'];
 
-type DeviceLists = {
-  audioInputs: MediaDeviceInfo[];
-  audioOutputs: MediaDeviceInfo[];
-};
+// --- Helper Components ---
 
-const HotkeyInput = ({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (next: string) => void;
-}) => {
+const HotkeyInput = ({ label, value, onChange }: { label: string; value: string; onChange: (next: string) => void }) => {
+  const [isRecording, setIsRecording] = useState(false);
+
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Tab') return;
+    if (!isRecording) return;
     e.preventDefault();
-
-    if (e.key === 'Backspace' || e.key === 'Escape') {
-      onChange('');
-      return;
+    if (e.key === 'Backspace' || e.key === 'Escape') { 
+        onChange(''); 
+        setIsRecording(false);
+        return; 
     }
-
+    
     const parts: string[] = [];
     if (e.ctrlKey) parts.push('Ctrl');
     if (e.altKey) parts.push('Alt');
     if (e.shiftKey) parts.push('Shift');
     if (e.metaKey) parts.push('Meta');
-
+    
     if (!modifierKeys.includes(e.key)) {
       const keyName = e.key.length === 1 ? e.key.toUpperCase() : e.key;
       parts.push(keyName);
+      onChange(parts.join('+'));
+      setIsRecording(false);
     }
-
-    onChange(parts.join('+'));
   };
 
   return (
-    <div className="space-y-1">
-      <div className="text-xs uppercase tracking-widest text-gray-500 font-bold flex items-center justify-between">
-        <span>{label}</span>
-        {value && <span className="text-[10px] text-cyan-400">Backspace/Esc löschen</span>}
-      </div>
-      <div className="flex gap-2 items-center">
-        <input
-          type="text"
-          value={value}
-          onKeyDown={handleKeyDown}
-          readOnly
-          placeholder="Taste drücken"
-          className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
-        />
-        {value && (
-          <button
-            onClick={() => onChange('')}
-            className="px-3 py-2 rounded-lg bg-white/5 text-gray-300 hover:text-white hover:bg-white/10"
+    <div className="space-y-2">
+      <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">{label}</label>
+      <div className="flex gap-2">
+          <div 
+            onClick={() => setIsRecording(true)}
+            className={`flex-1 bg-black/40 border rounded-xl px-4 py-3 text-sm cursor-pointer transition-all flex items-center justify-between font-mono ${isRecording ? 'border-red-500/50 text-white ring-1 ring-red-500/20' : 'border-white/10 text-gray-300 hover:border-white/20'}`}
           >
-            <X size={16} />
-          </button>
-        )}
+              <span>{isRecording ? 'Tastenkombination drücken...' : (value || 'Keine Taste zugewiesen')}</span>
+              {value && !isRecording && (
+                  <button onClick={(e) => { e.stopPropagation(); onChange(''); }} className="hover:text-red-400 transition-colors"><X size={14}/></button>
+              )}
+          </div>
       </div>
     </div>
   );
 };
 
-export const TalkSettingsModal = ({ onClose }: { onClose: () => void }) => {
-  const { settings, updateDevices, updateHotkeys } = useSettings();
+const SectionHeader = ({ children }: { children: React.ReactNode }) => (
+    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 mt-2 flex items-center gap-2">
+        {children}
+    </h3>
+);
+
+const DeviceSelect = ({ label, value, options, onChange }: { label: string, value: string, options: MediaDeviceInfo[], onChange: (val: string) => void }) => (
+    <div className="space-y-1.5 w-full">
+        <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">{label}</label>
+        <div className="relative">
+            <select 
+                value={value} 
+                onChange={(e) => onChange(e.target.value)}
+                className="w-full bg-black/40 text-gray-200 text-sm p-3 pr-8 rounded-xl border border-white/10 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 focus:outline-none appearance-none cursor-pointer truncate font-medium transition-all hover:bg-black/60"
+            >
+                <option value="">Systemstandard</option>
+                {options.map(d => (
+                    <option key={d.deviceId} value={d.deviceId}>{d.label || `Gerät ${d.deviceId.slice(0,5)}...`}</option>
+                ))}
+            </select>
+            <ChevronDown size={14} className="absolute right-3 top-3.5 text-gray-500 pointer-events-none"/>
+        </div>
+    </div>
+);
+
+export const TalkSettingsModal = ({ onClose, initialTab = 'voice' }: { onClose: () => void; initialTab?: 'voice' | 'stream' }) => {
+  const { settings, updateDevices, updateHotkeys, updateTalk } = useSettings();
   const {
-    muted,
-    micMuted,
-    usePushToTalk,
-    setMuted,
-    setMicMuted,
-    setPushToTalk,
-    rnnoiseEnabled,
-    rnnoiseAvailable,
-    rnnoiseError,
-    setRnnoiseEnabled,
-    selectedAudioInputId,
-    selectedAudioOutputId,
+    muted, micMuted, usePushToTalk,
+    setMuted, setMicMuted, setPushToTalk,
+    rnnoiseEnabled, rnnoiseAvailable, rnnoiseError, setRnnoiseEnabled,
+    selectedAudioInputId, selectedAudioOutputId, selectedVideoInputId
   } = useVoice();
 
-  const [deviceLists, setDeviceLists] = useState<DeviceLists>({ audioInputs: [], audioOutputs: [] });
+  // Navigation
+  const [activeTab, setActiveTab] = useState<'voice' | 'stream'>(initialTab);
+
+  // --- AUDIO STATE ---
   const [audioInputId, setAudioInputId] = useState(selectedAudioInputId || '');
   const [audioOutputId, setAudioOutputId] = useState(selectedAudioOutputId || '');
+  
+  // Input Mode
+  const [inputMode, setInputMode] = useState<'vad' | 'ptt'>(usePushToTalk ? 'ptt' : 'vad');
   const [pushToTalkKey, setPushToTalkKey] = useState(settings.hotkeys.pushToTalk || '');
-  const [pushToTalkEnabled, setPushToTalkEnabled] = useState(usePushToTalk);
-  const [locallyMuted, setLocallyMuted] = useState(muted);
-  const [locallyMicMuted, setLocallyMicMuted] = useState(micMuted);
-  const [useRnnoise, setUseRnnoise] = useState(rnnoiseEnabled);
+  const [sensitivity, setSensitivity] = useState(settings.talk.vadSensitivity ?? 50);
+  
+  // Mic Test
   const [inputLevel, setInputLevel] = useState(0);
-  const [sensitivity, setSensitivity] = useState(1);
-  const [meterError, setMeterError] = useState<string | null>(null);
-  const [isTestingOutput, setIsTestingOutput] = useState(false);
-  const [outputError, setOutputError] = useState<string | null>(null);
+
+  // --- VIDEO STATE ---
+  const [videoInputId, setVideoInputId] = useState(selectedVideoInputId || '');
+  const [cameraQuality, setCameraQuality] = useState(settings.talk.cameraQuality || 'medium');
+  const videoPreviewRef = useRef<HTMLVideoElement>(null);
+
+  // --- STREAM STATE ---
+  const [screenQuality, setScreenQuality] = useState(settings.talk.screenQuality || 'high');
+  const [screenFps, setScreenFps] = useState(settings.talk.screenFrameRate || 30);
+  
+  // --- ADVANCED ---
+  const [useRnnoise, setUseRnnoise] = useState(rnnoiseEnabled);
+  const [echoCancellation, setEchoCancellation] = useState(true);
+
+  // Device Lists
+  const [devices, setDevices] = useState<{ audioIn: MediaDeviceInfo[], audioOut: MediaDeviceInfo[], videoIn: MediaDeviceInfo[] }>({ audioIn: [], audioOut: [], videoIn: [] });
 
   const refreshDevices = useCallback(async () => {
-    if (!navigator.mediaDevices?.enumerateDevices) {
-      return;
-    }
-
+    if (!navigator.mediaDevices?.enumerateDevices) return;
     try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      setDeviceLists({
-        audioInputs: devices.filter((d) => d.kind === 'audioinput'),
-        audioOutputs: devices.filter((d) => d.kind === 'audiooutput'),
+      const all = await navigator.mediaDevices.enumerateDevices();
+      setDevices({
+        audioIn: all.filter(d => d.kind === 'audioinput'),
+        audioOut: all.filter(d => d.kind === 'audiooutput'),
+        videoIn: all.filter(d => d.kind === 'videoinput')
       });
-    } catch (err: any) {
-      console.warn('Device enumeration failed', err);
-    }
+    } catch (e) { console.error(e); }
   }, []);
 
-  useEffect(() => {
-    refreshDevices();
-  }, [refreshDevices]);
+  useEffect(() => { refreshDevices(); }, [refreshDevices]);
 
+  // Mic Meter Logic
   useEffect(() => {
-    setUseRnnoise(rnnoiseEnabled);
-  }, [rnnoiseEnabled]);
-
-  useEffect(() => {
+    if (activeTab !== 'voice') return;
     let stream: MediaStream | null = null;
-    let audioContext: AudioContext | null = null;
-    let analyser: AnalyserNode | null = null;
-    let sourceNode: MediaStreamAudioSourceNode | null = null;
-    let frame: number | null = null;
-    let smoothedLevel = 0;
-    let lastUpdate = 0;
-    const run = async () => {
-      try {
-        setMeterError(null);
-        stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: audioInputId || undefined } });
-        audioContext = new AudioContext();
-        sourceNode = audioContext.createMediaStreamSource(stream);
-        analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256;
-        sourceNode.connect(analyser);
-        const data = new Uint8Array(analyser.frequencyBinCount);
-        const smoothing = 0.2;
-        const minInterval = 75; // throttle UI updates
-        const tick = (time: number) => {
-          if (!analyser) return;
-          if (time - lastUpdate < minInterval) {
-            frame = requestAnimationFrame(tick);
-            return;
-          }
-          analyser.getByteTimeDomainData(data);
-          let sum = 0;
-          for (let i = 0; i < data.length; i++) {
-            const value = data[i] - 128;
-            sum += value * value;
-          }
-          const rms = Math.sqrt(sum / data.length) / 128;
-          const level = Math.min(1, rms * 2 * sensitivity);
-          smoothedLevel = smoothedLevel + (level - smoothedLevel) * smoothing;
-          setInputLevel(smoothedLevel);
-          lastUpdate = time;
-          frame = requestAnimationFrame(tick);
-        };
-        tick(performance.now());
-      } catch (err: any) {
-        setMeterError(err?.message || 'Pegel konnte nicht gemessen werden.');
-        setInputLevel(0);
-      }
+    let ctx: AudioContext | null = null;
+    let frame: number;
+    let cancelled = false;
+    
+    const startMeter = async () => {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: audioInputId || undefined } });
+            if (cancelled) return;
+
+            ctx = new AudioContext();
+            const src = ctx.createMediaStreamSource(stream);
+            const analyser = ctx.createAnalyser();
+            analyser.fftSize = 256;
+            src.connect(analyser);
+            const data = new Uint8Array(analyser.frequencyBinCount);
+            
+            const tick = () => {
+                if (cancelled) return;
+                analyser.getByteTimeDomainData(data);
+                let sum = 0;
+                for(let i=0; i<data.length; i++) {
+                    const v = data[i] - 128;
+                    sum += v*v;
+                }
+                const rms = Math.sqrt(sum/data.length) / 128;
+                setInputLevel(prev => prev * 0.7 + (rms * 10) * 0.3); 
+                frame = requestAnimationFrame(tick);
+            };
+            tick();
+        } catch (e) {}
     };
-
-    run();
-
+    startMeter();
     return () => {
-      if (frame) cancelAnimationFrame(frame);
-      sourceNode?.disconnect();
-      analyser?.disconnect();
-      stream?.getTracks().forEach((t) => t.stop());
-      if (audioContext) audioContext.close();
-    };
-  }, [audioInputId, sensitivity]);
-
-  const levelPercent = useMemo(() => Math.round(inputLevel * 100), [inputLevel]);
-
-  const handleTestOutput = useCallback(async () => {
-    setIsTestingOutput(true);
-    setOutputError(null);
-    try {
-      const ctx = new AudioContext();
-      const oscillator = ctx.createOscillator();
-      const gain = ctx.createGain();
-      const destination = ctx.createMediaStreamDestination();
-      gain.gain.value = 0.1;
-      oscillator.type = 'sine';
-      oscillator.frequency.value = 440;
-      oscillator.connect(gain).connect(destination);
-      const audio = new Audio();
-      audio.srcObject = destination.stream as any;
-      if ('setSinkId' in audio && audioOutputId) {
-        await (audio as any).setSinkId(audioOutputId);
-      }
-      oscillator.start();
-      await ctx.resume();
-      await audio.play();
-      setTimeout(() => {
-        oscillator.stop();
-        ctx.close();
-        setIsTestingOutput(false);
-      }, 1200);
-    } catch (err: any) {
-      console.error('Output test failed', err);
-      setOutputError(err?.message || 'Ausgabe konnte nicht getestet werden.');
-      setIsTestingOutput(false);
+        cancelled = true;
+        if(frame) cancelAnimationFrame(frame);
+        stream?.getTracks().forEach(t => t.stop());
+        ctx?.close();
     }
-  }, [audioOutputId]);
+  }, [activeTab, audioInputId]);
+
+  // Video Preview Logic
+  useEffect(() => {
+      if (activeTab !== 'voice') return;
+      let stream: MediaStream | null = null;
+      const startCam = async () => {
+          try {
+              if (videoPreviewRef.current) videoPreviewRef.current.srcObject = null;
+              if (!videoInputId) return;
+              
+              stream = await navigator.mediaDevices.getUserMedia({ 
+                  video: { 
+                      deviceId: videoInputId,
+                      width: { ideal: 640 },
+                      height: { ideal: 360 }
+                   } 
+              });
+              if (videoPreviewRef.current) {
+                  videoPreviewRef.current.srcObject = stream;
+                  videoPreviewRef.current.play().catch(() => {});
+              }
+          } catch (e) {}
+      };
+      startCam();
+      return () => { stream?.getTracks().forEach(t => t.stop()); };
+  }, [activeTab, videoInputId]);
+
 
   const handleSave = async () => {
-    updateDevices({ audioInputId: audioInputId || null, audioOutputId: audioOutputId || null });
-    updateHotkeys({ pushToTalk: pushToTalkKey || null });
-    await setPushToTalk(pushToTalkEnabled);
-    await setMuted(locallyMuted);
-    await setMicMuted(locallyMicMuted);
-    await setRnnoiseEnabled(useRnnoise);
-    onClose();
+      updateDevices({ 
+          audioInputId: audioInputId || null, 
+          audioOutputId: audioOutputId || null, 
+          videoInputId: videoInputId || null 
+      });
+      updateHotkeys({ pushToTalk: pushToTalkKey || null });
+      updateTalk({ 
+          cameraQuality: cameraQuality as any, 
+          screenQuality: screenQuality as any, 
+          screenFrameRate: screenFps,
+          vadSensitivity: sensitivity
+      });
+      
+      await setPushToTalk(inputMode === 'ptt');
+      await setRnnoiseEnabled(useRnnoise);
+      
+      onClose();
   };
 
+  const hasUnsavedChanges = useMemo(() => {
+      return inputMode !== (usePushToTalk ? 'ptt' : 'vad') || audioInputId !== selectedAudioInputId;
+  }, [inputMode, usePushToTalk, audioInputId, selectedAudioInputId]);
+
+
   return createPortal(
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-6">
-      <div className="w-full max-w-3xl bg-[#0d0f15] rounded-2xl border border-white/10 shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-white/5">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-              <Settings size={20} />
-            </div>
-            <div>
-              <div className="text-lg font-bold text-white">Talk Settings</div>
-              <div className="text-xs text-gray-400">Mikrofon, Lautsprecher und Push-to-Talk konfigurieren.</div>
-            </div>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[150] animate-in fade-in duration-200 p-4 md:p-8">
+      <div className="w-full max-w-5xl h-[85vh] bg-[#0f1014] rounded-3xl border border-white/10 shadow-2xl flex overflow-hidden text-gray-200 font-sans">
+          
+          {/* Sidebar */}
+          <div className="w-64 bg-white/[0.02] border-r border-white/5 flex-shrink-0 flex flex-col pt-8 pb-4 px-3 overflow-y-auto hidden md:flex">
+             <div className="px-3 mb-4 text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                <Settings size={14}/> Einstellungen
+             </div>
+             
+             <div className="space-y-1">
+                 <button 
+                    onClick={() => setActiveTab('voice')}
+                    className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === 'voice' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200 border border-transparent'}`}
+                 >
+                     Voice & Video
+                 </button>
+                 <button 
+                    onClick={() => setActiveTab('stream')}
+                    className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === 'stream' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200 border border-transparent'}`}
+                 >
+                     Stream Qualität
+                 </button>
+             </div>
+             
+             <div className="mt-auto pt-4 border-t border-white/5">
+                 <button onClick={onClose} className="w-full text-left px-4 py-2.5 rounded-xl text-sm text-gray-400 hover:bg-red-500/10 hover:text-red-400 transition-colors font-medium flex items-center gap-2">
+                     <X size={16} /> Schließen
+                 </button>
+             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white">
-            <X size={18} />
-          </button>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
-          <section className="space-y-4">
-            <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Geräte</div>
-            <div className="space-y-3">
-              <label className="space-y-2">
-                <div className="text-xs text-gray-400 uppercase font-semibold flex items-center gap-2">
-                  <Mic size={14} /> Mikrofon
-                </div>
-                <select
-                  value={audioInputId}
-                  onChange={(e) => setAudioInputId(e.target.value)}
-                  className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
-                >
-                  <option value="">System-Standard</option>
-                  {deviceLists.audioInputs.map((d) => (
-                    <option key={d.deviceId} value={d.deviceId}>
-                      {d.label || 'Unbenanntes Mikrofon'}
-                    </option>
-                  ))}
-                </select>
-              </label>
+          {/* Main Content */}
+          <div className="flex-1 flex flex-col bg-[#0f1014] relative min-w-0">
+             
+             {/* Header (Mobile only) */}
+             <div className="md:hidden flex items-center justify-between p-4 border-b border-white/5">
+                 <h2 className="text-lg font-bold text-white">Einstellungen</h2>
+                 <button onClick={onClose}><X size={20}/></button>
+             </div>
 
-              <label className="space-y-2">
-                <div className="text-xs text-gray-400 uppercase font-semibold flex items-center gap-2">
-                  <Headphones size={14} /> Lautsprecher
-                </div>
-                <select
-                  value={audioOutputId}
-                  onChange={(e) => setAudioOutputId(e.target.value)}
-                  className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
-                >
-                  <option value="">System-Standard</option>
-                  {deviceLists.audioOutputs.map((d) => (
-                    <option key={d.deviceId} value={d.deviceId}>
-                      {d.label || 'Unbenannter Ausgang'}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
+             {/* Content Header (Desktop) */}
+             <div className="hidden md:block pt-10 px-12 pb-6 shrink-0">
+                 <h2 className="text-2xl font-bold text-white mb-2">
+                     {activeTab === 'voice' ? 'Voice & Video' : 'Stream Qualität'}
+                 </h2>
+                 <p className="text-sm text-gray-400">
+                     {activeTab === 'voice' ? 'Passe deine Audio- und Videogeräte an.' : 'Optimiere deine Bildschirmübertragung.'}
+                 </p>
+             </div>
 
-            <div className="space-y-2">
-              <div className="text-xs uppercase tracking-widest text-gray-500 font-bold flex items-center gap-2">
-                <Volume2 size={14} /> Eingangspegel
-              </div>
-              <div className="flex items-center gap-3">
-                <input
-                  type="range"
-                  min={0.5}
-                  max={2}
-                  step={0.1}
-                  value={sensitivity}
-                  onChange={(e) => setSensitivity(Number(e.target.value))}
-                  className="flex-1 accent-cyan-500"
-                />
-                <div className="text-[11px] text-gray-400 w-24 text-right">
-                  Empfindlichkeit: {sensitivity.toFixed(1)}x
-                </div>
-              </div>
-              <div className="h-3 rounded-full bg-white/5 overflow-hidden border border-white/10">
-                <div
-                  className="h-full bg-gradient-to-r from-green-400 via-yellow-400 to-red-500 transition-all"
-                  style={{ width: `${levelPercent}%` }}
-                />
-              </div>
-              <div className="flex items-center justify-between text-[11px] text-gray-500">
-                <span className={meterError ? 'text-red-400' : ''}>
-                  {meterError || 'Sprich, um den Pegel zu prüfen.'}
-                </span>
-                <span className="text-cyan-400 font-semibold">{levelPercent}%</span>
-              </div>
-              <div className="text-[11px] text-gray-400">
-                Passt die Empfindlichkeit an, bis Umgebungsgeräusche im grünen Bereich bleiben.
-              </div>
-            </div>
-          </section>
+             {/* Scrollable Area */}
+             <div className="flex-1 overflow-y-auto custom-scrollbar px-6 md:px-12 pb-24 space-y-8">
+                 
+                 {/* VOICE TAB */}
+                 {activeTab === 'voice' && (
+                     <>
+                        {/* Devices */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pb-8 border-b border-white/5">
+                            <DeviceSelect 
+                                label="Eingabegerät" 
+                                value={audioInputId} 
+                                options={devices.audioIn} 
+                                onChange={setAudioInputId} 
+                            />
+                            <DeviceSelect 
+                                label="Ausgabegerät" 
+                                value={audioOutputId} 
+                                options={devices.audioOut} 
+                                onChange={setAudioOutputId} 
+                            />
+                            {/* Sliders */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Eingabelautstärke</label>
+                                <input type="range" className="w-full accent-cyan-500 h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer" />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Ausgabelautstärke</label>
+                                <input type="range" className="w-full accent-cyan-500 h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer" />
+                            </div>
+                        </div>
 
-          <section className="space-y-4">
-            <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Audio-Test & Hotkeys</div>
+                        {/* Mic Test */}
+                        <div className="pb-8 border-b border-white/5">
+                            <SectionHeader>Mikrofontest</SectionHeader>
+                            <div className="text-sm text-gray-400 mb-4">Probleme mit dem Mikrofon? Sag was und schau, ob der Balken ausschlägt.</div>
+                            <div className="bg-black/40 p-5 rounded-2xl border border-white/10">
+                                <div className="h-3 bg-white/5 rounded-full overflow-hidden relative border border-white/5">
+                                    <div 
+                                        className="h-full bg-gradient-to-r from-cyan-600 to-cyan-400 transition-all duration-75 ease-out shadow-[0_0_15px_rgba(34,211,238,0.3)]"
+                                        style={{ width: `${Math.min(100, inputLevel * 100)}%` }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
 
-            <div className="p-4 rounded-xl border border-white/10 bg-white/5 space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <div className="text-sm font-semibold text-white">Ausgabe testen</div>
-                  <p className="text-xs text-gray-400">Spiele einen kurzen Ton über den gewählten Lautsprecher ab.</p>
-                </div>
-                <button
-                  onClick={handleTestOutput}
-                  disabled={isTestingOutput}
-                  className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white flex items-center gap-2"
-                >
-                  <Play size={16} /> {isTestingOutput ? 'Test läuft' : 'Testton'}
-                </button>
-              </div>
-              {outputError && <div className="text-xs text-red-400">{outputError}</div>}
-            </div>
+                        {/* Input Mode */}
+                        <div className="pb-8 border-b border-white/5">
+                            <SectionHeader>Eingabemodus</SectionHeader>
+                            <div className="flex flex-col gap-4">
+                                <label className="flex items-center gap-3 cursor-pointer group p-3 rounded-xl border border-transparent hover:bg-white/5 transition-colors">
+                                    <input 
+                                        type="radio" 
+                                        name="inputMode" 
+                                        checked={inputMode === 'vad'} 
+                                        onChange={() => setInputMode('vad')}
+                                        className="w-5 h-5 accent-cyan-500 bg-black/40 border-gray-600" 
+                                    />
+                                    <span className="text-sm font-medium text-gray-200 group-hover:text-white">Sprachaktivierung</span>
+                                </label>
+                                
+                                {inputMode === 'vad' && (
+                                    <div className="pl-4 md:pl-11 pr-4 animate-in slide-in-from-top-1 fade-in">
+                                        <div className="bg-black/40 p-4 rounded-xl border border-white/10">
+                                            <div className="flex justify-between text-xs text-gray-400 mb-2 font-bold uppercase tracking-widest">
+                                                <span>Empfindlichkeit</span>
+                                                <span className="text-cyan-400">{sensitivity}%</span>
+                                            </div>
+                                            <input 
+                                                type="range" 
+                                                min={0} max={100} 
+                                                value={sensitivity} 
+                                                onChange={(e) => setSensitivity(Number(e.target.value))}
+                                                className="w-full h-1.5 bg-white/10 rounded-lg appearance-none accent-cyan-500 cursor-pointer"
+                                            />
+                                            <div className="text-[11px] text-gray-500 mt-3 leading-relaxed">
+                                                Das Mikrofon wird automatisch aktiviert, wenn der Pegel den Schwellenwert überschreitet.
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
-                <div>
-                  <div className="text-sm font-semibold text-white">Push-to-Talk</div>
-                  <p className="text-xs text-gray-400">Wenn aktiviert, bleibt dein Mikro stumm bis du die Hotkey-Kombination hältst.</p>
-                </div>
-                <button
-                  onClick={() => setPushToTalkEnabled((v) => !v)}
-                  className={`px-4 py-2 rounded-xl border ${pushToTalkEnabled ? 'border-cyan-400 bg-cyan-500/20 text-cyan-200' : 'border-white/10 text-gray-300 hover:text-white hover:border-white/30'}`}
-                >
-                  {pushToTalkEnabled ? 'Aktiv' : 'Aus'}
-                </button>
-              </div>
-              <HotkeyInput label="Push-to-Talk Hotkey" value={pushToTalkKey} onChange={setPushToTalkKey} />
+                                <label className="flex items-center gap-3 cursor-pointer group p-3 rounded-xl border border-transparent hover:bg-white/5 transition-colors">
+                                    <input 
+                                        type="radio" 
+                                        name="inputMode" 
+                                        checked={inputMode === 'ptt'} 
+                                        onChange={() => setInputMode('ptt')}
+                                        className="w-5 h-5 accent-cyan-500 bg-black/40 border-gray-600" 
+                                    />
+                                    <span className="text-sm font-medium text-gray-200 group-hover:text-white">Push-to-Talk</span>
+                                </label>
 
-              <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
-                <div>
-                  <div className="text-sm font-semibold text-white">Gesamt-Stummschaltung</div>
-                  <p className="text-xs text-gray-400">Alle Voice-Signale stummschalten, inklusive Mikrofon.</p>
-                </div>
-                <button
-                  onClick={() => setLocallyMuted((v) => !v)}
-                  className={`px-4 py-2 rounded-xl border ${locallyMuted ? 'border-red-400 bg-red-500/20 text-red-200' : 'border-green-400 bg-green-500/20 text-green-100'}`}
-                >
-                  {locallyMuted ? 'Stumm' : 'Aktiv'}
-                </button>
-              </div>
+                                {inputMode === 'ptt' && (
+                                    <div className="pl-4 md:pl-11 max-w-sm animate-in slide-in-from-top-1 fade-in">
+                                        <HotkeyInput label="Taste zuweisen" value={pushToTalkKey} onChange={setPushToTalkKey} />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
 
-              <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
-                <div>
-                  <div className="text-sm font-semibold text-white">Mikrofon-Stummschaltung</div>
-                  <p className="text-xs text-gray-400">Nur die Aufnahme deaktivieren, Ausgabe bleibt aktiv.</p>
-                </div>
-                <button
-                  onClick={() => setLocallyMicMuted((v) => !v)}
-                  className={`px-4 py-2 rounded-xl border ${locallyMicMuted ? 'border-red-400 bg-red-500/20 text-red-200' : 'border-green-400 bg-green-500/20 text-green-100'}`}
-                >
-                  {locallyMicMuted ? 'Stumm' : 'Aktiv'}
-                </button>
-              </div>
+                        {/* Video Settings */}
+                        <div className="pb-8 border-b border-white/5">
+                            <SectionHeader><Video size={16}/> Videoeinstellungen</SectionHeader>
+                            <div className="space-y-6">
+                                <DeviceSelect 
+                                    label="Kamera" 
+                                    value={videoInputId} 
+                                    options={devices.videoIn} 
+                                    onChange={setVideoInputId} 
+                                />
+                                
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Vorschau</label>
+                                    <div className="w-full aspect-video bg-black rounded-2xl overflow-hidden border border-white/10 relative flex items-center justify-center shadow-lg">
+                                        {videoInputId ? (
+                                            <>
+                                                <video ref={videoPreviewRef} autoPlay muted playsInline className="w-full h-full object-cover transform scale-x-[-1]" />
+                                                <div className="absolute top-3 left-3 px-2 py-1 bg-black/60 backdrop-blur-md rounded-lg text-[10px] font-bold text-white uppercase tracking-wider border border-white/10">
+                                                    Preview
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="text-center p-6">
+                                                <div className="w-full h-full flex flex-col items-center justify-center text-gray-600 gap-3">
+                                                    <div className="bg-white/5 p-4 rounded-full border border-white/5"><Video size={32} /></div>
+                                                    <span className="text-sm font-medium">Keine Kamera ausgewählt</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-              <div className="flex items-start justify-between gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
-                <div className="flex-1">
-                  <div className="text-sm font-semibold text-white">RNNoise Rauschunterdrückung</div>
-                  <p className="text-xs text-gray-400">
-                    Verarbeitet dein Mikrofon über den RNNoise-Audioknoten. Bei fehlender Unterstützung wird automatisch der
-                    Original-Stream genutzt.
-                  </p>
-                  {!rnnoiseAvailable && (
-                    <div className="text-[11px] text-amber-300 mt-1">
-                      RNNoise ist in dieser Umgebung nicht verfügbar. Die Aufnahme läuft ohne zusätzliche Filter.
-                    </div>
-                  )}
-                  {rnnoiseError && <div className="text-[11px] text-red-400 mt-1">{rnnoiseError}</div>}
-                </div>
-                <button
-                  onClick={() => setUseRnnoise((v) => !v)}
-                  disabled={!rnnoiseAvailable}
-                  className={`px-4 py-2 rounded-xl border ${
-                    useRnnoise
-                      ? 'border-cyan-400 bg-cyan-500/20 text-cyan-200'
-                      : 'border-white/10 text-gray-300 hover:text-white hover:border-white/30'
-                  } ${!rnnoiseAvailable ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {useRnnoise ? 'Aktiv' : 'Aus'}
-                </button>
-              </div>
-            </div>
-          </section>
-        </div>
+                        {/* Advanced */}
+                        <div className="pb-6">
+                            <SectionHeader>Erweitert</SectionHeader>
+                            <div className="space-y-1">
+                                <div className="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors">
+                                    <div>
+                                        <div className="text-sm font-medium text-gray-200">Echo-Unterdrückung</div>
+                                        <div className="text-xs text-gray-500">Verhindert Rückkopplungen.</div>
+                                    </div>
+                                    <input 
+                                        type="checkbox" 
+                                        checked={echoCancellation} 
+                                        onChange={(e) => setEchoCancellation(e.target.checked)}
+                                        className="accent-cyan-500 w-5 h-5 cursor-pointer" 
+                                    />
+                                </div>
+                                <div className="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors">
+                                    <div>
+                                        <div className="text-sm font-medium text-gray-200">Rauschunterdrückung (RNNoise)</div>
+                                        <div className="text-xs text-gray-500">Filtert Hintergrundgeräusche heraus.</div>
+                                        {!rnnoiseAvailable && <div className="text-[10px] text-red-400 mt-0.5 font-bold">Nicht verfügbar</div>}
+                                    </div>
+                                    <input 
+                                        type="checkbox" 
+                                        disabled={!rnnoiseAvailable}
+                                        checked={useRnnoise} 
+                                        onChange={(e) => setUseRnnoise(e.target.checked)}
+                                        className="accent-cyan-500 w-5 h-5 cursor-pointer" 
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                     </>
+                 )}
 
-        <div className="px-6 py-4 border-t border-white/5 flex items-center justify-between bg-white/5">
-          <div className="flex items-center gap-2 text-xs text-gray-400">
-            <Check size={14} className="text-green-400" /> Einstellungen werden lokal gespeichert.
+                 {/* STREAM TAB */}
+                 {activeTab === 'stream' && (
+                     <div className="animate-in slide-in-from-right-4 duration-300">
+                         <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 p-6 rounded-2xl border border-indigo-500/20 mb-8 flex gap-5 items-start">
+                             <div className="p-3 bg-indigo-500/20 text-indigo-300 rounded-xl h-fit border border-indigo-500/30 shadow-lg shadow-indigo-500/10"><Monitor size={28}/></div>
+                             <div>
+                                 <h4 className="text-white font-bold text-lg">Stream-Voreinstellungen</h4>
+                                 <p className="text-sm text-gray-400 mt-1 leading-relaxed">
+                                     Hier legst du die Standardqualität für deine Bildschirmübertragungen fest. Höhere Qualität benötigt mehr Bandbreite und CPU-Leistung.
+                                 </p>
+                             </div>
+                         </div>
+                         
+                         <SectionHeader>Auflösung</SectionHeader>
+                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                            {['low', 'medium', 'high'].map(q => (
+                                <button 
+                                    key={q}
+                                    onClick={() => setScreenQuality(q as any)}
+                                    className={`p-4 rounded-xl border text-left transition-all relative group overflow-hidden ${screenQuality === q ? 'bg-cyan-500/10 border-cyan-500/50 ring-1 ring-cyan-500/30' : 'bg-black/40 border-white/10 text-gray-400 hover:border-white/20 hover:bg-white/5'}`}
+                                >
+                                    <div className={`text-sm font-bold capitalize mb-1 ${screenQuality === q ? 'text-cyan-100' : 'text-gray-300'}`}>{q}</div>
+                                    <div className="text-xs text-gray-500">{q === 'low' ? '480p' : q === 'medium' ? '720p' : '1080p Source'}</div>
+                                    {screenQuality === q && <div className="absolute top-3 right-3 text-cyan-400"><Check size={16} /></div>}
+                                </button>
+                            ))}
+                         </div>
+
+                         <SectionHeader>Bildrate</SectionHeader>
+                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {[15, 30, 60].map(fps => (
+                                <button 
+                                    key={fps}
+                                    onClick={() => setScreenFps(fps)}
+                                    className={`p-4 rounded-xl border text-left transition-all relative group ${screenFps === fps ? 'bg-cyan-500/10 border-cyan-500/50 ring-1 ring-cyan-500/30' : 'bg-black/40 border-white/10 text-gray-400 hover:border-white/20 hover:bg-white/5'}`}
+                                >
+                                    <div className={`text-sm font-bold mb-1 ${screenFps === fps ? 'text-cyan-100' : 'text-gray-300'}`}>{fps} FPS</div>
+                                    <div className="text-xs text-gray-500">{fps === 60 ? 'Flüssig' : 'Standard'}</div>
+                                    {screenFps === fps && <div className="absolute top-3 right-3 text-cyan-400"><Check size={16} /></div>}
+                                </button>
+                            ))}
+                         </div>
+                     </div>
+                 )}
+
+             </div>
+
+             {/* Footer Actions */}
+             <div className="p-6 bg-[#0f1014] border-t border-white/5 flex justify-end gap-3 shrink-0 relative z-10 animate-in slide-in-from-bottom-2">
+                 {hasUnsavedChanges && (
+                     <div className="absolute left-6 top-1/2 -translate-y-1/2 text-xs text-red-400 font-bold uppercase tracking-wider flex items-center gap-2">
+                         <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.6)]"/>
+                         Nicht gespeichert
+                     </div>
+                 )}
+                 <button 
+                    onClick={onClose}
+                    className="px-6 py-2.5 rounded-xl bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white text-sm font-medium transition-colors"
+                 >
+                     Abbrechen
+                 </button>
+                 <button 
+                    onClick={handleSave}
+                    className="px-8 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold shadow-lg shadow-cyan-900/20 transition-all active:scale-95"
+                 >
+                     Speichern
+                 </button>
+             </div>
+
+             {/* Close Button Floating (Desktop) */}
+             <div className="absolute right-0 top-0 pt-8 pr-6 hidden md:block">
+                 <button onClick={onClose} className="flex flex-col items-center gap-1 group text-gray-500 hover:text-white transition-colors">
+                     <div className="p-2 rounded-full border-2 border-current opacity-60 group-hover:opacity-100">
+                         <X size={16} strokeWidth={3} />
+                     </div>
+                     <span className="text-[10px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-1 group-hover:translate-y-0">ESC</span>
+                 </button>
+             </div>
+
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-white/5 text-gray-300 hover:bg-white/10"
-            >
-              Abbrechen
-            </button>
-            <button
-              onClick={handleSave}
-              className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white flex items-center gap-2"
-            >
-              <Settings size={16} />
-              Anwenden
-            </button>
-          </div>
-        </div>
       </div>
     </div>,
     document.body
