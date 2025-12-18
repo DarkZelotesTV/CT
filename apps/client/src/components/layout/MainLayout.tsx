@@ -58,6 +58,7 @@ export const MainLayout = () => {
   const [showJoinServer, setShowJoinServer] = useState(false);
   const [lastNonVoiceChannel, setLastNonVoiceChannel] = useState<Channel | null>(null);
   const [pendingVoiceChannelId, setPendingVoiceChannelId] = useState<number | null>(null);
+  const [serverRefreshKey, setServerRefreshKey] = useState(0);
 
   // Voice Context holen
   const {
@@ -201,12 +202,12 @@ export const MainLayout = () => {
     }
   }, []);
 
-  const handleServerSelect = (id: number | null) => {
+  const handleServerSelect = useCallback((id: number | null) => {
     setSelectedServerId(id);
     setActiveChannel(null);
     setFallbackChannel(null);
     setShowServerSettings(false);
-  };
+  }, []);
 
   const handleChannelSelect = useCallback((channel: Channel) => {
     setActiveChannel(channel);
@@ -252,9 +253,24 @@ export const MainLayout = () => {
     setActiveChannel(null);
   }, [connectedVoiceChannelId, connectedVoiceChannelName, fallbackChannel, lastNonVoiceChannel]);
 
-  const announceServerChange = () => {
+  const announceServerChange = useCallback(() => {
     window.dispatchEvent(new Event('ct-servers-changed'));
-  };
+  }, []);
+
+  const handleServerUpdated = useCallback(
+    ({ fallbackChannelId }: { name: string; fallbackChannelId: number | null }) => {
+      announceServerChange();
+      setServerRefreshKey((value) => value + 1);
+      setFallbackChannel((prev) => (prev && prev.id === fallbackChannelId ? prev : null));
+      setShowServerSettings(false);
+    },
+    [announceServerChange]
+  );
+
+  const handleServerDeleted = useCallback(() => {
+    announceServerChange();
+    handleServerSelect(null);
+  }, [announceServerChange, handleServerSelect]);
 
   const startDragLeft = (event: React.MouseEvent) => {
     setIsDraggingLeft(true);
@@ -391,7 +407,12 @@ export const MainLayout = () => {
         />
       )}
       {selectedServerId && showServerSettings && (
-        <ServerSettingsModal serverId={selectedServerId} onClose={() => setShowServerSettings(false)} />
+        <ServerSettingsModal
+          serverId={selectedServerId}
+          onClose={() => setShowServerSettings(false)}
+          onUpdated={handleServerUpdated}
+          onDeleted={handleServerDeleted}
+        />
       )}
       {/* 1. SERVER RAIL */}
       {showServerRail && (
@@ -420,6 +441,7 @@ export const MainLayout = () => {
               onSelectChannel={handleChannelSelect}
               onOpenServerSettings={() => setShowServerSettings(true)}
               onResolveFallback={handleResolveFallback}
+              refreshKey={serverRefreshKey}
             />
           </div>
           {showLeftSidebar && !isNarrow && (
