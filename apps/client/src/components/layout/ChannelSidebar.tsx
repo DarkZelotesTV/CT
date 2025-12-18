@@ -67,7 +67,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   } = useVoice();
   const { channelPresence } = useSocket();
 
-  const participantCount = activeRoom ? activeRoom.participants.size : 0;
+  const participantCount = activeRoom ? activeRoom.numParticipants : 0;
   const shouldShowVoiceParticipants = connectionState === 'connected' && participantCount > 0;
 
   const fetchData = useCallback(async () => {
