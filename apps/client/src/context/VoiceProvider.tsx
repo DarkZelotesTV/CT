@@ -568,6 +568,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
           const publication = await roomToUse.localParticipant.publishTrack(selectedTrack, {
             name: 'screen_share',
             source: Track.Source.ScreenShare,
+            simulcast: false,
             videoEncoding: {
               maxBitrate: selectedBitrate.maxBitrate,
               maxFramerate: preferredFrameRate,
@@ -645,6 +646,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         const publication = await roomToUse.localParticipant.publishTrack(videoTrack, {
           name: 'screen_share',
           source: Track.Source.ScreenShare,
+          simulcast: false,
           videoEncoding: {
             maxBitrate: selectedBitrate.maxBitrate,
             maxFramerate: preferredFrameRate,
