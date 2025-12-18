@@ -18,7 +18,7 @@ import {
   Lock,
   ListChecks,
   GripHorizontal,
-  Volume2 as Volume2Icon
+  Volume2
 } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { CreateChannelModal } from './CreateChannelModal';
@@ -741,7 +741,7 @@ const ChannelEditor = ({
             <div className="flex items-center gap-2 flex-1">
                <span className="text-gray-500">
                   {channel.type === 'voice' ? (
-                    <Volume2Icon size={16} />
+                    <Volume2 size={16} />
                   ) : channel.type === 'web' ? (
                     <Globe size={16} />
                   ) : channel.type === 'data-transfer' ? (
@@ -824,12 +824,3 @@ const ChannelEditor = ({
       </div>
    )
 }
-
-// Icon helper
-const Volume2Icon = ({size}: {size: number}) => (
-   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-      <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-      <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-   </svg>
-);
