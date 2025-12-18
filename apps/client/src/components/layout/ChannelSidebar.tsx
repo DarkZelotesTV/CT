@@ -298,32 +298,37 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
         style={{ pointerEvents: showCreateModal ? 'auto' : 'none' }}
       />
       {/* Header */}
-        <div className="h-12 flex items-center gap-2 px-4 border-b border-white/5 transition-colors no-drag relative z-10">
+      <div className="h-12 flex items-center gap-2 px-4 border-b border-white/5 transition-colors no-drag relative z-10">
+        <div className="flex items-center gap-2 flex-1 overflow-hidden">
+          <span className="font-bold text-white truncate" title={serverName}>
+            {serverName}
+          </span>
           <button
             type="button"
             onClick={onOpenServerSettings}
-            className="group flex items-center gap-2 flex-1 text-left rounded-md px-2 py-2 hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0c10]"
+            className="p-2 rounded-md hover:bg-white/5 text-gray-500 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0c10]"
+            title="Servereinstellungen öffnen"
             aria-label="Servereinstellungen öffnen"
           >
-            <span className="font-bold text-white truncate flex-1">{serverName}</span>
-            <Settings size={16} className="text-gray-500 group-hover:text-white" aria-hidden />
-          </button>
-
-          <button
-            type="button"
-            className="p-1.5 rounded-md hover:bg-white/10 text-gray-500 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0c10]"
-            title="Kanal erstellen"
-            aria-label="Neuen Kanal erstellen"
-            onClick={(e) => {
-              e.stopPropagation();
-              setCreateType('text');
-              setCreateCategoryId(null);
-              setShowCreateModal(true);
-            }}
-          >
-            <Plus size={16} />
+            <Settings size={16} aria-hidden />
           </button>
         </div>
+
+        <button
+          type="button"
+          className="p-1.5 rounded-md hover:bg-white/10 text-gray-500 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0c10]"
+          title="Kanal erstellen"
+          aria-label="Neuen Kanal erstellen"
+          onClick={(e) => {
+            e.stopPropagation();
+            setCreateType('text');
+            setCreateCategoryId(null);
+            setShowCreateModal(true);
+          }}
+        >
+          <Plus size={16} />
+        </button>
+      </div>
 
         {/* Liste */}
         <div className="flex-1 overflow-y-auto pt-4 px-2 custom-scrollbar relative z-0">
