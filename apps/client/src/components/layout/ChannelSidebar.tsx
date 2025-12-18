@@ -1,7 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, PhoneOff, Camera, ScreenShare, Lock, ListChecks } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, PhoneOff, Camera, ScreenShare } from 'lucide-react';
+import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, PhoneOff, Camera, ScreenShare, Lock, ListChecks } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { CreateChannelModal } from '../modals/CreateChannelModal';
 import { UserBottomBar } from './UserBottomBar';
