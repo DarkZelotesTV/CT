@@ -561,6 +561,10 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
             throw new Error('Kein Videotrack für Screenshare gefunden.');
           }
 
+          if ('contentHint' in selectedTrack) {
+            selectedTrack.contentHint = 'motion';
+          }
+
           const publication = await roomToUse.localParticipant.publishTrack(selectedTrack, {
             name: 'screen_share',
             source: Track.Source.ScreenShare,
@@ -632,6 +636,10 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
 
         if (!videoTrack || videoTrack.readyState === 'ended') {
           throw new Error('Kein Videotrack für Screenshare gefunden.');
+        }
+
+        if ('contentHint' in videoTrack) {
+          videoTrack.contentHint = 'motion';
         }
 
         const publication = await roomToUse.localParticipant.publishTrack(videoTrack, {
