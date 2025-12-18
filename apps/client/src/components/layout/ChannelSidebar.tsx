@@ -141,16 +141,22 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
         style={{ pointerEvents: showCreateModal ? 'auto' : 'none' }}
       />
       {/* Header */}
-        <div
-          onClick={onOpenServerSettings}
-          className="h-12 flex items-center gap-2 px-4 border-b border-white/5 cursor-pointer hover:bg-white/5 transition-colors no-drag relative z-10"
-        >
-          <span className="font-bold text-white truncate flex-1">{serverName}</span>
+        <div className="h-12 flex items-center gap-2 px-4 border-b border-white/5 transition-colors no-drag relative z-10">
+          <button
+            type="button"
+            onClick={onOpenServerSettings}
+            className="group flex items-center gap-2 flex-1 text-left rounded-md px-2 py-2 hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0c10]"
+            aria-label="Servereinstellungen öffnen"
+          >
+            <span className="font-bold text-white truncate flex-1">{serverName}</span>
+            <Settings size={16} className="text-gray-500 group-hover:text-white" aria-hidden />
+          </button>
 
           <button
             type="button"
-            className="p-1.5 rounded-md hover:bg-white/10 text-gray-500 hover:text-white"
+            className="p-1.5 rounded-md hover:bg-white/10 text-gray-500 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0c10]"
             title="Kanal erstellen"
+            aria-label="Neuen Kanal erstellen"
             onClick={(e) => {
               e.stopPropagation();
               setCreateType('text');
@@ -160,8 +166,6 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
           >
             <Plus size={16} />
           </button>
-
-          <Settings size={16} className="text-gray-500" />
         </div>
 
         {/* Liste */}
