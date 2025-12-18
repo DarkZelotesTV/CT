@@ -1,7 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, PhoneOff, Camera, ScreenShare, Lock, ListChecks } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, PhoneOff, Camera, ScreenShare } from 'lucide-react';
+import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, PhoneOff, Camera, ScreenShare, Lock, ListChecks } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { CreateChannelModal } from '../modals/CreateChannelModal';
 import { UserBottomBar } from './UserBottomBar';
@@ -53,7 +51,6 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
 
   // CONTEXT NUTZEN
   const {
-    connectToChannel,
     activeChannelId: voiceChannelId,
     connectionState,
     activeChannelName,
@@ -129,12 +126,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   // Click Handler: Voice Logik in den Hintergrund schieben
   const handleChannelClick = (c: Channel) => {
     if (c.type === 'spacer') return;
-    if (c.type === 'voice') {
-      connectToChannel(c.id, c.name).catch(console.error);
-      onSelectChannel(c);
-    } else {
-      onSelectChannel(c);
-    }
+    onSelectChannel(c);
   };
 
   const closeContextMenu = () => setContextMenu(null);

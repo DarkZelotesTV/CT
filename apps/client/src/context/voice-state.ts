@@ -51,6 +51,8 @@ export interface VoiceContextType {
   selectedAudioOutputId: string | null;
   selectedVideoInputId: string | null;
   localParticipantId: string | null;
+  outputVolume: number;
+  setOutputVolume: (volume: number) => Promise<void> | void;
   screenShareAudioError?: string | null;
 }
 
