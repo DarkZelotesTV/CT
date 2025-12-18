@@ -529,7 +529,12 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
           let systemAudioTrack: MediaStreamTrack | null = null;
 
           if (!selectedTrack || (shouldShareAudio && !systemAudioTrack)) {
-            const videoConstraints: MediaTrackConstraints = {
+            type ChromeMediaConstraints = MediaTrackConstraints & {
+              chromeMediaSource?: string;
+              chromeMediaSourceId?: string;
+            };
+
+            const videoConstraints: ChromeMediaConstraints = {
               width: preset.resolution.width,
               height: preset.resolution.height,
               frameRate: { ideal: preferredFrameRate, max: preferredFrameRate },
@@ -538,7 +543,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
                 : {}),
             };
 
-            const audioConstraints: MediaTrackConstraints = shouldShareAudio
+            const audioConstraints: ChromeMediaConstraints = shouldShareAudio
               ? {
                   chromeMediaSource: 'desktop',
                   ...(options?.sourceId ? { chromeMediaSourceId: options.sourceId } : {}),
