@@ -15,7 +15,9 @@ rtc:
     enable_loopback_candidate: true
 
     # Keine externen STUN-Server nutzen
-    stun_servers: []
+    stun_servers: 
+        - stun.l.google.com:19302
+        - stun1.l.google.com:19302
 
 redis:
     address: redis:6379
