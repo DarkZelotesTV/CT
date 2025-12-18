@@ -16,6 +16,7 @@ import { WebChannelView } from '../server/WebChannelView';
 import { HomeOnboardingStage } from '../dashboard/HomeOnboardingStage';
 import { ChatChannelView } from '../server/ChatChannelView';
 import { VoiceChannelView } from '../voice/VoiceChannelView';
+import { VoicePreJoin } from '../voice/VoicePreJoin';
 
 import { OnboardingModal } from '../modals/OnboardingModal';
 import { ServerSettingsModal } from '../modals/ServerSettingsModal';
@@ -60,13 +61,22 @@ export const MainLayout = () => {
   const [showChatPanel, setShowChatPanel] = useState(true);
   const [chatCollapsed, setChatCollapsed] = useState(false);
   const [isChatDetached, setIsChatDetached] = useState(false);
+  const [lastNonVoiceChannel, setLastNonVoiceChannel] = useState<Channel | null>(null);
+  const [pendingVoiceChannelId, setPendingVoiceChannelId] = useState<number | null>(null);
   const activeTextChannel =
     activeChannel && activeChannel.type !== 'voice' && activeChannel.type !== 'web' && activeChannel.type !== 'spacer'
       ? activeChannel
       : null;
 
   // Voice Context holen
-  const { activeRoom, connectionState, muted } = useVoice();
+  const {
+    activeRoom,
+    activeChannelId: connectedVoiceChannelId,
+    activeChannelName: connectedVoiceChannelName,
+    connectionState,
+    muted,
+    connectToChannel,
+  } = useVoice();
 
   const computedMaxSidebarWidth = useMemo(() => {
     if (!containerWidth) return maxSidebarWidth;
@@ -154,6 +164,10 @@ export const MainLayout = () => {
   useEffect(() => {
     if (!activeChannel && fallbackChannel) {
       setActiveChannel(fallbackChannel);
+      if (fallbackChannel.type !== 'voice') {
+        setPendingVoiceChannelId(null);
+        setLastNonVoiceChannel(fallbackChannel);
+      }
     }
   }, [activeChannel, fallbackChannel]);
 
@@ -180,6 +194,17 @@ export const MainLayout = () => {
 
     previousConnectionState.current = connectionState;
   }, [activeChannel, connectionState, fallbackChannel]);
+
+  useEffect(() => {
+    if (
+      connectedVoiceChannelId &&
+      pendingVoiceChannelId &&
+      connectedVoiceChannelId === pendingVoiceChannelId &&
+      connectionState === 'connected'
+    ) {
+      setPendingVoiceChannelId(null);
+    }
+  }, [connectedVoiceChannelId, connectionState, pendingVoiceChannelId]);
 
   useEffect(() => {
     if (!localStorage.getItem('ct.onboarding.v1.done')) {
@@ -239,6 +264,12 @@ export const MainLayout = () => {
 
   const handleChannelSelect = useCallback((channel: Channel) => {
     setActiveChannel(channel);
+    if (channel.type === 'voice') {
+      setPendingVoiceChannelId(channel.id);
+    } else {
+      setPendingVoiceChannelId(null);
+      setLastNonVoiceChannel(channel);
+    }
     if (isNarrow) {
       setShowLeftSidebar(false);
     }
@@ -268,6 +299,30 @@ export const MainLayout = () => {
       return channel;
     });
   }, []);
+
+  const handleVoiceJoin = useCallback(
+    async (channel: Channel) => {
+      await connectToChannel(channel.id, channel.name);
+    },
+    [connectToChannel]
+  );
+
+  const handleVoiceCancel = useCallback(() => {
+    setPendingVoiceChannelId(null);
+    if (connectedVoiceChannelId && connectedVoiceChannelName) {
+      setActiveChannel({ id: connectedVoiceChannelId, name: connectedVoiceChannelName, type: 'voice' });
+      return;
+    }
+    if (lastNonVoiceChannel) {
+      setActiveChannel(lastNonVoiceChannel);
+      return;
+    }
+    if (fallbackChannel) {
+      setActiveChannel(fallbackChannel);
+      return;
+    }
+    setActiveChannel(null);
+  }, [connectedVoiceChannelId, connectedVoiceChannelName, fallbackChannel, lastNonVoiceChannel]);
 
   const announceServerChange = () => {
     window.dispatchEvent(new Event('ct-servers-changed'));
@@ -350,7 +405,26 @@ export const MainLayout = () => {
     }
 
     if (activeChannel?.type === 'voice') {
-      return <VoiceChannelView channelName={activeChannel.name} />;
+      const isConnectedToTarget = connectedVoiceChannelId === activeChannel.id && connectionState === 'connected';
+      const isJoiningTarget = pendingVoiceChannelId === activeChannel.id &&
+        (connectionState === 'connecting' || connectionState === 'reconnecting');
+      const connectedElsewhere =
+        connectedVoiceChannelId !== null && connectedVoiceChannelId !== activeChannel.id && connectionState !== 'disconnected';
+
+      if (isConnectedToTarget) {
+        return <VoiceChannelView channelName={activeChannel.name} />;
+      }
+
+      return (
+        <VoicePreJoin
+          channel={activeChannel}
+          onJoin={() => handleVoiceJoin(activeChannel)}
+          onCancel={handleVoiceCancel}
+          isJoining={isJoiningTarget}
+          connectedChannelName={connectedVoiceChannelName}
+          connectedElsewhere={connectedElsewhere}
+        />
+      );
     }
 
     return (

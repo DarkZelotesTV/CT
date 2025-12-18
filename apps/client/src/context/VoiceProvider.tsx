@@ -53,6 +53,9 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
   const [rnnoiseEnabled, setRnnoiseEnabledState] = useState(settings.talk.rnnoiseEnabled ?? false);
   const [rnnoiseAvailable, setRnnoiseAvailable] = useState(true);
   const [rnnoiseError, setRnnoiseError] = useState<string | null>(null);
+  const [outputVolume, setOutputVolumeState] = useState(() =>
+    typeof settings.talk.outputVolume === 'number' ? settings.talk.outputVolume : 1
+  );
 
   const publishedScreenTracksRef = useRef<MediaStreamTrack[]>([]);
   const rnnoiseResourcesRef = useRef<{
@@ -348,6 +351,16 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
     [activeRoom, applyMicrophoneState, isTalking, micMuted, muted, stopRnnoisePipeline, updateTalk, usePushToTalk]
   );
 
+  const setOutputVolume = useCallback(
+    async (volume: number) => {
+      const normalized = Math.max(0, Math.min(2, volume));
+      setOutputVolumeState(normalized);
+      updateTalk({ outputVolume: normalized });
+      applyOutputVolume(activeRoom, normalized);
+    },
+    [activeRoom, applyOutputVolume, updateTalk]
+  );
+
   const applyOutputMuteState = useCallback(
     (room: Room | null, shouldEnable: boolean) => {
       if (!room) return;
@@ -364,16 +377,35 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
     []
   );
 
+  const applyOutputVolume = useCallback(
+    (room: Room | null, volume: number) => {
+      if (!room) return;
+      const savedVolumes = settings.talk.participantVolumes || {};
+
+      room.remoteParticipants.forEach((participant) => {
+        const baseVolume = savedVolumes[participant.sid] ?? 1;
+        if (typeof participant.setVolume === 'function') {
+          participant.setVolume(baseVolume * volume);
+        }
+      });
+    },
+    [settings.talk.participantVolumes]
+  );
+
   useEffect(() => {
     if (!activeRoom) return;
 
     applyOutputMuteState(activeRoom, !muted);
 
-    const handleTrackSubscribed = (track: RemoteTrack) => {
+    const handleTrackSubscribed = (track: RemoteTrack, _publication: any, participant: any) => {
       if (track.kind === Track.Kind.Audio) {
         const audioTrack = track as RemoteAudioTrack;
         if (audioTrack.mediaStreamTrack) {
           audioTrack.mediaStreamTrack.enabled = !muted;
+        }
+        if (participant && typeof participant.setVolume === 'function') {
+          const baseVolume = (settings.talk.participantVolumes || {})[participant.sid] ?? 1;
+          participant.setVolume(baseVolume * outputVolume);
         }
       }
     };
@@ -382,7 +414,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       activeRoom.off(RoomEvent.TrackSubscribed, handleTrackSubscribed);
     };
-  }, [activeRoom, applyOutputMuteState, muted]);
+  }, [activeRoom, applyOutputMuteState, muted, outputVolume, settings.talk.participantVolumes]);
 
   const startTalking = useCallback(async () => {
     setIsTalking(true);
@@ -1055,6 +1087,10 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
   }, [activeRoom, applyMicrophoneState, settings.devices.audioInputId, settings.devices.audioOutputId, settings.devices.videoInputId]);
 
   useEffect(() => {
+    applyOutputVolume(activeRoom, outputVolume);
+  }, [activeRoom, applyOutputVolume, outputVolume]);
+
+  useEffect(() => {
     if (!activeRoom) {
       syncLocalMediaState(null);
       return;
@@ -1105,6 +1141,8 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         selectedAudioOutputId: settings.devices.audioOutputId,
         selectedVideoInputId: settings.devices.videoInputId,
         localParticipantId,
+        outputVolume,
+        setOutputVolume,
         screenShareAudioError,
       }}
     >

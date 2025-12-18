@@ -18,7 +18,7 @@ type VoicePerson = {
  * Shows who is currently in the voice call and highlights active speakers.
  */
 export const VoiceParticipantsPanel = () => {
-  const { activeRoom, activeChannelId, connectionState } = useVoice();
+  const { activeRoom, activeChannelId, connectionState, outputVolume } = useVoice();
   const { settings, updateTalk } = useSettings();
   const { channelPresence } = useSocket();
   const [people, setPeople] = useState<VoicePerson[]>([]);
@@ -66,11 +66,11 @@ export const VoiceParticipantsPanel = () => {
       const participant = activeRoom.remoteParticipants.get(sid);
       if (!participant) return;
 
-      const volume = volumeOverride ?? savedVolumes[sid] ?? 1;
+      const volume = (volumeOverride ?? savedVolumes[sid] ?? 1) * (outputVolume ?? 1);
 
       participant.setVolume(volume);
     },
-    [activeRoom, savedVolumes]
+    [activeRoom, outputVolume, savedVolumes]
   );
 
   const handleVolumeChange = useCallback(
