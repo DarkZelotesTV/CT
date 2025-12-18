@@ -1,3 +1,5 @@
+// apps/client/src/context/VoiceProvider.tsx
+
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   Room,
@@ -14,7 +16,6 @@ import { apiFetch } from '../api/http';
 import { useSettings } from './SettingsContext';
 import { useSocket } from './SocketContext';
 import rnnoiseWorkletUrl from '../audio/rnnoise-worklet.js?url';
-// NEU: Importiere URL für RNNoise-Sync
 import rnnoiseWasmScriptUrl from '@jitsi/rnnoise-wasm/dist/rnnoise-sync.js?url';
 
 const qualityPresets = {
@@ -210,7 +211,6 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         const rawStream = new MediaStream([rawTrack]);
         const source = audioContext.createMediaStreamSource(rawStream);
         
-        // NEU: WASM URL über processorOptions übergeben
         const rnnoiseNode = new AudioWorkletNode(audioContext, 'rnnoise-processor', {
             processorOptions: {
                 wasmUrl: rnnoiseWasmScriptUrl
@@ -578,7 +578,6 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         return track;
       };
 
-      // FIX: Electron Detection & Handling
       if ((window as any).electron && (window as any).electron.getScreenSources) {
         try {
           const sourceId = options?.sourceId;
@@ -597,7 +596,6 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
           let systemAudioTrack: MediaStreamTrack | null = null;
 
           if (!selectedTrack || (shouldShareAudio && !systemAudioTrack)) {
-            // FIX: Verwende die "mandatory"-Syntax, damit Electron nicht die Webcam nimmt
             const videoConstraints: any = {
               mandatory: {
                 chromeMediaSource: 'desktop',
@@ -680,7 +678,6 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      // Standard Browser Fallback
       try {
         let stream: MediaStream | null = null;
         let videoTrack: MediaStreamTrack | null = null;
@@ -806,10 +803,11 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [isScreenSharing, startScreenShare, stopScreenShare]);
 
+  // FIX: disconnect ist nun robust gegen Fehler beim Beenden des Raumes
   const disconnect = useCallback(async () => {
     console.warn('[voice] disconnect() called', new Error().stack);
 
-    // FIX START: Optimistic Leave Trigger
+    // Optimistic Leave Trigger
     if (activeChannelId && optimisticLeave) {
        try {
          const localUserStr = localStorage.getItem('clover_user');
@@ -824,7 +822,6 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
          console.warn('Could not perform optimistic leave', e);
        }
     }
-    // FIX END
 
     manualDisconnectRef.current = true;
     reconnectAttemptsRef.current = 0;
@@ -833,34 +830,48 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       reconnectTimeoutRef.current = null;
     }
     isConnecting.current = false;
-    await stopRnnoisePipeline(activeRoom);
-    if (activeRoom) {
-      await activeRoom.disconnect();
+
+    // Versuche, Audio-Pipeline sauber zu stoppen
+    try {
+      await stopRnnoisePipeline(activeRoom);
+    } catch (err) {
+      console.warn('Fehler beim Stoppen von RNNoise:', err);
     }
-    setActiveRoom(null);
-    setActiveChannelId(null);
-    setActiveChannelName(null);
-    leavePresenceChannel();
-    setToken(null);
-    setConnectionState('disconnected');
-    setIsTalking(false);
-    setIsCameraEnabled(false);
-    setIsScreenSharing(false);
-    setIsPublishingCamera(false);
-    setIsPublishingScreen(false);
-    setCameraError(null);
-    setScreenShareError(null);
-    setScreenShareAudioError(null);
-    publishedScreenTracksRef.current.forEach((t) => {
-      try {
-        t.stop();
-      } catch {
-        /* noop */
+
+    // Versuche, Raum sauber zu verlassen
+    try {
+      if (activeRoom) {
+        await activeRoom.disconnect();
       }
-    });
-    publishedScreenTracksRef.current = [];
-    setLocalParticipantId(null);
-  }, [activeRoom, leavePresenceChannel, activeChannelId, optimisticLeave]);
+    } catch (err) {
+      console.warn('Fehler beim Disconnecten des Raumes (State wird trotzdem resettet):', err);
+    } finally {
+      // GARANTIERTES STATE-RESET
+      setActiveRoom(null);
+      setActiveChannelId(null);
+      setActiveChannelName(null);
+      leavePresenceChannel();
+      setToken(null);
+      setConnectionState('disconnected');
+      setIsTalking(false);
+      setIsCameraEnabled(false);
+      setIsScreenSharing(false);
+      setIsPublishingCamera(false);
+      setIsPublishingScreen(false);
+      setCameraError(null);
+      setScreenShareError(null);
+      setScreenShareAudioError(null);
+      publishedScreenTracksRef.current.forEach((t) => {
+        try {
+          t.stop();
+        } catch {
+          /* noop */
+        }
+      });
+      publishedScreenTracksRef.current = [];
+      setLocalParticipantId(null);
+    }
+  }, [activeRoom, leavePresenceChannel, activeChannelId, optimisticLeave, stopRnnoisePipeline]);
 
   const finalizeDisconnection = useCallback(
     (message: string | null) => {
@@ -914,7 +925,12 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (activeRoom) {
         await stopRnnoisePipeline(activeRoom);
-        await activeRoom.disconnect();
+        // Auch hier ein try-catch, falls der alte Raum hängt
+        try {
+          await activeRoom.disconnect();
+        } catch (e) {
+          console.warn("Fehler beim Disconnect des alten Raums:", e);
+        }
       }
 
       if (activeChannelId) {
@@ -926,7 +942,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       setError(null);
 
       try {
-        const lkConfig = getLiveKitConfig(); // Config laden
+        const lkConfig = getLiveKitConfig();
         const roomName = `channel_${channelId}`;
 
         const res = await apiFetch<{ token: string }>(`/api/livekit/token?room=${roomName}`);
@@ -935,18 +951,15 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
 
         joinPresenceChannel(channelId);
 
-        // Room Instanz mit den konfigurierten ICE-Servern erstellen
         const room = new Room({
           adaptiveStream: true,
           dynacast: true,
           publishDefaults: { simulcast: true },
         });
 
-        // FIX: Max Listeners Limit erhöhen, um Warnung zu vermeiden
         room.setMaxListeners(100);
 
         room.on(RoomEvent.Disconnected, (reason) => {
-          // CRITICAL FIX: Prevent Reconnect Loop on Duplicate Identity
           if (reason === DisconnectReason.DUPLICATE_IDENTITY) {
             console.warn('[voice] Disconnected due to DUPLICATE_IDENTITY. Stopping reconnect loop.');
             finalizeDisconnection('Verbindung beendet: Sie haben sich von einem anderen Gerät angemeldet.');
@@ -1046,7 +1059,6 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         room.on(RoomEvent.TrackMuted, handleTrackChange);
         room.on(RoomEvent.TrackUnmuted, handleTrackChange);
 
-        // Verbinden mit der sicheren URL
         await room.connect(lkConfig.serverUrl, newToken, lkConfig.connectOptions);
         if (settings.devices.audioInputId) {
           await room.switchActiveDevice('audioinput', settings.devices.audioInputId, true);
