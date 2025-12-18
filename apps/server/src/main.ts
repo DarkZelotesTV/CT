@@ -9,17 +9,24 @@ import authRoutes from './routes/auth';
 import dataRoutes from './routes/data';
 import friendsRoutes from './routes/friends';
 import livekitRoutes from './routes/livekit'; // WICHTIG: Sicherstellen, dass diese Datei existiert!
+import {
+  channelPresence,
+  channelPublicKeys,
+  userChannelMemberships,
+  emitToUser,
+  registerUserSocket,
+  removeUserFromAllChannels,
+  removeUserFromChannel,
+  setIoInstance,
+  unregisterUserSocket,
+} from './realtime/registry';
 
 // Models Importe (für Socket Logik)
-import { Message, User, ServerMember, MemberRole, Role } from './models';
+import { Message, User, ServerMember, MemberRole, Role, ServerBan } from './models';
 import { resolveUserFromIdentity } from './utils/identityAuth';
 
 const app = express();
 const httpServer = createServer(app);
-const channelPresence = new Map<number, Set<number>>();
-const channelPublicKeys = new Map<number, Map<number, string>>();
-const userChannelMemberships = new Map<number, Set<number>>();
-
 const HEARTBEAT_INTERVAL_MS = 15_000;
 const OFFLINE_GRACE_MS = 30_000;
 const offlineTimers = new Map<number, NodeJS.Timeout>();
@@ -32,28 +39,10 @@ const clearOfflineTimer = (userId: number) => {
   }
 };
 
-const removeUserFromChannels = (userId: number) => {
-  for (const [channelId, users] of channelPresence.entries()) {
-    if (users.has(userId)) {
-      users.delete(userId);
-      if (!users.size) channelPresence.delete(channelId);
-      io.to(`channel_${channelId}`).emit('channel_presence_leave', { channelId, userId });
-    }
-
-    const keys = channelPublicKeys.get(channelId);
-    if (keys?.has(userId)) {
-      keys.delete(userId);
-      if (!keys.size) channelPublicKeys.delete(channelId);
-    }
-  }
-
-  userChannelMemberships.delete(userId);
-};
-
 const markUserOffline = async (userId: number) => {
   clearOfflineTimer(userId);
 
-  removeUserFromChannels(userId);
+  removeUserFromAllChannels(userId);
 
   try {
     await User.update({ status: 'offline' }, { where: { id: userId } });
@@ -97,6 +86,8 @@ const io = new Server(httpServer, {
     methods: ["GET", "POST"]
   }
 });
+
+setIoInstance(io);
 
 // ==========================================
 // 3. API ROUTEN REGISTRIEREN
@@ -146,6 +137,7 @@ io.on('connection', async (socket) => {
        io.emit('user_status_change', { userId: numericUserId, status: 'online' });
        scheduleOfflineCheck(numericUserId);
        await sendPresenceSnapshot(socket);
+       registerUserSocket(numericUserId, socket);
      } catch (err) {
        console.error("Fehler beim Setzen des Online-Status:", err);
      }
@@ -172,14 +164,7 @@ io.on('connection', async (socket) => {
     for (const prevChannel of Array.from(joinedChannels)) {
       if (prevChannel !== channelId) {
         socket.leave(`channel_${prevChannel}`);
-        const prevSet = channelPresence.get(prevChannel);
-        if (prevSet?.has(numericUserId)) {
-          prevSet.delete(numericUserId);
-          if (!prevSet.size) {
-            channelPresence.delete(prevChannel);
-          }
-          io.to(`channel_${prevChannel}`).emit('channel_presence_leave', { channelId: prevChannel, userId: numericUserId });
-        }
+        removeUserFromChannel(prevChannel, numericUserId);
         joinedChannels.delete(prevChannel);
         globalChannels.delete(prevChannel);
       }
@@ -329,27 +314,7 @@ io.on('connection', async (socket) => {
 
     socket.leave(`channel_${channelId}`);
     joinedChannels.delete(channelId);
-
-    const presenceSet = channelPresence.get(channelId);
-    if (presenceSet?.has(numericUserId)) {
-      presenceSet.delete(numericUserId);
-      if (!presenceSet.size) channelPresence.delete(channelId);
-      io.to(`channel_${channelId}`).emit('channel_presence_leave', { channelId, userId: numericUserId });
-    }
-
-    const channelKeys = channelPublicKeys.get(channelId);
-    if (channelKeys?.has(numericUserId)) {
-      channelKeys.delete(numericUserId);
-      if (!channelKeys.size) channelPublicKeys.delete(channelId);
-    }
-
-    const globalChannels = userChannelMemberships.get(numericUserId);
-    if (globalChannels?.has(channelId)) {
-      globalChannels.delete(channelId);
-      if (!globalChannels.size) {
-        userChannelMemberships.delete(numericUserId);
-      }
-    }
+    removeUserFromChannel(channelId, numericUserId);
   });
 
   socket.on('disconnect', async () => {
@@ -369,6 +334,7 @@ io.on('connection', async (socket) => {
          clearInterval((socket.data as any).presenceSnapshotInterval);
        }
 
+       unregisterUserSocket(numericUserId, socket);
        scheduleOfflineCheck(numericUserId);
     }
   });

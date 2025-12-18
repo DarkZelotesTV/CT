@@ -8,12 +8,16 @@ import { Friendship } from './Friendship';
 import { Role } from './Role';
 import { MemberRole } from './MemberRole';
 import { ChannelPermissionOverride } from './ChannelPermissionOverride';
+import { ServerBan } from './ServerBan';
 
 // Beziehungen definieren
 
 // User <-> Server
 User.hasMany(Server, { foreignKey: 'owner_id', as: 'ownedServers' });
 Server.belongsTo(User, { foreignKey: 'owner_id', as: 'owner' });
+
+Server.hasMany(ServerBan, { foreignKey: 'server_id', as: 'bans' });
+ServerBan.belongsTo(Server, { foreignKey: 'server_id', as: 'server' });
 
 // Server <-> Channel
 Server.hasMany(Channel, { foreignKey: 'server_id', as: 'channels' });
@@ -64,5 +68,4 @@ ChannelPermissionOverride.belongsTo(Channel, { foreignKey: 'channel_id', as: 'ch
 Role.hasMany(ChannelPermissionOverride, { foreignKey: 'role_id', as: 'roleOverrides' });
 ChannelPermissionOverride.belongsTo(Role, { foreignKey: 'role_id', as: 'role' });
 
-export { User, Server, Channel, Message, ServerMember, Category, Friendship, Role, MemberRole, ChannelPermissionOverride };
-
+export { User, Server, Channel, Message, ServerMember, Category, Friendship, Role, MemberRole, ChannelPermissionOverride, ServerBan };

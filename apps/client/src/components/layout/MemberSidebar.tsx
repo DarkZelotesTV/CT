@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Shield, Crown } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { useSocket } from '../../context/SocketContext';
@@ -14,7 +14,20 @@ interface Member {
 export const MemberSidebar = ({ serverId }: { serverId: number }) => {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);
-  const { socket, presenceSnapshot } = useSocket();
+  const [permissions, setPermissions] = useState<Record<string, boolean>>({});
+  const [voiceChannels, setVoiceChannels] = useState<{ id: number; name: string }[]>([]);
+  const [contextMenu, setContextMenu] = useState<{
+    userId: number;
+    username: string;
+    channelId: number | null;
+    channelName?: string;
+    x: number;
+    y: number;
+    target?: HTMLElement | null;
+    moveTargetId?: number | null;
+  } | null>(null);
+  const { socket, presenceSnapshot, channelPresence } = useSocket();
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
 
   const normalizeMember = (m: any): Member => ({
     userId: m.userId ?? m.user_id ?? m.User?.id ?? m.user?.id,
@@ -23,6 +36,92 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
     status: m.status ?? m.User?.status ?? m.user?.status ?? 'offline',
     roles: m.roles ?? (m.role ? [m.role] : []),
   });
+
+  const closeContextMenu = () => setContextMenu(null);
+
+  const findActiveVoiceChannel = (userId: number) => {
+    const entry = Object.entries(channelPresence || {}).find(([, users]) => (users || []).some((u) => u.id === userId));
+    if (!entry) return null;
+    const [channelId] = entry;
+    const numericId = Number(channelId);
+    const voiceChannel = voiceChannels.find((ch) => ch.id === numericId);
+    return { channelId: numericId, channelName: voiceChannel?.name };
+  };
+
+  const openUserMenu = (
+    origin: { x: number; y: number; target?: HTMLElement | null },
+    member: Member
+  ) => {
+    if (!permissions.move && !permissions.kick) return;
+    const active = findActiveVoiceChannel(member.userId);
+    setContextMenu({
+      userId: member.userId,
+      username: member.username,
+      channelId: active?.channelId ?? null,
+      channelName: active?.channelName,
+      x: origin.x,
+      y: origin.y,
+      target: origin.target,
+      moveTargetId: active?.channelId ?? null,
+    });
+  };
+
+  const startLongPress = (handler: () => void) => {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    longPressTimer.current = setTimeout(handler, 500);
+  };
+
+  const cancelLongPress = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
+  const performModeration = async (
+    action: 'mute' | 'kick' | 'ban' | 'remove' | 'move',
+    payload: { userId: number; channelId?: number | null; targetChannelId?: number | null }
+  ) => {
+    if (!serverId) return;
+    try {
+      switch (action) {
+        case 'mute':
+          if (!payload.channelId) throw new Error('Kein Kanal angegeben');
+          await apiFetch(`/api/servers/${serverId}/members/${payload.userId}/mute`, {
+            method: 'POST',
+            body: JSON.stringify({ channelId: payload.channelId }),
+          });
+          break;
+        case 'remove':
+          if (!payload.channelId) throw new Error('Kein Kanal angegeben');
+          await apiFetch(`/api/servers/${serverId}/members/${payload.userId}/remove-from-talk`, {
+            method: 'POST',
+            body: JSON.stringify({ channelId: payload.channelId }),
+          });
+          break;
+        case 'move':
+          if (!payload.channelId || !payload.targetChannelId) throw new Error('Kanal fehlt');
+          await apiFetch(`/api/servers/${serverId}/members/${payload.userId}/move`, {
+            method: 'POST',
+            body: JSON.stringify({ fromChannelId: payload.channelId, toChannelId: payload.targetChannelId }),
+          });
+          break;
+        case 'ban':
+          await apiFetch(`/api/servers/${serverId}/members/${payload.userId}/ban`, { method: 'POST' });
+          break;
+        case 'kick':
+          await apiFetch(`/api/servers/${serverId}/members/${payload.userId}`, { method: 'DELETE' });
+          break;
+      }
+      if (action === 'ban' || action === 'kick') {
+        setMembers((prev) => prev.filter((member) => member.userId !== payload.userId));
+      }
+    } catch (err: any) {
+      alert(err?.message || 'Aktion fehlgeschlagen');
+    } finally {
+      closeContextMenu();
+    }
+  };
 
   // --- API LOGIC: Mitglieder Laden ---
   useEffect(() => {
@@ -61,6 +160,21 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
   }, [serverId, socket]);
 
   useEffect(() => {
+    if (!serverId) return;
+    apiFetch<Record<string, boolean>>(`/api/servers/${serverId}/permissions`).then(setPermissions).catch(() => setPermissions({}));
+  }, [serverId]);
+
+  useEffect(() => {
+    if (!serverId) return;
+    apiFetch<{ categories: any[]; uncategorized: any[] }>(`/api/servers/${serverId}/structure`)
+      .then((res) => {
+        const channels = [...(res?.uncategorized || []), ...(res?.categories || []).flatMap((c: any) => c.channels || [])];
+        setVoiceChannels(channels.filter((c: any) => c.type === 'voice').map((c: any) => ({ id: c.id, name: c.name })));
+      })
+      .catch(() => setVoiceChannels([]));
+  }, [serverId]);
+
+  useEffect(() => {
     if (!socket) return;
 
     const handleStatusChange = ({ userId, status }: { userId: number; status: 'online' | 'offline' }) => {
@@ -95,12 +209,48 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
     }));
   }, [presenceSnapshot]);
 
+  useEffect(() => {
+    if (!contextMenu) return;
+    const handleGlobal = (e: MouseEvent) => {
+      if (!contextMenu.target) return closeContextMenu();
+      if (!(contextMenu.target as HTMLElement).contains(e.target as HTMLElement)) closeContextMenu();
+    };
+    window.addEventListener('click', handleGlobal);
+    window.addEventListener('contextmenu', handleGlobal);
+    return () => {
+      window.removeEventListener('click', handleGlobal);
+      window.removeEventListener('contextmenu', handleGlobal);
+    };
+  }, [contextMenu]);
+
+  useEffect(() => {
+    if (!contextMenu?.channelId) return;
+    const nextOption = voiceChannels.find((vc) => vc.id !== contextMenu.channelId);
+    if (!nextOption) return;
+    setContextMenu((prev) => (prev ? { ...prev, moveTargetId: prev.moveTargetId || nextOption.id } : prev));
+  }, [contextMenu?.channelId, voiceChannels]);
+
   // Gruppenlogik (Online / Offline)
   const onlineMembers = members.filter(m => m.status === 'online');
   const offlineMembers = members.filter(m => m.status !== 'online');
 
   const renderMember = (m: Member) => (
-      <div key={m.userId} className="flex items-center p-2 mb-1 rounded-lg hover:bg-white/5 cursor-pointer group transition-all">
+      <div
+        key={m.userId}
+        className="flex items-center p-2 mb-1 rounded-lg hover:bg-white/5 cursor-pointer group transition-all"
+        onContextMenu={(e) => {
+          e.preventDefault();
+          openUserMenu({ x: e.clientX, y: e.clientY, target: e.currentTarget as HTMLElement }, m);
+        }}
+        onTouchStart={(e) => {
+          const touch = e.touches?.[0];
+          startLongPress(() =>
+            openUserMenu({ x: touch?.clientX || 0, y: touch?.clientY || 0, target: e.currentTarget as HTMLElement }, m)
+          );
+        }}
+        onTouchEnd={cancelLongPress}
+        onTouchMove={cancelLongPress}
+      >
           <div className="w-9 h-9 rounded-full bg-glass-300 mr-3 relative flex items-center justify-center flex-shrink-0">
               {m.avatarUrl ? (
                   <img src={m.avatarUrl} className="w-full h-full rounded-full object-cover" />
@@ -145,7 +295,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
               {onlineMembers.map(renderMember)}
           </div>
 
-           {/* Offline Group */}
+          {/* Offline Group */}
            <div>
               <div className="text-[10px] font-bold text-gray-500 mb-2 px-2 uppercase tracking-wider flex items-center gap-2">
                  Offline <span className="text-[9px] text-gray-600">— {offlineMembers.length}</span>
@@ -153,6 +303,86 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
               {offlineMembers.map(renderMember)}
           </div>
       </div>
-    </div>
-  );
+
+      {contextMenu && (
+        <div className="fixed inset-0 z-50" onClick={closeContextMenu}>
+          <div
+            className="absolute min-w-[240px] rounded-md bg-[#16181d] border border-white/10 shadow-xl p-2 space-y-1"
+            style={{ top: contextMenu.y, left: contextMenu.x }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-[11px] text-gray-400 uppercase tracking-wide px-2 pb-1">{contextMenu.username}</div>
+            {permissions.move && contextMenu.channelId ? (
+              <button
+                type="button"
+                className="w-full text-left px-2 py-1 rounded hover:bg-white/10 text-sm text-gray-200"
+                onClick={() => performModeration('mute', { userId: contextMenu.userId, channelId: contextMenu.channelId })}
+              >
+                Stummschalten
+              </button>
+            ) : null}
+            {permissions.move && contextMenu.channelId ? (
+              <button
+                type="button"
+                className="w-full text-left px-2 py-1 rounded hover:bg-white/10 text-sm text-gray-200"
+                onClick={() => performModeration('remove', { userId: contextMenu.userId, channelId: contextMenu.channelId })}
+              >
+                Aus dem Talk entfernen
+              </button>
+            ) : null}
+            {permissions.move && contextMenu.channelId && voiceChannels.length > 1 ? (
+              <div className="px-2 py-1 space-y-1">
+                <div className="text-[11px] text-gray-500">In Talk verschieben</div>
+                <div className="flex items-center gap-2">
+                  <select
+                    className="flex-1 bg-[#0f1115] border border-white/10 rounded px-2 py-1 text-sm text-gray-200"
+                    value={contextMenu.moveTargetId || ''}
+                    onChange={(e) => setContextMenu((prev) => (prev ? { ...prev, moveTargetId: Number(e.target.value) } : prev))}
+                  >
+                    {voiceChannels
+                      .filter((vc) => vc.id !== contextMenu.channelId)
+                      .map((vc) => (
+                        <option key={vc.id} value={vc.id}>{vc.name}</option>
+                      ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="px-2 py-1 rounded bg-primary/20 text-primary text-sm hover:bg-primary/30"
+                    disabled={!contextMenu.moveTargetId}
+                    onClick={() =>
+                      performModeration('move', {
+                        userId: contextMenu.userId,
+                        channelId: contextMenu.channelId!,
+                        targetChannelId: contextMenu.moveTargetId || undefined,
+                      })
+                    }
+                  >
+                    Move
+                  </button>
+                </div>
+              </div>
+            ) : null}
+            {permissions.kick ? (
+              <>
+                <button
+                  type="button"
+                  className="w-full text-left px-2 py-1 rounded hover:bg-white/10 text-sm text-gray-200"
+                  onClick={() => performModeration('ban', { userId: contextMenu.userId })}
+                >
+                  Bann aussprechen
+                </button>
+                <button
+                  type="button"
+                  className="w-full text-left px-2 py-1 rounded hover:bg-white/10 text-sm text-gray-200"
+                  onClick={() => performModeration('kick', { userId: contextMenu.userId })}
+                >
+                  Vom Server kicken
+                </button>
+              </>
+            ) : null}
+          </div>
+        </div>
+      )}
+  </div>
+);
 };
