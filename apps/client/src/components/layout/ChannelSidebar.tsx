@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, PhoneOff, Camera, ScreenShare } from 'lucide-react';
+import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, PhoneOff, Camera, ScreenShare, Lock, ListChecks } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { CreateChannelModal } from '../modals/CreateChannelModal';
 import { UserBottomBar } from './UserBottomBar';
@@ -9,7 +9,7 @@ import { useSocket } from '../../context/SocketContext';
 import { defaultServerTheme, deriveServerThemeFromSettings, type ServerTheme } from '../../theme/serverTheme';
 
 // ... (Interfaces Channel, Category wie gehabt) ...
-interface Channel { id: number; name: string; type: 'text' | 'voice' | 'web'; custom_icon?: string; }
+interface Channel { id: number; name: string; type: 'text' | 'voice' | 'web' | 'data-transfer' | 'spacer' | 'list'; custom_icon?: string; }
 interface Category { id: number; name: string; channels: Channel[]; }
 interface ChannelSidebarProps {
   serverId: number | null;
@@ -26,7 +26,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   const [serverTheme, setServerTheme] = useState<ServerTheme>(defaultServerTheme);
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [createType, setCreateType] = useState<any>('text');
+  const [createType, setCreateType] = useState<Channel['type']>('text');
   const [createCategoryId, setCreateCategoryId] = useState<number | null>(null);
   const modalPortalRef = useRef<HTMLDivElement>(null);
 
@@ -63,8 +63,8 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
 
       const allChannels = [...structRes.uncategorized, ...structRes.categories.flatMap((c) => c.channels)];
       const fallbackChannel =
-        allChannels.find((c) => c.id === (structRes.fallbackChannelId ?? null) && c.type !== 'voice') ||
-        allChannels.find((c) => c.type !== 'voice') ||
+        allChannels.find((c) => c.id === (structRes.fallbackChannelId ?? null) && c.type !== 'voice' && c.type !== 'spacer') ||
+        allChannels.find((c) => c.type !== 'voice' && c.type !== 'spacer') ||
         null;
 
       onResolveFallback?.(fallbackChannel ?? null);
@@ -78,6 +78,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
 
   // Click Handler: Voice Logik in den Hintergrund schieben
   const handleChannelClick = (c: Channel) => {
+    if (c.type === 'spacer') return;
     if (c.type === 'voice') {
       connectToChannel(c.id, c.name).catch(console.error);
       onSelectChannel(c);
@@ -87,7 +88,26 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   };
 
   const renderChannel = (c: Channel, isInside: boolean) => {
-    const Icon = c.type === 'web' ? Globe : c.type === 'voice' ? Volume2 : Hash;
+    if (c.type === 'spacer') {
+      return (
+        <div key={c.id} className={`${isInside ? 'ml-4' : 'mx-2'} my-2 flex items-center gap-2`}>
+          <div className="flex-1 h-px bg-white/10" />
+          <span className="text-[10px] uppercase tracking-[0.15em] text-gray-600 select-none">Separator</span>
+          <div className="flex-1 h-px bg-white/10" />
+        </div>
+      );
+    }
+
+    const Icon =
+      c.type === 'web'
+        ? Globe
+        : c.type === 'voice'
+        ? Volume2
+        : c.type === 'data-transfer'
+        ? Lock
+        : c.type === 'list'
+        ? ListChecks
+        : Hash;
     const isActive = activeChannelId === c.id;
     const isConnected = c.type === 'voice' && voiceChannelId === c.id; // Bin ich hier verbunden?
     const presenceList = channelPresence[c.id] || [];

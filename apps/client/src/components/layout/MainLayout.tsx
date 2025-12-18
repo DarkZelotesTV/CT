@@ -32,7 +32,7 @@ const maxSidebarWidth = 420;
 interface Channel {
   id: number;
   name: string;
-  type: 'text' | 'voice' | 'web';
+  type: 'text' | 'voice' | 'web' | 'data-transfer' | 'spacer' | 'list';
 }
 
 export const MainLayout = () => {
@@ -60,7 +60,10 @@ export const MainLayout = () => {
   const [showChatPanel, setShowChatPanel] = useState(true);
   const [chatCollapsed, setChatCollapsed] = useState(false);
   const [isChatDetached, setIsChatDetached] = useState(false);
-  const activeTextChannel = activeChannel?.type === 'text' ? activeChannel : null;
+  const activeTextChannel =
+    activeChannel && activeChannel.type !== 'voice' && activeChannel.type !== 'web' && activeChannel.type !== 'spacer'
+      ? activeChannel
+      : null;
 
   // Voice Context holen
   const { activeRoom, connectionState, muted } = useVoice();
@@ -155,7 +158,7 @@ export const MainLayout = () => {
   }, [activeChannel, fallbackChannel]);
 
   useEffect(() => {
-    if (activeChannel?.type === 'text') {
+    if (activeChannel && activeChannel.type !== 'voice' && activeChannel.type !== 'web' && activeChannel.type !== 'spacer') {
       setShowChatPanel(true);
     } else {
       setShowChatPanel(false);
@@ -501,6 +504,7 @@ export const MainLayout = () => {
                 <ChatChannelView
                   channelId={activeTextChannel.id}
                   channelName={activeTextChannel.name}
+                  channelType={activeTextChannel.type}
                   isCompact={isNarrow}
                   onOpenMembers={() => setShowMemberSheet(true)}
                   onPopout={handleDetachChat}
@@ -535,8 +539,8 @@ export const MainLayout = () => {
             </div>
           )}
           <BottomChatBar
-            channelId={activeChannel?.type === 'text' ? activeChannel.id : null}
-            channelName={activeChannel?.type === 'text' ? activeChannel.name : undefined}
+            channelId={activeChannel && (activeChannel.type === 'text' || activeChannel.type === 'list') ? activeChannel.id : null}
+            channelName={activeChannel && (activeChannel.type === 'text' || activeChannel.type === 'list') ? activeChannel.name : undefined}
           />
         </div>
 

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Loader2, Hash, Volume2, Globe } from 'lucide-react';
+import { X, Loader2, Hash, Volume2, Globe, Lock, ListChecks, GripHorizontal } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import classNames from 'classnames';
 import { ServerTheme, defaultServerTheme, resolveServerTheme } from '../../theme/serverTheme';
@@ -8,7 +8,7 @@ import { ServerTheme, defaultServerTheme, resolveServerTheme } from '../../theme
 interface CreateChannelModalProps {
   serverId: number;
   categoryId?: number | null;
-  defaultType?: 'text' | 'voice' | 'web';
+  defaultType?: 'text' | 'voice' | 'web' | 'data-transfer' | 'spacer' | 'list';
   theme?: Partial<ServerTheme> | null;
   portalTarget?: HTMLElement | null;
   onClose: () => void;
@@ -25,7 +25,7 @@ export const CreateChannelModal = ({
   onCreated,
 }: CreateChannelModalProps) => {
   const [name, setName] = useState('');
-  const [type, setType] = useState<'text' | 'voice' | 'web'>(defaultType);
+  const [type, setType] = useState<'text' | 'voice' | 'web' | 'data-transfer' | 'spacer' | 'list'>(defaultType);
   const [loading, setLoading] = useState(false);
   const [defaultPassword, setDefaultPassword] = useState('');
   const [joinPassword, setJoinPassword] = useState('');
@@ -86,6 +86,9 @@ export const CreateChannelModal = ({
               { key: 'text' as const, label: 'Text', description: 'Nachrichten, Bilder, Emojis senden.', Icon: Hash },
               { key: 'voice' as const, label: 'Sprache', description: 'Zusammen abhängen, reden, streamen.', Icon: Volume2 },
               { key: 'web' as const, label: 'Webseite', description: 'Eine HTML Startseite für deinen Server.', Icon: Globe },
+              { key: 'list' as const, label: 'Liste', description: 'Ordne Nachrichten manuell per Drag & Drop.', Icon: ListChecks },
+              { key: 'data-transfer' as const, label: 'Daten-Transfer', description: 'Passwortgeschützte, verschlüsselte Inhalte.', Icon: Lock },
+              { key: 'spacer' as const, label: 'Trenner', description: 'Visuelle Abgrenzung ohne Interaktion.', Icon: GripHorizontal },
             ].map(({ key, label, description, Icon }) => {
               const isActive = type === key;
               return (
@@ -137,8 +140,14 @@ export const CreateChannelModal = ({
                 <Hash size={16} className="mr-2" style={{ color: palette.textMuted }} />
               ) : type === 'voice' ? (
                 <Volume2 size={16} className="mr-2" style={{ color: palette.textMuted }} />
-              ) : (
+              ) : type === 'web' ? (
                 <Globe size={16} className="mr-2" style={{ color: palette.textMuted }} />
+              ) : type === 'data-transfer' ? (
+                <Lock size={16} className="mr-2" style={{ color: palette.textMuted }} />
+              ) : type === 'list' ? (
+                <ListChecks size={16} className="mr-2" style={{ color: palette.textMuted }} />
+              ) : (
+                <GripHorizontal size={16} className="mr-2" style={{ color: palette.textMuted }} />
               )}
               <input
                 autoFocus
@@ -167,7 +176,8 @@ export const CreateChannelModal = ({
                   border: `1px solid ${palette.border}`,
                   color: palette.text,
                 }}
-                placeholder="Optional"
+                placeholder={type === 'spacer' ? 'Für Trenner nicht nötig' : 'Optional'}
+                disabled={type === 'spacer'}
               />
             </div>
             <div>
@@ -184,7 +194,8 @@ export const CreateChannelModal = ({
                   border: `1px solid ${palette.border}`,
                   color: palette.text,
                 }}
-                placeholder="Optional"
+                placeholder={type === 'spacer' ? 'Für Trenner nicht nötig' : 'Optional'}
+                disabled={type === 'spacer'}
               />
             </div>
           </div>

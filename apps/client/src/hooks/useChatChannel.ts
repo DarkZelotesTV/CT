@@ -14,6 +14,9 @@ export interface ChatMessageContent {
   text?: string;
   attachments?: ChatAttachment[];
   giphy?: { id: string; url: string; previewUrl?: string };
+  protected?: boolean;
+  ciphertext?: string;
+  iv?: string;
 }
 
 export interface ChatMessage {
@@ -39,6 +42,7 @@ interface UseChatChannelResult {
   handleKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   sendMessage: (contentOverride?: string | ChatMessageContent) => Promise<void>;
   loadMore: () => Promise<void>;
+  reorderMessages: (fromId: number, toId: number) => void;
 }
 
 type ChannelKeyBundle = {
@@ -108,6 +112,40 @@ const ensureKeyBundle = async (channelId: number): Promise<ChannelKeyBundle> => 
   return channelCrypto;
 };
 
+const derivePasswordKey = async (channelId: number, password: string): Promise<CryptoKey> => {
+  const encoder = new TextEncoder();
+  const salt = encoder.encode(`ct-data-transfer-${channelId}`);
+  const keyMaterial = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt,
+      iterations: 120000,
+      hash: 'SHA-256',
+    },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    true,
+    ['encrypt', 'decrypt']
+  );
+};
+
+const encryptWithPassword = async (channelId: number, password: string, plainText: string) => {
+  const key = await derivePasswordKey(channelId, password);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encoded = new TextEncoder().encode(plainText);
+  const cipher = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded);
+  return { ciphertext: bufferToB64(cipher), iv: bufferToB64(iv.buffer) };
+};
+
+const decryptWithPassword = async (channelId: number, password: string, ciphertext: string, iv: string) => {
+  const key = await derivePasswordKey(channelId, password);
+  const decodedCipher = b64ToBuffer(ciphertext);
+  const decodedIv = new Uint8Array(b64ToBuffer(iv));
+  const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: decodedIv }, key, decodedCipher);
+  return new TextDecoder().decode(plain);
+};
+
 const encryptWithChannelKey = async (channelKey: CryptoKey, plainText: string) => {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const encoded = new TextEncoder().encode(plainText);
@@ -122,22 +160,52 @@ const decryptWithChannelKey = async (channelKey: CryptoKey, ciphertext: string, 
   return new TextDecoder().decode(plain);
 };
 
-const decryptMessage = async (message: ChatMessage, channelId: number): Promise<ChatMessage> => {
+const decryptMessage = async (message: ChatMessage, channelId: number, password?: string | null): Promise<ChatMessage> => {
   try {
     const bundle = await ensureKeyBundle(channelId);
     const rawContent = typeof message.content === 'string' ? message.content : JSON.stringify(message.content);
-    const parsed = JSON.parse(rawContent || '{}');
+    let parsed: any = {};
+    try {
+      parsed = JSON.parse(rawContent || '{}');
+    } catch (err) {
+      return message;
+    }
     if (!parsed.ciphertext || !parsed.iv) return message;
     const decryptedContent = await decryptWithChannelKey(bundle.channelKey, parsed.ciphertext, parsed.iv);
+    let structured: any = decryptedContent;
     try {
-      const structured = JSON.parse(decryptedContent);
-      if (structured && (structured.text || structured.attachments || structured.giphy)) {
-        return { ...message, content: structured };
-      }
+      structured = JSON.parse(decryptedContent);
     } catch (err) {
-      // plain text fallback
+      // keep as string
     }
-    return { ...message, content: decryptedContent };
+
+    if (structured && typeof structured === 'object' && structured.protected && structured.ciphertext && structured.iv) {
+      if (!password) {
+        return { ...message, content: '🔒 Geschützte Daten – Passwort erforderlich' };
+      }
+      try {
+        const unlocked = await decryptWithPassword(channelId, password, structured.ciphertext, structured.iv);
+        try {
+          const unlockedStructured = JSON.parse(unlocked);
+          if (unlockedStructured && (unlockedStructured.text || unlockedStructured.attachments || unlockedStructured.giphy)) {
+            return { ...message, content: unlockedStructured };
+          }
+        } catch (err) {
+          // fall back to string content
+        }
+        return { ...message, content: unlocked };
+      } catch (err) {
+        return { ...message, content: '🔒 Geschützte Daten – Passwort ungültig?' };
+      }
+    }
+
+    if (structured && structured.text) {
+      return { ...message, content: structured };
+    }
+    if (structured && (structured.attachments || structured.giphy)) {
+      return { ...message, content: structured };
+    }
+    return { ...message, content: structured };
   } catch (err) {
     console.error('Decrypt error', err);
     return { ...message, content: 'Unable to decrypt message' };
@@ -217,7 +285,7 @@ const receiveChannelKey = async (payload: {
   localStorage.setItem(`chat_channel_key_${payload.channelId}`, bufferToB64(exported));
 };
 
-export const useChatChannel = (channelId: number | null): UseChatChannelResult => {
+export const useChatChannel = (channelId: number | null, options?: { password?: string | null }): UseChatChannelResult => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
@@ -226,6 +294,7 @@ export const useChatChannel = (channelId: number | null): UseChatChannelResult =
   const { socket } = useSocket();
   const knownPublicKeys = useRef<Map<number, string>>(new Map());
   const fetchInProgress = useRef(false);
+  const passwordRef = useRef<string | null>(options?.password ?? null);
 
   useEffect(() => {
     channelCrypto = null;
@@ -245,7 +314,7 @@ export const useChatChannel = (channelId: number | null): UseChatChannelResult =
         const res = await apiFetch<{ messages: ChatMessage[]; hasMore: boolean }>(
           `/api/channels/${channelId}/messages?${params.toString()}`
         );
-        const decrypted = await Promise.all(res.messages.map((msg) => decryptMessage(msg, channelId)));
+        const decrypted = await Promise.all(res.messages.map((msg) => decryptMessage(msg, channelId, passwordRef.current)));
 
         setHasMore(res.hasMore);
         if (append) {
@@ -259,6 +328,16 @@ export const useChatChannel = (channelId: number | null): UseChatChannelResult =
     },
     [channelId]
   );
+
+  useEffect(() => {
+    passwordRef.current = options?.password ?? null;
+  }, [options?.password]);
+
+  useEffect(() => {
+    if (channelId === null) return;
+    if (typeof options?.password === 'undefined') return;
+    fetchMessages();
+  }, [channelId, options?.password, fetchMessages]);
 
   useEffect(() => {
     if (channelId === null) return;
@@ -299,7 +378,7 @@ export const useChatChannel = (channelId: number | null): UseChatChannelResult =
       const msgChannelId = (newMsg.channel_id ?? newMsg.channelId) as number | undefined;
       if (msgChannelId !== undefined && msgChannelId !== channelId) return;
 
-      decryptMessage(newMsg, channelId)
+      decryptMessage(newMsg, channelId, passwordRef.current)
         .then((decrypted) => {
           setMessages((prev) => [...prev, decrypted]);
         })
@@ -360,12 +439,24 @@ export const useChatChannel = (channelId: number | null): UseChatChannelResult =
     }
   };
 
+  const prepareContentForSending = async (content: string | ChatMessageContent) => {
+    if (channelId === null) return content;
+    if (passwordRef.current) {
+      const payload = typeof content === 'string' ? content : JSON.stringify(content);
+      const encrypted = await encryptWithPassword(channelId, passwordRef.current, payload);
+      return { protected: true, ciphertext: encrypted.ciphertext, iv: encrypted.iv } as unknown as ChatMessageContent;
+    }
+    return content;
+  };
+
   const sendMessage = async (contentOverride?: string | ChatMessageContent) => {
+    if (channelId === null) return;
     const content = contentOverride ?? inputText;
     if (typeof content === 'string') {
       if (!content.trim()) return;
     }
-    await sendEncryptedChannelMessage(socket, channelId, content);
+    const prepared = await prepareContentForSending(content);
+    await sendEncryptedChannelMessage(socket, channelId, prepared);
     setInputText('');
   };
 
@@ -376,7 +467,20 @@ export const useChatChannel = (channelId: number | null): UseChatChannelResult =
     }
   };
 
-  return { messages, loading, loadingMore, hasMore, inputText, setInputText, handleKeyDown, sendMessage, loadMore };
+  const reorderMessages = (fromId: number, toId: number) => {
+    if (fromId === toId) return;
+    setMessages((prev) => {
+      const next = [...prev];
+      const fromIndex = next.findIndex((m) => m.id === fromId);
+      const toIndex = next.findIndex((m) => m.id === toId);
+      if (fromIndex === -1 || toIndex === -1) return prev;
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      return next;
+    });
+  };
+
+  return { messages, loading, loadingMore, hasMore, inputText, setInputText, handleKeyDown, sendMessage, loadMore, reorderMessages };
 };
 
 export default useChatChannel;
