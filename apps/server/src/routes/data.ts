@@ -1,13 +1,28 @@
 import { Router } from 'express';
-import { Server, Channel, Message, User, ServerMember, Category, Role, MemberRole, ChannelPermissionOverride } from '../models';
+import { RoomServiceClient } from 'livekit-server-sdk';
+import { Server, Channel, Message, User, ServerMember, Category, Role, MemberRole, ChannelPermissionOverride, ServerBan } from '../models';
 import { authenticateRequest, AuthRequest } from '../middleware/authMiddleware';
 import { PermissionKey } from '../models/Role';
 import { Op } from 'sequelize';
+import { emitToUser, getUserChannelIds, removeUserFromAllChannels, removeUserFromChannel } from '../realtime/registry';
 
 const router = Router();
 
 const PERMISSION_KEYS: PermissionKey[] = ['speak', 'move', 'kick', 'manage_channels', 'manage_roles', 'manage_overrides'];
 const FULL_PERMISSIONS = PERMISSION_KEYS.reduce((acc, key) => ({ ...acc, [key]: true }), {} as Record<PermissionKey, boolean>);
+
+const buildRoomService = () => {
+  const apiKey = process.env.LIVEKIT_API_KEY;
+  const apiSecret = process.env.LIVEKIT_API_SECRET;
+  const rawUrl = process.env.LIVEKIT_ADMIN_URL || process.env.LIVEKIT_PUBLIC_URL || process.env.VITE_LIVEKIT_URL;
+
+  if (!apiKey || !apiSecret || !rawUrl) {
+    throw new Error('LiveKit Konfiguration fehlt');
+  }
+
+  const host = rawUrl.startsWith('ws') ? rawUrl.replace(/^ws/, 'http') : rawUrl;
+  return new RoomServiceClient(host, apiKey, apiSecret);
+};
 
 async function getUserRoles(serverId: number, userId: number) {
   return Role.findAll({
@@ -91,6 +106,16 @@ router.get('/servers', authenticateRequest, async (req: AuthRequest, res) => {
     res.json(servers);
   } catch (err) {
     res.status(500).json({ error: "Fehler beim Laden der Server" });
+  }
+});
+
+router.get('/servers/:serverId/permissions', authenticateRequest, async (req: AuthRequest, res) => {
+  try {
+    const serverId = Number(req.params.serverId);
+    const perms = await resolvePermissions(serverId, req.user!.id);
+    res.json(perms);
+  } catch (err: any) {
+    res.status(statusForError(err)).json({ error: err?.message || 'Konnte Berechtigungen nicht berechnen' });
   }
 });
 
@@ -409,12 +434,135 @@ router.delete('/servers/:serverId/members/:userId', authenticateRequest, async (
 
     await requirePermission(serverId, req.user!.id, 'kick');
 
+    const activeChannels = Array.from(getUserChannelIds(userId));
+    const service = activeChannels.length ? buildRoomService() : null;
+
     await MemberRole.destroy({ where: { server_id: serverId, user_id: userId } });
     await ServerMember.destroy({ where: { server_id: serverId, user_id: userId } });
+
+    await Promise.all(
+      activeChannels.map((channelId) => service?.removeParticipant(`channel_${channelId}`, String(userId)).catch(() => null))
+    );
+    removeUserFromAllChannels(userId);
+    emitToUser(userId, 'voice:force-disconnect', { serverId, reason: 'Du wurdest vom Server entfernt.' });
 
     res.json({ success: true });
   } catch (err: any) {
     res.status(statusForError(err)).json({ error: err?.message || 'Konnte Mitglied nicht entfernen' });
+  }
+});
+
+// 7d. Mitglied bannen
+router.post('/servers/:serverId/members/:userId/ban', authenticateRequest, async (req: AuthRequest, res) => {
+  try {
+    const serverId = Number(req.params.serverId);
+    const userId = Number(req.params.userId);
+    const { reason } = req.body as { reason?: string };
+
+    await requirePermission(serverId, req.user!.id, 'kick');
+
+    const activeChannels = Array.from(getUserChannelIds(userId));
+    const service = activeChannels.length ? buildRoomService() : null;
+
+    await MemberRole.destroy({ where: { server_id: serverId, user_id: userId } });
+    await ServerMember.destroy({ where: { server_id: serverId, user_id: userId } });
+    await ServerBan.create({ server_id: serverId, user_id: userId, reason: reason || null });
+
+    await Promise.all(
+      activeChannels.map((channelId) => service?.removeParticipant(`channel_${channelId}`, String(userId)).catch(() => null))
+    );
+    removeUserFromAllChannels(userId);
+    emitToUser(userId, 'voice:force-disconnect', { serverId, reason: 'Du wurdest gebannt.' });
+
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(statusForError(err)).json({ error: err?.message || 'Konnte Bann nicht setzen' });
+  }
+});
+
+// 7e. Voice-Moderationsaktionen
+router.post('/servers/:serverId/members/:userId/mute', authenticateRequest, async (req: AuthRequest, res) => {
+  try {
+    const serverId = Number(req.params.serverId);
+    const targetUserId = Number(req.params.userId);
+    const { channelId } = req.body as { channelId?: number };
+
+    if (!channelId) return res.status(400).json({ error: 'channelId fehlt' });
+
+    const channel = await Channel.findByPk(channelId);
+    if (!channel || channel.server_id !== serverId) return res.status(404).json({ error: 'Kanal nicht gefunden' });
+
+    await requirePermission(serverId, req.user!.id, 'move');
+
+    const service = buildRoomService();
+    const roomName = `channel_${channelId}`;
+    const participants = await service.listParticipants(roomName);
+    const target = participants.find((p) => p.identity === String(targetUserId));
+    if (!target) return res.status(404).json({ error: 'Teilnehmer nicht im Talk' });
+
+    const mutedTracks: string[] = [];
+    await Promise.all(
+      (target.tracks || []).map(async (track) => {
+        mutedTracks.push(track.sid);
+        return service.mutePublishedTrack(roomName, target.identity, track.sid, true);
+      })
+    );
+
+    emitToUser(targetUserId, 'voice:force-mute', { channelId, serverId, trackSids: mutedTracks });
+    res.json({ success: true, mutedTracks });
+  } catch (err: any) {
+    res.status(statusForError(err)).json({ error: err?.message || 'Konnte Nutzer nicht stummschalten' });
+  }
+});
+
+router.post('/servers/:serverId/members/:userId/remove-from-talk', authenticateRequest, async (req: AuthRequest, res) => {
+  try {
+    const serverId = Number(req.params.serverId);
+    const targetUserId = Number(req.params.userId);
+    const { channelId } = req.body as { channelId?: number };
+
+    if (!channelId) return res.status(400).json({ error: 'channelId fehlt' });
+
+    const channel = await Channel.findByPk(channelId);
+    if (!channel || channel.server_id !== serverId) return res.status(404).json({ error: 'Kanal nicht gefunden' });
+
+    await requirePermission(serverId, req.user!.id, 'move');
+
+    const service = buildRoomService();
+    const roomName = `channel_${channelId}`;
+    await service.removeParticipant(roomName, String(targetUserId));
+    removeUserFromChannel(channelId, targetUserId);
+    emitToUser(targetUserId, 'voice:force-disconnect', { serverId, channelId });
+
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(statusForError(err)).json({ error: err?.message || 'Konnte Teilnehmer nicht entfernen' });
+  }
+});
+
+router.post('/servers/:serverId/members/:userId/move', authenticateRequest, async (req: AuthRequest, res) => {
+  try {
+    const serverId = Number(req.params.serverId);
+    const targetUserId = Number(req.params.userId);
+    const { fromChannelId, toChannelId } = req.body as { fromChannelId?: number; toChannelId?: number };
+
+    if (!fromChannelId || !toChannelId) return res.status(400).json({ error: 'fromChannelId und toChannelId sind erforderlich' });
+
+    const [fromChannel, toChannel] = await Promise.all([Channel.findByPk(fromChannelId), Channel.findByPk(toChannelId)]);
+    if (!fromChannel || !toChannel || fromChannel.server_id !== serverId || toChannel.server_id !== serverId) {
+      return res.status(404).json({ error: 'Ungültige Kanäle' });
+    }
+
+    await requirePermission(serverId, req.user!.id, 'move');
+
+    const service = buildRoomService();
+    await service.removeParticipant(`channel_${fromChannelId}`, String(targetUserId)).catch(() => null);
+    removeUserFromChannel(fromChannelId, targetUserId);
+    emitToUser(targetUserId, 'voice:force-move', { fromChannelId, toChannelId, serverId, toChannelName: toChannel.name });
+
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(statusForError(err)).json({ error: err?.message || 'Konnte Teilnehmer nicht verschieben' });
   }
 });
 

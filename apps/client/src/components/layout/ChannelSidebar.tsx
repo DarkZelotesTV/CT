@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, PhoneOff, Camera, ScreenShare, Lock, ListChecks } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, PhoneOff, Camera, ScreenShare } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { CreateChannelModal } from '../modals/CreateChannelModal';
 import { UserBottomBar } from './UserBottomBar';
@@ -28,7 +30,26 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createType, setCreateType] = useState<Channel['type']>('text');
   const [createCategoryId, setCreateCategoryId] = useState<number | null>(null);
+  const [permissions, setPermissions] = useState<Record<string, boolean>>({});
+  const [contextMenu, setContextMenu] = useState<{
+    userId: number;
+    username: string;
+    channelId: number | null;
+    channelName?: string;
+    x: number;
+    y: number;
+    target?: HTMLElement | null;
+    moveTargetId?: number | null;
+  } | null>(null);
   const modalPortalRef = useRef<HTMLDivElement>(null);
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const voiceChannels = useMemo(
+    () =>
+      [...uncategorized, ...categories.flatMap((cat) => cat.channels)]
+        .filter((ch) => ch.type === 'voice')
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [categories, uncategorized]
+  );
 
   // CONTEXT NUTZEN
   const {
@@ -76,6 +97,35 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   }, [activeChannelId, onResolveFallback, onSelectChannel, serverId]);
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  useEffect(() => {
+    if (!serverId) return;
+    apiFetch<Record<string, boolean>>(`/api/servers/${serverId}/permissions`).then(setPermissions).catch(() => setPermissions({}));
+  }, [serverId]);
+
+  useEffect(() => {
+    if (!contextMenu) return;
+    const handleGlobalClick = (e: MouseEvent) => {
+      if (!contextMenu.target) return closeContextMenu();
+      if (!(contextMenu.target as HTMLElement).contains(e.target as HTMLElement)) {
+        closeContextMenu();
+      }
+    };
+
+    window.addEventListener('click', handleGlobalClick);
+    window.addEventListener('contextmenu', handleGlobalClick);
+    return () => {
+      window.removeEventListener('click', handleGlobalClick);
+      window.removeEventListener('contextmenu', handleGlobalClick);
+    };
+  }, [contextMenu]);
+
+  useEffect(() => {
+    if (!contextMenu?.channelId) return;
+    const nextOption = voiceChannels.find((vc) => vc.id !== contextMenu.channelId);
+    if (!nextOption) return;
+    setContextMenu((prev) => (prev ? { ...prev, moveTargetId: prev.moveTargetId || nextOption.id } : prev));
+  }, [contextMenu?.channelId, voiceChannels]);
+
   // Click Handler: Voice Logik in den Hintergrund schieben
   const handleChannelClick = (c: Channel) => {
     if (c.type === 'spacer') return;
@@ -84,6 +134,81 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
       onSelectChannel(c);
     } else {
       onSelectChannel(c);
+    }
+  };
+
+  const closeContextMenu = () => setContextMenu(null);
+
+  const openUserMenu = (
+    origin: { x: number; y: number; target?: HTMLElement | null },
+    user: any,
+    channel?: Channel | null
+  ) => {
+    if (!permissions.move && !permissions.kick) return;
+    setContextMenu({
+      userId: user.id,
+      username: user.username,
+      channelId: channel?.id ?? null,
+      channelName: channel?.name,
+      x: origin.x,
+      y: origin.y,
+      target: origin.target,
+      moveTargetId: channel?.id ?? null,
+    });
+  };
+
+  const startLongPress = (handler: () => void) => {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    longPressTimer.current = setTimeout(handler, 500);
+  };
+
+  const cancelLongPress = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
+  const performModeration = async (
+    action: 'mute' | 'kick' | 'ban' | 'remove' | 'move',
+    payload: { userId: number; channelId?: number | null; targetChannelId?: number | null }
+  ) => {
+    if (!serverId) return;
+    try {
+      switch (action) {
+        case 'mute':
+          if (!payload.channelId) throw new Error('Kein Kanal angegeben');
+          await apiFetch(`/api/servers/${serverId}/members/${payload.userId}/mute`, {
+            method: 'POST',
+            body: JSON.stringify({ channelId: payload.channelId }),
+          });
+          break;
+        case 'remove':
+          if (!payload.channelId) throw new Error('Kein Kanal angegeben');
+          await apiFetch(`/api/servers/${serverId}/members/${payload.userId}/remove-from-talk`, {
+            method: 'POST',
+            body: JSON.stringify({ channelId: payload.channelId }),
+          });
+          break;
+        case 'move':
+          if (!payload.channelId || !payload.targetChannelId) throw new Error('Kanal fehlt');
+          await apiFetch(`/api/servers/${serverId}/members/${payload.userId}/move`, {
+            method: 'POST',
+            body: JSON.stringify({ fromChannelId: payload.channelId, toChannelId: payload.targetChannelId }),
+          });
+          break;
+        case 'ban':
+          await apiFetch(`/api/servers/${serverId}/members/${payload.userId}/ban`, { method: 'POST' });
+          break;
+        case 'kick':
+          await apiFetch(`/api/servers/${serverId}/members/${payload.userId}`, { method: 'DELETE' });
+          break;
+      }
+    } catch (err: any) {
+      alert(err?.message || 'Aktion fehlgeschlagen');
+    } finally {
+      closeContextMenu();
+      fetchData();
     }
   };
 
@@ -132,7 +257,26 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
             {hasPresence ? (
               <div className="space-y-1">
                 {presenceList.map((user) => (
-                  <div key={user.id} className="flex items-center gap-2 text-xs text-gray-200">
+                  <div
+                    key={user.id}
+                    className="flex items-center gap-2 text-xs text-gray-200"
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      openUserMenu({ x: e.clientX, y: e.clientY, target: e.currentTarget as HTMLElement }, user, c);
+                    }}
+                    onTouchStart={(e) => {
+                      const touch = e.touches?.[0];
+                      startLongPress(() =>
+                        openUserMenu(
+                          { x: touch?.clientX || 0, y: touch?.clientY || 0, target: e.currentTarget as HTMLElement },
+                          user,
+                          c
+                        )
+                      );
+                    }}
+                    onTouchEnd={cancelLongPress}
+                    onTouchMove={cancelLongPress}
+                  >
                     <span
                       className={`w-2 h-2 rounded-full ${user.status === 'online' ? 'bg-green-500' : 'bg-gray-500'}`}
                       title={user.status === 'online' ? 'Online' : 'Offline'}
@@ -216,6 +360,86 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
              </div>
            ))}
         </div>
+
+        {contextMenu && (
+          <div className="fixed inset-0 z-50" onClick={closeContextMenu}>
+            <div
+              className="absolute min-w-[240px] rounded-md bg-[#16181d] border border-white/10 shadow-xl p-2 space-y-1"
+              style={{ top: contextMenu.y, left: contextMenu.x }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="text-[11px] text-gray-400 uppercase tracking-wide px-2 pb-1">{contextMenu.username}</div>
+              {permissions.move && contextMenu.channelId ? (
+                <button
+                  type="button"
+                  className="w-full text-left px-2 py-1 rounded hover:bg-white/10 text-sm text-gray-200"
+                  onClick={() => performModeration('mute', { userId: contextMenu.userId, channelId: contextMenu.channelId })}
+                >
+                  Stummschalten
+                </button>
+              ) : null}
+              {permissions.move && contextMenu.channelId ? (
+                <button
+                  type="button"
+                  className="w-full text-left px-2 py-1 rounded hover:bg-white/10 text-sm text-gray-200"
+                  onClick={() => performModeration('remove', { userId: contextMenu.userId, channelId: contextMenu.channelId })}
+                >
+                  Aus dem Talk entfernen
+                </button>
+              ) : null}
+              {permissions.move && contextMenu.channelId && voiceChannels.length > 1 ? (
+                <div className="px-2 py-1 space-y-1">
+                  <div className="text-[11px] text-gray-500">In Talk verschieben</div>
+                  <div className="flex items-center gap-2">
+                    <select
+                      className="flex-1 bg-[#0f1115] border border-white/10 rounded px-2 py-1 text-sm text-gray-200"
+                      value={contextMenu.moveTargetId || ''}
+                      onChange={(e) => setContextMenu((prev) => (prev ? { ...prev, moveTargetId: Number(e.target.value) } : prev))}
+                    >
+                      {voiceChannels
+                        .filter((vc) => vc.id !== contextMenu.channelId)
+                        .map((vc) => (
+                          <option key={vc.id} value={vc.id}>{vc.name}</option>
+                        ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="px-2 py-1 rounded bg-primary/20 text-primary text-sm hover:bg-primary/30"
+                      disabled={!contextMenu.moveTargetId}
+                      onClick={() =>
+                        performModeration('move', {
+                          userId: contextMenu.userId,
+                          channelId: contextMenu.channelId!,
+                          targetChannelId: contextMenu.moveTargetId || undefined,
+                        })
+                      }
+                    >
+                      Move
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+              {permissions.kick ? (
+                <>
+                  <button
+                    type="button"
+                    className="w-full text-left px-2 py-1 rounded hover:bg-white/10 text-sm text-gray-200"
+                    onClick={() => performModeration('ban', { userId: contextMenu.userId })}
+                  >
+                    Bann aussprechen
+                  </button>
+                  <button
+                    type="button"
+                    className="w-full text-left px-2 py-1 rounded hover:bg-white/10 text-sm text-gray-200"
+                    onClick={() => performModeration('kick', { userId: contextMenu.userId })}
+                  >
+                    Vom Server kicken
+                  </button>
+                </>
+              ) : null}
+            </div>
+          </div>
+        )}
 
         {/* --- STATUS PANEL (Verbindung) --- */}
         {connectionState === 'connected' && (
