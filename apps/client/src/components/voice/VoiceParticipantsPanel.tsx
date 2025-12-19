@@ -140,17 +140,18 @@ export const VoiceParticipantsPanel = () => {
   const hasRemoteParticipants = useMemo(() => people.some((p) => !p.isLocal), [people]);
   const isConnected = connectionState === 'connected';
 
+  // --- FIX: Hook nach oben verschoben, VOR das return ---
+  const countLabel = useMemo(() => {
+    if (!people.length) return '';
+    return `${people.length} im Talk`;
+  }, [people.length]);
+
   if (!isConnected || !hasRemoteParticipants) {
     return null;
   }
 
   const displayPeople = people;
   const displaySpeakerSids = activeSpeakerSids;
-
-  const countLabel = useMemo(() => {
-    if (!displayPeople.length) return '';
-    return `${displayPeople.length} im Talk`;
-  }, [displayPeople.length]);
 
   return (
     <div className="bg-[#0b0c0f] border-t border-white/5 px-2 py-2">
