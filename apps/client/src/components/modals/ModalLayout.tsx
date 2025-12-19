@@ -29,8 +29,8 @@ export const ModalLayout = ({
   if (!target) return null;
 
   return createPortal(
-    <div 
-      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200 p-4"
+    <div
+      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200 p-4 z-[200]"
       // FIX: Inline-Style für z-index erzwingt die Ebene über der Sidebar (z-50), unabhängig von Tailwind
       style={{ zIndex: 99999 }}
     >
