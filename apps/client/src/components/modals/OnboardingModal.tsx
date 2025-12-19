@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Shield, Plus, Volume2, Users } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { getModalRoot } from './modalRoot';
 import { storage } from '../../shared/config/storage';
 
@@ -8,9 +9,10 @@ interface Props {
   onClose: () => void;
 }
 
-type Step = { icon: any; title: string; body: string };
+type Step = { icon: any; titleKey: string; bodyKey: string };
 
 export const OnboardingModal = ({ onClose }: Props) => {
+  const { t } = useTranslation();
   const user = useMemo(() => storage.get('cloverUser'), []);
 
   const [step, setStep] = useState(0);
@@ -18,23 +20,23 @@ export const OnboardingModal = ({ onClose }: Props) => {
   const steps: Step[] = [
     {
       icon: Shield,
-      title: 'Deine Clover Identity',
-      body: 'Deine Identität liegt lokal auf deinem Gerät. Du kannst sie jederzeit exportieren (Backup) oder importieren. Ohne Identity kannst du keinen Server beitreten.',
+      titleKey: 'onboarding.steps.identity.title',
+      bodyKey: 'onboarding.steps.identity.body',
     },
     {
       icon: Plus,
-      title: 'Server erstellen oder beitreten',
-      body: 'Über das grüne + links kannst du Server erstellen oder Server beitreten – auch von anderen Instanzen. Remote Server werden automatisch „gepinnt“.',
+      titleKey: 'onboarding.steps.servers.title',
+      bodyKey: 'onboarding.steps.servers.body',
     },
     {
       icon: Volume2,
-      title: 'Voice Calls',
-      body: 'Klicke auf einen Voice-Channel um zu verbinden. Unter dem Call siehst du, wer im Talk ist – und wer gerade spricht.',
+      titleKey: 'onboarding.steps.voice.title',
+      bodyKey: 'onboarding.steps.voice.body',
     },
     {
       icon: Users,
-      title: 'Server Settings & Rollen',
-      body: 'Als Admin kannst du Kanäle erstellen, Rollen vergeben und Berechtigungen pro Kanal einstellen. Öffne die Server Settings über das Zahnrad am Servernamen.',
+      titleKey: 'onboarding.steps.settings.title',
+      bodyKey: 'onboarding.steps.settings.body',
     },
   ];
 
@@ -42,6 +44,7 @@ export const OnboardingModal = ({ onClose }: Props) => {
 
   const current = steps[Math.min(step, steps.length - 1)]!;
   const Icon = current.icon;
+  const welcomeLabel = user?.username ? t('onboarding.welcomeUser', { username: user.username }) : t('onboarding.welcome');
 
   const finish = () => {
     storage.set('onboardingDone', true);
@@ -66,15 +69,15 @@ export const OnboardingModal = ({ onClose }: Props) => {
         <button
           onClick={close}
           className="absolute top-4 right-4 text-gray-400 hover:text-white p-1 rounded-full hover:bg-white/10"
-          aria-label="Schließen"
+          aria-label={t('onboarding.close')}
         >
           <X size={20} />
         </button>
 
         <div className="p-6 border-b border-white/5">
-          <div className="text-xs uppercase tracking-widest text-gray-500">Willkommen{user?.username ? `, ${user.username}` : ''}</div>
-          <h2 className="text-2xl font-bold text-white mt-1">Kurzes Tutorial</h2>
-          <p className="text-gray-400 text-sm mt-1">In 30 Sekunden bist du startklar.</p>
+          <div className="text-xs uppercase tracking-widest text-gray-500">{welcomeLabel}</div>
+          <h2 className="text-2xl font-bold text-white mt-1">{t('onboarding.title')}</h2>
+          <p className="text-gray-400 text-sm mt-1">{t('onboarding.subtitle')}</p>
         </div>
 
         <div className="p-6">
@@ -83,8 +86,8 @@ export const OnboardingModal = ({ onClose }: Props) => {
               <Icon size={24} />
             </div>
             <div className="flex-1">
-              <div className="text-white font-bold">{current.title}</div>
-              <div className="text-gray-400 text-sm mt-1 leading-relaxed">{current.body}</div>
+              <div className="text-white font-bold">{t(current.titleKey)}</div>
+              <div className="text-gray-400 text-sm mt-1 leading-relaxed">{t(current.bodyKey)}</div>
             </div>
           </div>
 
@@ -103,7 +106,7 @@ export const OnboardingModal = ({ onClose }: Props) => {
                 className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-sm"
                 onClick={finish}
               >
-                Überspringen
+                {t('onboarding.skip')}
               </button>
               <button
                 className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium"
@@ -112,7 +115,7 @@ export const OnboardingModal = ({ onClose }: Props) => {
                   else setStep((s) => s + 1);
                 }}
               >
-                {step >= steps.length - 1 ? 'Los geht\'s' : 'Weiter'}
+                {step >= steps.length - 1 ? t('onboarding.finish') : t('onboarding.next')}
               </button>
             </div>
           </div>
