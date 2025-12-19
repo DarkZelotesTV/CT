@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { 
   X, 
@@ -71,7 +71,6 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
   const [overrides, setOverrides] = useState<any[]>([]);
   const [selectedOverrideRole, setSelectedOverrideRole] = useState<number | null>(null);
   const [overrideDraft, setOverrideDraft] = useState<{ allow: Record<string, boolean>; deny: Record<string, boolean> }>({ allow: {}, deny: {} });
-  const modalPortalRef = useRef<HTMLDivElement>(null);
 
   // Initial Data Loading
   useEffect(() => {
@@ -324,11 +323,6 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
 
   return createPortal(
     <div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 relative">
-      <div
-        ref={modalPortalRef}
-        className="absolute inset-0"
-        style={{ pointerEvents: showCreateModal ? 'auto' : 'none' }}
-      />
       {/* Desktop Responsive Container: Wächst mit, maximale Breite begrenzt, fixe Höhe für konsistentes Layout */}
       <div className="bg-[#0f1014] w-11/12 max-w-5xl h-[85vh] rounded-3xl border border-white/10 shadow-2xl overflow-hidden flex flex-col">
         
@@ -714,7 +708,6 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
           serverId={serverId!}
           defaultType={newChannelType}
           theme={serverTheme}
-          portalTarget={modalPortalRef.current}
           onClose={() => setShowCreateModal(false)}
           onCreated={loadStructure}
         />

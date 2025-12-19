@@ -10,7 +10,6 @@ interface CreateChannelModalProps {
   categoryId?: number | null;
   defaultType?: 'text' | 'voice' | 'web' | 'data-transfer' | 'spacer' | 'list';
   theme?: Partial<ServerTheme> | null;
-  portalTarget?: HTMLElement | null;
   onClose: () => void;
   onCreated: () => void;
 }
@@ -20,7 +19,6 @@ export const CreateChannelModal = ({
   categoryId = null,
   defaultType = 'text',
   theme,
-  portalTarget,
   onClose,
   onCreated,
 }: CreateChannelModalProps) => {
@@ -57,7 +55,7 @@ export const CreateChannelModal = ({
     <ModalLayout
       title="Kanal erstellen"
       onClose={onClose}
-      portalTarget={portalTarget}
+      onOverlayClick={onClose}
       description="Lege einen neuen Bereich für deinen Server an."
       bodyClassName="p-6 pt-2 space-y-6"
     >

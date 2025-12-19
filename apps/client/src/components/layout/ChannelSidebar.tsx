@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, PhoneOff, Camera, ScreenShare, Lock, ListChecks } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { CreateChannelModal } from '../modals/CreateChannelModal';
@@ -41,7 +41,6 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
     moveTargetId?: number | null;
   } | null>(null);
   
-  const modalPortalRef = useRef<HTMLDivElement>(null);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
 
   // CONTEXTS
@@ -338,11 +337,6 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
 
   return (
     <div className="flex flex-col h-full bg-transparent relative">
-      <div
-        ref={modalPortalRef}
-        className={`absolute inset-0 ${showCreateModal ? 'z-50' : '-z-10'}`}
-        style={{ pointerEvents: showCreateModal ? 'auto' : 'none' }}
-      />
       {/* Header */}
       <div className="h-12 flex items-center gap-2 px-4 border-b border-white/5 transition-colors no-drag relative z-10">
         <div className="flex items-center gap-2 flex-1 overflow-hidden">
@@ -563,7 +557,6 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
           categoryId={createCategoryId}
           defaultType={createType}
           theme={serverTheme}
-          portalTarget={modalPortalRef.current}
           onClose={() => setShowCreateModal(false)}
           onCreated={fetchData}
         />

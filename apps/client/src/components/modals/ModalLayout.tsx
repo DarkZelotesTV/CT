@@ -9,7 +9,7 @@ interface ModalLayoutProps {
   children: ReactNode;
   footer?: ReactNode;
   bodyClassName?: string;
-  portalTarget?: HTMLElement | null;
+  onOverlayClick?: () => void;
 }
 
 export const ModalLayout = ({
@@ -19,17 +19,17 @@ export const ModalLayout = ({
   children,
   footer,
   bodyClassName,
-  portalTarget,
+  onOverlayClick,
 }: ModalLayoutProps) => {
   const bodyClasses = bodyClassName ?? 'p-6 pt-2 space-y-6';
-  const target = portalTarget ?? (typeof document !== 'undefined' ? document.body : null);
-  const positionClass = portalTarget ? 'absolute' : 'fixed';
+  const target = typeof document !== 'undefined' ? document.body : null;
+  const handleOverlayClick = onOverlayClick ?? onClose;
 
   if (!target) return null;
 
   return createPortal(
-    <div className={`${positionClass} inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center animate-in fade-in duration-200 p-4`}>
-      <div className="absolute inset-0" onClick={onClose}></div>
+    <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center animate-in fade-in duration-200 p-4`}>
+      <div className="absolute inset-0" onClick={handleOverlayClick}></div>
 
       <div className="bg-[#111214] w-full max-w-md rounded-2xl shadow-2xl border border-white/10 overflow-hidden transform transition-all scale-100 relative z-10">
         <div className="p-6 text-center relative">
