@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MicOff, Monitor, Video, Volume2 } from 'lucide-react';
 import { RoomEvent, Track } from 'livekit-client';
-import { useVoice } from '../../context/voice-state';
+import { useVoice } from '..';
 import { useSettings } from '../../context/SettingsContext';
 
 type VoicePerson = {

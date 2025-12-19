@@ -18,7 +18,7 @@ import {
   X,
 } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
-import { useVoice } from '../../context/voice-state';
+import { useVoice } from '../../features/voice';
 import { clearIdentity, computeFingerprint, createIdentity, formatFingerprint, loadIdentity, saveIdentity, type IdentityFile } from '../../auth/identity';
 import { buildBackupPayload, getBackupFilename, parseIdentityBackup } from '../../auth/identityBackup';
 

@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 
 import { useSettings } from '../../context/SettingsContext';
-import { useVoice } from '../../context/voice-state';
+import { useVoice } from '../../features/voice';
 
 const modifierKeys = ['Control', 'Shift', 'Alt', 'Meta'];
 
