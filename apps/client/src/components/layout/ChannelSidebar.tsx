@@ -335,6 +335,12 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
 
   const toggleCategory = (id: number) => setCollapsed(prev => ({ ...prev, [id]: !prev[id] }));
 
+  const handleOpenServerSettings = useCallback((e?: React.SyntheticEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    onOpenServerSettings();
+  }, [onOpenServerSettings]);
+
   return (
     <div className="flex flex-col h-full bg-transparent relative">
       {/* Header */}
@@ -348,10 +354,10 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
             // FIX: pointerdown + no-drag (Electron/Webkit drag region can swallow click)
             data-no-drag
             style={{ WebkitAppRegion: 'no-drag' } as any}
-            onPointerDown={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onOpenServerSettings();
+            onPointerDown={handleOpenServerSettings}
+            onClick={handleOpenServerSettings}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') handleOpenServerSettings(e);
             }}
             className="p-2 flex-shrink-0 rounded-md hover:bg-white/5 text-gray-500 hover:text-white focus:outline-none"
             title="Servereinstellungen"
