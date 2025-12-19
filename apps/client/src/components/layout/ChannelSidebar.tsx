@@ -344,7 +344,10 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   return (
     <div className="flex flex-col h-full bg-transparent relative">
       {/* Header */}
-      <div className="h-12 flex items-center gap-2 px-4 border-b border-white/5 transition-colors no-drag relative z-10">
+      <div
+        className="h-12 flex items-center gap-2 px-4 border-b border-white/5 transition-colors no-drag relative z-10"
+        data-no-drag
+      >
         <div
           className="flex items-center gap-2 flex-1 overflow-hidden cursor-pointer"
           role="button"
@@ -359,10 +362,6 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
           </span>
           <button
             type="button"
-            // FIX: pointerdown + no-drag (Electron/Webkit drag region can swallow click)
-            data-no-drag
-            style={{ WebkitAppRegion: 'no-drag' } as any}
-            onPointerDown={handleOpenServerSettings}
             onClick={handleOpenServerSettings}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') handleOpenServerSettings(e);
