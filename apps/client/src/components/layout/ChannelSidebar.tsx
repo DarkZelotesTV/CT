@@ -343,7 +343,11 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
                   >
                     <div className="relative">
                         {user.avatar_url ? (
-                            <img src={user.avatar_url} className="w-4 h-4 rounded-full object-cover" alt="" />
+                            <img
+                              src={user.avatar_url}
+                              className="w-4 h-4 rounded-full object-cover"
+                              alt={`${user.username || 'Nutzer'} Avatar`}
+                            />
                         ) : (
                             <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold ${user.status === 'online' ? 'bg-indigo-500 text-white' : 'bg-gray-600 text-gray-300'}`}>
                                 {user.username?.charAt(0).toUpperCase()}
