@@ -1,0 +1,8 @@
+{
+  "layout": {
+    "textChannelSelected": "Text channel selected",
+    "textChannelUnsupported": "Text channels are currently not supported.",
+    "stageAreaTitle": "Stage Area",
+    "stageAreaDescription": "Select a channel on the left."
+  }
+}

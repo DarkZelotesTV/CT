@@ -4,6 +4,7 @@ import classNames from 'classnames';
 import { ChevronDown, ChevronLeft, ChevronRight, Users, Menu, X } from 'lucide-react';
 import { RoomAudioRenderer, RoomContext } from '@livekit/components-react';
 import '@livekit/components-styles';
+import { useTranslation } from 'react-i18next';
 
 import { ServerRail } from './ServerRail';
 import { MemberSidebar } from './MemberSidebar';
@@ -38,6 +39,7 @@ interface Channel {
 }
 
 export const MainLayout = () => {
+  const { t } = useTranslation();
   // UI State
   const [showMobileNav, setShowMobileNav] = useState(false);
   const [showRightSidebar, setShowRightSidebar] = useState(true);
@@ -298,8 +300,8 @@ export const MainLayout = () => {
         <div className="flex-1 flex items-center justify-center relative h-full">
           <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
           <div className="text-center p-10 bg-white/[0.02] rounded-3xl border border-white/5 backdrop-blur-sm">
-            <h2 className="text-xl font-bold text-white mb-2">Textkanal ausgewählt</h2>
-            <p className="text-gray-500 text-sm max-w-md">Textkanäle werden derzeit nicht unterstützt.</p>
+            <h2 className="text-xl font-bold text-white mb-2">{t('layout.textChannelSelected')}</h2>
+            <p className="text-gray-500 text-sm max-w-md">{t('layout.textChannelUnsupported')}</p>
           </div>
         </div>
       );
@@ -325,8 +327,8 @@ export const MainLayout = () => {
       <div className="flex-1 flex items-center justify-center relative h-full">
         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
         <div className="text-center p-12 bg-white/[0.02] rounded-3xl border border-white/5 backdrop-blur-sm">
-          <h2 className="text-2xl font-bold text-white mb-2">Stage Area</h2>
-          <p className="text-gray-500 text-sm">Wähle einen Kanal links.</p>
+          <h2 className="text-2xl font-bold text-white mb-2">{t('layout.stageAreaTitle')}</h2>
+          <p className="text-gray-500 text-sm">{t('layout.stageAreaDescription')}</p>
         </div>
       </div>
     );
