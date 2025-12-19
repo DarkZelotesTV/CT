@@ -377,6 +377,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
           type="button"
           className="p-1.5 flex-shrink-0 rounded-md hover:bg-white/10 text-gray-500 hover:text-white focus:outline-none"
           title="Kanal erstellen"
+          data-no-drag
           onClick={(e) => {
             e.stopPropagation();
             setCreateType('text');

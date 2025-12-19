@@ -58,8 +58,6 @@ interface Category {
 }
 
 export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }: ServerSettingsProps) => {
-  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
-  const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'channels' | 'roles'>('overview');
   const [members, setMembers] = useState<any[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
@@ -92,10 +90,10 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
   const [selectedOverrideRole, setSelectedOverrideRole] = useState<number | null>(null);
   const [overrideDraft, setOverrideDraft] = useState<{ allow: Record<string, boolean>; deny: Record<string, boolean> }>({ allow: {}, deny: {} });
 
-  // Portal + lifecycle guards
+  const portalTarget = useMemo(() => (typeof document === 'undefined' ? null : getModalRoot()), []);
+
+  // Cleanup on unmount
   useEffect(() => {
-    setPortalTarget(getModalRoot());
-    setIsMounted(true);
     return () => {
       // Reset scroll state in case the modal prevented scroll in the future
       if (typeof document !== 'undefined') {
@@ -407,7 +405,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
     { key: 'members', label: 'Mitglieder', icon: Users },
   ];
 
-  if (!isMounted || !portalTarget) return null;
+  if (!portalTarget) return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 relative">
