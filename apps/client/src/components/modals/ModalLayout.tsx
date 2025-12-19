@@ -9,6 +9,7 @@ interface ModalLayoutProps {
   children: ReactNode;
   footer?: ReactNode;
   bodyClassName?: string;
+  portalTarget?: HTMLElement | null;
 }
 
 export const ModalLayout = ({
@@ -18,11 +19,16 @@ export const ModalLayout = ({
   children,
   footer,
   bodyClassName,
+  portalTarget,
 }: ModalLayoutProps) => {
   const bodyClasses = bodyClassName ?? 'p-6 pt-2 space-y-6';
+  const target = portalTarget ?? (typeof document !== 'undefined' ? document.body : null);
+  const positionClass = portalTarget ? 'absolute' : 'fixed';
+
+  if (!target) return null;
 
   return createPortal(
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center animate-in fade-in duration-200 p-4">
+    <div className={`${positionClass} inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center animate-in fade-in duration-200 p-4`}>
       <div className="absolute inset-0" onClick={onClose}></div>
 
       <div className="bg-[#111214] w-full max-w-md rounded-2xl shadow-2xl border border-white/10 overflow-hidden transform transition-all scale-100 relative z-10">
@@ -42,6 +48,6 @@ export const ModalLayout = ({
         {footer && <div className="bg-white/[0.02] p-3 text-center border-t border-white/5">{footer}</div>}
       </div>
     </div>,
-    document.body
+    target
   );
 };
