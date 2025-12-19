@@ -361,7 +361,6 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
           </span>
           <button
             type="button"
-            data-no-drag
             onClick={handleOpenServerSettings}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') handleOpenServerSettings();
