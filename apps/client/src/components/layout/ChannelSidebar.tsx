@@ -346,20 +346,21 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
         className="h-12 flex items-center gap-2 px-4 border-b border-white/5 transition-colors no-drag relative z-10"
         data-no-drag
       >
-        <div className="flex items-center gap-2 flex-1 overflow-hidden" data-no-drag>
+        <div
+          className="flex items-center gap-2 flex-1 overflow-hidden cursor-pointer"
+          role="button"
+          tabIndex={0}
+          data-no-drag
+          onClick={handleOpenServerSettings}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') handleOpenServerSettings();
+          }}
+        >
+          <span className="font-bold text-white truncate flex-1 min-w-0" title={serverName}>
+            {serverName}
+          </span>
           <button
             type="button"
-            className="flex items-center gap-2 flex-1 overflow-hidden cursor-pointer bg-transparent p-0 border-none text-left"
-            data-no-drag
-            onClick={handleOpenServerSettings}
-          >
-            <span className="font-bold text-white truncate flex-1 min-w-0" title={serverName}>
-              {serverName}
-            </span>
-          </button>
-          <button
-            type="button"
-            data-no-drag
             onClick={handleOpenServerSettings}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') handleOpenServerSettings();
