@@ -6,8 +6,8 @@ import {
 } from 'lucide-react';
 import { VoiceMediaStage } from './VoiceMediaStage';
 import { useVoice } from '..';
-import { useSettings } from '../../context/SettingsContext';
-import { TalkSettingsModal } from '../modals/TalkSettingsModal';
+import { useSettings } from '../../../context/SettingsContext';
+import { TalkSettingsModal } from '../../../components/modals/TalkSettingsModal';
 
 // --- Helper Components ---
 const DialButton = ({ 

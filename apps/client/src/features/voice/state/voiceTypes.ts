@@ -10,7 +10,7 @@ export interface VoiceState {
   error: string | null;
   cameraError: string | null;
   screenShareError: string | null;
-  screenShareAudioError?: string | null;
+  screenShareAudioError: string | null;
   muted: boolean;
   micMuted: boolean;
   usePushToTalk: boolean;

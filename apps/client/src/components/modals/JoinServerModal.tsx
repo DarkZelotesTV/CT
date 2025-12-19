@@ -73,8 +73,11 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
 
     try {
       const parsed = parseServerInput(serverInput);
-      const serverId = parsed.serverId;
-      if (!serverId) throw new Error('Bitte eine gültige Server-ID oder einen Invite-Link eingeben.');
+      const serverIdStr = parsed.serverId;
+      const serverId = Number(serverIdStr);
+      if (!serverIdStr || !Number.isFinite(serverId)) {
+        throw new Error('Bitte eine gültige Server-ID oder einen Invite-Link eingeben.');
+      }
 
       const chosenBase = normalizeInstanceUrl(instanceUrl || parsed.instanceUrl || getServerUrl());
 

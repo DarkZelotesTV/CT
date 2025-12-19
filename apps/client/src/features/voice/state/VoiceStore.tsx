@@ -56,7 +56,9 @@ export const VoiceStoreProvider = ({ children }: { children: React.ReactNode }) 
   );
 };
 
-const VoiceStoreHelpersContext = createContext<{ setState: (patch: Partial<VoiceState>) => void } | null>(null);
+const VoiceStoreHelpersContext = createContext<{
+  setState: (patch: Partial<VoiceState> | ((prev: VoiceState) => Partial<VoiceState>)) => void;
+} | null>(null);
 
 export const useVoiceState = () => {
   const ctx = useContext(VoiceStateContext);
