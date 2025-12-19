@@ -335,37 +335,34 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
 
   const toggleCategory = (id: number) => setCollapsed(prev => ({ ...prev, [id]: !prev[id] }));
 
-  const handleOpenServerSettings = useCallback((e?: React.SyntheticEvent) => {
-    e?.preventDefault();
-    e?.stopPropagation();
+  const handleOpenServerSettings = useCallback(() => {
     onOpenServerSettings();
   }, [onOpenServerSettings]);
 
   return (
     <div className="flex flex-col h-full bg-transparent relative">
       {/* Header */}
-      <div className="h-12 flex items-center gap-2 px-4 border-b border-white/5 transition-colors no-drag relative z-10">
-        <div
-          className="flex items-center gap-2 flex-1 overflow-hidden cursor-pointer"
-          role="button"
-          tabIndex={0}
-          onClick={handleOpenServerSettings}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') handleOpenServerSettings(e);
-          }}
-        >
-          <span className="font-bold text-white truncate flex-1 min-w-0" title={serverName}>
-            {serverName}
-          </span>
+      <div
+        className="h-12 flex items-center gap-2 px-4 border-b border-white/5 transition-colors no-drag relative z-10"
+        data-no-drag
+      >
+        <div className="flex items-center gap-2 flex-1 overflow-hidden" data-no-drag>
           <button
             type="button"
-            // FIX: pointerdown + no-drag (Electron/Webkit drag region can swallow click)
+            className="flex items-center gap-2 flex-1 overflow-hidden cursor-pointer bg-transparent p-0 border-none text-left"
             data-no-drag
-            style={{ WebkitAppRegion: 'no-drag' } as any}
-            onPointerDown={handleOpenServerSettings}
+            onClick={handleOpenServerSettings}
+          >
+            <span className="font-bold text-white truncate flex-1 min-w-0" title={serverName}>
+              {serverName}
+            </span>
+          </button>
+          <button
+            type="button"
+            data-no-drag
             onClick={handleOpenServerSettings}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') handleOpenServerSettings(e);
+              if (e.key === 'Enter' || e.key === ' ') handleOpenServerSettings();
             }}
             className="p-2 flex-shrink-0 rounded-md hover:bg-white/5 text-gray-500 hover:text-white focus:outline-none"
             title="Servereinstellungen"
@@ -379,6 +376,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
           type="button"
           className="p-1.5 flex-shrink-0 rounded-md hover:bg-white/10 text-gray-500 hover:text-white focus:outline-none"
           title="Kanal erstellen"
+          data-no-drag
           onClick={(e) => {
             e.stopPropagation();
             setCreateType('text');
