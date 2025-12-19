@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef, type KeyboardEvent } from 'react';
 import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, PhoneOff, Camera, ScreenShare, Lock, ListChecks, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../../api/http';
 import { CreateChannelModal } from '../modals/CreateChannelModal';
 import { UserBottomBar } from './UserBottomBar';
@@ -57,6 +58,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
 
   // CONTEXTS
   const { settings, updateDevices } = useSettings();
+  const { t } = useTranslation();
   const {
     activeRoom,
     activeChannelId: voiceChannelId,
@@ -306,7 +308,9 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
       return (
         <div key={c.id} className={`${isInside ? 'ml-4' : 'mx-2'} my-2 flex items-center gap-2`}>
           <div className="flex-1 h-px bg-white/10" />
-          <span className="text-[10px] uppercase tracking-[0.15em] text-gray-600 select-none">Separator</span>
+          <span className="text-[10px] uppercase tracking-[0.15em] text-gray-600 select-none">
+            {t('channelSidebar.separator')}
+          </span>
           <div className="flex-1 h-px bg-white/10" />
         </div>
       );
@@ -358,7 +362,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
           onClick={() => handleChannelClick(c)}
           role="button"
           tabIndex={0}
-          aria-label={`${c.name} Kanal`}
+          aria-label={t('channelSidebar.channelButtonLabel', { channel: c.name })}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
@@ -367,7 +371,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
           }}
           className={`flex items-center no-drag px-2 py-1.5 mb-0.5 cursor-pointer group select-none rounded-md transition-colors
             ${isInside ? 'ml-4' : 'mx-2'}
-            ${isActive ? 'bg-white/10 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'}
+            ${isActive ? 'bg-white/10 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200 focus-visible:bg-white/5 focus-visible:text-gray-200'}
             focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317]
           `}
         >
@@ -378,7 +382,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
         {c.type === 'voice' && hasPresence && (
           <div className={`${isInside ? 'ml-8' : 'ml-6'} mr-2 mb-1 rounded-md border border-white/5 bg-white/5 px-2 py-1.5 animate-in slide-in-from-top-1 duration-200`}>
             <div className="text-[10px] uppercase tracking-[0.08em] text-gray-500 mb-1 font-bold flex items-center gap-1">
-               Im Kanal
+              {t('channelSidebar.inChannel')}
             </div>
             <div className="space-y-1">
                 {displayParticipants.map((user) => (
@@ -443,7 +447,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
         data-no-drag
       >
         <div
-          className="flex items-center gap-2 flex-1 overflow-hidden cursor-pointer"
+          className="flex items-center gap-2 flex-1 overflow-hidden cursor-pointer rounded-md px-1 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317] focus-visible:bg-white/5"
           role="button"
           tabIndex={0}
           data-no-drag
@@ -451,6 +455,8 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') handleOpenServerSettings();
           }}
+          aria-label={t('channelSidebar.openServerSettings', { server: serverName })}
+          title={t('channelSidebar.openServerSettings', { server: serverName })}
         >
           <span className="font-bold text-white truncate flex-1 min-w-0" title={serverName}>
             {serverName}
@@ -461,9 +467,9 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') handleOpenServerSettings();
             }}
-            className="p-2 flex-shrink-0 rounded-md hover:bg-white/5 text-gray-500 hover:text-white focus:outline-none"
-            title="Servereinstellungen"
-            aria-label="Servereinstellungen"
+            className="p-2 flex-shrink-0 rounded-md hover:bg-white/5 text-gray-500 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317]"
+            title={t('channelSidebar.openServerSettings', { server: serverName })}
+            aria-label={t('channelSidebar.openServerSettings', { server: serverName })}
           >
             <Settings size={16} aria-hidden />
           </button>
@@ -471,8 +477,9 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
 
         <button
           type="button"
-          className="p-1.5 flex-shrink-0 rounded-md hover:bg-white/10 text-gray-500 hover:text-white focus:outline-none"
-          title="Kanal erstellen"
+          className="p-1.5 flex-shrink-0 rounded-md hover:bg-white/10 text-gray-500 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317]"
+          title={t('channelSidebar.createChannel')}
+          aria-label={t('channelSidebar.createChannel')}
           data-no-drag
           onClick={(e) => {
             e.stopPropagation();
@@ -493,9 +500,9 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
               e.stopPropagation();
               onCloseMobileNav();
             }}
-            className="lg:hidden p-2 -mr-1 rounded-md hover:bg-white/10 text-gray-400 hover:text-white focus:outline-none"
-            title="Navigation schließen"
-            aria-label="Navigation schließen"
+            className="lg:hidden p-2 -mr-1 rounded-md hover:bg-white/10 text-gray-400 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317]"
+            title={t('channelSidebar.closeNavigation')}
+            aria-label={t('channelSidebar.closeNavigation')}
             data-no-drag
           >
             <X size={18} aria-hidden />
@@ -507,7 +514,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
         <div className="flex-1 overflow-y-auto pt-4 px-2 custom-scrollbar relative z-0">
            {isLoading && (
              <div className="mx-2 mb-3 rounded-md border border-white/5 bg-white/5 px-3 py-2 text-xs text-gray-300">
-               Lade Kanäle...
+               {t('channelSidebar.loading')}
              </div>
            )}
 
@@ -520,7 +527,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
                    className="text-xs font-semibold text-red-100 underline-offset-2 hover:underline"
                    onClick={() => fetchData()}
                  >
-                   Erneut versuchen
+                   {t('channelSidebar.retry')}
                  </button>
                </div>
              </div>
@@ -529,15 +536,24 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
            {uncategorized.map(c => renderChannel(c, false))}
            {categories.map(cat => (
              <div key={cat.id} className="mt-4">
-                <div className="flex items-center justify-between group cursor-pointer no-drag mb-1 pl-1 pr-2" onClick={() => toggleCategory(cat.id)}>
-                   <div className="flex items-center gap-1 text-gray-500 text-xs font-bold uppercase hover:text-gray-300">
-                       {collapsed[cat.id] ? <ChevronRight size={10}/> : <ChevronDown size={10}/>}
-                       {cat.name}
-                   </div>
+                <div className="flex items-center justify-between group no-drag mb-1 pl-1 pr-2 gap-2">
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 text-gray-500 text-xs font-bold uppercase hover:text-gray-300 rounded-md px-1 py-0.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317] focus-visible:text-gray-200"
+                    onClick={() => toggleCategory(cat.id)}
+                    aria-expanded={!collapsed[cat.id]}
+                    aria-controls={`category-${cat.id}-channels`}
+                    aria-label={t('channelSidebar.toggleCategory', { category: cat.name })}
+                    data-no-drag
+                  >
+                    {collapsed[cat.id] ? <ChevronRight size={10}/> : <ChevronDown size={10}/>}
+                    {cat.name}
+                  </button>
                    <button
                      type="button"
-                     className="no-drag p-1 rounded-md text-gray-500 opacity-0 group-hover:opacity-100 hover:text-white hover:bg-white/5"
-                     title="Kanal in Kategorie erstellen"
+                     className="no-drag p-1 rounded-md text-gray-500 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-white hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317]"
+                     title={t('channelSidebar.createChannelInCategory', { category: cat.name })}
+                     aria-label={t('channelSidebar.createChannelInCategory', { category: cat.name })}
                      onClick={(e) => {
                        e.stopPropagation();
                        setCreateType('text');
@@ -548,7 +564,11 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
                      <Plus size={14} />
                    </button>
                 </div>
-                {!collapsed[cat.id] && cat.channels.map(c => renderChannel(c, true))}
+                {!collapsed[cat.id] && (
+                  <div id={`category-${cat.id}-channels`}>
+                    {cat.channels.map(c => renderChannel(c, true))}
+                  </div>
+                )}
              </div>
            ))}
         </div>

@@ -32,5 +32,17 @@
         "body": "Als Admin kannst du Kanäle erstellen, Rollen vergeben und Berechtigungen pro Kanal einstellen. Öffne die Server Settings über das Zahnrad am Servernamen."
       }
     }
+  },
+  "channelSidebar": {
+    "channelButtonLabel": "{{channel}} Kanal",
+    "separator": "Trenner",
+    "inChannel": "Im Kanal",
+    "loading": "Kanäle werden geladen...",
+    "retry": "Erneut versuchen",
+    "createChannel": "Kanal erstellen",
+    "openServerSettings": "Servereinstellungen für {{server}} öffnen",
+    "closeNavigation": "Navigation schließen",
+    "toggleCategory": "Kategorie {{category}} ein- oder ausklappen",
+    "createChannelInCategory": "Kanal in {{category}} erstellen"
   }
 }
