@@ -57,6 +57,8 @@ interface Category {
 }
 
 export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }: ServerSettingsProps) => {
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'channels' | 'roles'>('overview');
   const [members, setMembers] = useState<any[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
@@ -71,6 +73,30 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
   const [overrides, setOverrides] = useState<any[]>([]);
   const [selectedOverrideRole, setSelectedOverrideRole] = useState<number | null>(null);
   const [overrideDraft, setOverrideDraft] = useState<{ allow: Record<string, boolean>; deny: Record<string, boolean> }>({ allow: {}, deny: {} });
+
+  // Portal + lifecycle guards
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      setPortalTarget(document.body);
+    }
+    setIsMounted(true);
+    return () => {
+      // Reset scroll state in case the modal prevented scroll in the future
+      if (typeof document !== 'undefined') {
+        document.body.style.removeProperty('overflow');
+      }
+    };
+  }, []);
+
+  // Prevent background scroll while the modal is visible
+  useEffect(() => {
+    if (!portalTarget) return;
+    const previousOverflow = portalTarget.style.overflow;
+    portalTarget.style.overflow = 'hidden';
+    return () => {
+      portalTarget.style.overflow = previousOverflow;
+    };
+  }, [portalTarget]);
 
   // Initial Data Loading
   useEffect(() => {
@@ -320,6 +346,8 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
     { key: 'roles', label: 'Rollen', icon: Shield },
     { key: 'members', label: 'Mitglieder', icon: Users },
   ];
+
+  if (!isMounted || !portalTarget) return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 relative">
