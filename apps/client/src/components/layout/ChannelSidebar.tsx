@@ -335,9 +335,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
 
   const toggleCategory = (id: number) => setCollapsed(prev => ({ ...prev, [id]: !prev[id] }));
 
-  const handleOpenServerSettings = useCallback((e?: React.SyntheticEvent) => {
-    e?.preventDefault();
-    e?.stopPropagation();
+  const handleOpenServerSettings = useCallback(() => {
     onOpenServerSettings();
   }, [onOpenServerSettings]);
 
@@ -352,9 +350,10 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
           className="flex items-center gap-2 flex-1 overflow-hidden cursor-pointer"
           role="button"
           tabIndex={0}
+          data-no-drag
           onClick={handleOpenServerSettings}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') handleOpenServerSettings(e);
+            if (e.key === 'Enter' || e.key === ' ') handleOpenServerSettings();
           }}
         >
           <span className="font-bold text-white truncate flex-1 min-w-0" title={serverName}>
@@ -364,7 +363,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
             type="button"
             onClick={handleOpenServerSettings}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') handleOpenServerSettings(e);
+              if (e.key === 'Enter' || e.key === ' ') handleOpenServerSettings();
             }}
             className="p-2 flex-shrink-0 rounded-md hover:bg-white/5 text-gray-500 hover:text-white focus:outline-none"
             title="Servereinstellungen"
