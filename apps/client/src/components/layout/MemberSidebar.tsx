@@ -28,6 +28,13 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
   } | null>(null);
   const { socket, presenceSnapshot, channelPresence } = useSocket();
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 250);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
 
   const normalizeMember = (m: any): Member => ({
     userId: m.userId ?? m.user_id ?? m.User?.id ?? m.user?.id,
@@ -231,9 +238,14 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
     setContextMenu((prev) => (prev ? { ...prev, moveTargetId: prev.moveTargetId || nextOption.id } : prev));
   }, [contextMenu?.channelId, voiceChannels]);
 
+  const normalizedSearch = debouncedSearch.toLowerCase();
+  const filteredMembers = normalizedSearch
+    ? members.filter((m) => m.username.toLowerCase().includes(normalizedSearch))
+    : members;
+
   // Gruppenlogik (Online / Offline)
-  const onlineMembers = members.filter(m => m.status === 'online');
-  const offlineMembers = members.filter(m => m.status !== 'online');
+  const onlineMembers = filteredMembers.filter((m) => m.status === 'online');
+  const offlineMembers = filteredMembers.filter((m) => m.status !== 'online');
 
   const renderMember = (m: Member) => (
       <div
@@ -284,10 +296,19 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
       {/* Header */}
       <div className="h-12 flex items-center px-4 border-b border-white/5 flex-shrink-0">
         <span className="text-xs font-black tracking-widest text-gray-500 uppercase">Personal</span>
-        <span className="ml-auto text-[10px] bg-white/5 text-gray-400 px-2 py-0.5 rounded-full">{members.length}</span>
+        <span className="ml-auto text-[10px] bg-white/5 text-gray-400 px-2 py-0.5 rounded-full">{filteredMembers.length}</span>
       </div>
 
       <div className="flex-1 p-3 overflow-y-auto custom-scrollbar space-y-6">
+          <div className="px-2">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Mitglieder durchsuchen"
+              className="w-full px-3 py-2 text-sm bg-white/5 border border-white/10 rounded-md text-gray-200 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+          </div>
           {/* Online Group */}
           <div>
               <div className="text-[10px] font-bold text-gray-500 mb-2 px-2 uppercase tracking-wider flex items-center gap-2">
