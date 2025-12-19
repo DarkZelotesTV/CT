@@ -3,12 +3,12 @@ import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, P
 import { apiFetch } from '../../api/http';
 import { CreateChannelModal } from '../modals/CreateChannelModal';
 import { UserBottomBar } from './UserBottomBar';
-import { useVoice } from '../../context/voice-state'; // Importieren
+import { useVoice } from '../../context/voice-state';
 import { VoiceParticipantsPanel } from "../voice/VoiceParticipantsPanel";
 import { useSocket } from '../../context/SocketContext';
+import { useSettings } from '../../context/SettingsContext'; // Für aktuellen DisplayName
 import { defaultServerTheme, deriveServerThemeFromSettings, type ServerTheme } from '../../theme/serverTheme';
 
-// ... (Interfaces Channel, Category wie gehabt) ...
 interface Channel { id: number; name: string; type: 'text' | 'voice' | 'web' | 'data-transfer' | 'spacer' | 'list'; custom_icon?: string; }
 interface Category { id: number; name: string; channels: Channel[]; }
 interface ChannelSidebarProps {
@@ -40,17 +40,12 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
     target?: HTMLElement | null;
     moveTargetId?: number | null;
   } | null>(null);
+  
   const modalPortalRef = useRef<HTMLDivElement>(null);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
-  const voiceChannels = useMemo(
-    () =>
-      [...uncategorized, ...categories.flatMap((cat) => cat.channels)]
-        .filter((ch) => ch.type === 'voice')
-        .sort((a, b) => a.name.localeCompare(b.name)),
-    [categories, uncategorized]
-  );
 
-  // CONTEXT NUTZEN
+  // CONTEXTS
+  const { settings } = useSettings();
   const {
     activeRoom,
     activeChannelId: voiceChannelId,
@@ -67,6 +62,23 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
     isPublishingScreen,
   } = useVoice();
   const { channelPresence } = useSocket();
+
+  // Lokalen User laden (für ID-Vergleich)
+  const localUser = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem('clover_user') || '{}');
+    } catch {
+      return {};
+    }
+  }, []);
+
+  const voiceChannels = useMemo(
+    () =>
+      [...uncategorized, ...categories.flatMap((cat) => cat.channels)]
+        .filter((ch) => ch.type === 'voice')
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [categories, uncategorized]
+  );
 
   const participantCount = activeRoom ? activeRoom.numParticipants : 0;
   const shouldShowVoiceParticipants = connectionState === 'connected' && participantCount > 0;
@@ -128,7 +140,6 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
     setContextMenu((prev) => (prev ? { ...prev, moveTargetId: prev.moveTargetId || nextOption.id } : prev));
   }, [contextMenu?.channelId, voiceChannels]);
 
-  // Click Handler: Voice Logik in den Hintergrund schieben
   const handleChannelClick = (c: Channel) => {
     if (c.type === 'spacer') return;
     onSelectChannel(c);
@@ -230,10 +241,35 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
         : c.type === 'list'
         ? ListChecks
         : Hash;
+    
     const isActive = activeChannelId === c.id;
-    const isConnected = c.type === 'voice' && voiceChannelId === c.id; // Bin ich hier verbunden?
-    const presenceList = channelPresence[c.id] || [];
-    const hasPresence = presenceList.length > 0;
+    // Visuelle Indikation: Grüner Text, wenn ICH hier verbunden bin
+    const isConnected = c.type === 'voice' && voiceChannelId === c.id && connectionState === 'connected';
+
+    // --- OPTIMISTISCHE TEILNEHMER-LISTE ---
+    // Start mit der Liste vom Server
+    let displayParticipants = [...(channelPresence[c.id] || [])];
+    const localUserId = localUser?.id ? String(localUser.id) : null;
+
+    if (localUserId && c.type === 'voice') {
+        const isMeConnectedHere = connectionState === 'connected' && voiceChannelId === c.id;
+        const amIInList = displayParticipants.some(u => String(u.id) === localUserId);
+
+        if (isMeConnectedHere && !amIInList) {
+            // FIX: Ich bin verbunden, aber der Server hat mich noch nicht geschickt -> Füge mich optimistisch hinzu
+            displayParticipants.push({
+                id: Number(localUserId),
+                username: settings.profile.displayName || localUser.username || 'Ich',
+                avatar_url: settings.profile.avatarUrl || localUser.avatar_url,
+                status: 'online'
+            });
+        } else if (!isMeConnectedHere && amIInList) {
+            // FIX: Ich bin NICHT mehr verbunden, aber der Server listet mich noch -> Entferne mich sofort
+            displayParticipants = displayParticipants.filter(u => String(u.id) !== localUserId);
+        }
+    }
+
+    const hasPresence = displayParticipants.length > 0;
 
     return (
       <div key={c.id} className="relative">
@@ -249,13 +285,15 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
         </div>
 
         {c.type === 'voice' && hasPresence && (
-          <div className={`${isInside ? 'ml-8' : 'ml-6'} mr-2 mb-1 rounded-md border border-white/5 bg-white/5 px-2 py-1.5`}>
-            <div className="text-[10px] uppercase tracking-[0.08em] text-gray-500 mb-1 font-bold">Im Kanal</div>
+          <div className={`${isInside ? 'ml-8' : 'ml-6'} mr-2 mb-1 rounded-md border border-white/5 bg-white/5 px-2 py-1.5 animate-in slide-in-from-top-1 duration-200`}>
+            <div className="text-[10px] uppercase tracking-[0.08em] text-gray-500 mb-1 font-bold flex items-center gap-1">
+               Im Kanal
+            </div>
             <div className="space-y-1">
-                {presenceList.map((user) => (
+                {displayParticipants.map((user) => (
                   <div
                     key={user.id}
-                    className="flex items-center gap-2 text-xs text-gray-200"
+                    className="flex items-center gap-2 text-xs text-gray-200 group/user"
                     onContextMenu={(e) => {
                       e.preventDefault();
                       openUserMenu({ x: e.clientX, y: e.clientY, target: e.currentTarget as HTMLElement }, user, c);
@@ -273,12 +311,20 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
                     onTouchEnd={cancelLongPress}
                     onTouchMove={cancelLongPress}
                   >
-                    <span
-                      className={`w-2 h-2 rounded-full ${user.status === 'online' ? 'bg-green-500' : 'bg-gray-500'}`}
-                      title={user.status === 'online' ? 'Online' : 'Offline'}
-                    />
-                    <span className="font-medium truncate flex-1" title={user.username}>{user.username}</span>
-                    <span className="text-[10px] uppercase text-gray-400">{user.status === 'online' ? 'Online' : 'Offline'}</span>
+                    <div className="relative">
+                        {user.avatar_url ? (
+                            <img src={user.avatar_url} className="w-4 h-4 rounded-full object-cover" alt="" />
+                        ) : (
+                            <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold ${user.status === 'online' ? 'bg-indigo-500 text-white' : 'bg-gray-600 text-gray-300'}`}>
+                                {user.username?.charAt(0).toUpperCase()}
+                            </div>
+                        )}
+                        <span className={`absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full border border-[#1e1f22] ${user.status === 'online' ? 'bg-green-500' : 'bg-gray-500'}`}></span>
+                    </div>
+                    
+                    <span className={`font-medium truncate flex-1 ${String(user.id) === localUserId ? 'text-green-300' : ''}`} title={user.username}>
+                        {user.username} {String(user.id) === localUserId && '(Du)'}
+                    </span>
                   </div>
                 ))}
             </div>
@@ -297,7 +343,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
         className={`absolute inset-0 ${showCreateModal ? 'z-50' : '-z-10'}`}
         style={{ pointerEvents: showCreateModal ? 'auto' : 'none' }}
       />
-      {/* Header - FIX: Flex Layout und shrink behavior angepasst */}
+      {/* Header */}
       <div className="h-12 flex items-center gap-2 px-4 border-b border-white/5 transition-colors no-drag relative z-10">
         <div className="flex items-center gap-2 flex-1 overflow-hidden">
           <span className="font-bold text-white truncate flex-1 min-w-0" title={serverName}>
@@ -309,9 +355,8 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
                 e.stopPropagation();
                 onOpenServerSettings();
             }}
-            className="p-2 flex-shrink-0 rounded-md hover:bg-white/5 text-gray-500 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0c10]"
-            title="Servereinstellungen öffnen"
-            aria-label="Servereinstellungen öffnen"
+            className="p-2 flex-shrink-0 rounded-md hover:bg-white/5 text-gray-500 hover:text-white focus:outline-none"
+            title="Servereinstellungen"
           >
             <Settings size={16} aria-hidden />
           </button>
@@ -319,9 +364,8 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
 
         <button
           type="button"
-          className="p-1.5 flex-shrink-0 rounded-md hover:bg-white/10 text-gray-500 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0c10]"
+          className="p-1.5 flex-shrink-0 rounded-md hover:bg-white/10 text-gray-500 hover:text-white focus:outline-none"
           title="Kanal erstellen"
-          aria-label="Neuen Kanal erstellen"
           onClick={(e) => {
             e.stopPropagation();
             setCreateType('text');
