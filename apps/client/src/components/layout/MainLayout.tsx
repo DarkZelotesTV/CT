@@ -39,7 +39,7 @@ interface Channel {
 
 export const MainLayout = () => {
   // UI State
-  const [showMobileNav, setShowMobileNav] = useState(false); // Neu: Steuert das Menü auf Handy
+  const [showMobileNav, setShowMobileNav] = useState(false);
   const [showRightSidebar, setShowRightSidebar] = useState(true);
   const [containerWidth, setContainerWidth] = useState(() => (typeof window === 'undefined' ? 0 : window.innerWidth));
   
@@ -125,7 +125,6 @@ export const MainLayout = () => {
   // --- Auto-Close Mobile Nav on Selection ---
   useEffect(() => {
     setShowMemberSheet(false);
-    // Wenn wir auf dem Handy sind und einen Kanal wählen, Menü schließen
     if (window.innerWidth < MOBILE_BREAKPOINT) {
         setShowMobileNav(false);
     }
@@ -194,7 +193,6 @@ export const MainLayout = () => {
       setPendingVoiceChannelId(null);
       setLastNonVoiceChannel(channel);
     }
-    // Auf Mobile Menü schließen nach Auswahl
     setShowMobileNav(false); 
   }, []);
 
@@ -307,9 +305,7 @@ export const MainLayout = () => {
     }
     if (activeChannel?.type === 'voice') {
       const isConnectedToTarget = connectedVoiceChannelId === activeChannel.id && connectionState === 'connected';
-      const isJoiningTarget = pendingVoiceChannelId === activeChannel.id && (connectionState === 'connecting' || connectionState === 'reconnecting');
-      const connectedElsewhere = connectedVoiceChannelId !== null && connectedVoiceChannelId !== activeChannel.id && connectionState !== 'disconnected';
-
+      // ... (Voice logic bleibt gleich)
       if (isConnectedToTarget) {
         return <VoiceChannelView channelName={activeChannel.name} />;
       }
@@ -318,9 +314,9 @@ export const MainLayout = () => {
           channel={activeChannel}
           onJoin={() => handleVoiceJoin(activeChannel)}
           onCancel={handleVoiceCancel}
-          isJoining={isJoiningTarget}
+          isJoining={pendingVoiceChannelId === activeChannel.id && (connectionState === 'connecting' || connectionState === 'reconnecting')}
           connectedChannelName={connectedVoiceChannelName}
-          connectedElsewhere={connectedElsewhere}
+          connectedElsewhere={connectedVoiceChannelId !== null && connectedVoiceChannelId !== activeChannel.id && connectionState !== 'disconnected'}
         />
       );
     }
@@ -346,10 +342,6 @@ export const MainLayout = () => {
         <ServerSettingsModal serverId={selectedServerId} onClose={() => setShowServerSettings(false)} onUpdated={handleServerUpdated} onDeleted={handleServerDeleted} />
       )}
 
-      {/* === RESPONSIVE NAVIGATION DRAWER === 
-         Desktop First: Standard ist Flex, auf Mobile (max-lg) wird es ein Overlay 
-      */}
-      
       {/* Overlay Backdrop für Mobile */}
       <div 
         className={classNames(
@@ -359,34 +351,34 @@ export const MainLayout = () => {
         onClick={() => setShowMobileNav(false)}
       />
 
-      {/* Navigation Container (Server Rail + Channel Sidebar) */}
+      {/* Navigation Container */}
       <div className={classNames(
         "flex h-full z-50 transition-transform duration-300 ease-in-out",
-        // DESKTOP: Relative Position, immer sichtbar
         "lg:relative lg:translate-x-0",
-        // MOBILE: Fixed Position, Slide-in Animation
         "fixed inset-y-0 left-0 max-lg:w-[85vw] max-lg:max-w-[320px]",
         showMobileNav ? "translate-x-0" : "max-lg:-translate-x-full"
       )}>
         
-        {/* 1. SERVER RAIL */}
+        {/* 1. SERVER RAIL - Hier werden jetzt die Props übergeben! */}
         <div className="w-[80px] flex-shrink-0 flex flex-col items-center py-3 h-full">
            <div className="w-full h-full bg-[#0a0a0c]/90 backdrop-blur-xl rounded-2xl border border-white/5 ml-3 shadow-2xl overflow-hidden">
-             <ServerRail selectedServerId={selectedServerId} onSelectServer={handleServerSelect} />
+             <ServerRail 
+                selectedServerId={selectedServerId} 
+                onSelectServer={handleServerSelect} 
+                onCreateServer={() => setShowCreateServer(true)}
+                onJoinServer={() => setShowJoinServer(true)}
+             />
            </div>
         </div>
 
-        {/* 2. CHANNEL SIDEBAR (Nur wenn Server ausgewählt) */}
+        {/* 2. CHANNEL SIDEBAR */}
         {selectedServerId && (
             <div 
                 ref={leftSidebarRef}
                 className="h-full py-3 pl-3 flex-shrink-0 transition-all duration-300"
-                // Breite auf Mobile: Füllt den Rest des Drawers. Auf Desktop: User-Einstellung.
                 style={{ width: typeof window !== 'undefined' && window.innerWidth < 1024 ? 'calc(100% - 80px)' : leftSidebarWidth }}
             >
                 <div className="w-full h-full bg-[#0e0e11]/90 backdrop-blur-xl rounded-2xl border border-white/5 overflow-hidden flex flex-col relative">
-                    
-                    {/* Mobile Close Button (oben rechts in der Channel Leiste) */}
                     <button 
                         onClick={() => setShowMobileNav(false)} 
                         className="lg:hidden absolute top-4 right-3 z-50 p-1 text-gray-400 hover:text-white"
@@ -403,19 +395,14 @@ export const MainLayout = () => {
                         refreshKey={serverRefreshKey}
                     />
                 </div>
-                
-                {/* Drag Handle (Nur Desktop) */}
                 <div className="hidden lg:block absolute top-0 right-0 h-full w-2 cursor-ew-resize hover:bg-white/5" onMouseDown={startDragLeft} />
             </div>
         )}
       </div>
 
-
-      {/* === MAIN CONTENT AREA === 
-      */}
+      {/* === MAIN CONTENT AREA === */}
       <div className="flex-1 flex flex-col min-w-0 relative h-full py-3 px-3 overflow-hidden">
-        
-        {/* MOBILE HEADER (Nur auf Handy sichtbar) */}
+        {/* MOBILE HEADER */}
         <div className="lg:hidden flex items-center gap-3 mb-3 px-1">
             <button 
                 onClick={() => setShowMobileNav(true)}
@@ -426,7 +413,6 @@ export const MainLayout = () => {
             <span className="font-bold text-white truncate">
                 {activeChannel?.name || "Chat"}
             </span>
-            {/* Member Toggle Button für Mobile */}
             {selectedServerId && (
                 <button 
                     onClick={() => setShowMemberSheet(true)}
@@ -453,9 +439,7 @@ export const MainLayout = () => {
         )}
       </div>
 
-      {/* === MEMBER SIDEBAR (DESKTOP) === 
-          Wird auf Mobile komplett ausgeblendet (hidden lg:block) 
-      */}
+      {/* MEMBER SIDEBARS (Desktop & Mobile) - Code unverändert übernommen ... */}
       {selectedServerId && (
         <div
           ref={rightSidebarRef}
@@ -474,9 +458,6 @@ export const MainLayout = () => {
         </div>
       )}
 
-      {/* === MEMBER SIDEBAR (MOBILE SHEET) === 
-          Bleibt wie gehabt, nur Logik verbessert
-      */}
       {selectedServerId && (
         <div
           className={classNames(
@@ -502,7 +483,6 @@ export const MainLayout = () => {
         </div>
       )}
 
-      {/* AUDIO RENDERER */}
       {activeRoom && !muted && <RoomAudioRenderer />}
     </div>
   );

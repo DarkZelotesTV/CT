@@ -1,14 +1,15 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { Home, Plus, Loader2, Globe, X } from 'lucide-react';
 import { apiFetch } from '../../api/http';
-import { CreateServerModal } from '../modals/CreateServerModal';
-import { JoinServerModal } from '../modals/JoinServerModal';
 import { getServerUrl, setServerUrl } from '../../utils/apiConfig';
 import { readPinnedServers, removePinnedServer, normalizeInstanceUrl } from '../../utils/pinnedServers';
 
+// Props erweitert: onCreateServer und onJoinServer hinzugefügt
 interface ServerRailProps {
   selectedServerId: number | null;
   onSelectServer: (id: number | null) => void;
+  onCreateServer: () => void;
+  onJoinServer: () => void;
 }
 
 interface Server {
@@ -17,10 +18,9 @@ interface Server {
   icon_url?: string;
 }
 
-export const ServerRail = ({ selectedServerId, onSelectServer }: ServerRailProps) => {
+export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, onJoinServer }: ServerRailProps) => {
   const [servers, setServers] = useState<Server[]>([]);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showJoinModal, setShowJoinModal] = useState(false);
+  // Lokale Modals entfernt - werden jetzt von MainLayout gesteuert
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [loading, setLoading] = useState(false);
   const [pinnedTick, setPinnedTick] = useState(0);
@@ -230,7 +230,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer }: ServerRailProps
           )}
         </div>
 
-        {/* 2. FIXIERTER FOOTER: Add Button + Menü (wird nicht abgeschnitten) */}
+        {/* 2. FIXIERTER FOOTER: Add Button + Menü */}
         <div className="flex-shrink-0 w-full flex flex-col items-center pb-4 relative z-50">
           <div className="relative" data-rail-add>
             <button
@@ -251,7 +251,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer }: ServerRailProps
                   className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-sm text-white"
                   onClick={() => {
                     setShowAddMenu(false);
-                    setShowCreateModal(true);
+                    onCreateServer(); // Ruft jetzt die Prop auf
                   }}
                 >
                   Server erstellen
@@ -261,7 +261,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer }: ServerRailProps
                   className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-sm text-white"
                   onClick={() => {
                     setShowAddMenu(false);
-                    setShowJoinModal(true);
+                    onJoinServer(); // Ruft jetzt die Prop auf
                   }}
                 >
                   Server beitreten / hinzufügen
@@ -273,25 +273,8 @@ export const ServerRail = ({ selectedServerId, onSelectServer }: ServerRailProps
         </div>
 
       </div>
-
-      {showCreateModal && (
-        <CreateServerModal
-          onClose={() => setShowCreateModal(false)}
-          onCreated={async () => {
-            await fetchServers();
-          }}
-        />
-      )}
-
-      {showJoinModal && (
-        <JoinServerModal
-          onClose={() => setShowJoinModal(false)}
-          onJoined={async () => {
-            await fetchServers();
-            setPinnedTick((x) => x + 1);
-          }}
-        />
-      )}
+      
+      {/* Modals wurden hier entfernt und befinden sich nun in MainLayout */}
     </>
   );
 };
