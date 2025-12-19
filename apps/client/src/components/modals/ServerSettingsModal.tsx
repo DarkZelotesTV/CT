@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { getModalRoot } from './modalRoot';
 import { 
   X, 
   Trash2, 
@@ -76,9 +77,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
 
   // Portal + lifecycle guards
   useEffect(() => {
-    if (typeof document !== 'undefined') {
-      setPortalTarget(document.body);
-    }
+    setPortalTarget(getModalRoot());
     setIsMounted(true);
     return () => {
       // Reset scroll state in case the modal prevented scroll in the future
@@ -90,13 +89,14 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
 
   // Prevent background scroll while the modal is visible
   useEffect(() => {
-    if (!portalTarget) return;
-    const previousOverflow = portalTarget.style.overflow;
-    portalTarget.style.overflow = 'hidden';
+    if (typeof document === 'undefined') return;
+    const body = document.body;
+    const previousOverflow = body.style.overflow;
+    body.style.overflow = 'hidden';
     return () => {
-      portalTarget.style.overflow = previousOverflow;
+      body.style.overflow = previousOverflow;
     };
-  }, [portalTarget]);
+  }, []);
 
   // Initial Data Loading
   useEffect(() => {
@@ -741,7 +741,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
         />
       )}
     </div>,
-    document.body
+    portalTarget
   );
 };
 

@@ -51,6 +51,20 @@ body,
   -webkit-app-region: no-drag;
 }
 
+/*
+  Modal portal root
+
+  We keep modals in a dedicated top-most stacking context to avoid
+  Electron/Chromium compositor quirks with backdrop-filter layers
+  (sidebars can otherwise render above fixed overlays).
+*/
+
+#modal-root {
+  position: relative;
+  z-index: 2147483647; /* max 32-bit int (practically "always on top") */
+  isolation: isolate;
+}
+
 .drag-region {
   -webkit-app-region: drag !important;
 }

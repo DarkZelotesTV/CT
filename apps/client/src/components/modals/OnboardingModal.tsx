@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Shield, Plus, Volume2, Users } from 'lucide-react';
+import { getModalRoot } from './modalRoot';
 
 interface Props {
   onClose: () => void;
@@ -58,8 +59,14 @@ export const OnboardingModal = ({ onClose }: Props) => {
     onClose();
   };
 
+  const target = getModalRoot();
+  if (!target) return null;
+
   return createPortal(
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200">
+    <div
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+      style={{ zIndex: 2147483647, transform: 'translateZ(0)', willChange: 'transform' }}
+    >
       <div className="w-full max-w-lg bg-[#0f1014] border border-white/10 rounded-2xl shadow-2xl overflow-hidden relative">
         <button
           onClick={close}
@@ -117,6 +124,6 @@ export const OnboardingModal = ({ onClose }: Props) => {
         </div>
       </div>
     </div>,
-    document.body
+    target
   );
 };

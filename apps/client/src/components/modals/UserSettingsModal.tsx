@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
+import { getModalRoot } from './modalRoot';
 import {
   Camera,
   Check,
@@ -345,8 +346,14 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
     onClose();
   };
 
+	const target = getModalRoot();
+	if (!target) return null;
+
   return createPortal(
-    <div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+	  <div
+	    className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+	    style={{ zIndex: 2147483647, transform: 'translateZ(0)', willChange: 'transform' }}
+	  >
       <div className="bg-[#0f1014] w-11/12 max-w-5xl h-[85vh] rounded-3xl border border-white/10 shadow-2xl overflow-hidden flex flex-col">
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 shrink-0">
           <div>
@@ -787,6 +794,6 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
         </div>
       </div>
     </div>,
-    document.body
+    target
   );
 };

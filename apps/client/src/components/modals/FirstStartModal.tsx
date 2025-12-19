@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ArrowRight, Check, Download, Upload } from "lucide-react";
+import { getModalRoot } from "./modalRoot";
 import { computeFingerprint, createIdentity, formatFingerprint, loadIdentity, saveIdentity, type IdentityFile } from "../../auth/identity";
 import { buildBackupPayload, getBackupFilename, parseIdentityBackup } from "../../auth/identityBackup";
 
@@ -80,8 +81,14 @@ export function FirstStartModal({ onComplete }: Props) {
     onComplete(identity);
   }
 
+  const target = getModalRoot();
+  if (!target) return null;
+
   return createPortal(
-    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[120] flex items-center justify-center p-6 animate-in fade-in duration-200">
+    <div
+      className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200"
+      style={{ zIndex: 2147483647, transform: 'translateZ(0)', willChange: 'transform' }}
+    >
       <div className="w-full max-w-3xl bg-[#0f1014] border border-white/10 rounded-3xl shadow-2xl overflow-hidden">
         <div className="p-6 border-b border-white/5">
           <div className="text-xs uppercase tracking-[0.2em] text-indigo-300 mb-1">Erster Start</div>
@@ -196,6 +203,6 @@ export function FirstStartModal({ onComplete }: Props) {
         </div>
       </div>
     </div>,
-    document.body
+    target
   );
 }

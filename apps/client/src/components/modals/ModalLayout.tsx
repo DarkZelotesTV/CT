@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { getModalRoot } from './modalRoot';
 
 interface ModalLayoutProps {
   title: string;
@@ -23,16 +24,16 @@ export const ModalLayout = ({
 }: ModalLayoutProps) => {
   const bodyClasses = bodyClassName ?? 'p-6 pt-2 space-y-6';
   // SSR Safety Check
-  const target = typeof document !== 'undefined' ? document.body : null;
+  const target = getModalRoot();
   const handleOverlayClick = onOverlayClick ?? onClose;
 
   if (!target) return null;
 
   return createPortal(
     <div
-      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200 p-4 z-[200]"
-      // FIX: Inline-Style für z-index erzwingt die Ebene über der Sidebar (z-50), unabhängig von Tailwind
-      style={{ zIndex: 99999 }}
+      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200 p-4"
+      // Keep the overlay in a compositor layer and above any glass sidebars.
+      style={{ zIndex: 2147483647, transform: 'translateZ(0)', willChange: 'transform' }}
     >
       <div className="absolute inset-0" onClick={handleOverlayClick}></div>
 

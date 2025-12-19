@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Upload, ShieldAlert, Download } from 'lucide-react';
+import { getModalRoot } from './modalRoot';
 import { clearIdentity, computeFingerprint, createIdentity, formatFingerprint, loadIdentity, saveIdentity, type IdentityFile } from '../../auth/identity';
 import { buildBackupPayload, getBackupFilename, parseIdentityBackup } from '../../auth/identityBackup';
 
@@ -80,8 +81,14 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
     persistIdentity(updated);
   }
 
+  const target = getModalRoot();
+  if (!target) return null;
+
   return createPortal(
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+      style={{ zIndex: 2147483647, transform: 'translateZ(0)', willChange: 'transform' }}
+    >
       <div className="bg-[#0f1014] w-full max-w-xl rounded-2xl shadow-2xl border border-white/10 relative">
         <button
           onClick={onClose}
@@ -216,6 +223,6 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
         </div>
       </div>
     </div>,
-    document.body
+    target
   );
 };

@@ -19,6 +19,11 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Dedicated portal target for modals.
+         Electron/Chromium can occasionally mis-layer elements with backdrop-filter.
+         Keeping all modals inside a top-most stacking context avoids them slipping
+         behind the server rail / sidebars. -->
+    <div id="modal-root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
