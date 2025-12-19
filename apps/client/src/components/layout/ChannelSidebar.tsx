@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, type KeyboardEvent } from 'react';
 import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, PhoneOff, Camera, ScreenShare, Lock, ListChecks, X } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { CreateChannelModal } from '../modals/CreateChannelModal';
@@ -56,7 +56,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   }, []);
 
   // CONTEXTS
-  const { settings } = useSettings();
+  const { settings, updateDevices } = useSettings();
   const {
     activeRoom,
     activeChannelId: voiceChannelId,
@@ -71,8 +71,13 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
     screenShareError,
     isPublishingCamera,
     isPublishingScreen,
+    selectedAudioInputId,
+    selectedVideoInputId,
   } = useVoice();
   const { channelPresence } = useSocket();
+
+  const [audioInputs, setAudioInputs] = useState<MediaDeviceInfo[]>([]);
+  const [videoInputs, setVideoInputs] = useState<MediaDeviceInfo[]>([]);
 
   // Lokalen User laden (für ID-Vergleich)
   const localUser = useMemo(() => storage.get('cloverUser'), []);
@@ -204,6 +209,52 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
+    }
+  };
+
+  const refreshDevices = useCallback(async () => {
+    if (!navigator?.mediaDevices?.enumerateDevices) return;
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      setAudioInputs(devices.filter((d) => d.kind === 'audioinput'));
+      setVideoInputs(devices.filter((d) => d.kind === 'videoinput'));
+    } catch (err) {
+      console.warn('Could not enumerate devices', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshDevices();
+    navigator?.mediaDevices?.addEventListener('devicechange', refreshDevices);
+    return () => navigator?.mediaDevices?.removeEventListener('devicechange', refreshDevices);
+  }, [refreshDevices]);
+
+  const handleDeviceChange = async (
+    type: 'audioinput' | 'videoinput',
+    deviceId: string
+  ) => {
+    updateDevices({
+      audioInputId: type === 'audioinput' ? deviceId || null : settings.devices.audioInputId,
+      audioOutputId: settings.devices.audioOutputId,
+      videoInputId: type === 'videoinput' ? deviceId || null : settings.devices.videoInputId,
+    });
+
+    if (activeRoom && connectionState === 'connected' && deviceId) {
+      try {
+        await activeRoom.switchActiveDevice(type, deviceId, true);
+      } catch (err) {
+        console.warn('Could not switch active device', err);
+      }
+    }
+  };
+
+  const handleButtonKey = async (
+    e: KeyboardEvent<HTMLButtonElement>,
+    action: () => Promise<void>
+  ) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      await action();
     }
   };
 
@@ -596,48 +647,111 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
                 )}
               </div>
 
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleCamera().catch(console.error);
-                  }}
-                  className={`w-8 h-8 flex items-center justify-center rounded-lg border text-xs transition-colors ${
-                    isCameraEnabled
-                      ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-200'
-                      : 'bg-white/5 border-white/10 text-gray-300 hover:text-white'
-                  } ${isPublishingCamera ? 'opacity-60 cursor-wait' : ''}`}
-                  title={isCameraEnabled ? 'Kamera stoppen' : 'Kamera starten'}
-                  disabled={isPublishingCamera}
-                >
-                  <Camera size={14} />
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleScreenShare().catch(console.error);
-                  }}
-                  className={`w-8 h-8 flex items-center justify-center rounded-lg border text-xs transition-colors ${
-                    isScreenSharing
-                      ? 'bg-indigo-500/10 border-indigo-500/40 text-indigo-200'
-                      : 'bg-white/5 border-white/10 text-gray-300 hover:text-white'
-                  } ${isPublishingScreen ? 'opacity-60 cursor-wait' : ''}`}
-                  title={isScreenSharing ? 'Screen-Sharing stoppen' : 'Screen teilen'}
-                  disabled={isPublishingScreen}
-                >
-                  <ScreenShare size={14} />
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    disconnect().catch(console.error);
-                  }}
-                  className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"
-                  title="Auflegen"
-                >
-                  <PhoneOff size={16} aria-hidden />
-                </button>
+              <div className="flex items-center gap-2">
+                <div className="relative group">
+                  <button
+                    aria-label={isCameraEnabled ? 'Kamera stoppen' : 'Kamera starten'}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleCamera().catch(console.error);
+                    }}
+                    onKeyDown={(e) => {
+                      e.stopPropagation();
+                      handleButtonKey(e, () => toggleCamera());
+                    }}
+                    className={`w-8 h-8 flex items-center justify-center rounded-lg border text-xs transition-colors ${
+                      isCameraEnabled
+                        ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-200'
+                        : 'bg-white/5 border-white/10 text-gray-300 hover:text-white'
+                    } ${isPublishingCamera ? 'opacity-60 cursor-wait' : ''}`}
+                    title={isCameraEnabled ? 'Kamera stoppen' : 'Kamera starten'}
+                    disabled={isPublishingCamera}
+                  >
+                    <Camera size={14} />
+                  </button>
+                  <div className="pointer-events-none absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black px-2 py-1 text-[10px] text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
+                    {isCameraEnabled ? 'Kamera stoppen' : 'Kamera starten'}
+                  </div>
+                </div>
+                <div className="relative group">
+                  <button
+                    aria-label={isScreenSharing ? 'Screen-Sharing stoppen' : 'Screen teilen'}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleScreenShare().catch(console.error);
+                    }}
+                    onKeyDown={(e) => {
+                      e.stopPropagation();
+                      handleButtonKey(e, () => toggleScreenShare());
+                    }}
+                    className={`w-8 h-8 flex items-center justify-center rounded-lg border text-xs transition-colors ${
+                      isScreenSharing
+                        ? 'bg-indigo-500/10 border-indigo-500/40 text-indigo-200'
+                        : 'bg-white/5 border-white/10 text-gray-300 hover:text-white'
+                    } ${isPublishingScreen ? 'opacity-60 cursor-wait' : ''}`}
+                    title={isScreenSharing ? 'Screen-Sharing stoppen' : 'Screen teilen'}
+                    disabled={isPublishingScreen}
+                  >
+                    <ScreenShare size={14} />
+                  </button>
+                  <div className="pointer-events-none absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black px-2 py-1 text-[10px] text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
+                    {isScreenSharing ? 'Screen-Sharing stoppen' : 'Screen teilen'}
+                  </div>
+                </div>
+                <div className="relative group">
+                  <button
+                    aria-label="Auflegen"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      disconnect().catch(console.error);
+                    }}
+                    onKeyDown={(e) => {
+                      e.stopPropagation();
+                      handleButtonKey(e, () => disconnect());
+                    }}
+                    className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"
+                    title="Auflegen"
+                  >
+                    <PhoneOff size={16} aria-hidden />
+                  </button>
+                  <div className="pointer-events-none absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black px-2 py-1 text-[10px] text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
+                    Auflegen
+                  </div>
+                </div>
               </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <label className="flex flex-col gap-1 text-[10px] font-semibold text-gray-400">
+                Mikrofon
+                <select
+                  value={selectedAudioInputId || ''}
+                  onChange={(e) => handleDeviceChange('audioinput', e.target.value)}
+                  className="w-full rounded-lg border border-white/10 bg-black/30 px-2 py-1.5 text-xs text-gray-200 focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/20"
+                >
+                  <option value="">System Mikrofon</option>
+                  {audioInputs.map((device) => (
+                    <option key={device.deviceId} value={device.deviceId}>
+                      {device.label || 'Mikrofon'}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-[10px] font-semibold text-gray-400">
+                Kamera
+                <select
+                  value={selectedVideoInputId || ''}
+                  onChange={(e) => handleDeviceChange('videoinput', e.target.value)}
+                  className="w-full rounded-lg border border-white/10 bg-black/30 px-2 py-1.5 text-xs text-gray-200 focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/20"
+                >
+                  <option value="">Standard Kamera</option>
+                  {videoInputs.map((device) => (
+                    <option key={device.deviceId} value={device.deviceId}>
+                      {device.label || 'Kamera'}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
           </div>
         )}
