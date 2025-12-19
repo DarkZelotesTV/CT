@@ -1,14 +1,18 @@
 import React, { useMemo } from 'react';
-import { VoiceContext } from './state/VoiceContext';
-import { VoiceStoreProvider, useVoiceStore } from './state/VoiceStore';
-import { useVoiceEngine } from './engine/useVoiceEngine';
+import { useVoiceEngine } from './engine';
+import { VoiceContext, type VoiceContextType } from './state/VoiceContext';
+import { VoiceStoreProvider, useVoiceStore } from './state';
+
+const useVoiceComposer = (): VoiceContextType => {
+  const { state, setState } = useVoiceStore();
+  const engineContext = useVoiceEngine({ state, setState });
+
+  return useMemo(() => engineContext, [engineContext]);
+};
 
 const VoiceComposer = ({ children }: { children: React.ReactNode }) => {
-  const { state, setState } = useVoiceStore();
-  const contextValue = useVoiceEngine({ state, setState });
-  const memoizedValue = useMemo(() => contextValue, [contextValue]);
-
-  return <VoiceContext.Provider value={memoizedValue}>{children}</VoiceContext.Provider>;
+  const contextValue = useVoiceComposer();
+  return <VoiceContext.Provider value={contextValue}>{children}</VoiceContext.Provider>;
 };
 
 export const VoiceProvider = ({ children }: { children: React.ReactNode }) => (
