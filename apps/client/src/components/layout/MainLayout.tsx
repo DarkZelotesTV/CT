@@ -363,8 +363,14 @@ export const MainLayout = () => {
       )}>
         
         {/* 1. SERVER RAIL - Hier werden jetzt die Props übergeben! */}
-        <div className="w-[80px] flex-shrink-0 flex flex-col items-center py-3 h-full">
-           <div className="w-full h-full bg-[#0a0a0c]/90 backdrop-blur-xl rounded-2xl border border-white/5 ml-3 shadow-2xl overflow-visible">
+        {/*
+          The ServerRail contains a popover (Create/Join) that overflows into the ChannelSidebar.
+          When a server is selected, the ChannelSidebar is rendered after the rail and creates its
+          own stacking context (backdrop-filter/overflow), which can paint above the rail popover.
+          Give the rail a higher stacking context so the popover stays visible.
+        */}
+        <div className="w-[80px] flex-shrink-0 flex flex-col items-center py-3 h-full relative z-[80]">
+           <div className="w-full h-full bg-[#0a0a0c]/90 backdrop-blur-xl rounded-2xl border border-white/5 ml-3 shadow-2xl overflow-visible relative z-[80]">
              <ServerRail
                 selectedServerId={selectedServerId}
                 onSelectServer={handleServerSelect}
@@ -378,7 +384,7 @@ export const MainLayout = () => {
         {selectedServerId && (
             <div 
                 ref={leftSidebarRef}
-                className="h-full py-3 pl-3 flex-shrink-0 transition-all duration-300"
+                className="h-full py-3 pl-3 flex-shrink-0 transition-all duration-300 relative z-[60]"
                 style={{ width: typeof window !== 'undefined' && window.innerWidth < 1024 ? 'calc(100% - 80px)' : leftSidebarWidth }}
             >
                 <div className="w-full h-full bg-[#0e0e11]/90 backdrop-blur-xl rounded-2xl border border-white/5 overflow-hidden flex flex-col relative">
