@@ -48,8 +48,9 @@ npm run dev:client   # Vite-Entwicklungssserver
 - Format-Check (Prettier): `npm run format`
 - Typprüfung: `npm run typecheck`
 - Tests (Platzhalter, solange keine Test-Suite existiert): `npm run test`
+- Kombinierter Pipeline-Lauf (CI-Äquivalent): `npm run ci`
 
-Alle Befehle triggern die passenden Skripte in `apps/client` und `apps/server` automatisch.
+Die Root-Skripte nutzen die npm-Workspaces, um die entsprechenden Befehle in `apps/client` und `apps/server` automatisch auszuführen.
 
 ## Fehlerbehebung
 - Prüfe, ob `docker compose ps` zeigt, dass MySQL/Redis/LiveKit laufen.
