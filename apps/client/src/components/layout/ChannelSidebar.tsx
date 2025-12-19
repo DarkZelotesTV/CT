@@ -31,6 +31,8 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createType, setCreateType] = useState<Channel['type']>('text');
   const [createCategoryId, setCreateCategoryId] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
   const [contextMenu, setContextMenu] = useState<{
     userId: number;
@@ -42,8 +44,16 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
     target?: HTMLElement | null;
     moveTargetId?: number | null;
   } | null>(null);
-  
+
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const retryTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const clearRetryTimer = useCallback(() => {
+    if (retryTimer.current) {
+      clearTimeout(retryTimer.current);
+      retryTimer.current = null;
+    }
+  }, []);
 
   // CONTEXTS
   const { settings } = useSettings();
@@ -78,33 +88,58 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   const participantCount = activeRoom ? activeRoom.numParticipants : 0;
   const shouldShowVoiceParticipants = connectionState === 'connected' && participantCount > 0;
 
-  const fetchData = useCallback(async () => {
-    if (!serverId) return;
-    try {
-      const srvRes = await apiFetch<any[]>(`/api/servers`);
-      const current = srvRes.find((s: any) => s.id === serverId);
-      if (current) {
-        setServerName(current.name);
-        setServerTheme(deriveServerThemeFromSettings(current.settings || current.theme));
+  const fetchData = useCallback(
+    async (attempt = 1) => {
+      clearRetryTimer();
+      if (!serverId) {
+        setIsLoading(false);
+        return;
       }
-      const structRes = await apiFetch<{ categories: Category[]; uncategorized: Channel[]; fallbackChannelId?: number | null }>(`/api/servers/${serverId}/structure`);
-      setCategories(structRes.categories);
-      setUncategorized(structRes.uncategorized);
+      setIsLoading(true);
+      if (attempt === 1) setError(null);
 
-      const allChannels = [...structRes.uncategorized, ...structRes.categories.flatMap((c) => c.channels)];
-      const fallbackChannel =
-        allChannels.find((c) => c.id === (structRes.fallbackChannelId ?? null) && c.type !== 'voice' && c.type !== 'spacer') ||
-        allChannels.find((c) => c.type !== 'voice' && c.type !== 'spacer') ||
-        null;
+      try {
+        const srvRes = await apiFetch<any[]>(`/api/servers`);
+        const current = srvRes.find((s: any) => s.id === serverId);
+        if (current) {
+          setServerName(current.name);
+          setServerTheme(deriveServerThemeFromSettings(current.settings || current.theme));
+        }
+        const structRes = await apiFetch<{ categories: Category[]; uncategorized: Channel[]; fallbackChannelId?: number | null }>(`/api/servers/${serverId}/structure`);
+        setCategories(structRes.categories);
+        setUncategorized(structRes.uncategorized);
 
-      onResolveFallback?.(fallbackChannel ?? null);
+        const allChannels = [...structRes.uncategorized, ...structRes.categories.flatMap((c) => c.channels)];
+        const fallbackChannel =
+          allChannels.find((c) => c.id === (structRes.fallbackChannelId ?? null) && c.type !== 'voice' && c.type !== 'spacer') ||
+          allChannels.find((c) => c.type !== 'voice' && c.type !== 'spacer') ||
+          null;
 
-      if (!activeChannelId && fallbackChannel) {
-        onSelectChannel(fallbackChannel);
+        onResolveFallback?.(fallbackChannel ?? null);
+
+        if (!activeChannelId && fallbackChannel) {
+          onSelectChannel(fallbackChannel);
+        }
+
+        setError(null);
+        setIsLoading(false);
+      } catch (err) {
+        console.error(`Failed to load server data (attempt ${attempt})`, err);
+        setError('Konnte die Serverstruktur nicht laden. Bitte versuche es erneut.');
+        onResolveFallback?.(null);
+
+        if (attempt < 2) {
+          retryTimer.current = setTimeout(() => fetchData(attempt + 1), 1200);
+        } else {
+          setIsLoading(false);
+        }
       }
-    } catch (e) {}
-  }, [activeChannelId, onResolveFallback, onSelectChannel, refreshKey, serverId]);
+    },
+    [activeChannelId, clearRetryTimer, onResolveFallback, onSelectChannel, refreshKey, serverId]
+  );
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  useEffect(() => () => clearRetryTimer(), [clearRetryTimer]);
 
   useEffect(() => {
     if (!serverId) return;
@@ -405,6 +440,27 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
 
         {/* Liste */}
         <div className="flex-1 overflow-y-auto pt-4 px-2 custom-scrollbar relative z-0">
+           {isLoading && (
+             <div className="mx-2 mb-3 rounded-md border border-white/5 bg-white/5 px-3 py-2 text-xs text-gray-300">
+               Lade Kanäle...
+             </div>
+           )}
+
+           {error && (
+             <div className="mx-2 mb-3 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+               <div className="flex items-start justify-between gap-3">
+                 <span className="flex-1">{error}</span>
+                 <button
+                   type="button"
+                   className="text-xs font-semibold text-red-100 underline-offset-2 hover:underline"
+                   onClick={() => fetchData()}
+                 >
+                   Erneut versuchen
+                 </button>
+               </div>
+             </div>
+           )}
+
            {uncategorized.map(c => renderChannel(c, false))}
            {categories.map(cat => (
              <div key={cat.id} className="mt-4">
