@@ -14,5 +14,6 @@ export const requestLivekitToken = async (
   payload: LivekitCredentials,
   abortSignal?: AbortSignal,
 ): Promise<LivekitTokenResponse> => {
-  return apiClient.post<LivekitTokenResponse>('/api/livekit/token', payload, { signal: abortSignal });
+  const options = abortSignal ? { signal: abortSignal } : undefined;
+  return apiClient.post<LivekitTokenResponse>('/api/livekit/token', payload, options);
 };

@@ -24,10 +24,12 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
     onIdentityChanged?.(nextIdentity);
   };
 
+  const resolvedDisplayName = displayName.trim();
+
   async function handleCreate() {
     setError(null);
     try {
-      const id = await createIdentity(displayName || undefined);
+      const id = await createIdentity(resolvedDisplayName);
       persistIdentity(id);
     } catch (e: any) {
       setError(e?.message ?? 'Identity konnte nicht erstellt werden');
@@ -55,9 +57,8 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
     setError(null);
     try {
       const text = await file.text();
-      const parsed = await parseIdentityBackup(text, () => window.prompt('Passphrase für dieses Backup?'));
-      const trimmed = (displayName ?? "").trim();
-      const next = { ...parsed, displayName: parsed.displayName ?? (trimmed ? trimmed : undefined) };
+      const parsed = await parseIdentityBackup(text, () => window.prompt('Passphrase für dieses Backup?') ?? '');
+      const next: IdentityFile = { ...parsed, displayName: parsed.displayName ?? (resolvedDisplayName || null) };
       persistIdentity(next);
       setDisplayName(next.displayName ?? '');
     } catch (e: any) {
@@ -77,7 +78,7 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
 
   function handleSaveDisplayName() {
     if (!identity) return;
-    const updated: IdentityFile = { ...identity, displayName: displayName || undefined };
+    const updated: IdentityFile = { ...identity, displayName: resolvedDisplayName || null };
     persistIdentity(updated);
   }
 

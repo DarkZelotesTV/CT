@@ -196,8 +196,12 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         setRnnoiseAvailable(true);
         await stopRnnoisePipeline(room);
 
+        const audioConstraints: MediaTrackConstraints | boolean = settings.devices.audioInputId
+          ? { deviceId: settings.devices.audioInputId }
+          : true;
+
         const stream = await navigator.mediaDevices.getUserMedia({
-          audio: { deviceId: settings.devices.audioInputId || undefined },
+          audio: audioConstraints,
           video: false,
         });
 
@@ -474,7 +478,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const preset = qualityPresets[quality] || qualityPresets.medium;
         await roomToUse.localParticipant.setCameraEnabled(true, {
-          deviceId: settings.devices.videoInputId ?? undefined,
+          ...(settings.devices.videoInputId ? { deviceId: settings.devices.videoInputId } : {}),
           resolution: preset.resolution,
           frameRate: preset.frameRate,
         });
@@ -703,7 +707,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
           });
 
           const streamVideoTrack = stream.getVideoTracks()[0];
-          videoTrack = options?.track ?? streamVideoTrack;
+          videoTrack = options?.track ?? streamVideoTrack ?? null;
           audioTrack = shouldShareAudio ? stream.getAudioTracks()[0] ?? null : null;
 
           if (streamVideoTrack && videoTrack !== streamVideoTrack) {

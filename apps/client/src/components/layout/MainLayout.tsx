@@ -115,8 +115,9 @@ export const MainLayout = () => {
   useEffect(() => {
     if (!layoutRef.current || typeof ResizeObserver === 'undefined') return undefined;
     const observer = new ResizeObserver((entries) => {
-      if (!entries.length) return;
-      setContainerWidth(entries[0].contentRect.width);
+      const [entry] = entries;
+      if (!entry) return;
+      setContainerWidth(entry.contentRect.width);
     });
     observer.observe(layoutRef.current);
     return () => observer.disconnect();

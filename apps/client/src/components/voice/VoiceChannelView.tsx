@@ -116,7 +116,7 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
           await stopScreenShare();
       } else {
           await startScreenShare({
-              sourceId,
+              ...(sourceId ? { sourceId } : {}),
               quality: settings.talk.screenQuality || 'high',
               frameRate: settings.talk.screenFrameRate || 30,
               bitrateProfile: settings.talk.screenBitrateProfile || 'medium',

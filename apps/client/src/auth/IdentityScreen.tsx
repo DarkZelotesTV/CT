@@ -20,6 +20,12 @@ export function IdentityScreen({ onAuthed, onIdentityChanged }: Props) {
 
   const fp = useMemo(() => (identity ? computeFingerprint(identity) : null), [identity]);
 
+  const buildUpdatedIdentity = (): IdentityFile => {
+    if (!identity) throw new Error("Identity missing");
+    const trimmed = displayName.trim();
+    return trimmed ? { ...identity, displayName: trimmed } : { ...identity, displayName: null };
+  };
+
   const handleIdentityChange = (next: IdentityFile | null) => {
     setIdentity(next);
     setDisplayName(next?.displayName ?? "");
@@ -37,7 +43,7 @@ export function IdentityScreen({ onAuthed, onIdentityChanged }: Props) {
     setBusy(true);
     setErr(null);
     try {
-      const updated: IdentityFile = { ...identity, displayName: displayName || undefined };
+      const updated = buildUpdatedIdentity();
       saveIdentity(updated);
       setIdentity(updated);
       setServerUrl(serverHost);
@@ -63,7 +69,7 @@ export function IdentityScreen({ onAuthed, onIdentityChanged }: Props) {
       return;
     }
 
-    const updated: IdentityFile = { ...identity, displayName: displayName || undefined };
+    const updated = buildUpdatedIdentity();
     saveIdentity(updated);
     setIdentity(updated);
     onIdentityChanged?.(updated);

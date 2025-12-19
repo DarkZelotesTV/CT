@@ -13,7 +13,10 @@
     "jsx": "react-jsx",
     "types": ["vite/client", "node"],
     "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true
   },
   "include": ["src", "electron/**/*", "vite.config.ts"],
   "exclude": ["dist", "dist-electron", "release"]

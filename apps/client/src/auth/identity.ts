@@ -14,14 +14,14 @@ export type IdentityFile = {
   publicKeyB64: string;   // 32 bytes
   privateKeyB64: string;  // 32 bytes seed
   createdAt: string;
-  displayName?: string;
+  displayName?: string | null;
 };
 
 const STORAGE_KEY = "ct.identity.v1";
 
 function u8ToB64(u8: Uint8Array): string {
   let s = "";
-  for (let i = 0; i < u8.length; i++) s += String.fromCharCode(u8[i]);
+  for (const value of u8) s += String.fromCharCode(value);
   return btoa(s);
 }
 
@@ -45,13 +45,14 @@ export function fingerprintFromPublicKey(publicKey: Uint8Array): string {
 export async function createIdentity(displayName?: string): Promise<IdentityFile> {
   const seed = crypto.getRandomValues(new Uint8Array(32));
   const pub = await ed.getPublicKeyAsync(seed);
+  const trimmedDisplayName = displayName?.trim();
 
   return {
     version: 1,
     publicKeyB64: u8ToB64(pub),
     privateKeyB64: u8ToB64(seed),
     createdAt: new Date().toISOString(),
-    displayName,
+    ...(trimmedDisplayName ? { displayName: trimmedDisplayName } : {}),
   };
 }
 

@@ -152,7 +152,8 @@ export const TalkSettingsModal = ({ onClose, initialTab = 'voice' }: { onClose: 
     
     const startMeter = async () => {
         try {
-            stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: audioInputId || undefined } });
+            const audioConstraints: MediaTrackConstraints | boolean = audioInputId ? { deviceId: audioInputId } : true;
+            stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
             if (cancelled) return;
 
             ctx = new AudioContext();
@@ -166,8 +167,8 @@ export const TalkSettingsModal = ({ onClose, initialTab = 'voice' }: { onClose: 
                 if (cancelled) return;
                 analyser.getByteTimeDomainData(data);
                 let sum = 0;
-                for(let i=0; i<data.length; i++) {
-                    const v = data[i] - 128;
+                for (const value of data) {
+                    const v = value - 128;
                     sum += v*v;
                 }
                 const rms = Math.sqrt(sum/data.length) / 128;

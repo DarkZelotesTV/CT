@@ -58,10 +58,10 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
       userId: member.userId,
       username: member.username,
       channelId: active?.channelId ?? null,
-      channelName: active?.channelName,
+      ...(active?.channelName ? { channelName: active.channelName } : {}),
       x: origin.x,
       y: origin.y,
-      target: origin.target,
+      target: origin.target ?? null,
       moveTargetId: active?.channelId ?? null,
     });
   };
@@ -200,10 +200,11 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
     setMembers((prev) => prev.map((member) => {
       const snapshot = presenceSnapshot[member.userId];
       if (!snapshot) return member;
+      const avatarUrl = snapshot.avatar_url ?? member.avatarUrl;
       return {
         ...member,
         username: snapshot.username ?? member.username,
-        avatarUrl: snapshot.avatar_url ?? member.avatarUrl,
+        ...(avatarUrl ? { avatarUrl } : {}),
         status: snapshot.status ?? member.status,
       };
     }));
@@ -353,7 +354,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
                       performModeration('move', {
                         userId: contextMenu.userId,
                         channelId: contextMenu.channelId!,
-                        targetChannelId: contextMenu.moveTargetId || undefined,
+                        targetChannelId: contextMenu.moveTargetId ?? null,
                       })
                     }
                   >

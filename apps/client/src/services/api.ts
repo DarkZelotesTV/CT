@@ -16,12 +16,20 @@ const buildHeaders = (headers?: Record<string, string>): HeadersInit => ({
 
 const request = async <T>(path: string, options: RequestOptions = {}): Promise<T> => {
   const url = `${DEFAULT_BASE_URL}${path}`;
-  const response = await fetch(url, {
+  const init: RequestInit = {
     method: options.method ?? 'GET',
     headers: buildHeaders(options.headers),
-    body: options.body ? JSON.stringify(options.body) : undefined,
-    signal: options.signal,
-  });
+  };
+
+  if (options.signal !== undefined) {
+    init.signal = options.signal;
+  }
+
+  if (options.body !== undefined) {
+    init.body = options.body === null ? null : JSON.stringify(options.body);
+  }
+
+  const response = await fetch(url, init);
 
   if (!response.ok) {
     const message = await response.text();

@@ -73,9 +73,14 @@ function createWindow() {
   mainWindow.webContents.session.setDisplayMediaRequestHandler((request, callback) => {
     desktopCapturer.getSources({ types: ['screen'] }).then((sources) => {
       // Wählt automatisch den ersten Bildschirm, wenn kein Custom UI genutzt wird
-      callback({ video: sources[0] });
+      const [firstSource] = sources;
+      if (firstSource) {
+        callback({ video: firstSource } as unknown as Electron.Streams);
+      } else {
+        callback({} as Electron.Streams);
+      }
     }).catch(() => {
-      callback(null as any);
+      callback({} as Electron.Streams);
     });
   });
 

@@ -22,7 +22,10 @@ export function FirstStartModal({ onComplete }: Props) {
   const fp = useMemo(() => (identity ? computeFingerprint(identity) : null), [identity]);
 
   const persistIdentity = (next: IdentityFile) => {
-    const updated = { ...next, displayName: (displayName || next.displayName)?.trim() || undefined };
+    const resolvedName = (displayName || next.displayName || "").trim();
+    const updated: IdentityFile = resolvedName
+      ? { ...next, displayName: resolvedName }
+      : { ...next, displayName: null };
     saveIdentity(updated);
     setIdentity(updated);
     setError(null);
@@ -31,7 +34,7 @@ export function FirstStartModal({ onComplete }: Props) {
   async function handleCreate() {
     setError(null);
     try {
-      const created = await createIdentity(displayName || undefined);
+      const created = await createIdentity(displayName);
       persistIdentity(created);
       setStep("backup");
     } catch (e: any) {
