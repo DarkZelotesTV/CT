@@ -24,6 +24,9 @@ logs/
 .DS_Store
 Thumbs.db
 
+# Archive
+*.zip
+
 # IDEs
 .vscode/
 .idea/
