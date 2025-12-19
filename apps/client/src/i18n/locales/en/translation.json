@@ -4,5 +4,33 @@
     "textChannelUnsupported": "Text channels are currently not supported.",
     "stageAreaTitle": "Stage Area",
     "stageAreaDescription": "Select a channel on the left."
+  },
+  "onboarding": {
+    "welcome": "Welcome",
+    "welcomeUser": "Welcome, {{username}}",
+    "title": "Quick tutorial",
+    "subtitle": "Ready to go in 30 seconds.",
+    "close": "Close",
+    "skip": "Skip",
+    "next": "Next",
+    "finish": "Let's go",
+    "steps": {
+      "identity": {
+        "title": "Your Clover identity",
+        "body": "Your identity stays local on your device. You can export (backup) or import it at any time. Without an identity you can't join a server."
+      },
+      "servers": {
+        "title": "Create or join servers",
+        "body": "Use the green + on the left to create servers or join servers—including from other instances. Remote servers are pinned automatically."
+      },
+      "voice": {
+        "title": "Voice calls",
+        "body": "Click a voice channel to connect. Below the call you'll see who's in the talk—and who's currently speaking."
+      },
+      "settings": {
+        "title": "Server settings & roles",
+        "body": "As an admin you can create channels, assign roles, and set permissions per channel. Open server settings via the gear next to the server name."
+      }
+    }
   }
 }
