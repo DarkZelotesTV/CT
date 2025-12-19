@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Headphones, MicOff, Settings } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import { UserSettingsModal } from '../modals/UserSettingsModal';
-import { useVoice } from '../../context/voice-state';
+import { useVoice } from '../../features/voice';
 import { useSocket } from '../../context/SocketContext';
 
 export const UserBottomBar = () => {

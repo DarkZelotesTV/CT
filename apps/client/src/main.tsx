@@ -11,7 +11,7 @@ import '@livekit/components-styles/prefabs'; // Optional, für bessere Layouts
 import { IdentityGate } from './auth/IdentityGate';
 import { SocketProvider } from './context/SocketContext.tsx';
 import { SettingsProvider } from './context/SettingsContext';
-import { VoiceProvider } from './context/VoiceProvider';
+import { VoiceProvider } from './features/voice';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <IdentityGate>

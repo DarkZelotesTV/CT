@@ -3,8 +3,8 @@ import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, P
 import { apiFetch } from '../../api/http';
 import { CreateChannelModal } from '../modals/CreateChannelModal';
 import { UserBottomBar } from './UserBottomBar';
-import { useVoice } from '../../context/voice-state';
-import { VoiceParticipantsPanel } from "../voice/VoiceParticipantsPanel";
+import { useVoice } from '../../features/voice';
+import { VoiceParticipantsPanel } from "../../features/voice/ui/VoiceParticipantsPanel";
 import { useSocket } from '../../context/SocketContext';
 import { useSettings } from '../../context/SettingsContext'; // Für aktuellen DisplayName
 import { defaultServerTheme, deriveServerThemeFromSettings, type ServerTheme } from '../../theme/serverTheme';

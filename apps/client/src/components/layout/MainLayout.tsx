@@ -12,8 +12,8 @@ import { ChannelSidebar } from './ChannelSidebar';
 // Web & Voice Views
 import { WebChannelView } from '../server/WebChannelView';
 import { HomeOnboardingStage } from '../dashboard/HomeOnboardingStage';
-import { VoiceChannelView } from '../voice/VoiceChannelView';
-import { VoicePreJoin } from '../voice/VoicePreJoin';
+import { VoiceChannelView } from '../../features/voice/ui/VoiceChannelView';
+import { VoicePreJoin } from '../../features/voice/ui/VoicePreJoin';
 
 // Modals
 import { OnboardingModal } from '../modals/OnboardingModal';
@@ -21,7 +21,7 @@ import { ServerSettingsModal } from '../modals/ServerSettingsModal';
 import { CreateServerModal } from '../modals/CreateServerModal';
 import { JoinServerModal } from '../modals/JoinServerModal';
 
-import { useVoice, type VoiceContextType } from '../../context/voice-state';
+import { useVoice, type VoiceContextType } from '../../features/voice';
 
 const defaultChannelWidth = 256;
 const defaultMemberWidth = 256;

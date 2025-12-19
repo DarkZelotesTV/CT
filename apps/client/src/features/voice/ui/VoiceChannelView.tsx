@@ -5,7 +5,7 @@ import {
   XCircle, Check, Laptop2, RefreshCw, Settings, Sliders, Volume2
 } from 'lucide-react';
 import { VoiceMediaStage } from './VoiceMediaStage';
-import { useVoice } from '../../context/voice-state';
+import { useVoice } from '..';
 import { useSettings } from '../../context/SettingsContext';
 import { TalkSettingsModal } from '../modals/TalkSettingsModal';
 

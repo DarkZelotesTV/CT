@@ -1,6 +1,4 @@
-// apps/client/src/context/VoiceProvider.tsx
-
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef } from 'react';
 import {
   Room,
   RoomEvent,
@@ -10,13 +8,14 @@ import {
   RemoteAudioTrack,
   RemoteTrack,
 } from 'livekit-client';
-import { getLiveKitConfig } from '../utils/apiConfig';
-import { VoiceContext, VoiceContextType } from './voice-state';
-import { apiFetch } from '../api/http';
-import { useSettings } from './SettingsContext';
-import { useSocket } from './SocketContext';
-import rnnoiseWorkletUrl from '../audio/rnnoise-worklet.js?url';
 import rnnoiseWasmScriptUrl from '@jitsi/rnnoise-wasm/dist/rnnoise-sync.js?url';
+import rnnoiseWorkletUrl from '../../audio/rnnoise-worklet.js?url';
+import { apiFetch } from '../../api/http';
+import { useSettings } from '../../context/SettingsContext';
+import { useSocket } from '../../context/SocketContext';
+import { getLiveKitConfig } from '../../utils/apiConfig';
+import { VoiceContextType } from '../state/VoiceContext';
+import { VoiceState } from '../state/voiceTypes';
 
 const qualityPresets = {
   low: { resolution: { width: 640, height: 360 }, frameRate: 24 },
@@ -30,35 +29,94 @@ const bitrateProfiles = {
   high: { maxBitrate: 10_000_000 },
 };
 
-export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
+type VoiceEngineDeps = {
+  state: VoiceState;
+  setState: (patch: Partial<VoiceState> | ((prev: VoiceState) => Partial<VoiceState>)) => void;
+};
+
+export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
   const { settings, updateTalk } = useSettings();
   const { socket, optimisticLeave } = useSocket();
 
-  const [activeRoom, setActiveRoom] = useState<Room | null>(null);
-  const [activeChannelId, setActiveChannelId] = useState<number | null>(null);
-  const [activeChannelName, setActiveChannelName] = useState<string | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [connectionState, setConnectionState] = useState<VoiceContextType['connectionState']>('disconnected');
-  const [error, setError] = useState<string | null>(null);
-  const [muted, setMutedState] = useState(settings.talk.muted);
-  const [micMuted, setMicMutedState] = useState(settings.talk.micMuted);
-  const [usePushToTalk, setUsePushToTalkState] = useState(settings.talk.pushToTalkEnabled);
-  const [isTalking, setIsTalking] = useState(false);
-  const [isCameraEnabled, setIsCameraEnabled] = useState(false);
-  const [isScreenSharing, setIsScreenSharing] = useState(false);
-  const [isPublishingCamera, setIsPublishingCamera] = useState(false);
-  const [isPublishingScreen, setIsPublishingScreen] = useState(false);
-  const [cameraError, setCameraError] = useState<string | null>(null);
-  const [screenShareError, setScreenShareError] = useState<string | null>(null);
-  const [screenShareAudioError, setScreenShareAudioError] = useState<string | null>(null);
-  const [localParticipantId, setLocalParticipantId] = useState<string | null>(null);
-  const [shareSystemAudio, setShareSystemAudio] = useState(false);
-  const [rnnoiseEnabled, setRnnoiseEnabledState] = useState(settings.talk.rnnoiseEnabled ?? false);
-  const [rnnoiseAvailable, setRnnoiseAvailable] = useState(true);
-  const [rnnoiseError, setRnnoiseError] = useState<string | null>(null);
-  const [outputVolume, setOutputVolumeState] = useState(() =>
-    typeof settings.talk.outputVolume === 'number' ? settings.talk.outputVolume : 1
+  const {
+    activeRoom,
+    activeChannelId,
+    activeChannelName,
+    token,
+    connectionState,
+    error,
+    muted,
+    micMuted,
+    usePushToTalk,
+    isTalking,
+    isCameraEnabled,
+    isScreenSharing,
+    isPublishingCamera,
+    isPublishingScreen,
+    cameraError,
+    screenShareError,
+    screenShareAudioError,
+    localParticipantId,
+    shareSystemAudio,
+    rnnoiseEnabled,
+    rnnoiseAvailable,
+    rnnoiseError,
+    outputVolume,
+  } = state;
+
+  const setActiveRoom = useCallback((room: Room | null) => setState({ activeRoom: room }), [setState]);
+  const setActiveChannelId = useCallback(
+    (channelId: number | null) => setState({ activeChannelId: channelId }),
+    [setState]
   );
+  const setActiveChannelName = useCallback(
+    (channelName: string | null) => setState({ activeChannelName: channelName }),
+    [setState]
+  );
+  const setToken = useCallback((nextToken: string | null) => setState({ token: nextToken }), [setState]);
+  const setConnectionState = useCallback(
+    (next: VoiceContextType['connectionState']) => setState({ connectionState: next }),
+    [setState]
+  );
+  const setError = useCallback((next: string | null) => setState({ error: next }), [setState]);
+  const setMutedState = useCallback((next: boolean) => setState({ muted: next }), [setState]);
+  const setMicMutedState = useCallback((next: boolean) => setState({ micMuted: next }), [setState]);
+  const setUsePushToTalkState = useCallback((next: boolean) => setState({ usePushToTalk: next }), [setState]);
+  const setIsTalking = useCallback((next: boolean) => setState({ isTalking: next }), [setState]);
+  const setIsCameraEnabled = useCallback((next: boolean) => setState({ isCameraEnabled: next }), [setState]);
+  const setIsScreenSharing = useCallback((next: boolean) => setState({ isScreenSharing: next }), [setState]);
+  const setIsPublishingCamera = useCallback((next: boolean) => setState({ isPublishingCamera: next }), [setState]);
+  const setIsPublishingScreen = useCallback((next: boolean) => setState({ isPublishingScreen: next }), [setState]);
+  const setCameraError = useCallback((next: string | null) => setState({ cameraError: next }), [setState]);
+  const setScreenShareError = useCallback(
+    (next: string | null) => setState({ screenShareError: next }),
+    [setState]
+  );
+  const setScreenShareAudioError = useCallback(
+    (next: string | null) => setState({ screenShareAudioError: next }),
+    [setState]
+  );
+  const setLocalParticipantId = useCallback(
+    (next: string | null) => setState({ localParticipantId: next }),
+    [setState]
+  );
+  const setShareSystemAudio = useCallback<Dispatch<SetStateAction<boolean>>>(
+    (next) =>
+      setState((prev) => ({
+        shareSystemAudio: typeof next === 'function' ? next(prev.shareSystemAudio) : next,
+      })),
+    [setState]
+  );
+  const setRnnoiseEnabledState = useCallback(
+    (next: boolean) => setState({ rnnoiseEnabled: next }),
+    [setState]
+  );
+  const setRnnoiseAvailable = useCallback(
+    (next: boolean) => setState({ rnnoiseAvailable: next }),
+    [setState]
+  );
+  const setRnnoiseError = useCallback((next: string | null) => setState({ rnnoiseError: next }), [setState]);
+  const setOutputVolumeState = useCallback((next: number) => setState({ outputVolume: next }), [setState]);
 
   const publishedScreenTracksRef = useRef<MediaStreamTrack[]>([]);
   const rnnoiseResourcesRef = useRef<{
@@ -1188,54 +1246,50 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
     syncLocalMediaState(activeRoom);
   }, [activeRoom, syncLocalMediaState]);
 
-  return (
-    <VoiceContext.Provider
-      value={{
-        activeRoom,
-        activeChannelId,
-        activeChannelName,
-        connectionState,
-        error,
-        cameraError,
-        screenShareError,
-        connectToChannel,
-        disconnect,
-        token,
-        muted,
-        micMuted,
-        usePushToTalk,
-        isTalking,
-        isCameraEnabled,
-        isScreenSharing,
-        isPublishingCamera,
-        isPublishingScreen,
-        rnnoiseEnabled,
-        rnnoiseAvailable,
-        rnnoiseError,
-        setMuted,
-        setMicMuted,
-        setPushToTalk,
-        setRnnoiseEnabled,
-        startTalking,
-        stopTalking,
-        startCamera,
-        stopCamera,
-        toggleCamera,
-        startScreenShare,
-        stopScreenShare,
-        toggleScreenShare,
-        shareSystemAudio,
-        setShareSystemAudio,
-        selectedAudioInputId: settings.devices.audioInputId,
-        selectedAudioOutputId: settings.devices.audioOutputId,
-        selectedVideoInputId: settings.devices.videoInputId,
-        localParticipantId,
-        outputVolume,
-        setOutputVolume,
-        screenShareAudioError,
-      }}
-    >
-      {children}
-    </VoiceContext.Provider>
-  );
+  const contextValue: VoiceContextType = {
+    activeRoom,
+    activeChannelId,
+    activeChannelName,
+    connectionState,
+    error,
+    cameraError,
+    screenShareError,
+    connectToChannel,
+    disconnect,
+    token,
+    muted,
+    micMuted,
+    usePushToTalk,
+    isTalking,
+    isCameraEnabled,
+    isScreenSharing,
+    isPublishingCamera,
+    isPublishingScreen,
+    rnnoiseEnabled,
+    rnnoiseAvailable,
+    rnnoiseError,
+    setMuted,
+    setMicMuted,
+    setPushToTalk,
+    setRnnoiseEnabled,
+    startTalking,
+    stopTalking,
+    startCamera,
+    stopCamera,
+    toggleCamera,
+    startScreenShare,
+    stopScreenShare,
+    toggleScreenShare,
+    shareSystemAudio,
+    setShareSystemAudio,
+    selectedAudioInputId: settings.devices.audioInputId,
+    selectedAudioOutputId: settings.devices.audioOutputId,
+    selectedVideoInputId: settings.devices.videoInputId,
+    localParticipantId,
+    outputVolume,
+    setOutputVolume,
+    screenShareAudioError,
+  };
+
+  return contextValue;
 };

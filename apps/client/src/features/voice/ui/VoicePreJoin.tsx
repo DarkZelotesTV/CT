@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, ChevronRight, Headphones, Info, Loader2, Mic, MicOff, RefreshCw, Settings, Volume2, VolumeX, Video, Monitor } from 'lucide-react';
-import { useVoice } from '../../context/voice-state';
+import { useVoice } from '..';
 import { useSettings } from '../../context/SettingsContext';
 
 type VoicePreJoinProps = {

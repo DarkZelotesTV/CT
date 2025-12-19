@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ParticipantTile } from '@livekit/components-react';
 import { RoomEvent, Track, LocalParticipant, RemoteParticipant, TrackPublication } from 'livekit-client';
-import { useVoice } from '../../context/voice-state';
+import { useVoice } from '..';
 import { Monitor, User, MicOff, AlertCircle, Maximize2, Minimize2, Dock, Move, Maximize, Minimize } from 'lucide-react';
 
 type LayoutMode = 'grid' | 'speaker';

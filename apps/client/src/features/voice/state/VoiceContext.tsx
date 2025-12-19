@@ -1,11 +1,12 @@
-import { createContext, useContext, type Dispatch, type SetStateAction } from 'react';
+import { createContext, useContext } from 'react';
 import { Room } from 'livekit-client';
+import { ConnectionState } from './voiceTypes';
 
 export interface VoiceContextType {
   activeRoom: Room | null;
   activeChannelId: number | null;
   activeChannelName: string | null;
-  connectionState: 'disconnected' | 'connecting' | 'connected' | 'reconnecting';
+  connectionState: ConnectionState;
   error: string | null;
   cameraError: string | null;
   screenShareError: string | null;
@@ -46,7 +47,7 @@ export interface VoiceContextType {
   stopScreenShare: () => Promise<void>;
   toggleScreenShare: () => Promise<void>;
   shareSystemAudio: boolean;
-  setShareSystemAudio: Dispatch<SetStateAction<boolean>>;
+  setShareSystemAudio: React.Dispatch<React.SetStateAction<boolean>>;
   selectedAudioInputId: string | null;
   selectedAudioOutputId: string | null;
   selectedVideoInputId: string | null;
