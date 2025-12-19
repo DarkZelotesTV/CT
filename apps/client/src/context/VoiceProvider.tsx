@@ -695,6 +695,9 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
             audio: shouldShareAudio
               ? ({
                   suppressLocalAudioPlayback: false,
+                  // Verhindert, dass die eigene CloverTalk-App-Audio beim Screenshare mitgeschickt wird
+                  // und sich Teilnehmende selbst hören.
+                  selfBrowserSurface: 'exclude',
                 } as MediaTrackConstraints)
               : false,
           });
