@@ -16,7 +16,6 @@
     "@noble/ed25519": "^3.0.0",
     "@noble/hashes": "^2.0.1",
     "@types/dompurify": "^3.0.5",
-    "@vitejs/plugin-react": "^5.1.2",
     "axios": "^1.13.2",
     "classnames": "^2.5.1",
     "dompurify": "^3.3.1",
@@ -30,6 +29,7 @@
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.4",
     "@types/react": "^18.2.15",
+    "@vitejs/plugin-react": "^5.1.2",
     "autoprefixer": "^10.4.22",
     "electron": "39.2.7",
     "electron-builder": "^26.0.12",
