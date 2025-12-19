@@ -43,6 +43,14 @@ npm run dev:server   # Backend mit ts-node-dev
 npm run dev:client   # Vite-Entwicklungssserver
 ```
 
+## Code-Qualität & Tests
+- Linting: `npm run lint`
+- Format-Check (Prettier): `npm run format`
+- Typprüfung: `npm run typecheck`
+- Tests (Platzhalter, solange keine Test-Suite existiert): `npm run test`
+
+Alle Befehle triggern die passenden Skripte in `apps/client` und `apps/server` automatisch.
+
 ## Fehlerbehebung
 - Prüfe, ob `docker compose ps` zeigt, dass MySQL/Redis/LiveKit laufen.
 - Stelle sicher, dass `apps/server/.env` mit den MySQL-Zugangsdaten aus `docker-compose.yml` übereinstimmt.

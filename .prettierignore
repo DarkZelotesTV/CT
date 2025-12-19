@@ -1,0 +1,6 @@
+node_modules
+coverage
+dist
+dist-electron
+release
+apps/client/release
