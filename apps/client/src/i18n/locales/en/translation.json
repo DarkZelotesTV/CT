@@ -32,5 +32,17 @@
         "body": "As an admin you can create channels, assign roles, and set permissions per channel. Open server settings via the gear next to the server name."
       }
     }
+  },
+  "channelSidebar": {
+    "channelButtonLabel": "{{channel}} channel",
+    "separator": "Separator",
+    "inChannel": "In channel",
+    "loading": "Loading channels...",
+    "retry": "Try again",
+    "createChannel": "Create channel",
+    "openServerSettings": "Open server settings for {{server}}",
+    "closeNavigation": "Close navigation",
+    "toggleCategory": "Toggle category {{category}}",
+    "createChannelInCategory": "Create channel in {{category}}"
   }
 }
