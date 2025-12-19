@@ -332,7 +332,10 @@ export const MainLayout = () => {
   };
 
   const ui = (
-    <div ref={layoutRef} className="flex h-screen w-screen overflow-hidden relative bg-[#050507] text-gray-200 font-sans">
+    <div
+      ref={layoutRef}
+      className="flex h-screen w-screen overflow-visible relative bg-[#050507] text-gray-200 font-sans"
+    >
       
       {/* --- GLOBAL MODALS --- */}
       {showOnboarding && <OnboardingModal onClose={() => setShowOnboarding(false)} />}
@@ -361,10 +364,10 @@ export const MainLayout = () => {
         
         {/* 1. SERVER RAIL - Hier werden jetzt die Props übergeben! */}
         <div className="w-[80px] flex-shrink-0 flex flex-col items-center py-3 h-full">
-           <div className="w-full h-full bg-[#0a0a0c]/90 backdrop-blur-xl rounded-2xl border border-white/5 ml-3 shadow-2xl overflow-hidden">
-             <ServerRail 
-                selectedServerId={selectedServerId} 
-                onSelectServer={handleServerSelect} 
+           <div className="w-full h-full bg-[#0a0a0c]/90 backdrop-blur-xl rounded-2xl border border-white/5 ml-3 shadow-2xl overflow-visible">
+             <ServerRail
+                selectedServerId={selectedServerId}
+                onSelectServer={handleServerSelect}
                 onCreateServer={() => setShowCreateServer(true)}
                 onJoinServer={() => setShowJoinServer(true)}
              />
