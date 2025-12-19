@@ -59,7 +59,7 @@ export const OnboardingModal = ({ onClose }: Props) => {
   };
 
   return createPortal(
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[120] flex items-center justify-center p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200">
       <div className="w-full max-w-lg bg-[#0f1014] border border-white/10 rounded-2xl shadow-2xl overflow-hidden relative">
         <button
           onClick={close}

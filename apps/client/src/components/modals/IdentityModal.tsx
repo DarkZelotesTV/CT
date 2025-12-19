@@ -81,7 +81,7 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
   }
 
   return createPortal(
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
       <div className="bg-[#0f1014] w-full max-w-xl rounded-2xl shadow-2xl border border-white/10 relative">
         <button
           onClick={onClose}
