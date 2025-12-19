@@ -26,7 +26,6 @@ export const VoiceMediaStage = ({
   const stageScreenRef = useRef<HTMLDivElement | null>(null);
   const floatingOverlayRef = useRef<HTMLDivElement | null>(null);
 
-  // Re-Render Trigger bei Room-Events
   useEffect(() => {
     if (!activeRoom) return;
     const bump = () => setRefreshToken((v) => v + 1);
@@ -51,7 +50,6 @@ export const VoiceMediaStage = ({
     };
   }, [activeRoom]);
 
-  // Teilnehmer-Liste zusammenstellen
   const participants = useMemo(() => {
     if (!activeRoom) return [];
     const remoteMap = activeRoom.remoteParticipants;
@@ -60,7 +58,6 @@ export const VoiceMediaStage = ({
     return [local, ...remotes];
   }, [activeRoom, refreshToken]);
 
-  // Filter für Screen-Shares
   const screenParticipants = useMemo(() =>
     participants.filter((p) => p.isScreenShareEnabled),
   [participants]);
@@ -73,7 +70,6 @@ export const VoiceMediaStage = ({
   );
   const screenParticipantsForStage = showFloatingOverlay ? [] : screenParticipants;
 
-  // Fokus-Teilnehmer ermitteln
   const focusParticipant = useMemo(() => {
     const availableParticipants = participantsWithoutScreens;
     if (availableParticipants.length === 0 && floatingParticipant) return floatingParticipant;
@@ -142,7 +138,6 @@ export const VoiceMediaStage = ({
     }
   };
 
-  // Render Funktion für einzelne Kacheln
   const renderTile = (
     participant: LocalParticipant | RemoteParticipant,
     isScreenShare = false,
@@ -161,14 +156,10 @@ export const VoiceMediaStage = ({
 
     const isTrackEnabled = publication && !publication.isMuted && (isLocal || publication.isSubscribed);
 
-    // Styling Logic
     let borderColor = 'border-[#202225] hover:border-[#303236]';
-    
     if (isScreenShare) {
-        // HIER IST DIE WICHTIGE ÄNDERUNG: Immer Schwarz bei Screenshare
-        borderColor = 'border-black';
+        borderColor = 'border-black'; 
     } else if (isSpeaking) {
-        // Nur bei Kamera grün
         borderColor = 'border-green-500 ring-1 ring-green-500';
     }
 
@@ -188,9 +179,14 @@ export const VoiceMediaStage = ({
                 source: isScreenShare ? Track.Source.ScreenShare : Track.Source.Camera,
                 publication: publication
               }}
-              // WICHTIG: Hier fügen wir 'screenshare-tile' hinzu, damit unser CSS greift!
+              disableSpeakingIndicator={isScreenShare}
+              // WICHTIG: Die Klasse 'screenshare-tile' muss hier gesetzt sein!
               className={`w-full h-full ${objectFit} bg-black ${isScreenShare ? 'screenshare-tile' : ''}`}
-              style={{ width: '100%', height: '100%' }}
+              style={{ 
+                width: '100%', 
+                height: '100%',
+                background: '#000', // Doppelter Schutz
+              }}
             />
         ) : (
             <div className="w-full h-full flex flex-col items-center justify-center bg-[#2b2d31] text-gray-400 gap-2">
@@ -207,7 +203,6 @@ export const VoiceMediaStage = ({
             </div>
         )}
         
-        {/* Name Tag */}
         <div className="absolute bottom-2 left-2 flex items-center gap-1.5 px-2 py-1 rounded bg-black/70 backdrop-blur-md text-white max-w-[85%] z-20 pointer-events-none border border-white/5">
             {isScreenShare ? <Monitor size={12} className="text-indigo-300" /> : (!participant.isMicrophoneEnabled && <MicOff size={12} className="text-red-400"/>)}
             <span className="text-xs font-bold truncate tracking-wide text-gray-100 shadow-sm">
@@ -238,9 +233,6 @@ export const VoiceMediaStage = ({
     );
   };
 
-  // --- Layout Rendering ---
-
-  // SPEAKER VIEW
   if (layout === 'speaker' && focusParticipant) {
     return (
         <div className="flex flex-col lg:flex-row h-full p-4 gap-3 relative">
@@ -252,7 +244,6 @@ export const VoiceMediaStage = ({
                    focusParticipant.isScreenShareEnabled,
                  )}
             </div>
-
             <div className="h-32 lg:h-auto lg:w-64 flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto lg:pr-1 custom-scrollbar">
                 {participantsWithoutScreens.filter(p => p !== focusParticipant).map(p => (
                     <div key={p.sid} className="w-48 lg:w-full h-full lg:h-36 flex-none">
@@ -260,7 +251,6 @@ export const VoiceMediaStage = ({
                     </div>
                 ))}
             </div>
-
             {showFloatingOverlay && floatingParticipant && (
               <FloatingOverlay
                 isMaximized={isOverlayMaximized}
@@ -283,7 +273,6 @@ export const VoiceMediaStage = ({
     )
   }
 
-  // GRID VIEW (Standard)
   const gridCols = participantsWithoutScreens.length === 1 ? 'grid-cols-1 max-w-4xl'
                  : participantsWithoutScreens.length === 2 ? 'grid-cols-1 md:grid-cols-2 max-w-6xl'
                  : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4';
@@ -294,7 +283,6 @@ export const VoiceMediaStage = ({
             {participantsWithoutScreens.map((p) => renderTile(p, false))}
             {screenParticipantsForStage.map((p, index) => renderTile(p, true, index === 0 ? stageScreenRef : undefined, index === 0))}
         </div>
-
         {showFloatingOverlay && floatingParticipant && (
           <FloatingOverlay
             isMaximized={isOverlayMaximized}
