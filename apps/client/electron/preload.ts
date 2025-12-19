@@ -5,9 +5,6 @@ contextBridge.exposeInMainWorld("ct", {
   storeSet: (key: string, value: any) => ipcRenderer.invoke("store:set", key, value),
   storeDelete: (key: string) => ipcRenderer.invoke("store:delete", key),
   getPath: (name: string) => ipcRenderer.invoke("app:getPath", name),
-});
-
-contextBridge.exposeInMainWorld("electron", {
   openChatWindow: (chatId: string | number, chatName: string) =>
     ipcRenderer.invoke("chat:openWindow", chatId, chatName),
   dockChatWindow: (chatId: string | number, chatName: string) =>
@@ -19,7 +16,6 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.on("chat:docked", listener);
     return () => ipcRenderer.removeListener("chat:docked", listener);
   },
-  // FIX: Expose für Screen Sources
   getScreenSources: () => ipcRenderer.invoke("media:getSources"),
 });
 
