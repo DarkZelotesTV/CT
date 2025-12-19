@@ -64,11 +64,28 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
   const [members, setMembers] = useState<any[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
   const [serverName, setServerName] = useState('');
+  const [serverDescription, setServerDescription] = useState('');
   const [fallbackChannelId, setFallbackChannelId] = useState<number | null>(null);
   const [loadingMembers, setLoadingMembers] = useState(false);
+  const [savingServer, setSavingServer] = useState(false);
   const [structure, setStructure] = useState<{ categories: Category[]; uncategorized: Channel[]; fallbackChannelId?: number | null }>({ categories: [], uncategorized: [], fallbackChannelId: null });
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [serverTheme, setServerTheme] = useState<ServerTheme>(defaultServerTheme);
+  const [serverSettings, setServerSettings] = useState<any>({});
+  const [branding, setBranding] = useState<{ logoUrl: string; bannerUrl: string; accentColor: string; backgroundColor: string; tagline: string }>({
+    logoUrl: '',
+    bannerUrl: '',
+    accentColor: defaultServerTheme.accent,
+    backgroundColor: defaultServerTheme.background,
+    tagline: '',
+  });
+  const [connectionSettings, setConnectionSettings] = useState<{ host: string; port: string; basePath: string; region: string; secure: boolean }>({
+    host: '',
+    port: '',
+    basePath: '',
+    region: '',
+    secure: true,
+  });
   const [newChannelType, setNewChannelType] = useState<Channel['type']>('text');
   const [selectedChannelForOverrides, setSelectedChannelForOverrides] = useState<number | null>(null);
   const [overrides, setOverrides] = useState<any[]>([]);
@@ -107,7 +124,26 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
         if (myServer) {
           setServerName(myServer.name);
           setFallbackChannelId(myServer.fallback_channel_id ?? null);
-          setServerTheme(deriveServerThemeFromSettings(myServer.settings || myServer.theme));
+          const nextTheme = deriveServerThemeFromSettings(myServer.settings || myServer.theme);
+          setServerTheme(nextTheme);
+          setServerSettings(myServer.settings || {});
+          const connection = myServer.settings?.connection || {};
+          const brandingSettings = myServer.settings?.branding || {};
+          setServerDescription(myServer.settings?.description || myServer.settings?.tagline || '');
+          setBranding({
+            logoUrl: brandingSettings.logoUrl || '',
+            bannerUrl: brandingSettings.bannerUrl || '',
+            accentColor: brandingSettings.accentColor || nextTheme.accent,
+            backgroundColor: brandingSettings.backgroundColor || nextTheme.background,
+            tagline: brandingSettings.tagline || myServer.settings?.tagline || '',
+          });
+          setConnectionSettings({
+            host: connection.host || '',
+            port: typeof connection.port !== 'undefined' && connection.port !== null ? String(connection.port) : '',
+            basePath: connection.basePath || '',
+            region: connection.region || '',
+            secure: typeof connection.secure === 'boolean' ? connection.secure : true,
+          });
         }
       } catch (e) {}
     };
@@ -132,6 +168,14 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
       loadOverrides(selectedChannelForOverrides);
     }
   }, [selectedChannelForOverrides]);
+
+  useEffect(() => {
+    setServerTheme((prev) => ({
+      ...prev,
+      accent: branding.accentColor || prev.accent,
+      background: branding.backgroundColor || prev.background,
+    }));
+  }, [branding.accentColor, branding.backgroundColor]);
 
   useEffect(() => {
     if (overrides.length && roles.length) {
@@ -186,13 +230,29 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
 
   // Actions
   const handleSaveServer = async () => {
+    setSavingServer(true);
     try {
-      await apiFetch(`/api/servers/${serverId}`, { method: 'PUT', body: JSON.stringify({ name: serverName, fallbackChannelId }) });
+      const portValue = connectionSettings.port.trim() ? Number(connectionSettings.port) : null;
+      const settingsPayload = {
+        ...serverSettings,
+        description: serverDescription,
+        tagline: branding.tagline || serverDescription,
+        branding,
+        connection: { ...connectionSettings, port: Number.isNaN(portValue) ? null : portValue },
+        theme: { ...serverTheme, accent: branding.accentColor, background: branding.backgroundColor },
+      };
+
+      await apiFetch(`/api/servers/${serverId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ name: serverName, fallbackChannelId, settings: settingsPayload }),
+      });
       await loadStructure();
       onUpdated?.({ name: serverName, fallbackChannelId });
       onClose();
     } catch (e) {
       alert('Fehler beim Speichern');
+    } finally {
+      setSavingServer(false);
     }
   };
 
@@ -409,49 +469,274 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
               {activeTab === 'overview' && (
                 <div className="space-y-6 animate-in fade-in zoom-in-95 duration-200">
                   <div className="space-y-2">
-                    <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Allgemeines</div>
-                    <p className="text-gray-400 text-sm">Passe Namen und Meta-Informationen deines Servers an.</p>
+                    <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Serverprofil</div>
+                    <p className="text-gray-400 text-sm">Strukturiere die wichtigsten Server-Informationen im zweispaltigen Desktop-Layout.</p>
                   </div>
-                  
-                  <div className="p-4 rounded-2xl border border-white/10 bg-white/5 space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-xs text-gray-400 uppercase font-semibold">Servername</label>
-                      <input
-                        type="text"
-                        value={serverName}
-                        onChange={(e) => setServerName(e.target.value)}
-                        className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
-                        placeholder="Mein cooler Server"
-                      />
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    <div className="p-4 rounded-2xl border border-white/10 bg-white/5 space-y-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Identität</div>
+                          <div className="text-lg font-semibold text-white">Brand Basics</div>
+                        </div>
+                        <span className="text-[11px] px-2 py-1 rounded-full bg-white/10 text-gray-300 border border-white/10">Desktop-first</span>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="space-y-2">
+                          <label className="text-xs text-gray-400 uppercase font-semibold">Servername</label>
+                          <input
+                            type="text"
+                            value={serverName}
+                            onChange={(e) => setServerName(e.target.value)}
+                            className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                            placeholder="Mein cooler Server"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs text-gray-400 uppercase font-semibold">Tagline</label>
+                          <input
+                            type="text"
+                            value={branding.tagline}
+                            onChange={(e) => setBranding((prev) => ({ ...prev, tagline: e.target.value }))}
+                            className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                            placeholder="Kurzer Claim für den Server"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs text-gray-400 uppercase font-semibold">Beschreibung</label>
+                          <textarea
+                            value={serverDescription}
+                            onChange={(e) => setServerDescription(e.target.value)}
+                            rows={4}
+                            className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none resize-none"
+                            placeholder="Was erwartet Mitglieder hier?"
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-xs text-gray-400 uppercase font-semibold">Fallback-Kanal</label>
-                      <select
-                        value={fallbackChannelId ?? ''}
-                        onChange={(e) => setFallbackChannelId(e.target.value ? Number(e.target.value) : null)}
-                        className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+
+                    <div className="p-4 rounded-2xl border border-white/10 bg-white/5 space-y-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Verbindung</div>
+                          <div className="text-lg font-semibold text-white">Routing & Fallback</div>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-gray-400">
+                          <Globe size={14} />
+                          <span>Desktop optimiert</span>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <label className="text-xs text-gray-400 uppercase font-semibold">Host</label>
+                          <input
+                            value={connectionSettings.host}
+                            onChange={(e) => setConnectionSettings((prev) => ({ ...prev, host: e.target.value }))}
+                            className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                            placeholder="ct.example.local"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs text-gray-400 uppercase font-semibold">Port</label>
+                          <input
+                            value={connectionSettings.port}
+                            onChange={(e) => setConnectionSettings((prev) => ({ ...prev, port: e.target.value }))}
+                            className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                            placeholder="443"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs text-gray-400 uppercase font-semibold">Basis-Pfad</label>
+                          <input
+                            value={connectionSettings.basePath}
+                            onChange={(e) => setConnectionSettings((prev) => ({ ...prev, basePath: e.target.value }))}
+                            className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                            placeholder="/api"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs text-gray-400 uppercase font-semibold">Region</label>
+                          <input
+                            value={connectionSettings.region}
+                            onChange={(e) => setConnectionSettings((prev) => ({ ...prev, region: e.target.value }))}
+                            className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                            placeholder="eu-central"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <label className="flex items-center gap-2 text-sm text-gray-300">
+                          <input
+                            type="checkbox"
+                            checked={connectionSettings.secure}
+                            onChange={(e) => setConnectionSettings((prev) => ({ ...prev, secure: e.target.checked }))}
+                            className="w-4 h-4 rounded border border-white/20 bg-black/20"
+                          />
+                          TLS / HTTPS erzwingen
+                        </label>
+                        <div className="flex-1 text-right text-[11px] text-gray-500">Sichere Verbindungen werden bevorzugt.</div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs text-gray-400 uppercase font-semibold">Fallback-Kanal</label>
+                        <select
+                          value={fallbackChannelId ?? ''}
+                          onChange={(e) => setFallbackChannelId(e.target.value ? Number(e.target.value) : null)}
+                          className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                        >
+                          <option value="">Keiner</option>
+                          {[...structure.uncategorized, ...structure.categories.flatMap((c) => c.channels)]
+                            .filter((c) => c.type !== 'voice' && c.type !== 'spacer')
+                            .map((c) => (
+                              <option key={c.id} value={c.id}>
+                                {c.name} ({c.type === 'web' ? 'Web' : c.type === 'list' ? 'Liste' : c.type === 'data-transfer' ? 'Transfer' : 'Text'})
+                              </option>
+                            ))}
+                        </select>
+                        <p className="text-[11px] text-gray-500 leading-relaxed">
+                          Wird automatisch geöffnet, wenn Mitglieder dem Server beitreten oder einen Sprachkanal verlassen.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    <div className="p-4 rounded-2xl border border-white/10 bg-white/5 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Branding</div>
+                          <div className="text-lg font-semibold text-white">Farben & Medien</div>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-gray-400">
+                          <Settings size={14} />
+                          <span>Style Guide</span>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <label className="text-xs text-gray-400 uppercase font-semibold">Akzentfarbe</label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="color"
+                              value={branding.accentColor}
+                              onChange={(e) => setBranding((prev) => ({ ...prev, accentColor: e.target.value }))}
+                              className="w-12 h-10 bg-black/40 rounded-lg border border-white/10"
+                            />
+                            <input
+                              type="text"
+                              value={branding.accentColor}
+                              onChange={(e) => setBranding((prev) => ({ ...prev, accentColor: e.target.value }))}
+                              className="flex-1 bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                              placeholder="#6366f1"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs text-gray-400 uppercase font-semibold">Hintergrund</label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="color"
+                              value={branding.backgroundColor}
+                              onChange={(e) => setBranding((prev) => ({ ...prev, backgroundColor: e.target.value }))}
+                              className="w-12 h-10 bg-black/40 rounded-lg border border-white/10"
+                            />
+                            <input
+                              type="text"
+                              value={branding.backgroundColor}
+                              onChange={(e) => setBranding((prev) => ({ ...prev, backgroundColor: e.target.value }))}
+                              className="flex-1 bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                              placeholder="#050507"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <label className="text-xs text-gray-400 uppercase font-semibold">Logo-URL</label>
+                          <input
+                            type="text"
+                            value={branding.logoUrl}
+                            onChange={(e) => setBranding((prev) => ({ ...prev, logoUrl: e.target.value }))}
+                            className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                            placeholder="https://.../logo.png"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs text-gray-400 uppercase font-semibold">Banner-URL</label>
+                          <input
+                            type="text"
+                            value={branding.bannerUrl}
+                            onChange={(e) => setBranding((prev) => ({ ...prev, bannerUrl: e.target.value }))}
+                            className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                            placeholder="https://.../banner.jpg"
+                          />
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-gray-500">Links können leer bleiben – bestehende Assets bleiben erhalten.</p>
+                    </div>
+
+                    <div className="p-4 rounded-2xl border border-white/10 bg-white/5 space-y-4 flex flex-col">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Vorschau</div>
+                          <div className="text-lg font-semibold text-white">Branding & Routing</div>
+                        </div>
+                        <ListChecks size={16} className="text-gray-400" />
+                      </div>
+
+                      <div
+                        className="flex-1 rounded-2xl border border-white/10 overflow-hidden shadow-inner"
+                        style={{ background: branding.backgroundColor }}
                       >
-                        <option value="">Keiner</option>
-                        {[...structure.uncategorized, ...structure.categories.flatMap((c) => c.channels)]
-                          .filter((c) => c.type !== 'voice' && c.type !== 'spacer')
-                          .map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.name} ({c.type === 'web' ? 'Web' : c.type === 'list' ? 'Liste' : c.type === 'data-transfer' ? 'Transfer' : 'Text'})
-                            </option>
-                          ))}
-                      </select>
-                      <p className="text-[11px] text-gray-500 leading-relaxed">
-                        Dieser Text- oder Webkanal wird automatisch geöffnet, wenn Mitglieder dem Server beitreten oder einen Sprachkanal verlassen.
-                      </p>
+                        <div className="p-4 flex flex-col gap-3 h-full" style={{ backgroundImage: branding.bannerUrl ? `linear-gradient(180deg, rgba(0,0,0,0.35), rgba(0,0,0,0.75)), url(${branding.bannerUrl})` : 'linear-gradient(180deg, rgba(255,255,255,0.04), rgba(0,0,0,0.3))', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center overflow-hidden">
+                              {branding.logoUrl ? (
+                                <img src={branding.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-white text-sm font-bold">{serverName?.[0]?.toUpperCase() || 'S'}</span>
+                              )}
+                            </div>
+                            <div>
+                              <div className="text-white font-semibold text-lg">{serverName || 'Servername'}</div>
+                              <div className="text-gray-300 text-sm" style={{ color: branding.accentColor }}>
+                                {branding.tagline || 'Kurzer Claim für deinen Server'}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="mt-auto space-y-2 text-sm text-gray-300">
+                            <div className="flex items-center gap-2">
+                              <Globe size={14} />
+                              <span>{connectionSettings.host || 'host.local'}{connectionSettings.port ? `:${connectionSettings.port}` : ''}{connectionSettings.basePath || ''}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Shield size={14} />
+                              <span>{connectionSettings.secure ? 'TLS aktiv' : 'Ohne TLS'}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-gray-500">Passe Farben und Verbindungsdetails an und prüfe die Darstellung live.</p>
                     </div>
-                    <div className="flex justify-end">
-                      <button
-                        onClick={handleSaveServer}
-                        className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white flex items-center gap-2 transition-colors"
-                      >
-                        <Save size={16} /> Speichern
-                      </button>
-                    </div>
+                  </div>
+
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-end gap-3">
+                    <button
+                      onClick={onClose}
+                      className="px-4 py-2 rounded-xl bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
+                    >
+                      Abbrechen
+                    </button>
+                    <button
+                      onClick={handleSaveServer}
+                      disabled={savingServer}
+                      className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white flex items-center gap-2 transition-colors"
+                    >
+                      {savingServer ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                      Speichern
+                    </button>
                   </div>
                 </div>
               )}

@@ -345,7 +345,15 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
     <div className="flex flex-col h-full bg-transparent relative">
       {/* Header */}
       <div className="h-12 flex items-center gap-2 px-4 border-b border-white/5 transition-colors no-drag relative z-10">
-        <div className="flex items-center gap-2 flex-1 overflow-hidden">
+        <div
+          className="flex items-center gap-2 flex-1 overflow-hidden cursor-pointer"
+          role="button"
+          tabIndex={0}
+          onClick={handleOpenServerSettings}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') handleOpenServerSettings(e);
+          }}
+        >
           <span className="font-bold text-white truncate flex-1 min-w-0" title={serverName}>
             {serverName}
           </span>
