@@ -565,7 +565,7 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
 
       const applySystemAudioFilter = (track: MediaStreamTrack | null | undefined) => {
         if (!track) return track;
-        const filterHook = (window as any).ct?.filterSystemAudioTrack || (window as any).clover?.filterSystemAudioTrack;
+        const filterHook = window.clover?.filterSystemAudioTrack;
         if (typeof filterHook === 'function') {
           try {
             const filtered = filterHook(track);
@@ -578,12 +578,12 @@ export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
         return track;
       };
 
-      if ((window as any).electron && (window as any).electron.getScreenSources) {
+      if (window.ct?.getScreenSources) {
         try {
           const sourceId = options?.sourceId;
 
           if (!sourceId && !options?.track) {
-            const sources = await (window as any).electron.getScreenSources();
+            const sources = await window.ct.getScreenSources();
             const fallbackId = sources[0]?.id;
 
             if (!fallbackId) {

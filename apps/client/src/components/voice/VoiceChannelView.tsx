@@ -96,8 +96,8 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
 
   // Screen Sources
   useEffect(() => {
-      if (menuOpen === 'screen' && (window as any).electron?.getScreenSources) {
-          (window as any).electron.getScreenSources().then(setScreenSources);
+      if (menuOpen === 'screen' && window.ct?.getScreenSources) {
+          window.ct.getScreenSources().then(setScreenSources);
       }
   }, [menuOpen]);
 
