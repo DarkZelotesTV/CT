@@ -43,6 +43,10 @@
     "openServerSettings": "Servereinstellungen für {{server}} öffnen",
     "closeNavigation": "Navigation schließen",
     "toggleCategory": "Kategorie {{category}} ein- oder ausklappen",
-    "createChannelInCategory": "Kanal in {{category}} erstellen"
+    "createChannelInCategory": "Kanal in {{category}} erstellen",
+    "searchLabel": "Kanäle filtern",
+    "searchPlaceholder": "Nach Kanal oder Typ suchen",
+    "noChannels": "Noch keine Kanäle vorhanden.",
+    "noChannelsFound": "Keine Kanäle passen zur Suche."
   }
 }
