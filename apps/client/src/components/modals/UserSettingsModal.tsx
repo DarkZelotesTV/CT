@@ -181,7 +181,8 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
     const run = async () => {
       try {
         setMeterError(null);
-        stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: audioInputId || undefined } });
+        const audioConstraints: MediaTrackConstraints | boolean = audioInputId ? { deviceId: audioInputId } : true;
+        stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
         audioContext = new AudioContext();
         sourceNode = audioContext.createMediaStreamSource(stream);
         analyser = audioContext.createAnalyser();
@@ -198,8 +199,8 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
           }
           analyser.getByteTimeDomainData(data);
           let sum = 0;
-          for (let i = 0; i < data.length; i++) {
-            const value = data[i] - 128;
+          for (const dataPoint of data) {
+            const value = dataPoint - 128;
             sum += value * value;
           }
           const rms = Math.sqrt(sum / data.length) / 128;
@@ -272,10 +273,12 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
     setIdentity(nextIdentity);
   };
 
+  const resolvedIdentityName = identityName.trim();
+
   const handleCreateIdentity = async () => {
     setIdentityError(null);
     try {
-      const id = await createIdentity(identityName || undefined);
+      const id = await createIdentity(resolvedIdentityName);
       persistIdentity(id);
     } catch (e: any) {
       setIdentityError(e?.message ?? 'Identity konnte nicht erstellt werden');
@@ -302,9 +305,8 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
     setIdentityError(null);
     try {
       const text = await file.text();
-      const parsed = await parseIdentityBackup(text, () => window.prompt('Passphrase für dieses Backup?'));
-      const trimmed = (identityName ?? '').trim();
-      const next = { ...parsed, displayName: parsed.displayName ?? (trimmed ? trimmed : undefined) };
+      const parsed = await parseIdentityBackup(text, () => window.prompt('Passphrase für dieses Backup?') ?? '');
+      const next: IdentityFile = { ...parsed, displayName: parsed.displayName ?? (resolvedIdentityName || null) };
       persistIdentity(next);
       setIdentityName(next.displayName ?? '');
     } catch (e: any) {
@@ -324,7 +326,7 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
 
   const handleSaveIdentityName = () => {
     if (!identity) return;
-    const updated: IdentityFile = { ...identity, displayName: identityName || undefined };
+    const updated: IdentityFile = { ...identity, displayName: resolvedIdentityName || null };
     persistIdentity(updated);
   };
 

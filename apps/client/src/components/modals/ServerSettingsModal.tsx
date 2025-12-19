@@ -351,6 +351,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
     if (targetIndex < 0 || targetIndex >= channels.length) return;
     const a = channels[index];
     const b = channels[targetIndex];
+    if (!a || !b) return;
 
     const updates = [
       { id: a.id, position: b.position ?? targetIndex, categoryId },

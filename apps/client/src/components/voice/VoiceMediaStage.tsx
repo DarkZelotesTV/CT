@@ -154,7 +154,7 @@ export const VoiceMediaStage = ({
       publication = participant.getTrackPublication(Track.Source.Camera);
     }
 
-    const isTrackEnabled = publication && !publication.isMuted && (isLocal || publication.isSubscribed);
+    const isTrackEnabled = !!publication && !publication.isMuted && (isLocal || publication.isSubscribed);
 
     let borderColor = 'border-[#202225] hover:border-[#303236]';
     if (isScreenShare) {
@@ -172,12 +172,12 @@ export const VoiceMediaStage = ({
         ref={fullscreenRef}
         className={`relative rounded-xl overflow-hidden ${bgColor} transition-all border-2 ${borderColor} w-full h-full group shadow-md flex flex-col`}
       >
-        {isTrackEnabled ? (
+        {isTrackEnabled && publication ? (
            <ParticipantTile
               trackRef={{
-                participant, 
+                participant,
                 source: isScreenShare ? Track.Source.ScreenShare : Track.Source.Camera,
-                publication: publication
+                publication
               }}
               disableSpeakingIndicator={isScreenShare}
               // WICHTIG: Die Klasse 'screenshare-tile' muss hier gesetzt sein!
@@ -257,7 +257,7 @@ export const VoiceMediaStage = ({
                 isFullscreen={isFullscreenTarget(floatingOverlayRef.current)}
                 onToggleMaximize={() => setIsOverlayMaximized((prev) => !prev)}
                 onToggleFullscreen={() => toggleFullscreenFor(floatingOverlayRef.current)}
-                onAnchor={onRequestAnchor}
+                {...(onRequestAnchor ? { onAnchor: onRequestAnchor } : {})}
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
                 onPointerUp={stopDragging}
@@ -289,7 +289,7 @@ export const VoiceMediaStage = ({
             isFullscreen={isFullscreenTarget(floatingOverlayRef.current)}
             onToggleMaximize={() => setIsOverlayMaximized((prev) => !prev)}
             onToggleFullscreen={() => toggleFullscreenFor(floatingOverlayRef.current)}
-            onAnchor={onRequestAnchor}
+            {...(onRequestAnchor ? { onAnchor: onRequestAnchor } : {})}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={stopDragging}

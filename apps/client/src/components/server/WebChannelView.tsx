@@ -324,19 +324,19 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                   <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold">Widgets einfügen</p>
                   <div className="flex flex-wrap gap-2">
                     <button
-                      onClick={() => appendSnippet(widgetSnippets.media)}
+                      onClick={() => widgetSnippets.media && appendSnippet(widgetSnippets.media)}
                       className="flex items-center gap-2 px-3 py-2 rounded border border-dark-400 text-gray-200 hover:border-dark-200 bg-dark-300 text-sm"
                     >
                       <Image size={16} /> Media-Embed
                     </button>
                     <button
-                      onClick={() => appendSnippet(widgetSnippets.form)}
+                      onClick={() => widgetSnippets.form && appendSnippet(widgetSnippets.form)}
                       className="flex items-center gap-2 px-3 py-2 rounded border border-dark-400 text-gray-200 hover:border-dark-200 bg-dark-300 text-sm"
                     >
                       <Edit size={16} /> Formular
                     </button>
                     <button
-                      onClick={() => appendSnippet(widgetSnippets.file)}
+                      onClick={() => widgetSnippets.file && appendSnippet(widgetSnippets.file)}
                       className="flex items-center gap-2 px-3 py-2 rounded border border-dark-400 text-gray-200 hover:border-dark-200 bg-dark-300 text-sm"
                     >
                       <FileInput size={16} /> Datei-Link

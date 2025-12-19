@@ -215,7 +215,11 @@ export const FriendListStage = ({ onBackToHome }: FriendListStageProps) => {
                    <div key={friend.id} className="flex items-center justify-between group p-2.5 rounded hover:bg-dark-300/50 cursor-pointer border-t border-dark-400/30 first:border-none">
                       <div className="flex items-center gap-3">
                          <div className="w-9 h-9 rounded-full bg-gray-500 relative flex items-center justify-center overflow-hidden">
-                            {friend.avatar_url ? <img src={friend.avatar_url} className="w-full h-full object-cover" /> : <span className="text-white font-bold">{friend.username[0].toUpperCase()}</span>}
+                           {friend.avatar_url ? (
+                             <img src={friend.avatar_url} className="w-full h-full object-cover" />
+                           ) : (
+                             <span className="text-white font-bold">{friend.username?.[0]?.toUpperCase() ?? ''}</span>
+                           )}
                             {renderStatusBadge(friend.status)}
                          </div>
                          <div>

@@ -157,10 +157,10 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
       userId: user.id,
       username: user.username,
       channelId: channel?.id ?? null,
-      channelName: channel?.name,
+      ...(channel ? { channelName: channel.name } : {}),
       x: origin.x,
       y: origin.y,
-      target: origin.target,
+      target: origin.target ?? null,
       moveTargetId: channel?.id ?? null,
     });
   };
@@ -486,7 +486,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
                         performModeration('move', {
                           userId: contextMenu.userId,
                           channelId: contextMenu.channelId!,
-                          targetChannelId: contextMenu.moveTargetId || undefined,
+                          targetChannelId: contextMenu.moveTargetId ?? null,
                         })
                       }
                     >

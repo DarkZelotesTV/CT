@@ -45,7 +45,9 @@ export const OnboardingModal = ({ onClose }: Props) => {
     },
   ];
 
-  const current = steps[Math.min(step, steps.length - 1)];
+  if (!steps.length) return null;
+
+  const current = steps[Math.min(step, steps.length - 1)]!;
   const Icon = current.icon;
 
   const finish = () => {
