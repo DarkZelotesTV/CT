@@ -1,3 +1,6 @@
+import type { IdentityFile } from '../../auth/identity';
+import type { SettingsState } from '../../context/SettingsContext';
+
 const isBrowser = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
 
 interface StorageConfig<T> {
@@ -84,15 +87,15 @@ const STORAGE_CONFIG = {
   },
   identity: {
     key: 'ct.identity.v1',
-    defaultValue: null as Record<string, any> | null,
-    deserialize: (raw: string) => safeJsonParse(raw, null),
-    serialize: (value: Record<string, any> | null) => JSON.stringify(value),
+    defaultValue: null as IdentityFile | null,
+    deserialize: (raw: string) => safeJsonParse(raw, null as IdentityFile | null),
+    serialize: (value: IdentityFile | null) => JSON.stringify(value),
   },
   settings: {
     key: 'ct.settings',
-    defaultValue: null as Record<string, any> | null,
-    deserialize: (raw: string) => safeJsonParse(raw, null),
-    serialize: (value: Record<string, any> | null) => JSON.stringify(value),
+    defaultValue: null as SettingsState | null,
+    deserialize: (raw: string) => safeJsonParse(raw, null as SettingsState | null),
+    serialize: (value: SettingsState | null) => JSON.stringify(value),
   },
   pinnedServers: {
     key: 'ct.pinned_servers.v1',
@@ -105,7 +108,8 @@ const STORAGE_CONFIG = {
 export type StorageKey = keyof typeof STORAGE_CONFIG;
 export type StorageValue<K extends StorageKey> = (typeof STORAGE_CONFIG)[K]['defaultValue'];
 
-const getConfig = <K extends StorageKey>(key: K): StorageConfig<StorageValue<K>> => STORAGE_CONFIG[key];
+const getConfig = <K extends StorageKey>(key: K): StorageConfig<StorageValue<K>> =>
+  STORAGE_CONFIG[key] as StorageConfig<StorageValue<K>>;
 
 function resolveValue<T>(raw: string | null, config: StorageConfig<T>): T {
   if (raw === null || raw === undefined) return config.defaultValue;
