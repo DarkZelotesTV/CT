@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, PhoneOff, Camera, ScreenShare, Lock, ListChecks } from 'lucide-react';
+import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, PhoneOff, Camera, ScreenShare, Lock, ListChecks, X } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { CreateChannelModal } from '../modals/CreateChannelModal';
 import { UserBottomBar } from './UserBottomBar';
@@ -16,11 +16,12 @@ interface ChannelSidebarProps {
   activeChannelId: number | null;
   onSelectChannel: (channel: Channel) => void;
   onOpenServerSettings: () => void;
+  onCloseMobileNav?: () => void;
   onResolveFallback?: (channel: Channel | null) => void;
   refreshKey?: number;
 }
 
-export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onOpenServerSettings, onResolveFallback, refreshKey = 0 }: ChannelSidebarProps) => {
+export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onOpenServerSettings, onCloseMobileNav, onResolveFallback, refreshKey = 0 }: ChannelSidebarProps) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [uncategorized, setUncategorized] = useState<Channel[]>([]);
   const [serverName, setServerName] = useState('Server');
@@ -387,6 +388,24 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
         >
           <Plus size={16} />
         </button>
+
+        {/* Mobile: Close Navigation (wird bewusst im Header gerendert, damit es nicht über dem Zahnrad liegt) */}
+        {onCloseMobileNav && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onCloseMobileNav();
+            }}
+            className="lg:hidden p-2 -mr-1 rounded-md hover:bg-white/10 text-gray-400 hover:text-white focus:outline-none"
+            title="Navigation schließen"
+            aria-label="Navigation schließen"
+            data-no-drag
+          >
+            <X size={18} aria-hidden />
+          </button>
+        )}
       </div>
 
         {/* Liste */}

@@ -90,7 +90,9 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
   const [selectedOverrideRole, setSelectedOverrideRole] = useState<number | null>(null);
   const [overrideDraft, setOverrideDraft] = useState<{ allow: Record<string, boolean>; deny: Record<string, boolean> }>({ allow: {}, deny: {} });
 
-  const portalTarget = useMemo(() => (typeof document === 'undefined' ? null : getModalRoot()), []);
+  // Use the dedicated portal target so the modal never gets trapped behind
+  // backdrop-filter stacking contexts (Electron/Chromium quirk).
+  const portalTarget = getModalRoot();
 
   // Cleanup on unmount
   useEffect(() => {
@@ -408,7 +410,10 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
   if (!portalTarget) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 relative">
+    <div
+      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 relative"
+      style={{ zIndex: 2147483647, transform: 'translateZ(0)', willChange: 'transform' }}
+    >
       {/* Desktop Responsive Container: Wächst mit, maximale Breite begrenzt, fixe Höhe für konsistentes Layout */}
       <div className="bg-[#0f1014] w-11/12 max-w-5xl h-[85vh] rounded-3xl border border-white/10 shadow-2xl overflow-hidden flex flex-col">
         

@@ -388,18 +388,12 @@ export const MainLayout = () => {
                 style={{ width: typeof window !== 'undefined' && window.innerWidth < 1024 ? 'calc(100% - 80px)' : leftSidebarWidth }}
             >
                 <div className="w-full h-full bg-[#0e0e11]/90 backdrop-blur-xl rounded-2xl border border-white/5 overflow-hidden flex flex-col relative">
-                    <button 
-                        onClick={() => setShowMobileNav(false)} 
-                        className="lg:hidden absolute top-4 right-3 z-50 p-1 text-gray-400 hover:text-white"
-                    >
-                        <X size={20} />
-                    </button>
-
                     <ChannelSidebar
                         serverId={selectedServerId}
                         activeChannelId={activeChannel?.id || null}
                         onSelectChannel={handleChannelSelect}
                         onOpenServerSettings={() => { setShowServerSettings(true); setShowMobileNav(false); }}
+                        onCloseMobileNav={() => setShowMobileNav(false)}
                         onResolveFallback={handleResolveFallback}
                         refreshKey={serverRefreshKey}
                     />

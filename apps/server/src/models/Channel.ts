@@ -4,7 +4,8 @@ import { sequelize } from '../config/database';
 export class Channel extends Model {
   public id!: number;
   public name!: string;
-  public type!: 'text' | 'voice' | 'web';
+  // Hier die neuen Typen zur TypeScript-Definition hinzufügen
+  public type!: 'text' | 'voice' | 'web' | 'data-transfer' | 'spacer' | 'list';
   public server_id!: number;
   public category_id!: number | null;
   public position!: number;
@@ -17,7 +18,11 @@ export class Channel extends Model {
 Channel.init({
   id: { type: DataTypes.INTEGER.UNSIGNED, autoIncrement: true, primaryKey: true },
   name: { type: DataTypes.STRING, allowNull: false },
-  type: { type: DataTypes.ENUM('text', 'voice', 'web'), defaultValue: 'text' },
+  // Hier die neuen Typen zum Sequelize ENUM hinzufügen
+  type: { 
+    type: DataTypes.ENUM('text', 'voice', 'web', 'data-transfer', 'spacer', 'list'), 
+    defaultValue: 'text' 
+  },
   // WICHTIG: Alle IDs auf UNSIGNED
   server_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
   category_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
