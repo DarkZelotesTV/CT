@@ -81,8 +81,6 @@ export const VoiceMediaStage = ({
     return availableParticipants[0] || null;
   }, [activeSpeakerSid, floatingParticipant, participantsWithoutScreens, screenParticipantsForStage]);
 
-  if (!activeRoom || connectionState !== 'connected') return null;
-
   useEffect(() => {
     if (!showFloatingOverlay) {
       setOverlayPosition({ x: 0, y: 0 });
@@ -95,6 +93,8 @@ export const VoiceMediaStage = ({
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
+
+  if (!activeRoom || connectionState !== 'connected') return null;
 
   const toggleFullscreenFor = async (target: HTMLElement | null) => {
     if (!target) return;
