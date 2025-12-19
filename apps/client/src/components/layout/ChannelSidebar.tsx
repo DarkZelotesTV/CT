@@ -345,12 +345,17 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
           </span>
           <button
             type="button"
-            onClick={(e) => {
-                e.stopPropagation();
-                onOpenServerSettings();
+            // FIX: pointerdown + no-drag (Electron/Webkit drag region can swallow click)
+            data-no-drag
+            style={{ WebkitAppRegion: 'no-drag' } as any}
+            onPointerDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onOpenServerSettings();
             }}
             className="p-2 flex-shrink-0 rounded-md hover:bg-white/5 text-gray-500 hover:text-white focus:outline-none"
             title="Servereinstellungen"
+            aria-label="Servereinstellungen"
           >
             <Settings size={16} aria-hidden />
           </button>
@@ -533,7 +538,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
                   className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"
                   title="Auflegen"
                 >
-                  <PhoneOff size={16} />
+                  <PhoneOff size={16} aria-hidden />
                 </button>
               </div>
             </div>

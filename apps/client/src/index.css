@@ -103,3 +103,20 @@ video {
 .lk-participant-tile {
   background-color: #000 !important;
 }
+
+/* -------------------------------------------------------
+   FIX FÜR SCREENSHARE (Entfernt grünen Rahmen/Glow)
+   -------------------------------------------------------
+   Die Klasse .screenshare-tile wird in VoiceMediaStage.tsx gesetzt.
+   Hier überschreiben wir den Standard-LiveKit-Style, der sonst
+   einen grünen box-shadow hinzufügt, wenn man spricht.
+*/
+
+.lk-participant-tile.screenshare-tile[data-lk-speaking="true"],
+.lk-participant-tile.screenshare-tile:focus,
+.lk-participant-tile.screenshare-tile {
+    box-shadow: none !important;
+    border-color: transparent !important;
+    outline: none !important;
+    background-color: #000 !important;
+}

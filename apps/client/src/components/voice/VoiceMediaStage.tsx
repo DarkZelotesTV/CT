@@ -38,7 +38,7 @@ export const VoiceMediaStage = ({
       RoomEvent.LocalTrackPublished, RoomEvent.LocalTrackUnpublished,
       RoomEvent.TrackMuted, RoomEvent.TrackUnmuted,
       RoomEvent.ConnectionStateChanged,
-      RoomEvent.TrackSubscribed, RoomEvent.TrackUnsubscribed // Wichtig für Remote Streams
+      RoomEvent.TrackSubscribed, RoomEvent.TrackUnsubscribed
     ];
 
     events.forEach(e => activeRoom.on(e, bump));
@@ -57,10 +57,10 @@ export const VoiceMediaStage = ({
     const remoteMap = activeRoom.remoteParticipants;
     const remotes = Array.from(remoteMap.values());
     const local = activeRoom.localParticipant;
-    return [local, ...remotes]; // Local User immer zuerst
+    return [local, ...remotes];
   }, [activeRoom, refreshToken]);
 
-  // Filter für Screen-Shares (inkl. Local User)
+  // Filter für Screen-Shares
   const screenParticipants = useMemo(() =>
     participants.filter((p) => p.isScreenShareEnabled),
   [participants]);
@@ -73,7 +73,7 @@ export const VoiceMediaStage = ({
   );
   const screenParticipantsForStage = showFloatingOverlay ? [] : screenParticipants;
 
-  // Fokus-Teilnehmer ermitteln (für Speaker View)
+  // Fokus-Teilnehmer ermitteln
   const focusParticipant = useMemo(() => {
     const availableParticipants = participantsWithoutScreens;
     if (availableParticipants.length === 0 && floatingParticipant) return floatingParticipant;
@@ -152,7 +152,6 @@ export const VoiceMediaStage = ({
     const isSpeaking = activeSpeakerSid === (participant.sid || participant.identity) && !participant.isLocal;
     const isLocal = participant.isLocal;
     
-    // WICHTIG: Track Publication explizit suchen, um Schwarzbild bei Local User zu vermeiden
     let publication: TrackPublication | undefined;
     if (isScreenShare) {
       publication = participant.getTrackPublication(Track.Source.ScreenShare);
@@ -160,15 +159,20 @@ export const VoiceMediaStage = ({
       publication = participant.getTrackPublication(Track.Source.Camera);
     }
 
-    // Prüfen, ob Video "da" ist (Enabled und nicht Muted)
-    // Bei Remote muss es subscribed sein, bei Local existieren.
     const isTrackEnabled = publication && !publication.isMuted && (isLocal || publication.isSubscribed);
 
-    // Styling
-    const borderColor = isSpeaking ? 'border-green-500 ring-1 ring-green-500' : 'border-[#202225] hover:border-[#303236]';
-    // ScreenShare: 'contain' (nichts abschneiden), Kamera: 'cover' (füllen)
+    // Styling Logic
+    let borderColor = 'border-[#202225] hover:border-[#303236]';
+    
+    if (isScreenShare) {
+        // HIER IST DIE WICHTIGE ÄNDERUNG: Immer Schwarz bei Screenshare
+        borderColor = 'border-black';
+    } else if (isSpeaking) {
+        // Nur bei Kamera grün
+        borderColor = 'border-green-500 ring-1 ring-green-500';
+    }
+
     const objectFit = isScreenShare ? 'object-contain' : 'object-cover';
-    // Dunklerer Hintergrund für ScreenShare, damit Ränder weniger auffallen
     const bgColor = isScreenShare ? 'bg-[#000000]' : 'bg-[#2b2d31]';
 
     return (
@@ -182,14 +186,13 @@ export const VoiceMediaStage = ({
               trackRef={{
                 participant, 
                 source: isScreenShare ? Track.Source.ScreenShare : Track.Source.Camera,
-                publication: publication // <--- FIX: Explizite Publication übergeben
+                publication: publication
               }}
-              className={`w-full h-full ${objectFit} bg-black`}
+              // WICHTIG: Hier fügen wir 'screenshare-tile' hinzu, damit unser CSS greift!
+              className={`w-full h-full ${objectFit} bg-black ${isScreenShare ? 'screenshare-tile' : ''}`}
               style={{ width: '100%', height: '100%' }}
-              onParticipantClick={() => { /* Optional: Pin Feature */ }}
             />
         ) : (
-            // Placeholder: Wenn Track enabled sein sollte, aber keine Daten da sind (oder Kamera aus)
             <div className="w-full h-full flex flex-col items-center justify-center bg-[#2b2d31] text-gray-400 gap-2">
                  {isScreenShare ? (
                     <>
@@ -204,7 +207,7 @@ export const VoiceMediaStage = ({
             </div>
         )}
         
-        {/* Name Tag Overlay */}
+        {/* Name Tag */}
         <div className="absolute bottom-2 left-2 flex items-center gap-1.5 px-2 py-1 rounded bg-black/70 backdrop-blur-md text-white max-w-[85%] z-20 pointer-events-none border border-white/5">
             {isScreenShare ? <Monitor size={12} className="text-indigo-300" /> : (!participant.isMicrophoneEnabled && <MicOff size={12} className="text-red-400"/>)}
             <span className="text-xs font-bold truncate tracking-wide text-gray-100 shadow-sm">
@@ -223,7 +226,6 @@ export const VoiceMediaStage = ({
           </button>
         )}
 
-        {/* Warnung bei gemutetem Video Track (selten, aber möglich) */}
         {publication && publication.isMuted && isScreenShare && (
              <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-10 backdrop-blur-sm">
                 <div className="flex flex-col items-center text-gray-400">
@@ -242,7 +244,6 @@ export const VoiceMediaStage = ({
   if (layout === 'speaker' && focusParticipant) {
     return (
         <div className="flex flex-col lg:flex-row h-full p-4 gap-3 relative">
-            {/* Main Stage (Großes Bild) */}
             <div className="flex-1 rounded-2xl overflow-hidden shadow-2xl bg-[#000000] border border-white/5 relative">
                  {renderTile(
                    focusParticipant,
@@ -252,7 +253,6 @@ export const VoiceMediaStage = ({
                  )}
             </div>
 
-            {/* Sidebar (Andere Teilnehmer) */}
             <div className="h-32 lg:h-auto lg:w-64 flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto lg:pr-1 custom-scrollbar">
                 {participantsWithoutScreens.filter(p => p !== focusParticipant).map(p => (
                     <div key={p.sid} className="w-48 lg:w-full h-full lg:h-36 flex-none">
@@ -291,10 +291,7 @@ export const VoiceMediaStage = ({
   return (
     <div className="flex-1 overflow-y-auto p-4 flex items-center justify-center relative">
         <div className={`grid gap-3 w-full ${gridCols} auto-rows-[minmax(200px,1fr)] md:auto-rows-fr aspect-video max-h-full`}>
-            {/* 1. Erst alle Kameras rendern */}
             {participantsWithoutScreens.map((p) => renderTile(p, false))}
-
-            {/* 2. Dann alle Screen Shares (inkl. eigenem) rendern */}
             {screenParticipantsForStage.map((p, index) => renderTile(p, true, index === 0 ? stageScreenRef : undefined, index === 0))}
         </div>
 
