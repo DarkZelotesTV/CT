@@ -87,6 +87,7 @@ video {
   width: 100%;
   height: 100%;
   object-fit: contain; /* oder cover, je nach Bedarf */
+  background-color: #000; /* verhindert grüne Letterbox bei Screenshare */
 }
 
 /* Spezifisch für LiveKit Tiles */
@@ -95,4 +96,10 @@ video {
   inset: 0;
   width: 100%;
   height: 100%;
+  background-color: #000 !important; /* erzwingt schwarzen Hintergrund bei Füllbereichen */
+}
+
+/* LiveKit Tile selbst dunkel halten, falls kein Video rendert */
+.lk-participant-tile {
+  background-color: #000 !important;
 }
