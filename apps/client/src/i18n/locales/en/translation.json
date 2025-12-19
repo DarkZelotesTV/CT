@@ -43,6 +43,10 @@
     "openServerSettings": "Open server settings for {{server}}",
     "closeNavigation": "Close navigation",
     "toggleCategory": "Toggle category {{category}}",
-    "createChannelInCategory": "Create channel in {{category}}"
+    "createChannelInCategory": "Create channel in {{category}}",
+    "searchLabel": "Filter channels",
+    "searchPlaceholder": "Search channels or types",
+    "noChannels": "No channels available yet.",
+    "noChannelsFound": "No channels match your search."
   }
 }

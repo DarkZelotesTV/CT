@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef, type KeyboardEvent } from 'react';
-import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, PhoneOff, Camera, ScreenShare, Lock, ListChecks, X } from 'lucide-react';
+import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, PhoneOff, Camera, ScreenShare, Lock, ListChecks, X, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../../api/http';
 import { CreateChannelModal } from '../modals/CreateChannelModal';
@@ -35,6 +35,8 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [contextMenu, setContextMenu] = useState<{
     userId: number;
     username: string;
@@ -149,6 +151,15 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   useEffect(() => () => clearRetryTimer(), [clearRetryTimer]);
 
   useEffect(() => {
+    const handle = setTimeout(() => setDebouncedSearchTerm(searchTerm.trim().toLowerCase()), 250);
+    return () => clearTimeout(handle);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    // Debounced term is ready for potential API-driven filtering without delaying local updates
+  }, [debouncedSearchTerm]);
+
+  useEffect(() => {
     if (!serverId) return;
     apiFetch<Record<string, boolean>>(`/api/servers/${serverId}/permissions`).then(setPermissions).catch(() => setPermissions({}));
   }, [serverId]);
@@ -249,6 +260,35 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
       }
     }
   };
+
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+  // Prepare debounced term for potential API-driven filtering without impacting local responsiveness
+  const matchesSearch = useCallback(
+    (channel: Channel) => {
+      if (!normalizedSearchTerm) return true;
+      const haystack = `${channel.name} ${channel.type}`.toLowerCase();
+      return haystack.includes(normalizedSearchTerm);
+    },
+    [normalizedSearchTerm]
+  );
+
+  const filteredUncategorized = useMemo(
+    () => uncategorized.filter(matchesSearch),
+    [matchesSearch, uncategorized]
+  );
+
+  const filteredCategories = useMemo(
+    () =>
+      categories
+        .map((cat) => ({
+          ...cat,
+          channels: cat.channels.filter(matchesSearch),
+        }))
+        .filter((cat) => cat.channels.length > 0),
+    [categories, matchesSearch]
+  );
+
+  const hasVisibleChannels = filteredUncategorized.length > 0 || filteredCategories.some((cat) => cat.channels.length > 0);
 
   const handleButtonKey = async (
     e: KeyboardEvent<HTMLButtonElement>,
@@ -510,67 +550,93 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
         )}
       </div>
 
-        {/* Liste */}
-        <div className="flex-1 overflow-y-auto pt-4 px-2 custom-scrollbar relative z-0">
-           {isLoading && (
-             <div className="mx-2 mb-3 rounded-md border border-white/5 bg-white/5 px-3 py-2 text-xs text-gray-300">
-               {t('channelSidebar.loading')}
-             </div>
-           )}
+        {/* Suche & Liste */}
+        <div className="flex-1 overflow-y-auto px-2 pb-4 pt-3 custom-scrollbar relative z-0">
+          <div className="px-1 mb-3">
+            <label className="sr-only" htmlFor="channel-search">
+              {t('channelSidebar.searchLabel')}
+            </label>
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" aria-hidden />
+              <input
+                id="channel-search"
+                type="search"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder={t('channelSidebar.searchPlaceholder') ?? ''}
+                className="w-full rounded-md border border-white/10 bg-white/5 px-8 py-2 text-sm text-gray-100 placeholder:text-gray-600 focus:border-white/30 focus:outline-none focus:ring-1 focus:ring-white/30"
+              />
+            </div>
+          </div>
 
-           {error && (
-             <div className="mx-2 mb-3 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
-               <div className="flex items-start justify-between gap-3">
-                 <span className="flex-1">{error}</span>
-                 <button
-                   type="button"
-                   className="text-xs font-semibold text-red-100 underline-offset-2 hover:underline"
-                   onClick={() => fetchData()}
-                 >
-                   {t('channelSidebar.retry')}
-                 </button>
-               </div>
-             </div>
-           )}
+          {isLoading && (
+            <div className="mx-2 mb-3 rounded-md border border-white/5 bg-white/5 px-3 py-2 text-xs text-gray-300">
+              {t('channelSidebar.loading')}
+            </div>
+          )}
 
-           {uncategorized.map(c => renderChannel(c, false))}
-           {categories.map(cat => (
-             <div key={cat.id} className="mt-4">
+          {error && (
+            <div className="mx-2 mb-3 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+              <div className="flex items-start justify-between gap-3">
+                <span className="flex-1">{error}</span>
+                <button
+                  type="button"
+                  className="text-xs font-semibold text-red-100 underline-offset-2 hover:underline"
+                  onClick={() => fetchData()}
+                >
+                  {t('channelSidebar.retry')}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {filteredUncategorized.map((c) => renderChannel(c, false))}
+          {filteredCategories.map((cat) => {
+            const isCollapsed = normalizedSearchTerm ? false : collapsed[cat.id];
+            return (
+              <div key={cat.id} className="mt-4">
                 <div className="flex items-center justify-between group no-drag mb-1 pl-1 pr-2 gap-2">
                   <button
                     type="button"
                     className="flex items-center gap-1 text-gray-500 text-xs font-bold uppercase hover:text-gray-300 rounded-md px-1 py-0.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317] focus-visible:text-gray-200"
                     onClick={() => toggleCategory(cat.id)}
-                    aria-expanded={!collapsed[cat.id]}
+                    aria-expanded={!isCollapsed}
                     aria-controls={`category-${cat.id}-channels`}
                     aria-label={t('channelSidebar.toggleCategory', { category: cat.name })}
                     data-no-drag
                   >
-                    {collapsed[cat.id] ? <ChevronRight size={10}/> : <ChevronDown size={10}/>}
+                    {isCollapsed ? <ChevronRight size={10} /> : <ChevronDown size={10} />}
                     {cat.name}
                   </button>
-                   <button
-                     type="button"
-                     className="no-drag p-1 rounded-md text-gray-500 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-white hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317]"
-                     title={t('channelSidebar.createChannelInCategory', { category: cat.name })}
-                     aria-label={t('channelSidebar.createChannelInCategory', { category: cat.name })}
-                     onClick={(e) => {
-                       e.stopPropagation();
-                       setCreateType('text');
-                       setCreateCategoryId(cat.id);
-                       setShowCreateModal(true);
-                     }}
-                   >
-                     <Plus size={14} />
-                   </button>
+                  <button
+                    type="button"
+                    className="no-drag p-1 rounded-md text-gray-500 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-white hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317]"
+                    title={t('channelSidebar.createChannelInCategory', { category: cat.name })}
+                    aria-label={t('channelSidebar.createChannelInCategory', { category: cat.name })}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCreateType('text');
+                      setCreateCategoryId(cat.id);
+                      setShowCreateModal(true);
+                    }}
+                  >
+                    <Plus size={14} />
+                  </button>
                 </div>
-                {!collapsed[cat.id] && (
+                {!isCollapsed && (
                   <div id={`category-${cat.id}-channels`}>
-                    {cat.channels.map(c => renderChannel(c, true))}
+                    {cat.channels.map((c) => renderChannel(c, true))}
                   </div>
                 )}
-             </div>
-           ))}
+              </div>
+            );
+          })}
+
+          {!isLoading && !error && !hasVisibleChannels && (
+            <div className="mx-2 mb-3 rounded-md border border-white/5 bg-white/5 px-3 py-2 text-xs text-gray-300">
+              {normalizedSearchTerm ? t('channelSidebar.noChannelsFound') : t('channelSidebar.noChannels')}
+            </div>
+          )}
         </div>
 
         {contextMenu && (
