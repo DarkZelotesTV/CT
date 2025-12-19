@@ -305,9 +305,19 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
       <div key={c.id} className="relative">
         <div
           onClick={() => handleChannelClick(c)}
+          role="button"
+          tabIndex={0}
+          aria-label={`${c.name} Kanal`}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleChannelClick(c);
+            }
+          }}
           className={`flex items-center no-drag px-2 py-1.5 mb-0.5 cursor-pointer group select-none rounded-md transition-colors
             ${isInside ? 'ml-4' : 'mx-2'}
             ${isActive ? 'bg-white/10 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'}
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317]
           `}
         >
           <Icon size={16} className={`mr-2 ${isConnected ? 'text-green-500' : ''}`} />
