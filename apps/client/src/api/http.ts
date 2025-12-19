@@ -1,5 +1,6 @@
 import { getServerUrl, getServerPassword } from "../utils/apiConfig";
 import { computeFingerprint, signMessage } from "../auth/identity";
+import { storage } from "../shared/config/storage";
 
 export type ApiFetchInit = RequestInit & {
   /** Override the base URL (instance) for this request. */
@@ -12,13 +13,13 @@ export type ApiFetchInit = RequestInit & {
 export async function apiFetch<T>(path: string, init: ApiFetchInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
   const serverPassword = getServerPassword();
-  const rawIdentity = localStorage.getItem("ct.identity.v1");
+  const rawIdentity = storage.get("identity");
 
   if (!headers.has("Content-Type") && init.body) headers.set("Content-Type", "application/json");
   if (serverPassword) headers.set("X-Server-Password", serverPassword);
 
   if (rawIdentity) {
-    const identity = JSON.parse(rawIdentity);
+    const identity = rawIdentity;
     const { signatureB64, timestamp } = await signMessage(identity, "handshake");
     headers.set("X-Identity-PublicKey", identity.publicKeyB64);
     headers.set("X-Identity-Fingerprint", computeFingerprint(identity));

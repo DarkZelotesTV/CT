@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { storage } from '../shared/config/storage';
 
 export type ProfileSettings = {
   displayName: string;
@@ -36,8 +37,6 @@ export type SettingsState = {
   hotkeys: HotkeySettings;
   talk: TalkSettings;
 };
-
-const SETTINGS_STORAGE_KEY = 'ct.settings';
 
 const defaultSettings: SettingsState = {
   profile: {
@@ -85,25 +84,24 @@ const SettingsContext = createContext<{
 } | null>(null);
 
 const loadInitialSettings = (): SettingsState => {
-  const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
+  const stored = storage.get('settings') as SettingsState | null;
   if (stored) {
     try {
-      const parsed = JSON.parse(stored) as SettingsState;
       return {
-        profile: { ...defaultSettings.profile, ...parsed.profile },
-        devices: { ...defaultSettings.devices, ...parsed.devices },
-        hotkeys: { ...defaultSettings.hotkeys, ...parsed.hotkeys },
-        talk: { ...defaultSettings.talk, ...parsed.talk },
+        profile: { ...defaultSettings.profile, ...stored.profile },
+        devices: { ...defaultSettings.devices, ...stored.devices },
+        hotkeys: { ...defaultSettings.hotkeys, ...stored.hotkeys },
+        talk: { ...defaultSettings.talk, ...stored.talk },
       };
     } catch (err) {
       console.warn('Could not parse stored settings', err);
     }
   }
 
-  const rawUser = localStorage.getItem('clover_user');
-  if (rawUser) {
+  const rawUser = storage.get('cloverUser');
+  if (rawUser && Object.keys(rawUser).length) {
     try {
-      const parsedUser = JSON.parse(rawUser) as { username?: string };
+      const parsedUser = rawUser as { username?: string };
       return {
         ...createDefaultSettings(),
         profile: {
@@ -123,7 +121,7 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
   const [settings, setSettings] = useState<SettingsState>(() => loadInitialSettings());
 
   useEffect(() => {
-    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+    storage.set('settings', settings);
   }, [settings]);
 
   const updateProfile = (nextProfile: Partial<ProfileSettings>) => {

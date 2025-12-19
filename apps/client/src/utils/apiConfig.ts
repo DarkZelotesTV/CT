@@ -1,5 +1,4 @@
-const SERVER_PASSWORD_KEY = 'clover_server_password';
-const LIVEKIT_URL_KEY = 'clover_livekit_url'; // Neuer Key für LocalStorage
+import { storage } from '../shared/config/storage';
 
 const getAppOrigin = () => {
   if (typeof window !== "undefined" && window.location?.origin) {
@@ -14,22 +13,22 @@ export const getDefaultServerUrl = () => {
 };
 
 export const getServerUrl = (): string => {
-  const stored = localStorage.getItem('clover_server_url');
+  const stored = storage.get('cloverServerUrl');
   const url = (stored && stored.trim()) || getDefaultServerUrl();
 
   return url.trim().replace(/\/$/, "");
 };
 
 export const setServerUrl = (url: string) => {
-  localStorage.setItem('clover_server_url', url.trim());
+  storage.set('cloverServerUrl', url.trim());
 };
 
 export const getServerPassword = (): string => {
-  return localStorage.getItem(SERVER_PASSWORD_KEY) || '';
+  return storage.get('cloverServerPassword') || '';
 };
 
 export const setServerPassword = (password: string) => {
-  localStorage.setItem(SERVER_PASSWORD_KEY, password);
+  storage.set('cloverServerPassword', password);
 };
 
 // --- LiveKit dynamic configuration persistence ---
@@ -38,16 +37,16 @@ export const setLiveKitUrl = (livekitUrl?: string | null) => {
   const trimmed = livekitUrl?.trim();
 
   if (trimmed) {
-    localStorage.setItem(LIVEKIT_URL_KEY, trimmed);
+    storage.set('livekitUrl', trimmed);
   } else {
-    localStorage.removeItem(LIVEKIT_URL_KEY);
+    storage.remove('livekitUrl');
   }
 };
 
 export const resetServerSettings = () => {
-  localStorage.removeItem('clover_server_url');
-  localStorage.removeItem(SERVER_PASSWORD_KEY);
-  localStorage.removeItem(LIVEKIT_URL_KEY);
+  storage.remove('cloverServerUrl');
+  storage.remove('cloverServerPassword');
+  storage.remove('livekitUrl');
 };
 
 // --- URL Helpers ---
@@ -111,7 +110,7 @@ export const getLiveKitConfig = () => {
 
   // 1. NEU: Prüfen, ob wir eine dynamische URL vom Server erhalten haben
   // Diese hat die allerhöchste Priorität!
-  const dynamicUrl = localStorage.getItem(LIVEKIT_URL_KEY);
+  const dynamicUrl = storage.get('livekitUrl');
   
   if (dynamicUrl && dynamicUrl.trim() !== "") {
     return {

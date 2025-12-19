@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { io, Socket } from 'socket.io-client';
 import { getServerPassword, getServerWebSocketUrl } from '../utils/apiConfig';
 import { computeFingerprint, signMessage } from '../auth/identity';
+import { storage } from '../shared/config/storage';
 
 export interface ChannelPresenceUser {
   id: number;
@@ -57,10 +58,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    const rawIdentity = localStorage.getItem('ct.identity.v1');
-    if (!rawIdentity) return;
-
-    const identity = JSON.parse(rawIdentity);
+    const identity = storage.get('identity');
+    if (!identity) return;
     const setupSocket = async () => {
       const { signatureB64, timestamp } = await signMessage(identity, 'handshake');
       const socketInstance = io(getServerWebSocketUrl(), {

@@ -21,6 +21,7 @@ import { useSettings } from '../../context/SettingsContext';
 import { useVoice } from '../../features/voice';
 import { clearIdentity, computeFingerprint, createIdentity, formatFingerprint, loadIdentity, saveIdentity, type IdentityFile } from '../../auth/identity';
 import { buildBackupPayload, getBackupFilename, parseIdentityBackup } from '../../auth/identityBackup';
+import { storage } from '../../shared/config/storage';
 
 const modifierKeys = ['Control', 'Shift', 'Alt', 'Meta'];
 
@@ -316,10 +317,10 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
 
   const handleResetIdentity = () => {
     clearIdentity();
-    localStorage.removeItem('clover_token');
-    localStorage.removeItem('clover_user');
-    localStorage.removeItem('ct.jwt');
-    localStorage.removeItem('clover_server_password');
+    storage.remove('cloverToken');
+    storage.remove('cloverUser');
+    storage.remove('ctJwt');
+    storage.remove('cloverServerPassword');
     setIdentityName('');
     persistIdentity(null);
   };

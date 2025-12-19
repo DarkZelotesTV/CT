@@ -4,10 +4,11 @@ import { useSettings } from '../../context/SettingsContext';
 import { UserSettingsModal } from '../modals/UserSettingsModal';
 import { useVoice } from '../../features/voice';
 import { useSocket } from '../../context/SocketContext';
+import { storage } from '../../shared/config/storage';
 
 export const UserBottomBar = () => {
   const { settings } = useSettings();
-  const user = useMemo(() => JSON.parse(localStorage.getItem('clover_user') || '{}'), []);
+  const user = useMemo(() => storage.get('cloverUser'), []);
   const [showSettings, setShowSettings] = useState(false);
 
   const { muted, micMuted, setMuted, setMicMuted } = useVoice();
