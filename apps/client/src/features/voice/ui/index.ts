@@ -1,4 +1,4 @@
-export { VoiceChannelView } from './VoiceChannelView';
-export { VoiceMediaStage } from './VoiceMediaStage';
-export { VoiceParticipantsPanel } from './VoiceParticipantsPanel';
-export { VoicePreJoin } from './VoicePreJoin';
+export { VoiceChannelView } from './views/VoiceChannelView';
+export { VoicePreJoin } from './views/VoicePreJoin';
+export { VoiceMediaStage } from './tabs/VoiceMediaStage';
+export { VoiceParticipantsPanel } from './tabs/VoiceParticipantsPanel';

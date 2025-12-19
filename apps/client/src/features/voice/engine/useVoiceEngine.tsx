@@ -9,11 +9,11 @@ import {
   RemoteTrack,
 } from 'livekit-client';
 import rnnoiseWasmScriptUrl from '@jitsi/rnnoise-wasm/dist/rnnoise-sync.js?url';
-import rnnoiseWorkletUrl from '../../audio/rnnoise-worklet.js?url';
-import { apiFetch } from '../../api/http';
-import { useSettings } from '../../context/SettingsContext';
-import { useSocket } from '../../context/SocketContext';
-import { getLiveKitConfig } from '../../utils/apiConfig';
+import rnnoiseWorkletUrl from '../../../audio/rnnoise-worklet.js?url';
+import { apiFetch } from '../../../api/http';
+import { useSettings } from '../../../context/SettingsContext';
+import { useSocket } from '../../../context/SocketContext';
+import { getLiveKitConfig } from '../../../utils/apiConfig';
 import { VoiceContextType } from '../state/VoiceContext';
 import { VoiceState } from '../state/voiceTypes';
 

@@ -12,8 +12,7 @@ import { ChannelSidebar } from './ChannelSidebar';
 // Web & Voice Views
 import { WebChannelView } from '../server/WebChannelView';
 import { HomeOnboardingStage } from '../dashboard/HomeOnboardingStage';
-import { VoiceChannelView } from '../../features/voice/ui/VoiceChannelView';
-import { VoicePreJoin } from '../../features/voice/ui/VoicePreJoin';
+import { VoiceChannelView, VoicePreJoin } from '../../features/voice/ui';
 
 // Modals
 import { OnboardingModal } from '../modals/OnboardingModal';
