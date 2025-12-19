@@ -4,3 +4,6 @@ export interface User {
   username: string;
   avatarUrl?: string;
 }
+
+export * from './types';
+export * from './socket-events';
