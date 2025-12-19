@@ -4,8 +4,7 @@ import { ArrowRight, Check, Download, Upload } from "lucide-react";
 import { getModalRoot } from "./modalRoot";
 import { computeFingerprint, createIdentity, formatFingerprint, loadIdentity, saveIdentity, type IdentityFile } from "../../auth/identity";
 import { buildBackupPayload, getBackupFilename, parseIdentityBackup } from "../../auth/identityBackup";
-
-export const FIRST_START_KEY = "ct.firststart.v1.done";
+import { storage } from "../../shared/config/storage";
 
 type Props = {
   onComplete: (identity: IdentityFile | null) => void;
@@ -80,7 +79,7 @@ export function FirstStartModal({ onComplete }: Props) {
       setError("Bitte erst eine Identity erstellen oder importieren.");
       return;
     }
-    localStorage.setItem(FIRST_START_KEY, "1");
+    storage.set("firstStartDone", true);
     onComplete(identity);
   }
 

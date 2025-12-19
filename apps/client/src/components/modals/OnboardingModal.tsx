@@ -2,23 +2,16 @@ import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Shield, Plus, Volume2, Users } from 'lucide-react';
 import { getModalRoot } from './modalRoot';
+import { storage } from '../../shared/config/storage';
 
 interface Props {
   onClose: () => void;
 }
 
-const STORAGE_KEY = 'ct.onboarding.v1.done';
-
 type Step = { icon: any; title: string; body: string };
 
 export const OnboardingModal = ({ onClose }: Props) => {
-  const user = useMemo(() => {
-    try {
-      return JSON.parse(localStorage.getItem('clover_user') || '{}');
-    } catch {
-      return {};
-    }
-  }, []);
+  const user = useMemo(() => storage.get('cloverUser'), []);
 
   const [step, setStep] = useState(0);
 
@@ -51,13 +44,13 @@ export const OnboardingModal = ({ onClose }: Props) => {
   const Icon = current.icon;
 
   const finish = () => {
-    localStorage.setItem(STORAGE_KEY, '1');
+    storage.set('onboardingDone', true);
     onClose();
   };
 
   const close = () => {
     // Also mark as done when user closes it.
-    localStorage.setItem(STORAGE_KEY, '1');
+    storage.set('onboardingDone', true);
     onClose();
   };
 

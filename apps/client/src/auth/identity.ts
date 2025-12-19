@@ -57,23 +57,19 @@ export async function createIdentity(displayName?: string): Promise<IdentityFile
 }
 
 export function loadIdentity(): IdentityFile | null {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(raw) as IdentityFile;
-    if (parsed?.version !== 1) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
+  const stored = storage.get("identity");
+  if (!stored) return null;
+  const parsed = stored as IdentityFile;
+  if (parsed?.version !== 1) return null;
+  return parsed;
 }
 
 export function saveIdentity(id: IdentityFile) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(id));
+  storage.set("identity", id);
 }
 
 export function clearIdentity() {
-  localStorage.removeItem(STORAGE_KEY);
+  storage.remove("identity");
 }
 
 export function identityToKeys(id: IdentityFile) {
@@ -106,3 +102,4 @@ export function computeFingerprint(id: IdentityFile): string {
   const { publicKey } = identityToKeys(id);
   return fingerprintFromPublicKey(publicKey);
 }
+import { storage } from "../shared/config/storage";

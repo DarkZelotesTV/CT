@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { IdentityScreen } from "./IdentityScreen";
 import { loadIdentity, type IdentityFile } from "./identity";
-import { FirstStartModal, FIRST_START_KEY } from "../components/modals/FirstStartModal";
+import { FirstStartModal } from "../components/modals/FirstStartModal";
+import { storage } from "../shared/config/storage";
 
 type Props = { children: React.ReactNode };
 
@@ -9,33 +10,29 @@ type User = { id: number; username?: string | null; displayName: string | null; 
 
 /**
  * Gate that requires a valid Clover Identity session.
- * We store the resolved user in localStorage under "clover_user".
+ * We store the resolved user in the shared storage helper under "clover_user".
  */
 export function IdentityGate({ children }: Props) {
   const [user, setUser] = useState<User | null>(() => {
-    try {
-      const raw = localStorage.getItem("clover_user");
-      return raw ? (JSON.parse(raw) as User) : null;
-    } catch {
-      return null;
-    }
+    const stored = storage.get("cloverUser");
+    return stored && Object.keys(stored).length > 0 ? (stored as User) : null;
   });
   const [identity, setIdentity] = useState<IdentityFile | null>(() => loadIdentity());
-  const [firstStartDone, setFirstStartDone] = useState(() => localStorage.getItem(FIRST_START_KEY) === "1");
+  const [firstStartDone, setFirstStartDone] = useState(() => storage.get("firstStartDone"));
 
   const handleIdentityReady = (next: IdentityFile | null) => {
     setIdentity(next);
     if (next) {
-      localStorage.setItem(FIRST_START_KEY, "1");
+      storage.set("firstStartDone", true);
       setFirstStartDone(true);
     } else {
-      localStorage.removeItem(FIRST_START_KEY);
+      storage.remove("firstStartDone");
       setFirstStartDone(false);
     }
   };
 
   const handleAuthed = (nextUser: User) => {
-    localStorage.setItem("clover_user", JSON.stringify(nextUser));
+    storage.set("cloverUser", nextUser);
     setUser(nextUser);
   };
 

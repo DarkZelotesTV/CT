@@ -6,6 +6,7 @@ import { computeFingerprint, formatFingerprint, loadIdentity, type IdentityFile 
 import { addPinnedServer, normalizeInstanceUrl } from '../../utils/pinnedServers';
 import { getServerUrl, setServerUrl } from '../../utils/apiConfig';
 import { ModalLayout } from './ModalLayout';
+import { storage } from '../../shared/config/storage';
 
 interface JoinServerModalProps {
   onClose: () => void;
@@ -95,7 +96,7 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
         });
 
         // Switch to the remote instance now
-        localStorage.setItem('ct.pending_server_id', String(serverId));
+        storage.set('pendingServerId', serverId);
         setServerUrl(chosenBase);
         window.location.reload();
         return;

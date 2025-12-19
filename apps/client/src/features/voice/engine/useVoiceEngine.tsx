@@ -875,13 +875,10 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
     // Optimistic Leave Trigger
     if (activeChannelId && optimisticLeave) {
        try {
-         const localUserStr = localStorage.getItem('clover_user');
-         if (localUserStr) {
-           const user = JSON.parse(localUserStr);
-           if (user?.id) {
-             optimisticLeave(activeChannelId, Number(user.id));
-             console.log('[voice] Optimistic Leave performed for user', user.id);
-           }
+         const user = storage.get('cloverUser');
+         if (user?.id) {
+           optimisticLeave(activeChannelId, Number(user.id));
+           console.log('[voice] Optimistic Leave performed for user', user.id);
          }
        } catch (e) {
          console.warn('Could not perform optimistic leave', e);
@@ -1293,3 +1290,4 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
 
   return contextValue;
 };
+import { storage } from '../../../shared/config/storage';

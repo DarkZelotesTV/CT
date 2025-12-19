@@ -3,6 +3,7 @@ import { Home, Plus, Loader2, Globe, X } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { getServerUrl, setServerUrl } from '../../utils/apiConfig';
 import { readPinnedServers, removePinnedServer, normalizeInstanceUrl } from '../../utils/pinnedServers';
+import { storage } from '../../shared/config/storage';
 
 // Props erweitert: onCreateServer und onJoinServer hinzugefügt
 interface ServerRailProps {
@@ -98,7 +99,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
       onSelectServer(serverId);
       return;
     }
-    localStorage.setItem('ct.pending_server_id', String(serverId));
+    storage.set('pendingServerId', serverId);
     setServerUrl(norm);
     window.location.reload();
   };

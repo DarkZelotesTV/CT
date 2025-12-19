@@ -8,6 +8,7 @@ import { VoiceParticipantsPanel } from '../../features/voice/ui';
 import { useSocket } from '../../context/SocketContext';
 import { useSettings } from '../../context/SettingsContext'; // Für aktuellen DisplayName
 import { defaultServerTheme, deriveServerThemeFromSettings, type ServerTheme } from '../../theme/serverTheme';
+import { storage } from '../../shared/config/storage';
 
 interface Channel { id: number; name: string; type: 'text' | 'voice' | 'web' | 'data-transfer' | 'spacer' | 'list'; custom_icon?: string; }
 interface Category { id: number; name: string; channels: Channel[]; }
@@ -64,13 +65,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   const { channelPresence } = useSocket();
 
   // Lokalen User laden (für ID-Vergleich)
-  const localUser = useMemo(() => {
-    try {
-      return JSON.parse(localStorage.getItem('clover_user') || '{}');
-    } catch {
-      return {};
-    }
-  }, []);
+  const localUser = useMemo(() => storage.get('cloverUser'), []);
 
   const voiceChannels = useMemo(
     () =>

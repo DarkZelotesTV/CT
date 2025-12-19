@@ -21,6 +21,7 @@ import { CreateServerModal } from '../modals/CreateServerModal';
 import { JoinServerModal } from '../modals/JoinServerModal';
 
 import { useVoice, type VoiceContextType } from '../../features/voice';
+import { storage } from '../../shared/config/storage';
 
 const defaultChannelWidth = 256;
 const defaultMemberWidth = 256;
@@ -43,8 +44,8 @@ export const MainLayout = () => {
   const [containerWidth, setContainerWidth] = useState(() => (typeof window === 'undefined' ? 0 : window.innerWidth));
   
   // Resizable Widths (Desktop)
-  const [leftSidebarWidth, setLeftSidebarWidth] = useState(defaultChannelWidth);
-  const [rightSidebarWidth, setRightSidebarWidth] = useState(defaultMemberWidth);
+  const [leftSidebarWidth, setLeftSidebarWidth] = useState(() => storage.get('layoutLeftWidth'));
+  const [rightSidebarWidth, setRightSidebarWidth] = useState(() => storage.get('layoutRightWidth'));
   const [isDraggingLeft, setIsDraggingLeft] = useState(false);
   const [isDraggingRight, setIsDraggingRight] = useState(false);
   
@@ -95,19 +96,19 @@ export const MainLayout = () => {
   // --- LocalStorage für Sidebar Breite ---
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const storedLeft = localStorage.getItem('ct.layout.left_width');
-    if (storedLeft) setLeftSidebarWidth(clampSidebarWidth(Number(storedLeft)));
-    
-    const storedRight = localStorage.getItem('ct.layout.right_width');
-    if (storedRight) setRightSidebarWidth(clampSidebarWidth(Number(storedRight)));
+    const storedLeft = storage.get('layoutLeftWidth');
+    setLeftSidebarWidth(clampSidebarWidth(storedLeft));
+
+    const storedRight = storage.get('layoutRightWidth');
+    setRightSidebarWidth(clampSidebarWidth(storedRight));
   }, [clampSidebarWidth]);
 
   useEffect(() => {
-    localStorage.setItem('ct.layout.left_width', String(clampSidebarWidth(leftSidebarWidth)));
+    storage.set('layoutLeftWidth', clampSidebarWidth(leftSidebarWidth));
   }, [clampSidebarWidth, leftSidebarWidth]);
 
   useEffect(() => {
-    localStorage.setItem('ct.layout.right_width', String(clampSidebarWidth(rightSidebarWidth)));
+    storage.set('layoutRightWidth', clampSidebarWidth(rightSidebarWidth));
   }, [clampSidebarWidth, rightSidebarWidth]);
 
   // --- Resize Observer ---
@@ -164,16 +165,16 @@ export const MainLayout = () => {
 
   // --- Onboarding Check ---
   useEffect(() => {
-    if (!localStorage.getItem('ct.onboarding.v1.done')) {
+    if (!storage.get('onboardingDone')) {
       setShowOnboarding(true);
     }
   }, []);
 
   useEffect(() => {
-    const pending = localStorage.getItem('ct.pending_server_id');
-    if (pending && /^\d+$/.test(pending)) {
-      setSelectedServerId(Number(pending));
-      localStorage.removeItem('ct.pending_server_id');
+    const pending = storage.get('pendingServerId');
+    if (pending) {
+      setSelectedServerId(pending);
+      storage.remove('pendingServerId');
     }
   }, []);
 

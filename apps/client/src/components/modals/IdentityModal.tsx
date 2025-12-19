@@ -4,6 +4,7 @@ import { X, Upload, ShieldAlert, Download } from 'lucide-react';
 import { getModalRoot } from './modalRoot';
 import { clearIdentity, computeFingerprint, createIdentity, formatFingerprint, loadIdentity, saveIdentity, type IdentityFile } from '../../auth/identity';
 import { buildBackupPayload, getBackupFilename, parseIdentityBackup } from '../../auth/identityBackup';
+import { storage } from '../../shared/config/storage';
 
 interface IdentityModalProps {
   onClose: () => void;
@@ -68,10 +69,10 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
 
   function handleReset() {
     clearIdentity();
-    localStorage.removeItem('clover_token');
-    localStorage.removeItem('clover_user');
-    localStorage.removeItem('ct.jwt');
-    localStorage.removeItem('clover_server_password');
+    storage.remove('cloverToken');
+    storage.remove('cloverUser');
+    storage.remove('ctJwt');
+    storage.remove('cloverServerPassword');
     setDisplayName('');
     persistIdentity(null);
   }

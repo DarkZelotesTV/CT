@@ -1,3 +1,5 @@
+import { storage } from '../shared/config/storage';
+
 export type PinnedServer = {
   instanceUrl: string;
   serverId: number;
@@ -5,8 +7,6 @@ export type PinnedServer = {
   iconUrl?: string;
   addedAt: string;
 };
-
-const STORAGE_KEY = 'ct.pinned_servers.v1';
 
 export function normalizeInstanceUrl(url: string): string {
   const trimmed = (url || '').trim();
@@ -23,19 +23,13 @@ export function normalizeInstanceUrl(url: string): string {
 }
 
 export function readPinnedServers(): PinnedServer[] {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed as PinnedServer[];
-  } catch {
-    return [];
-  }
+  const stored = storage.get('pinnedServers');
+  if (!Array.isArray(stored)) return [];
+  return stored as PinnedServer[];
 }
 
 export function writePinnedServers(list: PinnedServer[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  storage.set('pinnedServers', list);
 }
 
 export function addPinnedServer(entry: Omit<PinnedServer, 'addedAt'> & { addedAt?: string }): PinnedServer[] {

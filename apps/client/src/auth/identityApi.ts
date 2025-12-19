@@ -1,5 +1,6 @@
 import { IdentityFile, computeFingerprint, signMessage } from "./identity";
 import { getServerUrl, getServerPassword, setLiveKitUrl } from "../utils/apiConfig";
+import { storage } from "../shared/config/storage";
 
 async function postJson<T>(baseUrl: string, path: string, body: any): Promise<T> {
   const res = await fetch(`${baseUrl}${path}`, {
@@ -47,10 +48,8 @@ export async function performHandshake(id: IdentityFile, serverPassword?: string
 export async function buildIdentityHeaders(): Promise<Headers> {
   const headers = new Headers();
   const storedPassword = getServerPassword();
-  const rawIdentity = localStorage.getItem("ct.identity.v1");
-  if (!rawIdentity) return headers;
-
-  const identity = JSON.parse(rawIdentity) as IdentityFile;
+  const identity = storage.get("identity") as IdentityFile | null;
+  if (!identity) return headers;
   const { signatureB64, timestamp } = await signMessage(identity, "handshake");
 
   headers.set("X-Server-Password", storedPassword || "");
