@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, useRef, type KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { getModalRoot } from './modalRoot';
+import { useTopBar } from '../window/TopBarContext';
 import { 
   Check, 
   X, 
@@ -89,6 +90,26 @@ const DeviceSelect = ({ label, value, options, onChange }: { label: string, valu
 );
 
 export const TalkSettingsModal = ({ onClose, initialTab = 'voice' }: { onClose: () => void; initialTab?: 'voice' | 'stream' }) => {
+  const { slots, setSlots } = useTopBar();
+  const baseSlotsRef = useRef(slots);
+  const modalTitle = 'Einstellungen';
+
+  useEffect(() => {
+    const base = baseSlotsRef.current;
+    setSlots({
+      ...base,
+      center: (
+        <div className="px-3 py-1 rounded-md bg-white/5 border border-white/10 max-w-[720px]">
+          <div className="text-[13px] text-gray-200 truncate" title={modalTitle}>
+            {modalTitle}
+          </div>
+        </div>
+      ),
+    });
+
+    return () => setSlots(base);
+  }, [setSlots, modalTitle]);
+
   const { settings, updateDevices, updateHotkeys, updateTalk } = useSettings();
   const {
     muted, micMuted, usePushToTalk,
@@ -282,7 +303,7 @@ export const TalkSettingsModal = ({ onClose, initialTab = 'voice' }: { onClose: 
              
              {/* Header (Mobile only) */}
              <div className="md:hidden flex items-center justify-between p-4 border-b border-white/5">
-                 <h2 className="text-lg font-bold text-white">Einstellungen</h2>
+                 <h2 className="text-lg font-bold text-white">{modalTitle}</h2>
                  <button onClick={onClose}><X size={20}/></button>
              </div>
 

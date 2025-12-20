@@ -15,81 +15,77 @@ export const UserBottomBar = () => {
   const [showFeedback, setShowFeedback] = useState(false);
   const { t } = useTranslation();
 
-  const { muted, micMuted, setMuted, setMicMuted } = useVoice();
-  // NEU: Echter Verbindungsstatus vom Socket
+  const isDesktop = typeof window !== 'undefined' && !!window.ct?.windowControls;
+
+  const { micMuted, muted, setMicMuted, setMuted } = useVoice();
   const { isConnected } = useSocket();
+  const handleLocaleChange = (locale: string) => updateLocale(locale);
 
-  // Priorisierung: Lokale Einstellung > Server DisplayName > Server Username > Fallback
-  const displayName = settings.profile.displayName || user.displayName || user.username || t('userBottomBar.fallbackDisplayName');
-  // Priorisierung: Lokale Einstellung > Server Avatar
-  const avatarUrl = settings.profile.avatarUrl || user.avatar_url;
-
-  // NEU: Statusfarbe basierend auf Socket-Verbindung
-  const statusColor = isConnected ? 'bg-green-500' : 'bg-red-500';
-  const statusText = isConnected ? t('userBottomBar.online') : t('userBottomBar.offline');
-
-  const handleLocaleChange = (locale: string) => {
-    updateLocale(locale);
-  };
+  const displayName = settings.profile.displayName || user?.username || t('userBottomBar.fallbackDisplayName');
 
   return (
     <>
-      <div className="p-3 bg-[var(--color-surface)] flex items-center gap-3 border-t border-[var(--color-border)]">
-        <div className="w-8 h-8 bg-[var(--color-accent)]/20 border border-[var(--color-accent)]/50 rounded flex items-center justify-center text-[color:var(--color-accent)] font-bold text-xs relative overflow-hidden">
-          {avatarUrl ? (
-            <img src={avatarUrl} className="w-full h-full object-cover" alt="User Avatar" />
-          ) : (
-            displayName.substring(0, 1).toUpperCase()
-          )}
-          {/* NEU: Dynamischer Status-Indikator */}
-          <div 
-            className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 ${statusColor} rounded-full border border-black animate-pulse`}
-            title={statusText}
-          ></div>
-        </div>
-
-        <div className="flex-1 overflow-hidden">
-          <div className="text-xs font-bold text-[color:var(--color-text)] truncate tracking-wider">{displayName}</div>
-          <div className="text-[9px] text-[color:var(--color-text-muted)] uppercase tracking-widest">
-            {t('userBottomBar.idLabel')}: {user.id || t('userBottomBar.unknownId')}
+      <div className="h-16 bg-dark-200 border-t border-dark-400 flex items-center justify-between px-3 gap-2">
+        <div className="min-w-0 flex items-center gap-2">
+          <div className="w-8 h-8 bg-cyan-700 rounded-full flex items-center justify-center text-white text-sm font-bold">
+            {(displayName?.[0] ?? 'U').toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <div className="text-sm text-gray-200 font-semibold truncate">{displayName}</div>
+            <div className="text-xs text-gray-500 truncate">
+              {isConnected ? t('userBottomBar.online') : t('userBottomBar.offline')}
+            </div>
           </div>
         </div>
 
-        <div className="flex gap-1 items-center">
-          <label className="sr-only" htmlFor="locale-select">
-            {t('userBottomBar.languageLabel')}
-          </label>
-          <select
-            id="locale-select"
-            className="rounded border border-white/10 bg-black/30 px-2 py-1 text-[11px] text-gray-200 focus:border-cyan-500/50 focus:outline-none"
-            value={settings.locale}
-            onChange={(e) => handleLocaleChange(e.target.value)}
-          >
-            <option value="en">English</option>
-            <option value="de">Deutsch</option>
-          </select>
+        <div className="flex items-center gap-2">
+          {/* Language + Feedback wurden in der Desktop-App in die Titlebar verschoben */}
+          {!isDesktop && (
+            <>
+              <label className="sr-only" htmlFor="language-select">
+                {t('userBottomBar.languageLabel')}
+              </label>
+              <select
+                id="language-select"
+                className="bg-dark-100 text-gray-200 text-xs px-2 py-1 rounded border border-dark-400"
+                value={settings.locale}
+                onChange={(e) => handleLocaleChange(e.target.value)}
+              >
+                <option value="en">English</option>
+                <option value="de">Deutsch</option>
+              </select>
+
+              <button
+                className="px-2 py-1 rounded text-gray-100 bg-cyan-600/20 hover:bg-cyan-600/30 border border-cyan-600/30 text-[11px] font-semibold flex items-center gap-1"
+                onClick={() => setShowFeedback(true)}
+                title={t('userBottomBar.feedback')}
+              >
+                <MessageSquare size={14} aria-hidden="true" />
+                <span className="hidden sm:inline">{t('userBottomBar.feedback')}</span>
+              </button>
+            </>
+          )}
+
           <button
-            className={`p-1 rounded ${micMuted ? 'text-red-400 hover:text-red-300 bg-red-500/10' : 'text-gray-500 hover:text-cyan-400 hover:bg-cyan-900/30'}`}
+            className={`p-1 rounded ${
+              micMuted ? 'text-red-400 hover:bg-red-900/30' : 'text-gray-500 hover:text-cyan-400 hover:bg-cyan-900/30'
+            }`}
             onClick={() => setMicMuted(!micMuted)}
             title={micMuted ? t('userBottomBar.unmuteMic') : t('userBottomBar.muteMic')}
           >
             <MicOff size={14} />
           </button>
+
           <button
-            className={`p-1 rounded ${muted ? 'text-red-400 hover:text-red-300 bg-red-500/10' : 'text-gray-500 hover:text-cyan-400 hover:bg-cyan-900/30'}`}
+            className={`p-1 rounded ${
+              muted ? 'text-red-400 hover:bg-red-900/30' : 'text-gray-500 hover:text-cyan-400 hover:bg-cyan-900/30'
+            }`}
             onClick={() => setMuted(!muted)}
             title={muted ? t('userBottomBar.unmuteAll') : t('userBottomBar.muteAll')}
           >
             <Headphones size={14} />
           </button>
-          <button
-            className="px-2 py-1 rounded text-gray-100 bg-cyan-600/20 hover:bg-cyan-600/30 border border-cyan-600/30 text-[11px] font-semibold flex items-center gap-1"
-            onClick={() => setShowFeedback(true)}
-            title={t('userBottomBar.feedback')}
-          >
-            <MessageSquare size={14} aria-hidden="true" />
-            <span className="hidden sm:inline">{t('userBottomBar.feedback')}</span>
-          </button>
+
           <button
             className="p-1 hover:bg-cyan-900/30 rounded text-gray-500 hover:text-cyan-400"
             onClick={() => setShowSettings(true)}
@@ -101,7 +97,7 @@ export const UserBottomBar = () => {
       </div>
 
       {showSettings && <UserSettingsModal onClose={() => setShowSettings(false)} />}
-      {showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} />}
+      {!isDesktop && showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} />}
     </>
   );
 };

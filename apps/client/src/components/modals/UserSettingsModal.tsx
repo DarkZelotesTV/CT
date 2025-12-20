@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type KeyboardEvent, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { getModalRoot } from './modalRoot';
+import { useTopBar } from '../window/TopBarContext';
 import {
   Camera,
   Check,
@@ -96,6 +97,26 @@ type DeviceLists = {
 };
 
 export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
+  const { slots, setSlots } = useTopBar();
+  const baseSlotsRef = useRef(slots);
+  const modalTitle = 'Persönliche Einstellungen';
+
+  useEffect(() => {
+    const base = baseSlotsRef.current;
+    setSlots({
+      ...base,
+      center: (
+        <div className="px-3 py-1 rounded-md bg-white/5 border border-white/10 max-w-[720px]">
+          <div className="text-[13px] text-gray-200 truncate" title={modalTitle}>
+            {modalTitle}
+          </div>
+        </div>
+      ),
+    });
+
+    return () => setSlots(base);
+  }, [setSlots, modalTitle]);
+
   const { settings, updateDevices, updateHotkeys, updateProfile, updateTheme, updateNotifications } = useSettings();
   const {
     muted,
@@ -440,7 +461,7 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
             <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] flex items-center gap-2">
               <Settings size={14} /> Settings
             </div>
-            <h2 className="text-2xl font-bold">Persönliche Einstellungen</h2>
+            <h2 className="text-2xl font-bold">{modalTitle}</h2>
           </div>
           <button
             onClick={onClose}

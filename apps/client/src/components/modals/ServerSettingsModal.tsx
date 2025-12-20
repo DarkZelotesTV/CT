@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { getModalRoot } from './modalRoot';
+import { useTopBar } from '../window/TopBarContext';
 import { 
   X, 
   Trash2, 
@@ -59,6 +60,26 @@ interface Category {
 }
 
 export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }: ServerSettingsProps) => {
+  const { slots, setSlots } = useTopBar();
+  const baseSlotsRef = useRef(slots);
+  const modalTitle = 'Server Einstellungen';
+
+  useEffect(() => {
+    const base = baseSlotsRef.current;
+    setSlots({
+      ...base,
+      center: (
+        <div className="px-3 py-1 rounded-md bg-white/5 border border-white/10 max-w-[720px]">
+          <div className="text-[13px] text-gray-200 truncate" title={modalTitle}>
+            {modalTitle}
+          </div>
+        </div>
+      ),
+    });
+
+    return () => setSlots(base);
+  }, [setSlots, modalTitle]);
+
   const { settings } = useSettings();
   const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'channels' | 'roles'>('overview');
   const [members, setMembers] = useState<any[]>([]);
@@ -439,7 +460,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
             <div className="text-xs uppercase tracking-widest text-gray-500 flex items-center gap-2">
               <Settings2 size={14} /> Server Management
             </div>
-            <h2 className="text-2xl font-bold text-white">Server Einstellungen</h2>
+            <h2 className="text-2xl font-bold text-white">{modalTitle}</h2>
           </div>
           <button
             onClick={onClose}

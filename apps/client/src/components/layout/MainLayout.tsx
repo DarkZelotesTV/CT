@@ -784,7 +784,7 @@ export const MainLayout = () => {
       >
         {t('layout.skipToContent', { defaultValue: 'Skip to content' })}
       </a>
-      {isDesktop && <TitleBar serverName={serverName} channel={activeChannel} showRightSidebar={showRightSidebar} onToggleRightSidebar={() => setShowRightSidebar((v) => !v)} onOpenServerSettings={handleOpenServerSettings} />}
+      {isDesktop && <TitleBar serverName={serverName} channel={activeChannel}  onOpenServerSettings={handleOpenServerSettings} />}
 
       {/* --- GLOBAL MODALS --- */}
       {showOnboarding && (
