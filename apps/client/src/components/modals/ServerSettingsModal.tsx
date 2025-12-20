@@ -46,6 +46,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [dragAndDropEnabled, setDragAndDropEnabled] = useState(true);
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -61,6 +62,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
       setIconFile(null);
       setIconPreview(null);
       setRemoveIcon(false);
+      setDragAndDropEnabled(current.drag_drop_enabled ?? current.dragAndDropEnabled ?? true);
 
       const struct = await apiFetch<StructureResponse>(`/api/servers/${serverId}/structure`);
       const allChannels = [...struct.uncategorized, ...struct.categories.flatMap((c) => c.channels)];
@@ -159,6 +161,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
         body: JSON.stringify({
           name: name.trim(),
           fallbackChannelId: fallbackChannelId ?? null,
+          dragAndDropEnabled,
           ...(typeof nextIconPath !== 'undefined' ? { iconPath: nextIconPath } : {}),
         }),
       });
@@ -310,6 +313,34 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
             <p className="text-[11px] text-gray-500">
               Der Fallback-Kanal wird geöffnet, wenn kein spezifischer Kanal ausgewählt ist.
             </p>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 flex items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="text-sm font-semibold text-white">Drag & Drop zum Sortieren</div>
+              <p className="text-xs text-gray-400">
+                Wenn deaktiviert, können nur Administratoren die Reihenfolge von Kategorien und Kanälen anpassen.
+              </p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer select-none">
+              <input
+                type="checkbox"
+                className="sr-only"
+                checked={dragAndDropEnabled}
+                onChange={(e) => setDragAndDropEnabled(e.target.checked)}
+              />
+              <span
+                className={`h-6 w-11 rounded-full transition-colors ${
+                  dragAndDropEnabled ? 'bg-indigo-500' : 'bg-white/10'
+                }`}
+              >
+                <span
+                  className={`absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                    dragAndDropEnabled ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </span>
+            </label>
           </div>
 
           {actionError && (

@@ -7,6 +7,7 @@ export class Server extends Model {
   public icon_url!: string | null;
   public owner_id!: number;
   public fallback_channel_id!: number | null;
+  public drag_drop_enabled!: boolean;
 }
 
 Server.init({
@@ -15,4 +16,5 @@ Server.init({
   icon_url: { type: DataTypes.STRING, allowNull: true },
   owner_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
   fallback_channel_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
+  drag_drop_enabled: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
 }, { sequelize, tableName: 'servers' });
