@@ -22,6 +22,7 @@ import { OnboardingModal } from '../modals/OnboardingModal';
 import { ServerSettingsModal } from '../modals/ServerSettingsModal';
 import { CreateServerModal } from '../modals/CreateServerModal';
 import { JoinServerModal } from '../modals/JoinServerModal';
+import { CommandPalette } from '../modals/CommandPalette';
 
 import { useVoice, type VoiceContextType } from '../../features/voice';
 import { useOnboardingReplay, type OnboardingReplayKey } from '../../features/onboarding/useOnboardingReplay';
@@ -98,6 +99,7 @@ export const MainLayout = () => {
   const [showServerSettings, setShowServerSettings] = useState(false);
   const [showCreateServer, setShowCreateServer] = useState(false);
   const [showJoinServer, setShowJoinServer] = useState(false);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [onboardingConfig, setOnboardingConfig] = useState<{
     initialStep?: number;
     replayKey?: OnboardingReplayKey | null;
@@ -350,6 +352,24 @@ export const MainLayout = () => {
   }, [showMemberSheet, showMobileNav]);
 
   useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+
+      const key = event.key.toLowerCase();
+      if ((event.metaKey || event.ctrlKey) && (key === 'k' || key === 'p')) {
+        event.preventDefault();
+        setShowCommandPalette(true);
+      }
+    };
+
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
+
+  useEffect(() => {
     if (!showMobileNav && !showMemberSheet) return;
 
     const target = showMemberSheet ? memberSheetRef.current : mobileNavRef.current;
@@ -506,6 +526,15 @@ export const MainLayout = () => {
     setShowServerSettings(true);
   }, [ensureOnboardingForStep, selectedServerId]);
 
+  const handleShowMembers = useCallback(() => {
+    if (!selectedServerId) return;
+    if (typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT) {
+      setShowMemberSheet(true);
+      return;
+    }
+    setShowRightSidebar(true);
+  }, [selectedServerId]);
+
   // --- Dragging Handlers ---
   const startDragLeft = (event: React.MouseEvent) => {
     setIsDraggingLeft(true);
@@ -624,6 +653,36 @@ export const MainLayout = () => {
       {selectedServerId && showServerSettings && (
         <ServerSettingsModal serverId={selectedServerId} onClose={() => setShowServerSettings(false)} onUpdated={handleServerUpdated} onDeleted={handleServerDeleted} />
       )}
+      <CommandPalette
+        open={showCommandPalette}
+        serverId={selectedServerId}
+        serverName={serverName}
+        onClose={() => setShowCommandPalette(false)}
+        onSelectServer={(id) => {
+          handleServerSelect(id);
+          setShowCommandPalette(false);
+        }}
+        onSelectChannel={(channel) => {
+          handleChannelSelect(channel);
+          setShowCommandPalette(false);
+        }}
+        onShowMembers={() => {
+          handleShowMembers();
+          setShowCommandPalette(false);
+        }}
+        onCreateServer={() => {
+          handleCreateServer();
+          setShowCommandPalette(false);
+        }}
+        onJoinServer={() => {
+          handleJoinServer();
+          setShowCommandPalette(false);
+        }}
+        onOpenServerSettings={() => {
+          handleOpenServerSettings();
+          setShowCommandPalette(false);
+        }}
+      />
 
       {/* Overlay Backdrop für Mobile */}
       <div 
