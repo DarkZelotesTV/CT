@@ -24,6 +24,7 @@ import { CreateServerModal } from '../modals/CreateServerModal';
 import { JoinServerModal } from '../modals/JoinServerModal';
 
 import { useVoice, type VoiceContextType } from '../../features/voice';
+import { useOnboardingReplay, type OnboardingReplayKey } from '../../features/onboarding/useOnboardingReplay';
 import { storage } from '../../shared/config/storage';
 import { useSettings } from '../../context/SettingsContext';
 import { applyAppTheme, buildAppTheme } from '../../theme/appTheme';
@@ -49,6 +50,13 @@ interface Channel {
   name: string;
   type: 'text' | 'voice' | 'web' | 'data-transfer' | 'spacer' | 'list';
 }
+
+const onboardingStepIndex: Record<OnboardingReplayKey, number> = {
+  identity: 0,
+  servers: 1,
+  voice: 2,
+  settings: 3,
+};
 
 export const MainLayout = () => {
   const { t } = useTranslation();
@@ -90,6 +98,13 @@ export const MainLayout = () => {
   const [showServerSettings, setShowServerSettings] = useState(false);
   const [showCreateServer, setShowCreateServer] = useState(false);
   const [showJoinServer, setShowJoinServer] = useState(false);
+  const [onboardingConfig, setOnboardingConfig] = useState<{
+    initialStep?: number;
+    replayKey?: OnboardingReplayKey | null;
+    action?: (() => void) | null;
+  } | null>(null);
+  const onboardingActionExecuted = useRef(false);
+  const { shouldShowReplay, markReplaySeen } = useOnboardingReplay();
   
   const [lastNonVoiceChannel, setLastNonVoiceChannel] = useState<Channel | null>(null);
   const [pendingVoiceChannelId, setPendingVoiceChannelId] = useState<number | null>(null);
@@ -117,6 +132,44 @@ export const MainLayout = () => {
     const theme = buildAppTheme(settings.theme.mode, activeAccent);
     applyAppTheme(theme);
   }, [activeAccent, settings.theme.mode]);
+
+  const openOnboardingModal = useCallback(
+    (config?: { initialStep?: number; replayKey?: OnboardingReplayKey | null; action?: (() => void) | null }) => {
+      onboardingActionExecuted.current = false;
+      setOnboardingConfig({
+        initialStep: config?.initialStep ?? 0,
+        replayKey: config?.replayKey ?? null,
+        action: config?.action ?? null,
+      });
+      setShowOnboarding(true);
+    },
+    []
+  );
+
+  const resolveOnboarding = useCallback(() => {
+    setShowOnboarding(false);
+    if (onboardingConfig?.replayKey) {
+      markReplaySeen(onboardingConfig.replayKey);
+    }
+
+    if (!onboardingActionExecuted.current) {
+      onboardingConfig?.action?.();
+    }
+
+    onboardingActionExecuted.current = false;
+    setOnboardingConfig(null);
+  }, [markReplaySeen, onboardingConfig]);
+
+  const ensureOnboardingForStep = useCallback(
+    (stepKey: OnboardingReplayKey, action: () => void) => {
+      if (storage.get('onboardingDone') && shouldShowReplay(stepKey)) {
+        openOnboardingModal({ initialStep: onboardingStepIndex[stepKey], replayKey: stepKey, action });
+        return true;
+      }
+      return false;
+    },
+    [openOnboardingModal, shouldShowReplay]
+  );
 
   const focusContainer = useCallback((container: HTMLElement | null) => {
     if (!container) return;
@@ -260,9 +313,9 @@ export const MainLayout = () => {
   // --- Onboarding Check ---
   useEffect(() => {
     if (!storage.get('onboardingDone')) {
-      setShowOnboarding(true);
+      openOnboardingModal({ initialStep: 0, replayKey: null, action: null });
     }
-  }, []);
+  }, [openOnboardingModal]);
 
   useEffect(() => {
     const pending = storage.get('pendingServerId');
@@ -370,6 +423,14 @@ export const MainLayout = () => {
       await connectToChannel(channel.id, channel.name);
     }, [connectToChannel]);
 
+  const attemptVoiceJoin = useCallback(
+    (channel: Channel) => {
+      if (ensureOnboardingForStep('voice', () => handleVoiceJoin(channel))) return;
+      handleVoiceJoin(channel);
+    },
+    [ensureOnboardingForStep, handleVoiceJoin]
+  );
+
   const handleVoiceCancel = useCallback(() => {
     setPendingVoiceChannelId(null);
     if (connectedVoiceChannelId && connectedVoiceChannelName) {
@@ -386,6 +447,30 @@ export const MainLayout = () => {
     }
     setActiveChannel(null);
   }, [connectedVoiceChannelId, connectedVoiceChannelName, fallbackChannel, lastNonVoiceChannel]);
+
+  const handleOnboardingStepAction = useCallback(
+    (step: OnboardingReplayKey) => {
+      onboardingActionExecuted.current = true;
+      if (onboardingConfig?.action) {
+        onboardingConfig.action();
+        return;
+      }
+
+      if (step === 'servers') {
+        setShowCreateServer(true);
+        return;
+      }
+
+      if (step === 'voice' && activeChannel?.type === 'voice') {
+        handleVoiceJoin(activeChannel);
+      }
+
+      if (step === 'settings' && selectedServerId) {
+        setShowServerSettings(true);
+      }
+    },
+    [activeChannel, handleVoiceJoin, onboardingConfig, selectedServerId]
+  );
 
   const announceServerChange = useCallback(() => {
     window.dispatchEvent(new Event('ct-servers-changed'));
@@ -404,6 +489,22 @@ export const MainLayout = () => {
     announceServerChange();
     handleServerSelect(null);
   }, [announceServerChange, handleServerSelect]);
+
+  const handleCreateServer = useCallback(() => {
+    if (ensureOnboardingForStep('servers', () => setShowCreateServer(true))) return;
+    setShowCreateServer(true);
+  }, [ensureOnboardingForStep]);
+
+  const handleJoinServer = useCallback(() => {
+    if (ensureOnboardingForStep('servers', () => setShowJoinServer(true))) return;
+    setShowJoinServer(true);
+  }, [ensureOnboardingForStep]);
+
+  const handleOpenServerSettings = useCallback(() => {
+    if (!selectedServerId) return;
+    if (ensureOnboardingForStep('settings', () => setShowServerSettings(true))) return;
+    setShowServerSettings(true);
+  }, [ensureOnboardingForStep, selectedServerId]);
 
   // --- Dragging Handlers ---
   const startDragLeft = (event: React.MouseEvent) => {
@@ -449,8 +550,8 @@ export const MainLayout = () => {
       return (
         <div className="flex-1 relative h-full">
           <HomeOnboardingStage
-            onCreateServer={() => setShowCreateServer(true)}
-            onJoinServer={() => setShowJoinServer(true)}
+            onCreateServer={handleCreateServer}
+            onJoinServer={handleJoinServer}
           />
         </div>
       );
@@ -478,7 +579,7 @@ export const MainLayout = () => {
       return (
         <VoicePreJoin
           channel={activeChannel}
-          onJoin={() => handleVoiceJoin(activeChannel)}
+          onJoin={() => attemptVoiceJoin(activeChannel)}
           onCancel={handleVoiceCancel}
           isJoining={pendingVoiceChannelId === activeChannel.id && (connectionState === 'connecting' || connectionState === 'reconnecting')}
           connectedChannelName={connectedVoiceChannelName}
@@ -508,10 +609,16 @@ export const MainLayout = () => {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {isDesktop && <TitleBar serverName={serverName} channel={activeChannel} showRightSidebar={showRightSidebar} onToggleRightSidebar={() => setShowRightSidebar((v) => !v)} onOpenServerSettings={() => setShowServerSettings(true)} />}
-      
+      {isDesktop && <TitleBar serverName={serverName} channel={activeChannel} showRightSidebar={showRightSidebar} onToggleRightSidebar={() => setShowRightSidebar((v) => !v)} onOpenServerSettings={handleOpenServerSettings} />}
+
       {/* --- GLOBAL MODALS --- */}
-      {showOnboarding && <OnboardingModal onClose={() => setShowOnboarding(false)} />}
+      {showOnboarding && (
+        <OnboardingModal
+          onClose={resolveOnboarding}
+          initialStep={onboardingConfig?.initialStep ?? 0}
+          onStepAction={handleOnboardingStepAction}
+        />
+      )}
       {showCreateServer && <CreateServerModal onClose={() => setShowCreateServer(false)} onCreated={() => { announceServerChange(); setShowCreateServer(false); }} />}
       {showJoinServer && <JoinServerModal onClose={() => setShowJoinServer(false)} onJoined={() => { announceServerChange(); setShowJoinServer(false); }} />}
       {selectedServerId && showServerSettings && (
@@ -553,8 +660,8 @@ export const MainLayout = () => {
              <ServerRail
                 selectedServerId={selectedServerId}
                 onSelectServer={handleServerSelect}
-                onCreateServer={() => setShowCreateServer(true)}
-                onJoinServer={() => setShowJoinServer(true)}
+                onCreateServer={handleCreateServer}
+                onJoinServer={handleJoinServer}
              />
            </div>
         </div>
@@ -571,7 +678,10 @@ export const MainLayout = () => {
                         serverId={selectedServerId}
                         activeChannelId={activeChannel?.id || null}
                         onSelectChannel={handleChannelSelect}
-                        onOpenServerSettings={() => { setShowServerSettings(true); setShowMobileNav(false); }}
+                        onOpenServerSettings={() => {
+                          handleOpenServerSettings();
+                          setShowMobileNav(false);
+                        }}
                         onCloseMobileNav={() => setShowMobileNav(false)}
                         onResolveFallback={handleResolveFallback}
                         refreshKey={serverRefreshKey}

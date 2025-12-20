@@ -12,6 +12,7 @@ vi.mock('react-i18next', () => ({
         'layout.stageAreaDescription': 'Wähle einen Kanal aus, um zu starten.',
       }[key] || key),
   }),
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
 
 const connectToChannelMock = vi.fn();
@@ -96,6 +97,14 @@ vi.mock('../modals/CreateServerModal', () => ({
 
 vi.mock('../modals/JoinServerModal', () => ({
   JoinServerModal: () => <div data-testid="join-server" />,
+}));
+
+vi.mock('../../context/SettingsContext', () => ({
+  useSettings: () => ({
+    settings: {
+      theme: { mode: 'dark', accentColor: '#6366f1', serverAccents: {} },
+    },
+  }),
 }));
 
 vi.mock('../../features/voice', () => ({

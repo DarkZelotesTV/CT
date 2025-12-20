@@ -26,6 +26,13 @@ const safeJsonParse = <T>(raw: string, fallback: T): T => {
   }
 };
 
+const defaultOnboardingReplayState = {
+  identity: false,
+  servers: false,
+  voice: false,
+  settings: false,
+};
+
 const STORAGE_CONFIG = {
   layoutLeftWidth: {
     key: 'ct.layout.left_width',
@@ -44,6 +51,12 @@ const STORAGE_CONFIG = {
     defaultValue: false,
     deserialize: booleanDeserializer,
     serialize: booleanSerializer,
+  },
+  onboardingReplays: {
+    key: 'ct.onboarding.v1.replays',
+    defaultValue: defaultOnboardingReplayState,
+    deserialize: (raw: string) => ({ ...defaultOnboardingReplayState, ...safeJsonParse(raw, defaultOnboardingReplayState) }),
+    serialize: (value: typeof defaultOnboardingReplayState) => JSON.stringify(value ?? defaultOnboardingReplayState),
   },
   pendingServerId: {
     key: 'ct.pending_server_id',
@@ -154,3 +167,4 @@ export const storage = {
 };
 
 export type StorageConfigMap = typeof STORAGE_CONFIG;
+export type OnboardingReplayState = typeof defaultOnboardingReplayState;
