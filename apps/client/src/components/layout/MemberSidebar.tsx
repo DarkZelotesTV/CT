@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Shield, Crown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../../api/http';
 import { useSocket } from '../../context/SocketContext';
 import { ErrorCard, Skeleton, Spinner } from '../ui';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 interface Member {
   userId: number;
@@ -35,6 +36,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const { t } = useTranslation();
+  const listParentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => () => {
     isMountedRef.current = false;
@@ -269,48 +271,72 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
   const onlineMembers = filteredMembers.filter((m) => m.status === 'online');
   const offlineMembers = filteredMembers.filter((m) => m.status !== 'online');
 
-  const renderMember = (m: Member) => (
-      <div
-        key={m.userId}
-        className="flex items-center p-2 mb-1 rounded-lg hover:bg-white/5 cursor-pointer group transition-all"
-        onContextMenu={(e) => {
-          e.preventDefault();
-          openUserMenu({ x: e.clientX, y: e.clientY, target: e.currentTarget as HTMLElement }, m);
-        }}
-        onTouchStart={(e) => {
-          const touch = e.touches?.[0];
-          startLongPress(() =>
-            openUserMenu({ x: touch?.clientX || 0, y: touch?.clientY || 0, target: e.currentTarget as HTMLElement }, m)
-          );
-        }}
-        onTouchEnd={cancelLongPress}
-        onTouchMove={cancelLongPress}
-      >
-          <div className="w-9 h-9 rounded-full bg-glass-300 mr-3 relative flex items-center justify-center flex-shrink-0">
-              {m.avatarUrl ? (
-                  <img src={m.avatarUrl} className="w-full h-full rounded-full object-cover" />
-              ) : (
-                  <span className="font-bold text-gray-400 text-xs">{m.username?.[0]?.toUpperCase()}</span>
-              )}
+  type MemberRow =
+    | { type: 'section'; key: string; label: string; count: number }
+    | { type: 'member'; key: string; member: Member };
 
-              {/* Status Dot */}
-              <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#111214]
-                  ${m.status === 'online' ? 'bg-success' : 'bg-gray-500'}`}>
-              </div>
-          </div>
+  const memberRows = useMemo<MemberRow[]>(() => {
+    const rows: MemberRow[] = [
+      { type: 'section', key: 'online', label: t('memberSidebar.online'), count: onlineMembers.length },
+      ...onlineMembers.map((member) => ({ type: 'member', key: `member-${member.userId}`, member })),
+      { type: 'section', key: 'offline', label: t('memberSidebar.offline'), count: offlineMembers.length },
+      ...offlineMembers.map((member) => ({ type: 'member', key: `member-${member.userId}`, member })),
+    ];
 
-          <div className="overflow-hidden">
-              <div className="text-sm font-medium text-gray-300 group-hover:text-white truncate flex items-center gap-1">
-                  {m.username}
-                  {m.roles?.some((r: any) => r.name === 'owner') && <Crown size={12} className="text-yellow-500 fill-yellow-500/20" />}
-                  {m.roles?.some((r: any) => r.name === 'admin') && <Shield size={12} className="text-primary fill-primary/20" />}
-              </div>
-              {/* Custom Status Text (Dummy für jetzt) */}
-              <div className="text-[10px] text-gray-500 truncate group-hover:text-gray-400">
-                  {m.status === 'online' ? t('memberSidebar.onlineStatus') : t('memberSidebar.offlineStatus')}
-              </div>
-          </div>
+    return rows;
+  }, [offlineMembers, onlineMembers, t]);
+
+  const memberVirtualizer = useVirtualizer({
+    count: memberRows.length,
+    getScrollElement: () => listParentRef.current,
+    estimateSize: (index) => (memberRows[index]?.type === 'section' ? 32 : 72),
+    overscan: 8,
+  });
+
+  const renderMember = (m: Member, style?: CSSProperties) => (
+    <div
+      key={m.userId}
+      style={style}
+      className="flex items-center p-2 mb-1 rounded-lg hover:bg-white/5 cursor-pointer group transition-all"
+      onContextMenu={(e) => {
+        e.preventDefault();
+        openUserMenu({ x: e.clientX, y: e.clientY, target: e.currentTarget as HTMLElement }, m);
+      }}
+      onTouchStart={(e) => {
+        const touch = e.touches?.[0];
+        startLongPress(() =>
+          openUserMenu({ x: touch?.clientX || 0, y: touch?.clientY || 0, target: e.currentTarget as HTMLElement }, m)
+        );
+      }}
+      onTouchEnd={cancelLongPress}
+      onTouchMove={cancelLongPress}
+    >
+      <div className="w-9 h-9 rounded-full bg-glass-300 mr-3 relative flex items-center justify-center flex-shrink-0">
+        {m.avatarUrl ? (
+          <img src={m.avatarUrl} className="w-full h-full rounded-full object-cover" />
+        ) : (
+          <span className="font-bold text-gray-400 text-xs">{m.username?.[0]?.toUpperCase()}</span>
+        )}
+
+        {/* Status Dot */}
+        <div
+          className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#111214]
+                  ${m.status === 'online' ? 'bg-success' : 'bg-gray-500'}`}
+        ></div>
       </div>
+
+      <div className="overflow-hidden">
+        <div className="text-sm font-medium text-gray-300 group-hover:text-white truncate flex items-center gap-1">
+          {m.username}
+          {m.roles?.some((r: any) => r.name === 'owner') && <Crown size={12} className="text-yellow-500 fill-yellow-500/20" />}
+          {m.roles?.some((r: any) => r.name === 'admin') && <Shield size={12} className="text-primary fill-primary/20" />}
+        </div>
+        {/* Custom Status Text (Dummy für jetzt) */}
+        <div className="text-[10px] text-gray-500 truncate group-hover:text-gray-400">
+          {m.status === 'online' ? t('memberSidebar.onlineStatus') : t('memberSidebar.offlineStatus')}
+        </div>
+      </div>
+    </div>
   );
 
   return (
@@ -321,7 +347,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
         <span className="ml-auto text-[10px] bg-white/5 text-gray-400 px-2 py-0.5 rounded-full">{filteredMembers.length}</span>
       </div>
 
-      <div className="flex-1 p-3 overflow-y-auto custom-scrollbar space-y-6">
+      <div ref={listParentRef} className="flex-1 p-3 overflow-y-auto custom-scrollbar space-y-6">
           <div className="px-2">
             <input
               type="text"
@@ -364,23 +390,34 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
           )}
 
           {!loading && !error && filteredMembers.length > 0 && (
-            <>
-              {/* Online Group */}
-              <div>
-                <div className="text-[10px] font-bold text-gray-500 mb-2 px-2 uppercase tracking-wider flex items-center gap-2">
-                  {t('memberSidebar.online')} <span className="text-[9px] text-gray-600">— {onlineMembers.length}</span>
-                </div>
-                {onlineMembers.map(renderMember)}
-              </div>
+            <div style={{ height: memberVirtualizer.getTotalSize(), position: 'relative' }}>
+              {memberVirtualizer.getVirtualItems().map((virtualRow) => {
+                const row = memberRows[virtualRow.index];
+                if (!row) return null;
 
-              {/* Offline Group */}
-              <div>
-                <div className="text-[10px] font-bold text-gray-500 mb-2 px-2 uppercase tracking-wider flex items-center gap-2">
-                  {t('memberSidebar.offline')} <span className="text-[9px] text-gray-600">— {offlineMembers.length}</span>
-                </div>
-                {offlineMembers.map(renderMember)}
-              </div>
-            </>
+                const style: CSSProperties = {
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  transform: `translateY(${virtualRow.start}px)`,
+                };
+
+                if (row.type === 'section') {
+                  return (
+                    <div
+                      key={row.key}
+                      style={style}
+                      className="text-[10px] font-bold text-gray-500 mb-2 px-2 uppercase tracking-wider flex items-center gap-2"
+                    >
+                      {row.label} <span className="text-[9px] text-gray-600">— {row.count}</span>
+                    </div>
+                  );
+                }
+
+                return renderMember(row.member, style);
+              })}
+            </div>
           )}
       </div>
 
