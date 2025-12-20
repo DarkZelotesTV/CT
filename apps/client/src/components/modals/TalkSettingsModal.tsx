@@ -266,7 +266,7 @@ export const TalkSettingsModal = ({ onClose, initialTab = 'voice' }: { onClose: 
   return createPortal(
 	  <div
 	    className="fixed left-0 right-0 bottom-0 top-[var(--ct-titlebar-height)] bg-black/80 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200 p-4 md:p-8"
-	    style={{ zIndex: 2500, transform: 'translateZ(0)', willChange: 'transform' }}
+	    style={{ zIndex: 9999, transform: 'translateZ(0)', willChange: 'transform' }}
 	  >
       <div className="w-full max-w-5xl h-[85vh] bg-[#0f1014] rounded-3xl border border-white/10 shadow-2xl flex overflow-hidden text-gray-200 font-sans">
           

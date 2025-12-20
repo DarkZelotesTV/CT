@@ -54,7 +54,7 @@ body,
 
 #modal-root {
   position: relative;
-  z-index: 2500; 
+  z-index: 9999; 
   isolation: isolate;
 }
 

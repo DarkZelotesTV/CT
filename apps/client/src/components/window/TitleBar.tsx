@@ -110,7 +110,7 @@ export const TitleBar = ({ serverName, channel, onOpenServerSettings }: TitleBar
 
   if (!controls) return null;
 
-  const channelTitle = channel?.name ?? t('titlebar.title', { defaultValue: 'CT' });
+  const channelTitle = channel?.name ?? t('titlebar.title', { defaultValue: 'Startpage' });
 
   const platform = state.platform ?? 'win32';
   const isMac = platform === 'darwin';
@@ -169,7 +169,7 @@ export const TitleBar = ({ serverName, channel, onOpenServerSettings }: TitleBar
       </button>
 
       <div className="no-drag h-6 w-6 rounded-md bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-bold text-gray-200">
-        CT
+        CloverTalk BETA
       </div>
     </div>
   );

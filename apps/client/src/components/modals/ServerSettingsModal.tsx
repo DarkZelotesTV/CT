@@ -449,7 +449,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
   return createPortal(
     <div
       className="fixed left-0 right-0 bottom-0 top-[var(--ct-titlebar-height)] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 relative"
-      style={{ zIndex: 2500, transform: 'translateZ(0)', willChange: 'transform' }}
+      style={{ zIndex: 9999, transform: 'translateZ(0)', willChange: 'transform' }}
     >
       {/* Desktop Responsive Container: Wächst mit, maximale Breite begrenzt, fixe Höhe für konsistentes Layout */}
       <div className="bg-[#0f1014] w-11/12 max-w-5xl h-[85vh] rounded-3xl border border-white/10 shadow-2xl overflow-hidden flex flex-col">

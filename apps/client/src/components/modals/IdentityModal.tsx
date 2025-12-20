@@ -89,7 +89,7 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
   return createPortal(
     <div
       className="fixed left-0 right-0 bottom-0 top-[var(--ct-titlebar-height)] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
-      style={{ zIndex: 2500, transform: 'translateZ(0)', willChange: 'transform' }}
+      style={{ zIndex: 9999, transform: 'translateZ(0)', willChange: 'transform' }}
     >
       <div className="bg-[#0f1014] w-full max-w-xl rounded-2xl shadow-2xl border border-white/10 relative">
         <button
