@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback, useMemo, useRef, type CSSProperties, type KeyboardEvent } from 'react';
-import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, PhoneOff, Camera, ScreenShare, Lock, ListChecks, X, Search, GripVertical } from 'lucide-react';
+import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, PhoneOff, Camera, ScreenShare, Lock, ListChecks, X, GripVertical } from 'lucide-react';
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent, KeyboardSensor } from '@dnd-kit/core';
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useTranslation } from 'react-i18next';
-import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 import { apiFetch } from '../../api/http';
 import { CreateChannelModal } from '../modals/CreateChannelModal';
 import { UserBottomBar } from './UserBottomBar';
@@ -80,8 +79,6 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   const [error, setError] = useState<string | null>(null);
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
   const [serverOwnerId, setServerOwnerId] = useState<number | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [contextMenu, setContextMenu] = useState<{
     userId: number;
     username: string;
@@ -222,11 +219,6 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   useEffect(() => () => clearRetryTimer(), [clearRetryTimer]);
 
   useEffect(() => {
-    const handle = setTimeout(() => setDebouncedSearchTerm(searchTerm.trim().toLowerCase()), 250);
-    return () => clearTimeout(handle);
-  }, [searchTerm]);
-
-  useEffect(() => {
     if (!serverId) return;
     apiFetch<Record<string, boolean>>(`/api/servers/${serverId}/permissions`).then(setPermissions).catch(() => setPermissions({}));
   }, [serverId]);
@@ -328,7 +320,6 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
     }
   };
 
-  const normalizedSearchTerm = debouncedSearchTerm.trim().toLowerCase();
   const isServerAdmin = useMemo(
     () =>
       Boolean(
@@ -336,65 +327,9 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
       ),
     [localUser?.id, permissions.manage_channels, permissions.manage_roles, serverOwnerId]
   );
-  const canDrag = !normalizedSearchTerm && dragAndDropEnabled && isServerAdmin;
+  const canDrag = dragAndDropEnabled && isServerAdmin;
   const dragDisabled = !canDrag;
-  const matchesSearch = useCallback(
-    (channel: Channel) => {
-      if (!normalizedSearchTerm) return true;
-      const haystack = `${channel.name} ${channel.type}`.toLowerCase();
-      return haystack.includes(normalizedSearchTerm);
-    },
-    [normalizedSearchTerm]
-  );
-
-  const filteredUncategorized = useMemo(
-    () => uncategorized.filter(matchesSearch),
-    [matchesSearch, uncategorized]
-  );
-
-  const filteredCategories = useMemo(
-    () =>
-      categories
-        .map((cat) => ({
-          ...cat,
-          channels: cat.channels.filter(matchesSearch),
-        }))
-        .filter((cat) => cat.channels.length > 0),
-    [categories, matchesSearch]
-  );
-
-  const hasVisibleChannels = filteredUncategorized.length > 0 || filteredCategories.some((cat) => cat.channels.length > 0);
-
-  type SearchRow =
-    | { type: 'category'; category: Category; key: string }
-    | { type: 'channel'; channel: Channel; parentKey: string; key: string };
-
-  const virtualizedSearchItems = useMemo<SearchRow[]>(() => {
-    if (!normalizedSearchTerm) return [];
-
-    const rows: SearchRow[] = [];
-
-    filteredCategories.forEach((cat) => {
-      rows.push({ type: 'category', category: cat, key: categoryKey(cat.id) });
-      cat.channels.forEach((channel) =>
-        rows.push({ type: 'channel', channel, parentKey: categoryKey(cat.id), key: channelKey(channel.id, categoryKey(cat.id)) })
-      );
-    });
-
-    filteredUncategorized.forEach((channel) => {
-      rows.push({ type: 'channel', channel, parentKey: 'uncategorized', key: channelKey(channel.id, 'uncategorized') });
-    });
-
-    return rows;
-  }, [filteredCategories, filteredUncategorized, normalizedSearchTerm]);
-
-  const searchListParentRef = useRef<HTMLDivElement | null>(null);
-  const searchVirtualizer = useVirtualizer({
-    count: virtualizedSearchItems.length,
-    getScrollElement: () => searchListParentRef.current,
-    estimateSize: (index: number) => (virtualizedSearchItems[index]?.type === 'category' ? 40 : 52),
-    overscan: 8,
-  });
+  const hasVisibleChannels = uncategorized.length > 0 || categories.some((cat) => cat.channels.length > 0);
 
   const persistStructure = useCallback(
     async (
@@ -761,94 +696,79 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   return (
     <div className="flex flex-col h-full bg-transparent relative">
       {!isDesktop && (
-      <div
-        className="h-12 flex items-center gap-2 px-4 border-b border-[var(--color-border)] bg-[var(--color-surface-alt)] transition-colors no-drag relative z-10"
-        data-no-drag
-      >
         <div
-          className="flex items-center gap-2 flex-1 overflow-hidden cursor-pointer rounded-md px-1 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)] focus-visible:bg-[var(--color-surface-hover)]"
-          role="button"
-          tabIndex={0}
+          className="relative z-10 flex h-12 items-center border-b border-[var(--color-border)] bg-[var(--color-surface-alt)] px-3 sm:px-4 transition-colors no-drag"
           data-no-drag
-          onClick={handleOpenServerSettings}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') handleOpenServerSettings();
-          }}
-          aria-label={t('channelSidebar.openServerSettings', { server: serverName || t('channelSidebar.defaultServerName') })}
-          title={t('channelSidebar.openServerSettings', { server: serverName || t('channelSidebar.defaultServerName') })}
         >
-          <span className="font-semibold text-[color:var(--color-text)] truncate flex-1 min-w-0" title={serverName || t('channelSidebar.defaultServerName')}>
-            {serverName || t('channelSidebar.defaultServerName')}
-          </span>
           <button
             type="button"
+            className="absolute left-1/2 -translate-x-1/2 rounded-md px-3 py-1 text-center text-sm font-semibold text-[color:var(--color-text)] hover:bg-[var(--color-surface-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
+            data-no-drag
             onClick={handleOpenServerSettings}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') handleOpenServerSettings();
             }}
-            className="p-2 flex-shrink-0 rounded-md hover:bg-[var(--color-surface-hover)] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
-            title={t('channelSidebar.openServerSettings', { server: serverName || t('channelSidebar.defaultServerName') })}
             aria-label={t('channelSidebar.openServerSettings', { server: serverName || t('channelSidebar.defaultServerName') })}
+            title={t('channelSidebar.openServerSettings', { server: serverName || t('channelSidebar.defaultServerName') })}
           >
-            <Settings size={16} aria-hidden />
+            <span className="inline-block max-w-[72vw] truncate align-middle" title={serverName || t('channelSidebar.defaultServerName')}>
+              {serverName || t('channelSidebar.defaultServerName')}
+            </span>
           </button>
+
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleOpenServerSettings}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') handleOpenServerSettings();
+              }}
+              className="flex h-9 w-9 items-center justify-center rounded-md text-[color:var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] hover:text-[color:var(--color-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
+              title={t('channelSidebar.openServerSettings', { server: serverName || t('channelSidebar.defaultServerName') })}
+              aria-label={t('channelSidebar.openServerSettings', { server: serverName || t('channelSidebar.defaultServerName') })}
+            >
+              <Settings size={16} aria-hidden />
+            </button>
+
+            <button
+              type="button"
+              className="flex h-9 w-9 items-center justify-center rounded-md text-[color:var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] hover:text-[color:var(--color-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
+              title={t('channelSidebar.createChannel')}
+              aria-label={t('channelSidebar.createChannel')}
+              data-no-drag
+              onClick={(e) => {
+                e.stopPropagation();
+                setCreateType('text');
+                setCreateCategoryId(null);
+                setShowCreateModal(true);
+              }}
+            >
+              <Plus size={16} />
+            </button>
+
+            {onCloseMobileNav && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onCloseMobileNav();
+                }}
+                className="flex h-9 w-9 items-center justify-center rounded-md text-[color:var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] hover:text-[color:var(--color-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)] lg:hidden"
+                title={t('channelSidebar.closeNavigation')}
+                aria-label={t('channelSidebar.closeNavigation')}
+                data-no-drag
+              >
+                <X size={18} aria-hidden />
+              </button>
+            )}
+          </div>
         </div>
-
-        <button
-          type="button"
-          className="p-1.5 flex-shrink-0 rounded-md hover:bg-[var(--color-surface-hover)] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
-          title={t('channelSidebar.createChannel')}
-          aria-label={t('channelSidebar.createChannel')}
-          data-no-drag
-          onClick={(e) => {
-            e.stopPropagation();
-            setCreateType('text');
-            setCreateCategoryId(null);
-            setShowCreateModal(true);
-          }}
-        >
-          <Plus size={16} />
-        </button>
-
-        {/* Mobile: Close Navigation (wird bewusst im Header gerendert, damit es nicht über dem Zahnrad liegt) */}
-        {onCloseMobileNav && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onCloseMobileNav();
-            }}
-            className="lg:hidden p-2 -mr-1 rounded-md hover:bg-[var(--color-surface-hover)] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
-            title={t('channelSidebar.closeNavigation')}
-            aria-label={t('channelSidebar.closeNavigation')}
-            data-no-drag
-          >
-            <X size={18} aria-hidden />
-          </button>
-        )}
-      </div>
       )}
 
 
-        {/* Suche & Liste */}
-        <div ref={searchListParentRef} className="flex-1 overflow-y-auto px-4 pb-5 pt-4 custom-scrollbar relative z-0">
-          <div className="px-1 mb-4">
-            <label className="sr-only" htmlFor="channel-search">
-              {t('channelSidebar.searchLabel')}
-            </label>
-            <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--color-text-muted)]" aria-hidden />
-              <input
-                id="channel-search"
-                type="search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder={t('channelSidebar.searchPlaceholder') ?? ''}
-                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] px-9 py-2 text-sm text-[color:var(--color-text)] placeholder:text-[color:var(--color-text-muted)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
-              />
-            </div>
-          </div>
+        {/* Liste */}
+        <div className="flex-1 overflow-y-auto px-3 sm:px-4 pb-5 pt-3 custom-scrollbar relative z-0">
 
           {isLoading && (
             <div className="mx-2 mb-4 space-y-3">
@@ -900,155 +820,116 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
             </div>
           )}
 
-          {normalizedSearchTerm ? (
-            <div style={{ height: searchVirtualizer.getTotalSize(), position: 'relative' }}>
-              {searchVirtualizer.getVirtualItems().map((virtualRow: VirtualItem) => {
-                const row = virtualizedSearchItems[virtualRow.index];
-                if (!row) return null;
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext
+              items={uncategorized.map((c) => channelKey(c.id, 'uncategorized'))}
+              strategy={verticalListSortingStrategy}
+            >
+              {uncategorized.map((c) => (
+                <SortableWrapper
+                  key={c.id}
+                  item={c}
+                  id={channelKey(c.id, 'uncategorized')}
+                  data={{ type: 'channel', channelId: c.id, parent: 'uncategorized' }}
+                  disabled={dragDisabled}
+                >
+                  {(dragMeta) => renderChannel(c, false, dragMeta)}
+                </SortableWrapper>
+              ))}
+            </SortableContext>
 
-                const style: CSSProperties = {
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  transform: `translateY(${virtualRow.start}px)`,
-                };
-
-                if (row.type === 'category') {
-                  return (
-                    <div
-                      key={row.key}
-                      style={style}
-                      className="mt-4 mb-1 flex items-center gap-2 px-1 text-[11px] font-bold uppercase text-gray-500"
-                    >
-                      <ChevronDown size={10} className="text-gray-600" />
-                      {row.category.name}
-                    </div>
-                  );
-                }
+            <SortableContext items={categories.map((cat) => categoryKey(cat.id))} strategy={verticalListSortingStrategy}>
+              {categories.map((cat) => {
+                const isCollapsed = collapsed[cat.id];
+                const parentKey = categoryKey(cat.id);
 
                 return (
-                  <div key={row.key} style={style}>
-                    {renderChannel(row.channel, row.parentKey !== 'uncategorized')}
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext
-                items={filteredUncategorized.map((c) => channelKey(c.id, 'uncategorized'))}
-                strategy={verticalListSortingStrategy}
-              >
-                {filteredUncategorized.map((c) => (
                   <SortableWrapper
-                    key={c.id}
-                    item={c}
-                    id={channelKey(c.id, 'uncategorized')}
-                    data={{ type: 'channel', channelId: c.id, parent: 'uncategorized' }}
+                    key={cat.id}
+                    item={cat}
+                    id={parentKey}
+                    data={{ type: 'category', categoryId: cat.id }}
                     disabled={dragDisabled}
                   >
-                    {(dragMeta) => renderChannel(c, false, dragMeta)}
-                  </SortableWrapper>
-                ))}
-              </SortableContext>
+                    {(dragMeta) => {
+                      const handleProps = dragMeta.isDisabled ? {} : dragMeta.handleProps;
 
-              <SortableContext
-                items={filteredCategories.map((cat) => categoryKey(cat.id))}
-                strategy={verticalListSortingStrategy}
-              >
-                {filteredCategories.map((cat) => {
-                  const isCollapsed = normalizedSearchTerm ? false : collapsed[cat.id];
-                  const parentKey = categoryKey(cat.id);
-
-                  return (
-                    <SortableWrapper
-                      key={cat.id}
-                      item={cat}
-                      id={parentKey}
-                      data={{ type: 'category', categoryId: cat.id }}
-                      disabled={dragDisabled}
-                    >
-                      {(dragMeta) => {
-                        const handleProps = dragMeta.isDisabled ? {} : dragMeta.handleProps;
-
-                        return (
-                          <div className={`mt-4 ${dragMeta.isDragging ? 'opacity-80' : ''}`} ref={dragMeta.setNodeRef} style={dragMeta.style}>
-                            <div className="flex items-center justify-between group no-drag mb-1 pl-1 pr-2 gap-2">
-                              <div className="flex items-center gap-2">
-                                <button
-                                  type="button"
-                                  className={`flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-gray-600 hover:text-gray-300 focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317] ${dragMeta.isDisabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-white/5'}`}
-                                  aria-roledescription="Reorder handle"
-                                  aria-label={t('channelSidebar.reorderCategory', { category: cat.name }) ?? `Kategorie ${cat.name} verschieben`}
-                                  aria-disabled={dragMeta.isDisabled}
-                                  disabled={dragMeta.isDisabled}
-                                  {...handleProps}
-                                >
-                                  <GripVertical size={14} aria-hidden />
-                                </button>
-                                <button
-                                  type="button"
-                                  className="flex items-center gap-1 text-gray-500 text-xs font-bold uppercase hover:text-gray-300 rounded-md px-1 py-0.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317] focus-visible:text-gray-200"
-                                  onClick={() => toggleCategory(cat.id)}
-                                  aria-expanded={!isCollapsed}
-                                  aria-controls={`category-${cat.id}-channels`}
-                                  aria-label={t('channelSidebar.toggleCategory', { category: cat.name })}
-                                  data-no-drag
-                                >
-                                  {isCollapsed ? <ChevronRight size={10} /> : <ChevronDown size={10} />}
-                                  {cat.name}
-                                </button>
-                              </div>
+                      return (
+                        <div className={`mt-4 ${dragMeta.isDragging ? 'opacity-80' : ''}`} ref={dragMeta.setNodeRef} style={dragMeta.style}>
+                          <div className="flex items-center justify-between group no-drag mb-1 pl-1 pr-2 gap-2">
+                            <div className="flex items-center gap-2">
                               <button
                                 type="button"
-                                className="no-drag p-1 rounded-md text-gray-500 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-white hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317]"
-                                title={t('channelSidebar.createChannelInCategory', { category: cat.name })}
-                                aria-label={t('channelSidebar.createChannelInCategory', { category: cat.name })}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setCreateType('text');
-                                  setCreateCategoryId(cat.id);
-                                  setShowCreateModal(true);
-                                }}
+                                className={`flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-gray-600 hover:text-gray-300 focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317] ${dragMeta.isDisabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-white/5'}`}
+                                aria-roledescription="Reorder handle"
+                                aria-label={t('channelSidebar.reorderCategory', { category: cat.name }) ?? `Kategorie ${cat.name} verschieben`}
+                                aria-disabled={dragMeta.isDisabled}
+                                disabled={dragMeta.isDisabled}
+                                {...handleProps}
                               >
-                                <Plus size={14} />
+                                <GripVertical size={14} aria-hidden />
+                              </button>
+                              <button
+                                type="button"
+                                className="flex items-center gap-1 text-gray-500 text-xs font-bold uppercase hover:text-gray-300 rounded-md px-1 py-0.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317] focus-visible:text-gray-200"
+                                onClick={() => toggleCategory(cat.id)}
+                                aria-expanded={!isCollapsed}
+                                aria-controls={`category-${cat.id}-channels`}
+                                aria-label={t('channelSidebar.toggleCategory', { category: cat.name })}
+                                data-no-drag
+                              >
+                                {isCollapsed ? <ChevronRight size={10} /> : <ChevronDown size={10} />}
+                                {cat.name}
                               </button>
                             </div>
-                            {!isCollapsed && (
-                              <SortableContext
-                                id={`${parentKey}-context`}
-                                items={cat.channels.map((c) => channelKey(c.id, parentKey))}
-                                strategy={verticalListSortingStrategy}
-                              >
-                                <div id={`category-${cat.id}-channels`}>
-                                  {cat.channels.map((c) => (
-                                    <SortableWrapper
-                                      key={c.id}
-                                      item={c}
-                                      id={channelKey(c.id, parentKey)}
-                                      data={{ type: 'channel', channelId: c.id, parent: parentKey }}
-                                      disabled={dragDisabled}
-                                    >
-                                      {(channelMeta) => renderChannel(c, true, channelMeta)}
-                                    </SortableWrapper>
-                                  ))}
-                                </div>
-                              </SortableContext>
-                            )}
+                            <button
+                              type="button"
+                              className="no-drag p-1 rounded-md text-gray-500 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-white hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317]"
+                              title={t('channelSidebar.createChannelInCategory', { category: cat.name })}
+                              aria-label={t('channelSidebar.createChannelInCategory', { category: cat.name })}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setCreateType('text');
+                                setCreateCategoryId(cat.id);
+                                setShowCreateModal(true);
+                              }}
+                            >
+                              <Plus size={14} />
+                            </button>
                           </div>
-                        );
-                      }}
-                    </SortableWrapper>
-                  );
-                })}
-              </SortableContext>
-            </DndContext>
-          )}
+                          {!isCollapsed && (
+                            <SortableContext
+                              id={`${parentKey}-context`}
+                              items={cat.channels.map((c) => channelKey(c.id, parentKey))}
+                              strategy={verticalListSortingStrategy}
+                            >
+                              <div id={`category-${cat.id}-channels`}>
+                                {cat.channels.map((c) => (
+                                  <SortableWrapper
+                                    key={c.id}
+                                    item={c}
+                                    id={channelKey(c.id, parentKey)}
+                                    data={{ type: 'channel', channelId: c.id, parent: parentKey }}
+                                    disabled={dragDisabled}
+                                  >
+                                    {(channelMeta) => renderChannel(c, true, channelMeta)}
+                                  </SortableWrapper>
+                                ))}
+                              </div>
+                            </SortableContext>
+                          )}
+                        </div>
+                      );
+                    }}
+                  </SortableWrapper>
+                );
+              })}
+            </SortableContext>
+          </DndContext>
 
           {!isLoading && !error && !hasVisibleChannels && (
             <div className="mx-2 mb-3 rounded-md border border-white/5 bg-white/5 px-3 py-2 text-xs text-gray-300">
-              {normalizedSearchTerm ? t('channelSidebar.noChannelsFound') : t('channelSidebar.noChannels')}
+              {t('channelSidebar.noChannels')}
             </div>
           )}
         </div>
