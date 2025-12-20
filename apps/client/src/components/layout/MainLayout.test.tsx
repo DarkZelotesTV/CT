@@ -2,6 +2,18 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MainLayout } from './MainLayout';
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) =>
+      ({
+        'layout.textChannelSelected': 'Textkanal ausgewählt',
+        'layout.textChannelUnsupported': 'Dieser Textkanal wird aktuell nicht unterstützt.',
+        'layout.stageAreaTitle': 'Bühnenbereich',
+        'layout.stageAreaDescription': 'Wähle einen Kanal aus, um zu starten.',
+      }[key] || key),
+  }),
+}));
+
 const connectToChannelMock = vi.fn();
 
 vi.mock('@livekit/components-react', () => ({

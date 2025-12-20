@@ -32,7 +32,15 @@ const minSidebarWidth = 200;
 const maxSidebarWidth = 420;
 
 // Breakpoint für Mobile/Desktop Umschaltung (entspricht Tailwind 'lg')
-const MOBILE_BREAKPOINT = 1024; 
+const MOBILE_BREAKPOINT = 1024;
+
+const focusableSelectors =
+  'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe, object, embed, [tabindex]:not([tabindex="-1"]), [contenteditable="true"]';
+
+const getFocusableElements = (container: HTMLElement) =>
+  Array.from(container.querySelectorAll<HTMLElement>(focusableSelectors)).filter(
+    (el) => !el.hasAttribute('aria-hidden') && el.tabIndex !== -1
+  );
 
 interface Channel {
   id: number;
@@ -57,7 +65,11 @@ export const MainLayout = () => {
   const leftSidebarRef = useRef<HTMLDivElement>(null);
   const rightSidebarRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef<HTMLDivElement>(null);
+  const mobileNavRef = useRef<HTMLDivElement>(null);
+  const memberSheetRef = useRef<HTMLDivElement>(null);
   const dragState = useRef<{ startX: number; startWidth: number }>({ startX: 0, startWidth: 0 });
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   const isDesktop = typeof window !== 'undefined' && !!window.ct?.windowControls;
   
@@ -89,6 +101,63 @@ export const MainLayout = () => {
     muted,
     connectToChannel,
   } = useVoice();
+
+  const focusContainer = useCallback((container: HTMLElement | null) => {
+    if (!container) return;
+    const focusable = getFocusableElements(container);
+    if (focusable.length > 0) {
+      focusable[0].focus();
+      return;
+    }
+    container.focus({ preventScroll: true });
+  }, []);
+
+  const recordPreviousFocus = useCallback(() => {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement) {
+      previousFocusRef.current = active;
+    }
+  }, []);
+
+  const handleTouchStart = useCallback((event: React.TouchEvent) => {
+    const touch = event.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  }, []);
+
+  const handleTouchEnd = useCallback(
+    (event: React.TouchEvent) => {
+      if (typeof window === 'undefined') return;
+      if (!touchStartRef.current) return;
+      if (window.innerWidth >= MOBILE_BREAKPOINT) return;
+
+      const touch = event.changedTouches[0];
+      const deltaX = touch.clientX - touchStartRef.current.x;
+      const deltaY = touch.clientY - touchStartRef.current.y;
+      const absX = Math.abs(deltaX);
+      const absY = Math.abs(deltaY);
+
+      const isHorizontalSwipe = absX > absY && absX > 50;
+      const isVerticalSwipe = absY > absX && absY > 50;
+
+      if (isHorizontalSwipe) {
+        if (deltaX > 0 && !showMobileNav && touchStartRef.current.x < 60) {
+          setShowMobileNav(true);
+        } else if (deltaX < 0 && showMobileNav) {
+          setShowMobileNav(false);
+        }
+      } else if (isVerticalSwipe && selectedServerId) {
+        const viewportHeight = window.innerHeight;
+        if (deltaY < 0 && !showMemberSheet && touchStartRef.current.y > viewportHeight - 160) {
+          setShowMemberSheet(true);
+        } else if (deltaY > 0 && showMemberSheet) {
+          setShowMemberSheet(false);
+        }
+      }
+
+      touchStartRef.current = null;
+    },
+    [selectedServerId, showMemberSheet, showMobileNav]
+  );
 
   // --- Width Calculation Logic ---
   const computedMaxSidebarWidth = useMemo(() => {
@@ -186,6 +255,77 @@ export const MainLayout = () => {
       storage.remove('pendingServerId');
     }
   }, []);
+
+  useEffect(() => {
+    if (showMobileNav) {
+      recordPreviousFocus();
+      focusContainer(mobileNavRef.current);
+    }
+  }, [focusContainer, showMobileNav]);
+
+  useEffect(() => {
+    if (showMemberSheet) {
+      recordPreviousFocus();
+      focusContainer(memberSheetRef.current);
+    }
+  }, [focusContainer, showMemberSheet]);
+
+  useEffect(() => {
+    if (showMobileNav || showMemberSheet) {
+      return;
+    }
+    if (previousFocusRef.current) {
+      previousFocusRef.current.focus();
+      previousFocusRef.current = null;
+    }
+  }, [showMemberSheet, showMobileNav]);
+
+  useEffect(() => {
+    if (!showMobileNav && !showMemberSheet) return;
+
+    const target = showMemberSheet ? memberSheetRef.current : mobileNavRef.current;
+    if (!target) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        if (showMemberSheet) {
+          setShowMemberSheet(false);
+        } else {
+          setShowMobileNav(false);
+        }
+        return;
+      }
+
+      if (event.key !== 'Tab') return;
+      const focusable = getFocusableElements(target);
+      if (focusable.length === 0) {
+        target.focus();
+        event.preventDefault();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+
+      if (event.shiftKey) {
+        if (!active || active === first || !target.contains(active)) {
+          event.preventDefault();
+          last.focus();
+        }
+      } else if (active === last) {
+        event.preventDefault();
+        first.focus();
+      } else if (!active || !target.contains(active)) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showMemberSheet, showMobileNav]);
 
   // --- Handlers ---
   const handleServerSelect = useCallback((id: number | null) => {
@@ -349,6 +489,8 @@ export const MainLayout = () => {
       className={classNames(
         "flex h-screen w-screen overflow-visible relative bg-[#050507] text-gray-200 font-sans box-border"
       )}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       {isDesktop && <TitleBar serverName={serverName} channel={activeChannel} showRightSidebar={showRightSidebar} onToggleRightSidebar={() => setShowRightSidebar((v) => !v)} onOpenServerSettings={() => setShowServerSettings(true)} />}
       
@@ -375,7 +517,13 @@ export const MainLayout = () => {
         "lg:relative lg:translate-x-0",
         "fixed inset-y-0 left-0 max-lg:w-[85vw] max-lg:max-w-[320px]",
         showMobileNav ? "translate-x-0" : "max-lg:-translate-x-full"
-      )}>
+      )}
+        ref={mobileNavRef}
+        role="dialog"
+        aria-modal="true"
+        aria-hidden={!showMobileNav}
+        tabIndex={-1}
+      >
         
         {/* 1. SERVER RAIL - Hier werden jetzt die Props übergeben! */}
         {/*
@@ -484,7 +632,14 @@ export const MainLayout = () => {
           )}
         >
           <div className="absolute inset-0 h-screen bg-black/60 backdrop-blur-sm -top-[100vh]" onClick={() => setShowMemberSheet(false)} style={{ display: showMemberSheet ? 'block' : 'none' }} />
-          <div className="relative bg-[#0e0e11] border-t border-white/10 rounded-t-3xl overflow-hidden shadow-2xl h-[70vh] flex flex-col">
+          <div
+            ref={memberSheetRef}
+            role="dialog"
+            aria-modal="true"
+            aria-hidden={!showMemberSheet}
+            tabIndex={-1}
+            className="relative bg-[#0e0e11] border-t border-white/10 rounded-t-3xl overflow-hidden shadow-2xl h-[70vh] flex flex-col"
+          >
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-[#1a1b1e]">
               <div className="flex items-center gap-2 text-sm font-semibold text-white">
                 <Users size={16} />
