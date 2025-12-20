@@ -51,6 +51,13 @@ export type TalkSettings = {
   vadSensitivity?: number; // Hinzugefügt
 };
 
+export type NotificationSettings = {
+  permission: NotificationPermission | 'unsupported';
+  mentions: boolean;
+  directMessages: boolean;
+  invites: boolean;
+};
+
 export type SettingsState = {
   profile: ProfileSettings;
   devices: DeviceSettings;
@@ -58,6 +65,12 @@ export type SettingsState = {
   theme: ThemeSettings;
   talk: TalkSettings;
   locale: string;
+  notifications: NotificationSettings;
+};
+
+const resolveInitialPermission = (): NotificationSettings['permission'] => {
+  if (typeof window === 'undefined' || typeof Notification === 'undefined') return 'unsupported';
+  return Notification.permission;
 };
 
 const defaultSettings: SettingsState = {
@@ -90,6 +103,12 @@ const defaultSettings: SettingsState = {
     vadSensitivity: 50, // Standardwert
   },
   locale: 'en',
+  notifications: {
+    permission: resolveInitialPermission(),
+    mentions: true,
+    directMessages: true,
+    invites: true,
+  },
 };
 
 const createDefaultSettings = (): SettingsState => ({
@@ -99,6 +118,7 @@ const createDefaultSettings = (): SettingsState => ({
   theme: { ...defaultSettings.theme },
   talk: { ...defaultSettings.talk },
   locale: defaultSettings.locale,
+  notifications: { ...defaultSettings.notifications },
 });
 
 const SettingsContext = createContext<{
@@ -109,6 +129,7 @@ const SettingsContext = createContext<{
   updateTheme: (nextTheme: Partial<ThemeSettings>) => void;
   updateTalk: (nextTalk: Partial<TalkSettings>) => void;
   updateLocale: (nextLocale: string) => void;
+  updateNotifications: (nextNotifications: Partial<NotificationSettings>) => void;
   resetSettings: () => void;
 } | null>(null);
 
@@ -123,6 +144,7 @@ const loadInitialSettings = (): SettingsState => {
         theme: { ...defaultSettings.theme, ...stored.theme, serverAccents: stored.theme?.serverAccents || {} },
         talk: { ...defaultSettings.talk, ...stored.talk },
         locale: stored.locale || defaultSettings.locale,
+        notifications: { ...defaultSettings.notifications, ...stored.notifications },
       };
     } catch (err) {
       console.warn('Could not parse stored settings', err);
@@ -208,10 +230,27 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
     }));
   };
 
+  const updateNotifications = (nextNotifications: Partial<NotificationSettings>) => {
+    setSettings((prev) => ({
+      ...prev,
+      notifications: { ...prev.notifications, ...nextNotifications },
+    }));
+  };
+
   const resetSettings = () => setSettings(createDefaultSettings());
 
   const value = useMemo(
-    () => ({ settings, updateProfile, updateDevices, updateHotkeys, updateTheme, updateTalk, updateLocale, resetSettings }),
+    () => ({
+      settings,
+      updateProfile,
+      updateDevices,
+      updateHotkeys,
+      updateTheme,
+      updateTalk,
+      updateLocale,
+      updateNotifications,
+      resetSettings,
+    }),
     [settings]
   );
 

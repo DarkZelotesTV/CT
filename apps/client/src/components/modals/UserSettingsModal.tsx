@@ -15,6 +15,7 @@ import {
   SunMoon,
   Settings,
   ShieldAlert,
+  Bell,
   Upload,
   Volume2,
   X,
@@ -94,7 +95,7 @@ type DeviceLists = {
 };
 
 export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
-  const { settings, updateDevices, updateHotkeys, updateProfile, updateTheme } = useSettings();
+  const { settings, updateDevices, updateHotkeys, updateProfile, updateTheme, updateNotifications } = useSettings();
   const {
     muted,
     micMuted,
@@ -119,6 +120,10 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
   const [commandPaletteHotkey, setCommandPaletteHotkey] = useState(
     settings.hotkeys.commandPalette ?? defaultHotkeySettings.commandPalette
   );
+  const [notificationPermission, setNotificationPermission] = useState(settings.notifications.permission);
+  const [notifyMentions, setNotifyMentions] = useState(settings.notifications.mentions);
+  const [notifyDirectMessages, setNotifyDirectMessages] = useState(settings.notifications.directMessages);
+  const [notifyInvites, setNotifyInvites] = useState(settings.notifications.invites);
   const [toggleMembersHotkey, setToggleMembersHotkey] = useState(
     settings.hotkeys.toggleMembers ?? defaultHotkeySettings.toggleMembers
   );
@@ -154,6 +159,7 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
     () => [
       { id: 'profile', label: 'Profil', icon: Settings },
       { id: 'appearance', label: 'Design', icon: Palette },
+      { id: 'notifications', label: 'Benachrichtigungen', icon: Bell },
       { id: 'devices', label: 'Audio & Video', icon: Camera },
       { id: 'hotkeys', label: 'Hotkeys', icon: Keyboard },
       { id: 'identity', label: 'Identity', icon: ShieldAlert },
@@ -189,6 +195,13 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
   useEffect(() => {
     setUseRnnoise(rnnoiseEnabled);
   }, [rnnoiseEnabled]);
+
+  useEffect(() => {
+    setNotificationPermission(settings.notifications.permission);
+    setNotifyMentions(settings.notifications.mentions);
+    setNotifyDirectMessages(settings.notifications.directMessages);
+    setNotifyInvites(settings.notifications.invites);
+  }, [settings.notifications]);
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -257,6 +270,12 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
 
   const levelPercent = useMemo(() => Math.round(inputLevel * 100), [inputLevel]);
   const fingerprint = useMemo(() => (identity ? computeFingerprint(identity) : null), [identity]);
+  const permissionLabel = useMemo(() => {
+    if (notificationPermission === 'granted') return 'Aktiv';
+    if (notificationPermission === 'denied') return 'Blockiert';
+    if (notificationPermission === 'unsupported') return 'Nicht unterstützt';
+    return 'Unbestätigt';
+  }, [notificationPermission]);
 
   const handleTestOutput = useCallback(async () => {
     setIsTestingOutput(true);
@@ -366,6 +385,17 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
     });
   };
 
+  const handleRequestPermission = useCallback(async () => {
+    if (typeof window === 'undefined' || typeof Notification === 'undefined') {
+      setNotificationPermission('unsupported');
+      updateNotifications({ permission: 'unsupported' });
+      return;
+    }
+    const result = await Notification.requestPermission();
+    setNotificationPermission(result);
+    updateNotifications({ permission: result });
+  }, [updateNotifications]);
+
   const handleSave = async () => {
     updateProfile({ displayName, avatarUrl });
     updateDevices({
@@ -382,6 +412,12 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
       skipToContent: skipToContentHotkey || null,
     });
     updateTheme({ mode: themeMode, accentColor, serverAccents: serverAccentDraft });
+    updateNotifications({
+      permission: notificationPermission,
+      mentions: notifyMentions,
+      directMessages: notifyDirectMessages,
+      invites: notifyInvites,
+    });
     await setPushToTalkEnabledFlag(pushToTalkEnabled);
     await setMuted(locallyMuted);
     await setMicMuted(locallyMicMuted);
@@ -553,6 +589,74 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
                             ))}
                           </div>
                         )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeCategory === 'notifications' && (
+                <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Desktop-Status</div>
+                      <p className="text-gray-400 text-sm">Steuert, wann CT Desktop-Benachrichtigungen zeigt.</p>
+                    </div>
+                    <button
+                      onClick={handleRequestPermission}
+                      className="px-4 py-2 rounded-xl border border-[var(--color-border)] text-[color:var(--color-text)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-hover)]"
+                    >
+                      Berechtigung anfragen
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <label className="flex items-center gap-3 p-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-alt)]">
+                      <input
+                        type="checkbox"
+                        checked={notifyMentions}
+                        onChange={(e) => setNotifyMentions(e.target.checked)}
+                        className="form-checkbox h-4 w-4"
+                      />
+                      <div>
+                        <div className="text-sm font-medium">Erwähnungen</div>
+                        <div className="text-xs text-gray-500">Benachrichtige mich bei Erwähnungen.</div>
+                      </div>
+                    </label>
+
+                    <label className="flex items-center gap-3 p-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-alt)]">
+                      <input
+                        type="checkbox"
+                        checked={notifyDirectMessages}
+                        onChange={(e) => setNotifyDirectMessages(e.target.checked)}
+                        className="form-checkbox h-4 w-4"
+                      />
+                      <div>
+                        <div className="text-sm font-medium">Direktnachrichten</div>
+                        <div className="text-xs text-gray-500">Hinweise auf neue private Nachrichten.</div>
+                      </div>
+                    </label>
+
+                    <label className="flex items-center gap-3 p-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-alt)] sm:col-span-2">
+                      <input
+                        type="checkbox"
+                        checked={notifyInvites}
+                        onChange={(e) => setNotifyInvites(e.target.checked)}
+                        className="form-checkbox h-4 w-4"
+                      />
+                      <div>
+                        <div className="text-sm font-medium">Server-Einladungen</div>
+                        <div className="text-xs text-gray-500">Zeige eine Benachrichtigung, wenn dich jemand einlädt.</div>
+                      </div>
+                    </label>
+                  </div>
+
+                  <div className="text-xs text-gray-400 bg-white/[0.04] border border-[var(--color-border)] rounded-xl p-3 flex items-center gap-2">
+                    <Bell size={14} />
+                    <div>
+                      <div className="font-semibold">Status: {permissionLabel}</div>
+                      <div className="text-[11px] text-gray-500">
+                        Browser-Entscheidungen werden gespeichert, damit CT weiß, ob Benachrichtigungen ausgeliefert werden dürfen.
                       </div>
                     </div>
                   </div>
