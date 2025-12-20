@@ -134,7 +134,29 @@
     "muteMic": "Nur Mikrofon stummschalten",
     "unmuteAll": "Audio und Mikrofon wieder aktivieren",
     "muteAll": "Alle Ein- und Ausgänge stummschalten",
-    "settings": "Einstellungen"
+    "settings": "Einstellungen",
+    "feedback": "Feedback"
+  },
+  "feedbackModal": {
+    "title": "Feedback senden",
+    "description": "Teile Bugs, Ideen oder alles, was uns besser macht.",
+    "categoryLabel": "Kategorie",
+    "categories": {
+      "bug": "Bug oder Problem",
+      "idea": "Idee oder Wunsch",
+      "other": "Sonstiges"
+    },
+    "messageLabel": "Was ist passiert?",
+    "messagePlaceholder": "Beschreibe, was passiert ist, was du erwartet hast und wie wir es nachstellen können...",
+    "messageHelp": "Je mehr Details, desto schneller können wir reagieren. Keine persönlichen Daten, außer du schreibst sie hinein.",
+    "screenshotLabel": "Screenshot (optional)",
+    "screenshotPlaceholder": "Screenshot anhängen",
+    "screenshotHelp": "Bilder werden lokal umgewandelt, bevor sie gesendet werden, und zeigen uns deine Ansicht.",
+    "removeScreenshot": "Entfernen",
+    "submit": "Feedback abschicken",
+    "success": "Feedback gesendet. Danke!",
+    "error": "Feedback konnte nicht gesendet werden.",
+    "errorFallback": "Etwas ist schiefgelaufen. Bitte erneut versuchen."
   },
   "titlebar": {
     "home": "Start",
