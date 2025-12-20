@@ -31,6 +31,8 @@ type ChannelLike = {
   type?: 'text' | 'voice' | 'web' | 'data-transfer' | 'spacer' | 'list';
 };
 
+const DEFAULT_TITLEBAR_HEIGHT = 48;
+
 function getControls() {
   if (typeof window === 'undefined') return null;
   return window.ct?.windowControls ?? null;
@@ -75,7 +77,7 @@ export const TitleBar = ({ serverName, channel, onOpenServerSettings }: TitleBar
   const [state, setState] = useState<WindowState>({
     isMaximized: false,
     isFullScreen: false,
-    titlebarHeight: 44,
+    titlebarHeight: DEFAULT_TITLEBAR_HEIGHT,
   });
 
   useEffect(() => {
@@ -89,7 +91,7 @@ export const TitleBar = ({ serverName, channel, onOpenServerSettings }: TitleBar
           isMaximized: !!s.isMaximized,
           isFullScreen: !!s.isFullScreen,
           platform: s.platform,
-          titlebarHeight: s.titlebarHeight ?? 44,
+          titlebarHeight: s.titlebarHeight ?? DEFAULT_TITLEBAR_HEIGHT,
         };
         setState(next);
       })
@@ -107,6 +109,15 @@ export const TitleBar = ({ serverName, channel, onOpenServerSettings }: TitleBar
 
     return () => off?.();
   }, [controls]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    document.documentElement.style.setProperty(
+      '--ct-titlebar-height',
+      `${state.titlebarHeight}px`,
+    );
+  }, [state.titlebarHeight]);
 
   if (!controls) return null;
 
