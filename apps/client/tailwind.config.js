@@ -10,19 +10,23 @@ export default {
         sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
       },
       colors: {
-        // Modernes "Deep Space" Thema
-        background: '#050507', 
-        glass: {
-          100: 'rgba(255, 255, 255, 0.03)',
-          200: 'rgba(255, 255, 255, 0.07)',
-          300: 'rgba(255, 255, 255, 0.12)',
-          border: 'rgba(255, 255, 255, 0.08)',
+        background: 'var(--color-background)',
+        surface: 'var(--color-surface)',
+        'surface-alt': 'var(--color-surface-alt)',
+        'surface-hover': 'var(--color-surface-hover)',
+        border: {
+          DEFAULT: 'var(--color-border)',
+          strong: 'var(--color-border-strong)',
         },
-        primary: {
-          DEFAULT: '#6366f1', // Indigo
-          glow: 'rgba(99, 102, 241, 0.5)',
+        text: {
+          DEFAULT: 'var(--color-text)',
+          muted: 'var(--color-text-muted)',
         },
-        success: '#10b981',
+        accent: {
+          DEFAULT: 'var(--color-accent)',
+          hover: 'var(--color-accent-hover)',
+        },
+        overlay: 'var(--color-overlay)',
       },
       backdropBlur: {
         xs: '2px',

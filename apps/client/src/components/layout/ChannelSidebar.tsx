@@ -748,11 +748,11 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
     <div className="flex flex-col h-full bg-transparent relative">
       {!isDesktop && (
       <div
-        className="h-12 flex items-center gap-2 px-4 border-b border-white/5 transition-colors no-drag relative z-10"
+        className="h-12 flex items-center gap-2 px-4 border-b border-[var(--color-border)] bg-[var(--color-surface-alt)] transition-colors no-drag relative z-10"
         data-no-drag
       >
         <div
-          className="flex items-center gap-2 flex-1 overflow-hidden cursor-pointer rounded-md px-1 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317] focus-visible:bg-white/5"
+          className="flex items-center gap-2 flex-1 overflow-hidden cursor-pointer rounded-md px-1 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)] focus-visible:bg-[var(--color-surface-hover)]"
           role="button"
           tabIndex={0}
           data-no-drag
@@ -763,7 +763,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
           aria-label={t('channelSidebar.openServerSettings', { server: serverName || t('channelSidebar.defaultServerName') })}
           title={t('channelSidebar.openServerSettings', { server: serverName || t('channelSidebar.defaultServerName') })}
         >
-          <span className="font-bold text-white truncate flex-1 min-w-0" title={serverName || t('channelSidebar.defaultServerName')}>
+          <span className="font-semibold text-[color:var(--color-text)] truncate flex-1 min-w-0" title={serverName || t('channelSidebar.defaultServerName')}>
             {serverName || t('channelSidebar.defaultServerName')}
           </span>
           <button
@@ -772,7 +772,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') handleOpenServerSettings();
             }}
-            className="p-2 flex-shrink-0 rounded-md hover:bg-white/5 text-gray-500 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317]"
+            className="p-2 flex-shrink-0 rounded-md hover:bg-[var(--color-surface-hover)] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
             title={t('channelSidebar.openServerSettings', { server: serverName || t('channelSidebar.defaultServerName') })}
             aria-label={t('channelSidebar.openServerSettings', { server: serverName || t('channelSidebar.defaultServerName') })}
           >
@@ -782,7 +782,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
 
         <button
           type="button"
-          className="p-1.5 flex-shrink-0 rounded-md hover:bg-white/10 text-gray-500 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317]"
+          className="p-1.5 flex-shrink-0 rounded-md hover:bg-[var(--color-surface-hover)] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
           title={t('channelSidebar.createChannel')}
           aria-label={t('channelSidebar.createChannel')}
           data-no-drag
@@ -805,7 +805,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
               e.stopPropagation();
               onCloseMobileNav();
             }}
-            className="lg:hidden p-2 -mr-1 rounded-md hover:bg-white/10 text-gray-400 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317]"
+            className="lg:hidden p-2 -mr-1 rounded-md hover:bg-[var(--color-surface-hover)] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
             title={t('channelSidebar.closeNavigation')}
             aria-label={t('channelSidebar.closeNavigation')}
             data-no-drag
@@ -818,20 +818,20 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
 
 
         {/* Suche & Liste */}
-        <div ref={searchListParentRef} className="flex-1 overflow-y-auto px-2 pb-4 pt-3 custom-scrollbar relative z-0">
-          <div className="px-1 mb-3">
+        <div ref={searchListParentRef} className="flex-1 overflow-y-auto px-4 pb-5 pt-4 custom-scrollbar relative z-0">
+          <div className="px-1 mb-4">
             <label className="sr-only" htmlFor="channel-search">
               {t('channelSidebar.searchLabel')}
             </label>
             <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" aria-hidden />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--color-text-muted)]" aria-hidden />
               <input
                 id="channel-search"
                 type="search"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder={t('channelSidebar.searchPlaceholder') ?? ''}
-                className="w-full rounded-md border border-white/10 bg-white/5 px-8 py-2 text-sm text-gray-100 placeholder:text-gray-600 focus:border-white/30 focus:outline-none focus:ring-1 focus:ring-white/30"
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-alt)] px-9 py-2 text-sm text-[color:var(--color-text)] placeholder:text-[color:var(--color-text-muted)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
               />
             </div>
           </div>
@@ -841,7 +841,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
               <Spinner label={t('channelSidebar.loading')} />
               <div className="space-y-2">
                 {[0, 1, 2, 3].map((index) => (
-                  <Skeleton key={`channel-skeleton-${index}`} className="h-9 w-full border border-white/5 bg-white/5" />
+                  <Skeleton key={`channel-skeleton-${index}`} className="h-9 w-full border border-[var(--color-border)] bg-[var(--color-surface-hover)]" />
                 ))}
               </div>
             </div>
@@ -1034,54 +1034,54 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
           )}
         </div>
 
-        {contextMenu && (
-          <div className="fixed left-0 right-0 bottom-0 top-[var(--ct-titlebar-height)] z-50" onClick={closeContextMenu}>
-            <div
-              className="absolute min-w-[240px] rounded-md bg-[#16181d] border border-white/10 shadow-xl p-2 space-y-1"
-              style={{ top: contextMenu.y, left: contextMenu.x }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="text-[11px] text-gray-400 uppercase tracking-wide px-2 pb-1">{contextMenu.username}</div>
-              {permissions.move && contextMenu.channelId ? (
-                <button
-                  type="button"
-                  className="w-full text-left px-2 py-1 rounded hover:bg-white/10 text-sm text-gray-200"
-                  onClick={() => performModeration('mute', { userId: contextMenu.userId, channelId: contextMenu.channelId })}
-                >
-                  {t('channelSidebar.mute')}
-                </button>
-              ) : null}
-              {permissions.move && contextMenu.channelId ? (
-                <button
-                  type="button"
-                  className="w-full text-left px-2 py-1 rounded hover:bg-white/10 text-sm text-gray-200"
-                  onClick={() => performModeration('remove', { userId: contextMenu.userId, channelId: contextMenu.channelId })}
-                >
-                  {t('channelSidebar.removeFromTalk')}
-                </button>
-              ) : null}
-              {permissions.move && contextMenu.channelId && voiceChannels.length > 1 ? (
-                <div className="px-2 py-1 space-y-1">
-                  <div className="text-[11px] text-gray-500">{t('channelSidebar.moveToTalk')}</div>
-                  <div className="flex items-center gap-2">
-                    <select
-                      className="flex-1 bg-[#0f1115] border border-white/10 rounded px-2 py-1 text-sm text-gray-200"
-                      value={contextMenu.moveTargetId || ''}
-                      onChange={(e) => setContextMenu((prev) => (prev ? { ...prev, moveTargetId: Number(e.target.value) } : prev))}
-                    >
-                      {voiceChannels
-                        .filter((vc) => vc.id !== contextMenu.channelId)
-                        .map((vc) => (
-                          <option key={vc.id} value={vc.id}>{vc.name}</option>
-                        ))}
-                    </select>
-                    <button
-                      type="button"
-                      className="px-2 py-1 rounded bg-primary/20 text-primary text-sm hover:bg-primary/30"
-                      disabled={!contextMenu.moveTargetId}
-                      onClick={() =>
-                        performModeration('move', {
-                          userId: contextMenu.userId,
+      {contextMenu && (
+        <div className="fixed left-0 right-0 bottom-0 top-[var(--ct-titlebar-height)] z-50" onClick={closeContextMenu}>
+          <div
+            className="absolute min-w-[240px] rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] shadow-xl p-2 space-y-1"
+            style={{ top: contextMenu.y, left: contextMenu.x }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-[11px] text-[color:var(--color-text-muted)] uppercase tracking-wide px-2 pb-1">{contextMenu.username}</div>
+            {permissions.move && contextMenu.channelId ? (
+              <button
+                type="button"
+                className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)]"
+                onClick={() => performModeration('mute', { userId: contextMenu.userId, channelId: contextMenu.channelId })}
+              >
+                {t('channelSidebar.mute')}
+              </button>
+            ) : null}
+            {permissions.move && contextMenu.channelId ? (
+              <button
+                type="button"
+                className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)]"
+                onClick={() => performModeration('remove', { userId: contextMenu.userId, channelId: contextMenu.channelId })}
+              >
+                {t('channelSidebar.removeFromTalk')}
+              </button>
+            ) : null}
+            {permissions.move && contextMenu.channelId && voiceChannels.length > 1 ? (
+              <div className="px-2 py-1 space-y-1">
+                <div className="text-[11px] text-[color:var(--color-text-muted)]">{t('channelSidebar.moveToTalk')}</div>
+                <div className="flex items-center gap-2">
+                  <select
+                    className="flex-1 bg-[var(--color-surface-alt)] border border-[var(--color-border)] rounded px-2 py-1 text-sm text-[color:var(--color-text)]"
+                    value={contextMenu.moveTargetId || ''}
+                    onChange={(e) => setContextMenu((prev) => (prev ? { ...prev, moveTargetId: Number(e.target.value) } : prev))}
+                  >
+                    {voiceChannels
+                      .filter((vc) => vc.id !== contextMenu.channelId)
+                      .map((vc) => (
+                        <option key={vc.id} value={vc.id}>{vc.name}</option>
+                      ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="px-2 py-1 rounded bg-[var(--color-accent)]/15 text-[color:var(--color-text)] text-sm hover:bg-[var(--color-accent)]/25"
+                    disabled={!contextMenu.moveTargetId}
+                    onClick={() =>
+                      performModeration('move', {
+                        userId: contextMenu.userId,
                           channelId: contextMenu.channelId!,
                           targetChannelId: contextMenu.moveTargetId ?? null,
                         })
@@ -1092,27 +1092,27 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
                   </div>
                 </div>
               ) : null}
-              {permissions.kick ? (
-                <>
+            {permissions.kick ? (
+              <>
                 <button
                   type="button"
-                  className="w-full text-left px-2 py-1 rounded hover:bg-white/10 text-sm text-gray-200"
+                  className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)]"
                   onClick={() => performModeration('ban', { userId: contextMenu.userId })}
                 >
-                    {t('channelSidebar.ban')}
+                  {t('channelSidebar.ban')}
                 </button>
                 <button
                   type="button"
-                  className="w-full text-left px-2 py-1 rounded hover:bg-white/10 text-sm text-gray-200"
+                  className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)]"
                   onClick={() => performModeration('kick', { userId: contextMenu.userId })}
                 >
-                    {t('channelSidebar.kick')}
+                  {t('channelSidebar.kick')}
                 </button>
-                </>
-              ) : null}
-            </div>
+              </>
+            ) : null}
           </div>
-        )}
+        </div>
+      )}
 
         {/* --- STATUS PANEL (Verbindung) --- */}
         {connectionState === 'connected' && (

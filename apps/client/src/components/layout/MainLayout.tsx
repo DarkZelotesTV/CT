@@ -780,7 +780,7 @@ export const MainLayout = () => {
           event.preventDefault();
           focusMainContent();
         }}
-        className="sr-only focus:not-sr-only focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400 absolute top-2 left-2 z-[70] bg-[var(--color-surface)] text-white px-3 py-2 rounded-md border border-[var(--color-border)] shadow-lg"
+        className="sr-only focus:not-sr-only focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400 absolute top-2 left-2 z-[70] bg-[var(--color-surface)] text-[color:var(--color-text)] px-3 py-2 rounded-md border border-[var(--color-border-strong)] shadow-lg"
       >
         {t('layout.skipToContent', { defaultValue: 'Skip to content' })}
       </a>
@@ -831,9 +831,9 @@ export const MainLayout = () => {
       />
 
       {/* Overlay Backdrop für Mobile */}
-	      <div 
-	        className={classNames(
-	          "fixed left-0 right-0 bottom-0 top-[var(--ct-titlebar-height)] bg-black/80 z-40 lg:hidden transition-opacity duration-300",
+      <div
+        className={classNames(
+          "fixed left-0 right-0 bottom-0 top-[var(--ct-titlebar-height)] bg-[var(--color-overlay)] z-40 lg:hidden transition-opacity duration-300",
           showMobileNav ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         )}
         onClick={() => setShowMobileNav(false)}
@@ -860,8 +860,8 @@ export const MainLayout = () => {
           own stacking context (backdrop-filter/overflow), which can paint above the rail popover.
           Give the rail a higher stacking context so the popover stays visible.
         */}
-        <div className="w-[80px] flex-shrink-0 flex flex-col items-center py-3 h-full relative z-[80]">
-           <div className="w-full h-full bg-[var(--color-surface)] bg-opacity-90 backdrop-blur-xl rounded-2xl border border-[var(--color-border)] ml-3 shadow-2xl overflow-visible relative z-[80]">
+        <div className="w-[80px] flex-shrink-0 flex flex-col items-center py-4 h-full relative z-[80]">
+           <div className="w-full h-full bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border-strong)] ml-3 shadow-xl overflow-visible relative z-[80]">
              <ServerRail
                 selectedServerId={selectedServerId}
                 onSelectServer={handleServerSelect}
@@ -873,12 +873,12 @@ export const MainLayout = () => {
 
         {/* 2. CHANNEL SIDEBAR */}
         {selectedServerId && (
-            <div 
+            <div
                 ref={leftSidebarRef}
-                className="h-full py-3 pl-3 flex-shrink-0 transition-all duration-300 relative z-[60]"
+                className="h-full py-4 pl-4 flex-shrink-0 transition-all duration-300 relative z-[60]"
                 style={{ width: typeof window !== 'undefined' && window.innerWidth < 1024 ? 'calc(100% - 80px)' : leftSidebarWidth }}
             >
-                <div className="w-full h-full bg-[var(--color-surface)] bg-opacity-90 backdrop-blur-xl rounded-2xl border border-[var(--color-border)] overflow-hidden flex flex-col relative">
+                <div className="w-full h-full bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border-strong)] overflow-hidden flex flex-col relative shadow-lg">
                     <ChannelSidebar onServerNameChange={(name) => setServerName(name)}
                         serverId={selectedServerId}
                         activeChannelId={activeChannel?.id || null}
@@ -902,30 +902,30 @@ export const MainLayout = () => {
         ref={mainContentRef}
         id="main-content"
         tabIndex={-1}
-        className="flex-1 flex flex-col min-w-0 relative h-full py-3 px-3 overflow-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+        className="flex-1 flex flex-col min-w-0 relative h-full py-4 px-4 overflow-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
       >
         {/* MOBILE HEADER */}
-        <div className="lg:hidden flex items-center gap-3 mb-3 px-1">
+        <div className="lg:hidden flex items-center gap-3 mb-4 px-1 text-[color:var(--color-text)]">
             <button
                 onClick={() => setShowMobileNav(true)}
-                className="p-2 bg-[#1a1b1e] rounded-xl border border-white/10 text-white shadow-lg active:scale-95 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                className="p-2 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] text-[color:var(--color-text)] shadow-md active:scale-95 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
             >
                 <Menu size={20} />
             </button>
-            <span className="font-bold text-white truncate">
+            <span className="font-semibold truncate text-base">
                 {activeChannel?.name || "Chat"}
             </span>
             {selectedServerId && (
                 <button
                     onClick={() => setShowMemberSheet(true)}
-                    className="ml-auto p-2 bg-[#1a1b1e] rounded-xl border border-white/10 text-white shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                    className="ml-auto p-2 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] text-[color:var(--color-text)] shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                 >
                     <Users size={20} />
                 </button>
             )}
         </div>
 
-        <div className="flex-1 bg-[var(--color-surface-alt)] rounded-2xl border border-[var(--color-border)] relative overflow-hidden shadow-2xl flex flex-col">
+        <div className="flex-1 bg-[var(--color-surface-alt)] rounded-3xl border border-[var(--color-border-strong)] relative overflow-hidden shadow-2xl flex flex-col">
           {renderContent()}
         </div>
 
@@ -933,7 +933,7 @@ export const MainLayout = () => {
         {selectedServerId && (
           <button
             onClick={() => setShowRightSidebar(!showRightSidebar)}
-            className="hidden lg:flex absolute right-3 top-1/2 -translate-y-1/2 z-30 w-6 h-12 bg-black/50 hover:bg-indigo-600 rounded-l-xl backdrop-blur-md items-center justify-center text-white/50 hover:text-white transition-all cursor-pointer shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+            className="hidden lg:flex absolute right-3 top-1/2 -translate-y-1/2 z-30 w-7 h-14 bg-[var(--color-surface-hover)] hover:bg-[var(--color-accent)] rounded-l-xl items-center justify-center text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] transition-all cursor-pointer shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
             style={{ right: showRightSidebar ? 12 : 12 }}
           >
             {showRightSidebar ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
@@ -951,7 +951,7 @@ export const MainLayout = () => {
           )}
           style={{ width: showRightSidebar ? rightSidebarWidth : 0 }}
         >
-          <div className="w-full h-full bg-[var(--color-surface)] bg-opacity-80 backdrop-blur-xl rounded-2xl border border-[var(--color-border)] overflow-hidden">
+          <div className="w-full h-full bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border-strong)] overflow-hidden shadow-lg">
             <MemberSidebar serverId={selectedServerId} />
           </div>
           {showRightSidebar && (
@@ -967,21 +967,21 @@ export const MainLayout = () => {
             showMemberSheet ? 'translate-y-0' : 'translate-y-full'
           )}
         >
-          <div className="absolute inset-0 h-screen bg-black/60 backdrop-blur-sm -top-[100vh]" onClick={() => setShowMemberSheet(false)} style={{ display: showMemberSheet ? 'block' : 'none' }} />
+          <div className="absolute inset-0 h-screen bg-[var(--color-overlay)] backdrop-blur-sm -top-[100vh]" onClick={() => setShowMemberSheet(false)} style={{ display: showMemberSheet ? 'block' : 'none' }} />
           <div
             ref={memberSheetRef}
             role="dialog"
             aria-modal="true"
             aria-hidden={!showMemberSheet}
             tabIndex={-1}
-            className="relative bg-[var(--color-surface)] border-t border-[var(--color-border)] rounded-t-3xl overflow-hidden shadow-2xl h-[70vh] flex flex-col"
+            className="relative bg-[var(--color-surface)] border-t border-[var(--color-border-strong)] rounded-t-3xl overflow-hidden shadow-2xl h-[70vh] flex flex-col"
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-surface-alt)]">
-              <div className="flex items-center gap-2 text-sm font-semibold text-white">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--color-text)]">
                 <Users size={16} />
                 Mitglieder
               </div>
-              <button onClick={() => setShowMemberSheet(false)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-gray-200">
+              <button onClick={() => setShowMemberSheet(false)} className="p-2 rounded-full bg-[var(--color-surface-hover)] hover:bg-[var(--color-accent)] text-[color:var(--color-text)]">
                 <ChevronDown size={16} />
               </button>
             </div>
