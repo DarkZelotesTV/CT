@@ -3,7 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { RoomServiceClient } from 'livekit-server-sdk';
-import { Server, Channel, ServerMember, Category, Role, MemberRole, ChannelPermissionOverride, ServerBan } from '../models';
+import { Server, Channel, ServerMember, Category, Role, MemberRole, ChannelPermissionOverride, ServerBan, User } from '../models';
 import { authenticateRequest, AuthRequest } from '../middleware/authMiddleware';
 import { PermissionKey } from '../models/Role';
 import { emitToUser, getUserChannelIds, removeUserFromAllChannels, removeUserFromChannel } from '../realtime/registry';
@@ -11,6 +11,7 @@ import { emitToUser, getUserChannelIds, removeUserFromAllChannels, removeUserFro
 const router = Router();
 
 const SERVER_ICON_DIR = path.resolve(__dirname, '..', 'public', 'uploads', 'server-icons');
+const AVATAR_UPLOAD_DIR = path.resolve(__dirname, '..', 'public', 'uploads', 'avatars');
 
 const iconStorage = multer.diskStorage({
   destination: async (_req, _file, cb) => {
@@ -44,6 +45,45 @@ const iconUploadMiddleware = (req: Request, res: Response, next: NextFunction) =
   iconUpload.single('icon')(req, res, (err: any) => {
     if (err) {
       const message = err?.message === 'File too large' ? 'Datei überschreitet 2 MB' : err?.message || 'Ungültige Datei';
+      return res.status(400).json({ error: message });
+    }
+    next();
+  });
+};
+
+const avatarStorage = multer.diskStorage({
+  destination: async (_req, _file, cb) => {
+    try {
+      await fs.promises.mkdir(AVATAR_UPLOAD_DIR, { recursive: true });
+      cb(null, AVATAR_UPLOAD_DIR);
+    } catch (err) {
+      cb(err as Error, AVATAR_UPLOAD_DIR);
+    }
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname) || '.png';
+    const safeExt = ext.replace(/[^.a-zA-Z0-9]/g, '') || '.png';
+    const userId = (req as AuthRequest)?.user?.id || 'unknown';
+    const baseName = `avatar-${userId}-${Date.now()}`;
+    cb(null, `${baseName}${safeExt}`);
+  },
+});
+
+const avatarUpload = multer({
+  storage: avatarStorage,
+  limits: { fileSize: 3 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (!file.mimetype.startsWith('image/')) {
+      return cb(new Error('Nur Bilddateien sind erlaubt'));
+    }
+    cb(null, true);
+  },
+});
+
+const avatarUploadMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  avatarUpload.single('avatar')(req, res, (err: any) => {
+    if (err) {
+      const message = err?.message === 'File too large' ? 'Datei überschreitet 3 MB' : err?.message || 'Ungültige Datei';
       return res.status(400).json({ error: message });
     }
     next();
@@ -142,6 +182,41 @@ const ensureAdminOrOwner = async (serverId: number, userId: number) => {
   }
   return { server, perms } as const;
 };
+
+// ==========================================
+// USER ROUTES
+// ==========================================
+
+router.post('/users/me/avatar', authenticateRequest, avatarUploadMiddleware, async (req: AuthRequest & { file?: Express.Multer.File }, res) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'Keine Datei hochgeladen' });
+    }
+
+    const user = await User.findByPk(req.user.id);
+    if (!user) return res.status(404).json({ error: 'User nicht gefunden' });
+
+    const relativePath = path.posix.join('/uploads/avatars', req.file.filename);
+    const previousAvatar = user.avatar_url;
+
+    user.avatar_url = relativePath;
+    await user.save();
+
+    if (previousAvatar && previousAvatar.startsWith('/uploads/avatars/') && previousAvatar !== relativePath) {
+      const absolutePreviousPath = path.resolve(__dirname, '..', 'public', previousAvatar.replace(/^\//, ''));
+      fs.promises.unlink(absolutePreviousPath).catch(() => {});
+    }
+
+    res.json({ avatar_url: relativePath, user });
+  } catch (err: any) {
+    const message = err?.message || 'Upload fehlgeschlagen';
+    res.status(400).json({ error: message });
+  }
+});
 
 // ==========================================
 // SERVER ROUTES
