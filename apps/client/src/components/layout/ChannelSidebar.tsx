@@ -4,6 +4,7 @@ import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type D
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useTranslation } from 'react-i18next';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { apiFetch } from '../../api/http';
 import { CreateChannelModal } from '../modals/CreateChannelModal';
 import { UserBottomBar } from './UserBottomBar';
@@ -220,10 +221,6 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   }, [searchTerm]);
 
   useEffect(() => {
-    // Debounced term is ready for potential API-driven filtering without delaying local updates
-  }, [debouncedSearchTerm]);
-
-  useEffect(() => {
     if (!serverId) return;
     apiFetch<Record<string, boolean>>(`/api/servers/${serverId}/permissions`).then(setPermissions).catch(() => setPermissions({}));
   }, [serverId]);
@@ -325,9 +322,8 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
     }
   };
 
-  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+  const normalizedSearchTerm = debouncedSearchTerm.trim().toLowerCase();
   const dragDisabled = Boolean(normalizedSearchTerm);
-  // Prepare debounced term for potential API-driven filtering without impacting local responsiveness
   const matchesSearch = useCallback(
     (channel: Channel) => {
       if (!normalizedSearchTerm) return true;
@@ -354,6 +350,37 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   );
 
   const hasVisibleChannels = filteredUncategorized.length > 0 || filteredCategories.some((cat) => cat.channels.length > 0);
+
+  type SearchRow =
+    | { type: 'category'; category: Category; key: string }
+    | { type: 'channel'; channel: Channel; parentKey: string; key: string };
+
+  const virtualizedSearchItems = useMemo<SearchRow[]>(() => {
+    if (!normalizedSearchTerm) return [];
+
+    const rows: SearchRow[] = [];
+
+    filteredCategories.forEach((cat) => {
+      rows.push({ type: 'category', category: cat, key: categoryKey(cat.id) });
+      cat.channels.forEach((channel) =>
+        rows.push({ type: 'channel', channel, parentKey: categoryKey(cat.id), key: channelKey(channel.id, categoryKey(cat.id)) })
+      );
+    });
+
+    filteredUncategorized.forEach((channel) => {
+      rows.push({ type: 'channel', channel, parentKey: 'uncategorized', key: channelKey(channel.id, 'uncategorized') });
+    });
+
+    return rows;
+  }, [filteredCategories, filteredUncategorized, normalizedSearchTerm]);
+
+  const searchListParentRef = useRef<HTMLDivElement | null>(null);
+  const searchVirtualizer = useVirtualizer({
+    count: virtualizedSearchItems.length,
+    getScrollElement: () => searchListParentRef.current,
+    estimateSize: (index) => (virtualizedSearchItems[index]?.type === 'category' ? 40 : 52),
+    overscan: 8,
+  });
 
   const persistStructure = useCallback(
     async (
@@ -786,7 +813,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
 
 
         {/* Suche & Liste */}
-        <div className="flex-1 overflow-y-auto px-2 pb-4 pt-3 custom-scrollbar relative z-0">
+        <div ref={searchListParentRef} className="flex-1 overflow-y-auto px-2 pb-4 pt-3 custom-scrollbar relative z-0">
           <div className="px-1 mb-3">
             <label className="sr-only" htmlFor="channel-search">
               {t('channelSidebar.searchLabel')}
@@ -854,110 +881,146 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
             </div>
           )}
 
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext
-              items={filteredUncategorized.map((c) => channelKey(c.id, 'uncategorized'))}
-              strategy={verticalListSortingStrategy}
-            >
-              {filteredUncategorized.map((c) => (
-                <SortableWrapper
-                  key={c.id}
-                  item={c}
-                  id={channelKey(c.id, 'uncategorized')}
-                  data={{ type: 'channel', channelId: c.id, parent: 'uncategorized' }}
-                  disabled={dragDisabled}
-                >
-                  {(dragMeta) => renderChannel(c, false, dragMeta)}
-                </SortableWrapper>
-              ))}
-            </SortableContext>
+          {normalizedSearchTerm ? (
+            <div style={{ height: searchVirtualizer.getTotalSize(), position: 'relative' }}>
+              {searchVirtualizer.getVirtualItems().map((virtualRow) => {
+                const row = virtualizedSearchItems[virtualRow.index];
+                if (!row) return null;
 
-            <SortableContext
-              items={filteredCategories.map((cat) => categoryKey(cat.id))}
-              strategy={verticalListSortingStrategy}
-            >
-              {filteredCategories.map((cat) => {
-                const isCollapsed = normalizedSearchTerm ? false : collapsed[cat.id];
-                const parentKey = categoryKey(cat.id);
+                const style: CSSProperties = {
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  transform: `translateY(${virtualRow.start}px)`,
+                };
+
+                if (row.type === 'category') {
+                  return (
+                    <div
+                      key={row.key}
+                      style={style}
+                      className="mt-4 mb-1 flex items-center gap-2 px-1 text-[11px] font-bold uppercase text-gray-500"
+                    >
+                      <ChevronDown size={10} className="text-gray-600" />
+                      {row.category.name}
+                    </div>
+                  );
+                }
 
                 return (
-                  <SortableWrapper
-                    key={cat.id}
-                    item={cat}
-                    id={parentKey}
-                    data={{ type: 'category', categoryId: cat.id }}
-                    disabled={dragDisabled}
-                  >
-                    {(dragMeta) => (
-                      <div className={`mt-4 ${dragMeta.isDragging ? 'opacity-80' : ''}`} ref={dragMeta.setNodeRef} style={dragMeta.style}>
-                        <div className="flex items-center justify-between group no-drag mb-1 pl-1 pr-2 gap-2">
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              className={`flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-gray-600 hover:text-gray-300 focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317] ${dragMeta.isDisabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-white/5'}`}
-                              aria-roledescription="Reorder handle"
-                              aria-label={t('channelSidebar.reorderCategory', { category: cat.name }) ?? `Kategorie ${cat.name} verschieben`}
-                              aria-disabled={dragMeta.isDisabled}
-                              {...dragMeta.handleProps}
-                            >
-                              <GripVertical size={14} aria-hidden />
-                            </button>
-                            <button
-                              type="button"
-                              className="flex items-center gap-1 text-gray-500 text-xs font-bold uppercase hover:text-gray-300 rounded-md px-1 py-0.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317] focus-visible:text-gray-200"
-                              onClick={() => toggleCategory(cat.id)}
-                              aria-expanded={!isCollapsed}
-                              aria-controls={`category-${cat.id}-channels`}
-                              aria-label={t('channelSidebar.toggleCategory', { category: cat.name })}
-                              data-no-drag
-                            >
-                              {isCollapsed ? <ChevronRight size={10} /> : <ChevronDown size={10} />}
-                              {cat.name}
-                            </button>
-                          </div>
-                          <button
-                            type="button"
-                            className="no-drag p-1 rounded-md text-gray-500 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-white hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317]"
-                            title={t('channelSidebar.createChannelInCategory', { category: cat.name })}
-                            aria-label={t('channelSidebar.createChannelInCategory', { category: cat.name })}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setCreateType('text');
-                              setCreateCategoryId(cat.id);
-                              setShowCreateModal(true);
-                            }}
-                          >
-                            <Plus size={14} />
-                          </button>
-                        </div>
-                        {!isCollapsed && (
-                          <SortableContext
-                            id={`${parentKey}-context`}
-                            items={cat.channels.map((c) => channelKey(c.id, parentKey))}
-                            strategy={verticalListSortingStrategy}
-                          >
-                            <div id={`category-${cat.id}-channels`}>
-                              {cat.channels.map((c) => (
-                                <SortableWrapper
-                                  key={c.id}
-                                  item={c}
-                                  id={channelKey(c.id, parentKey)}
-                                  data={{ type: 'channel', channelId: c.id, parent: parentKey }}
-                                  disabled={dragDisabled}
-                                >
-                                  {(channelMeta) => renderChannel(c, true, channelMeta)}
-                                </SortableWrapper>
-                              ))}
-                            </div>
-                          </SortableContext>
-                        )}
-                      </div>
-                    )}
-                  </SortableWrapper>
+                  <div key={row.key} style={style}>
+                    {renderChannel(row.channel, row.parentKey !== 'uncategorized')}
+                  </div>
                 );
               })}
-            </SortableContext>
-          </DndContext>
+            </div>
+          ) : (
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext
+                items={filteredUncategorized.map((c) => channelKey(c.id, 'uncategorized'))}
+                strategy={verticalListSortingStrategy}
+              >
+                {filteredUncategorized.map((c) => (
+                  <SortableWrapper
+                    key={c.id}
+                    item={c}
+                    id={channelKey(c.id, 'uncategorized')}
+                    data={{ type: 'channel', channelId: c.id, parent: 'uncategorized' }}
+                    disabled={dragDisabled}
+                  >
+                    {(dragMeta) => renderChannel(c, false, dragMeta)}
+                  </SortableWrapper>
+                ))}
+              </SortableContext>
+
+              <SortableContext
+                items={filteredCategories.map((cat) => categoryKey(cat.id))}
+                strategy={verticalListSortingStrategy}
+              >
+                {filteredCategories.map((cat) => {
+                  const isCollapsed = normalizedSearchTerm ? false : collapsed[cat.id];
+                  const parentKey = categoryKey(cat.id);
+
+                  return (
+                    <SortableWrapper
+                      key={cat.id}
+                      item={cat}
+                      id={parentKey}
+                      data={{ type: 'category', categoryId: cat.id }}
+                      disabled={dragDisabled}
+                    >
+                      {(dragMeta) => (
+                        <div className={`mt-4 ${dragMeta.isDragging ? 'opacity-80' : ''}`} ref={dragMeta.setNodeRef} style={dragMeta.style}>
+                          <div className="flex items-center justify-between group no-drag mb-1 pl-1 pr-2 gap-2">
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                className={`flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-gray-600 hover:text-gray-300 focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317] ${dragMeta.isDisabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-white/5'}`}
+                                aria-roledescription="Reorder handle"
+                                aria-label={t('channelSidebar.reorderCategory', { category: cat.name }) ?? `Kategorie ${cat.name} verschieben`}
+                                aria-disabled={dragMeta.isDisabled}
+                                {...dragMeta.handleProps}
+                              >
+                                <GripVertical size={14} aria-hidden />
+                              </button>
+                              <button
+                                type="button"
+                                className="flex items-center gap-1 text-gray-500 text-xs font-bold uppercase hover:text-gray-300 rounded-md px-1 py-0.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317] focus-visible:text-gray-200"
+                                onClick={() => toggleCategory(cat.id)}
+                                aria-expanded={!isCollapsed}
+                                aria-controls={`category-${cat.id}-channels`}
+                                aria-label={t('channelSidebar.toggleCategory', { category: cat.name })}
+                                data-no-drag
+                              >
+                                {isCollapsed ? <ChevronRight size={10} /> : <ChevronDown size={10} />}
+                                {cat.name}
+                              </button>
+                            </div>
+                            <button
+                              type="button"
+                              className="no-drag p-1 rounded-md text-gray-500 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-white hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317]"
+                              title={t('channelSidebar.createChannelInCategory', { category: cat.name })}
+                              aria-label={t('channelSidebar.createChannelInCategory', { category: cat.name })}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setCreateType('text');
+                                setCreateCategoryId(cat.id);
+                                setShowCreateModal(true);
+                              }}
+                            >
+                              <Plus size={14} />
+                            </button>
+                          </div>
+                          {!isCollapsed && (
+                            <SortableContext
+                              id={`${parentKey}-context`}
+                              items={cat.channels.map((c) => channelKey(c.id, parentKey))}
+                              strategy={verticalListSortingStrategy}
+                            >
+                              <div id={`category-${cat.id}-channels`}>
+                                {cat.channels.map((c) => (
+                                  <SortableWrapper
+                                    key={c.id}
+                                    item={c}
+                                    id={channelKey(c.id, parentKey)}
+                                    data={{ type: 'channel', channelId: c.id, parent: parentKey }}
+                                    disabled={dragDisabled}
+                                  >
+                                    {(channelMeta) => renderChannel(c, true, channelMeta)}
+                                  </SortableWrapper>
+                                ))}
+                              </div>
+                            </SortableContext>
+                          )}
+                        </div>
+                      )}
+                    </SortableWrapper>
+                  );
+                })}
+              </SortableContext>
+            </DndContext>
+          )}
 
           {!isLoading && !error && !hasVisibleChannels && (
             <div className="mx-2 mb-3 rounded-md border border-white/5 bg-white/5 px-3 py-2 text-xs text-gray-300">
