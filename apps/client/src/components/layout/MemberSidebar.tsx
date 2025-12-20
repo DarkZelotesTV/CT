@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Shield, Crown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../../api/http';
 import { useSocket } from '../../context/SocketContext';
 
@@ -30,6 +31,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const { t } = useTranslation();
 
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 250);
@@ -38,7 +40,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
 
   const normalizeMember = (m: any): Member => ({
     userId: m.userId ?? m.user_id ?? m.User?.id ?? m.user?.id,
-    username: m.username ?? m.User?.username ?? m.user?.username ?? 'Unbekannt',
+    username: m.username ?? m.User?.username ?? m.user?.username ?? t('memberSidebar.unknownUser'),
     avatarUrl: m.avatarUrl ?? m.avatar_url ?? m.User?.avatar_url ?? m.user?.avatar_url,
     status: m.status ?? m.User?.status ?? m.user?.status ?? 'offline',
     roles: m.roles ?? (m.role ? [m.role] : []),
@@ -93,21 +95,21 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
     try {
       switch (action) {
         case 'mute':
-          if (!payload.channelId) throw new Error('Kein Kanal angegeben');
+          if (!payload.channelId) throw new Error(t('memberSidebar.errors.missingChannel'));
           await apiFetch(`/api/servers/${serverId}/members/${payload.userId}/mute`, {
             method: 'POST',
             body: JSON.stringify({ channelId: payload.channelId }),
           });
           break;
         case 'remove':
-          if (!payload.channelId) throw new Error('Kein Kanal angegeben');
+          if (!payload.channelId) throw new Error(t('memberSidebar.errors.missingChannel'));
           await apiFetch(`/api/servers/${serverId}/members/${payload.userId}/remove-from-talk`, {
             method: 'POST',
             body: JSON.stringify({ channelId: payload.channelId }),
           });
           break;
         case 'move':
-          if (!payload.channelId || !payload.targetChannelId) throw new Error('Kanal fehlt');
+          if (!payload.channelId || !payload.targetChannelId) throw new Error(t('memberSidebar.errors.missingChannel'));
           await apiFetch(`/api/servers/${serverId}/members/${payload.userId}/move`, {
             method: 'POST',
             body: JSON.stringify({ fromChannelId: payload.channelId, toChannelId: payload.targetChannelId }),
@@ -124,7 +126,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
         setMembers((prev) => prev.filter((member) => member.userId !== payload.userId));
       }
     } catch (err: any) {
-      alert(err?.message || 'Aktion fehlgeschlagen');
+      alert(err?.message || t('memberSidebar.errors.actionFailed'));
     } finally {
       closeContextMenu();
     }
@@ -285,7 +287,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
               </div>
               {/* Custom Status Text (Dummy für jetzt) */}
               <div className="text-[10px] text-gray-500 truncate group-hover:text-gray-400">
-                  {m.status === 'online' ? 'Bereit zum Zocken' : 'Offline'}
+                  {m.status === 'online' ? t('memberSidebar.onlineStatus') : t('memberSidebar.offlineStatus')}
               </div>
           </div>
       </div>
@@ -295,7 +297,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
     <div className="flex flex-col h-full bg-transparent overflow-hidden">
       {/* Header */}
       <div className="h-12 flex items-center px-4 border-b border-white/5 flex-shrink-0">
-        <span className="text-xs font-black tracking-widest text-gray-500 uppercase">Personal</span>
+        <span className="text-xs font-black tracking-widest text-gray-500 uppercase">{t('memberSidebar.header')}</span>
         <span className="ml-auto text-[10px] bg-white/5 text-gray-400 px-2 py-0.5 rounded-full">{filteredMembers.length}</span>
       </div>
 
@@ -305,14 +307,14 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Mitglieder durchsuchen"
+              placeholder={t('memberSidebar.searchPlaceholder') ?? ''}
               className="w-full px-3 py-2 text-sm bg-white/5 border border-white/10 rounded-md text-gray-200 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
           </div>
           {/* Online Group */}
           <div>
               <div className="text-[10px] font-bold text-gray-500 mb-2 px-2 uppercase tracking-wider flex items-center gap-2">
-                 Online <span className="text-[9px] text-gray-600">— {onlineMembers.length}</span>
+                 {t('memberSidebar.online')} <span className="text-[9px] text-gray-600">— {onlineMembers.length}</span>
               </div>
               {onlineMembers.map(renderMember)}
           </div>
@@ -320,7 +322,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
           {/* Offline Group */}
            <div>
               <div className="text-[10px] font-bold text-gray-500 mb-2 px-2 uppercase tracking-wider flex items-center gap-2">
-                 Offline <span className="text-[9px] text-gray-600">— {offlineMembers.length}</span>
+                 {t('memberSidebar.offline')} <span className="text-[9px] text-gray-600">— {offlineMembers.length}</span>
               </div>
               {offlineMembers.map(renderMember)}
           </div>
@@ -340,7 +342,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
                 className="w-full text-left px-2 py-1 rounded hover:bg-white/10 text-sm text-gray-200"
                 onClick={() => performModeration('mute', { userId: contextMenu.userId, channelId: contextMenu.channelId })}
               >
-                Stummschalten
+                {t('memberSidebar.mute')}
               </button>
             ) : null}
             {permissions.move && contextMenu.channelId ? (
@@ -349,12 +351,12 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
                 className="w-full text-left px-2 py-1 rounded hover:bg-white/10 text-sm text-gray-200"
                 onClick={() => performModeration('remove', { userId: contextMenu.userId, channelId: contextMenu.channelId })}
               >
-                Aus dem Talk entfernen
+                {t('memberSidebar.removeFromTalk')}
               </button>
             ) : null}
             {permissions.move && contextMenu.channelId && voiceChannels.length > 1 ? (
               <div className="px-2 py-1 space-y-1">
-                <div className="text-[11px] text-gray-500">In Talk verschieben</div>
+                <div className="text-[11px] text-gray-500">{t('memberSidebar.moveToTalk')}</div>
                 <div className="flex items-center gap-2">
                   <select
                     className="flex-1 bg-[#0f1115] border border-white/10 rounded px-2 py-1 text-sm text-gray-200"
@@ -379,7 +381,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
                       })
                     }
                   >
-                    Move
+                    {t('memberSidebar.move')}
                   </button>
                 </div>
               </div>
@@ -391,14 +393,14 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
                   className="w-full text-left px-2 py-1 rounded hover:bg-white/10 text-sm text-gray-200"
                   onClick={() => performModeration('ban', { userId: contextMenu.userId })}
                 >
-                  Bann aussprechen
+                  {t('memberSidebar.ban')}
                 </button>
                 <button
                   type="button"
                   className="w-full text-left px-2 py-1 rounded hover:bg-white/10 text-sm text-gray-200"
                   onClick={() => performModeration('kick', { userId: contextMenu.userId })}
                 >
-                  Vom Server kicken
+                  {t('memberSidebar.kick')}
                 </button>
               </>
             ) : null}

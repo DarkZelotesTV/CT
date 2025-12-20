@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import i18n from '../i18n/config';
 import { storage } from '../shared/config/storage';
 
 export type ProfileSettings = {
@@ -43,6 +44,7 @@ export type SettingsState = {
   hotkeys: HotkeySettings;
   theme: ThemeSettings;
   talk: TalkSettings;
+  locale: string;
 };
 
 const defaultSettings: SettingsState = {
@@ -77,6 +79,7 @@ const defaultSettings: SettingsState = {
     rnnoiseEnabled: false,
     vadSensitivity: 50, // Standardwert
   },
+  locale: 'en',
 };
 
 const createDefaultSettings = (): SettingsState => ({
@@ -85,6 +88,7 @@ const createDefaultSettings = (): SettingsState => ({
   hotkeys: { ...defaultSettings.hotkeys },
   theme: { ...defaultSettings.theme },
   talk: { ...defaultSettings.talk },
+  locale: defaultSettings.locale,
 });
 
 const SettingsContext = createContext<{
@@ -94,6 +98,7 @@ const SettingsContext = createContext<{
   updateHotkeys: (nextHotkeys: Partial<HotkeySettings>) => void;
   updateTheme: (nextTheme: Partial<ThemeSettings>) => void;
   updateTalk: (nextTalk: Partial<TalkSettings>) => void;
+  updateLocale: (nextLocale: string) => void;
   resetSettings: () => void;
 } | null>(null);
 
@@ -107,6 +112,7 @@ const loadInitialSettings = (): SettingsState => {
         hotkeys: { ...defaultSettings.hotkeys, ...stored.hotkeys },
         theme: { ...defaultSettings.theme, ...stored.theme, serverAccents: stored.theme?.serverAccents || {} },
         talk: { ...defaultSettings.talk, ...stored.talk },
+        locale: stored.locale || defaultSettings.locale,
       };
     } catch (err) {
       console.warn('Could not parse stored settings', err);
@@ -123,6 +129,7 @@ const loadInitialSettings = (): SettingsState => {
           ...defaultSettings.profile,
           displayName: parsedUser.username || '',
         },
+        locale: defaultSettings.locale,
       };
     } catch (err) {
       console.warn('Could not parse clover_user', err);
@@ -138,6 +145,12 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
   useEffect(() => {
     storage.set('settings', settings);
   }, [settings]);
+
+  useEffect(() => {
+    if (i18n.language !== settings.locale) {
+      i18n.changeLanguage(settings.locale).catch((err) => console.warn('Could not change language', err));
+    }
+  }, [settings.locale]);
 
   const updateProfile = (nextProfile: Partial<ProfileSettings>) => {
     setSettings((prev) => ({
@@ -178,10 +191,17 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
     }));
   };
 
+  const updateLocale = (nextLocale: string) => {
+    setSettings((prev) => ({
+      ...prev,
+      locale: nextLocale,
+    }));
+  };
+
   const resetSettings = () => setSettings(createDefaultSettings());
 
   const value = useMemo(
-    () => ({ settings, updateProfile, updateDevices, updateHotkeys, updateTheme, updateTalk, resetSettings }),
+    () => ({ settings, updateProfile, updateDevices, updateHotkeys, updateTheme, updateTalk, updateLocale, resetSettings }),
     [settings]
   );
 

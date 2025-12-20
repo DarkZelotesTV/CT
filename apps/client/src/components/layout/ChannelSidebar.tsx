@@ -60,7 +60,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   const [categories, setCategories] = useState<Category[]>([]);
   const [uncategorized, setUncategorized] = useState<Channel[]>([]);
   const isDesktop = typeof window !== 'undefined' && !!window.ct?.windowControls;
-  const [serverName, setServerName] = useState('Server');
+  const [serverName, setServerName] = useState('');
 
   useEffect(() => {
     if (serverName) onServerNameChange?.(serverName);
@@ -196,7 +196,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
         setIsLoading(false);
       } catch (err) {
         console.error(`Failed to load server data (attempt ${attempt})`, err);
-        setError('Konnte die Serverstruktur nicht laden. Bitte versuche es erneut.');
+        setError(t('channelSidebar.loadError'));
         onResolveFallback?.(null);
 
         if (attempt < 2) {
@@ -401,21 +401,21 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
     try {
       switch (action) {
         case 'mute':
-          if (!payload.channelId) throw new Error('Kein Kanal angegeben');
+          if (!payload.channelId) throw new Error(t('channelSidebar.errors.missingChannel'));
           await apiFetch(`/api/servers/${serverId}/members/${payload.userId}/mute`, {
             method: 'POST',
             body: JSON.stringify({ channelId: payload.channelId }),
           });
           break;
         case 'remove':
-          if (!payload.channelId) throw new Error('Kein Kanal angegeben');
+          if (!payload.channelId) throw new Error(t('channelSidebar.errors.missingChannel'));
           await apiFetch(`/api/servers/${serverId}/members/${payload.userId}/remove-from-talk`, {
             method: 'POST',
             body: JSON.stringify({ channelId: payload.channelId }),
           });
           break;
         case 'move':
-          if (!payload.channelId || !payload.targetChannelId) throw new Error('Kanal fehlt');
+          if (!payload.channelId || !payload.targetChannelId) throw new Error(t('channelSidebar.errors.missingChannel'));
           await apiFetch(`/api/servers/${serverId}/members/${payload.userId}/move`, {
             method: 'POST',
             body: JSON.stringify({ fromChannelId: payload.channelId, toChannelId: payload.targetChannelId }),
@@ -429,7 +429,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
           break;
       }
     } catch (err: any) {
-      alert(err?.message || 'Aktion fehlgeschlagen');
+      alert(err?.message || t('channelSidebar.errors.actionFailed'));
     } finally {
       closeContextMenu();
       fetchData();
@@ -563,7 +563,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
             // FIX: Ich bin verbunden, aber der Server hat mich noch nicht geschickt -> Füge mich optimistisch hinzu
             displayParticipants.push({
                 id: Number(localUserId),
-                username: settings.profile.displayName || localUser.username || 'Ich',
+                username: settings.profile.displayName || localUser.username || t('channelSidebar.selfPlaceholder'),
                 avatar_url: settings.profile.avatarUrl || localUser.avatar_url,
                 status: 'online'
             });
@@ -642,10 +642,10 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
                   >
                     <div className="relative">
                         {user.avatar_url ? (
-                            <img
+                          <img
                               src={user.avatar_url}
                               className="w-4 h-4 rounded-full object-cover"
-                              alt={`${user.username || 'Nutzer'} Avatar`}
+                              alt={`${user.username || t('channelSidebar.fallbackUser')} Avatar`}
                             />
                         ) : (
                             <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold ${user.status === 'online' ? 'bg-indigo-500 text-white' : 'bg-gray-600 text-gray-300'}`}>
@@ -689,11 +689,11 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') handleOpenServerSettings();
           }}
-          aria-label={t('channelSidebar.openServerSettings', { server: serverName })}
-          title={t('channelSidebar.openServerSettings', { server: serverName })}
+          aria-label={t('channelSidebar.openServerSettings', { server: serverName || t('channelSidebar.defaultServerName') })}
+          title={t('channelSidebar.openServerSettings', { server: serverName || t('channelSidebar.defaultServerName') })}
         >
-          <span className="font-bold text-white truncate flex-1 min-w-0" title={serverName}>
-            {serverName}
+          <span className="font-bold text-white truncate flex-1 min-w-0" title={serverName || t('channelSidebar.defaultServerName')}>
+            {serverName || t('channelSidebar.defaultServerName')}
           </span>
           <button
             type="button"
@@ -702,8 +702,8 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
               if (e.key === 'Enter' || e.key === ' ') handleOpenServerSettings();
             }}
             className="p-2 flex-shrink-0 rounded-md hover:bg-white/5 text-gray-500 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317]"
-            title={t('channelSidebar.openServerSettings', { server: serverName })}
-            aria-label={t('channelSidebar.openServerSettings', { server: serverName })}
+            title={t('channelSidebar.openServerSettings', { server: serverName || t('channelSidebar.defaultServerName') })}
+            aria-label={t('channelSidebar.openServerSettings', { server: serverName || t('channelSidebar.defaultServerName') })}
           >
             <Settings size={16} aria-hidden />
           </button>
@@ -942,7 +942,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
                   className="w-full text-left px-2 py-1 rounded hover:bg-white/10 text-sm text-gray-200"
                   onClick={() => performModeration('mute', { userId: contextMenu.userId, channelId: contextMenu.channelId })}
                 >
-                  Stummschalten
+                  {t('channelSidebar.mute')}
                 </button>
               ) : null}
               {permissions.move && contextMenu.channelId ? (
@@ -951,12 +951,12 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
                   className="w-full text-left px-2 py-1 rounded hover:bg-white/10 text-sm text-gray-200"
                   onClick={() => performModeration('remove', { userId: contextMenu.userId, channelId: contextMenu.channelId })}
                 >
-                  Aus dem Talk entfernen
+                  {t('channelSidebar.removeFromTalk')}
                 </button>
               ) : null}
               {permissions.move && contextMenu.channelId && voiceChannels.length > 1 ? (
                 <div className="px-2 py-1 space-y-1">
-                  <div className="text-[11px] text-gray-500">In Talk verschieben</div>
+                  <div className="text-[11px] text-gray-500">{t('channelSidebar.moveToTalk')}</div>
                   <div className="flex items-center gap-2">
                     <select
                       className="flex-1 bg-[#0f1115] border border-white/10 rounded px-2 py-1 text-sm text-gray-200"
@@ -981,27 +981,27 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
                         })
                       }
                     >
-                      Move
+                      {t('channelSidebar.move')}
                     </button>
                   </div>
                 </div>
               ) : null}
               {permissions.kick ? (
                 <>
-                  <button
-                    type="button"
-                    className="w-full text-left px-2 py-1 rounded hover:bg-white/10 text-sm text-gray-200"
-                    onClick={() => performModeration('ban', { userId: contextMenu.userId })}
-                  >
-                    Bann aussprechen
-                  </button>
-                  <button
-                    type="button"
-                    className="w-full text-left px-2 py-1 rounded hover:bg-white/10 text-sm text-gray-200"
-                    onClick={() => performModeration('kick', { userId: contextMenu.userId })}
-                  >
-                    Vom Server kicken
-                  </button>
+                <button
+                  type="button"
+                  className="w-full text-left px-2 py-1 rounded hover:bg-white/10 text-sm text-gray-200"
+                  onClick={() => performModeration('ban', { userId: contextMenu.userId })}
+                >
+                    {t('channelSidebar.ban')}
+                </button>
+                <button
+                  type="button"
+                  className="w-full text-left px-2 py-1 rounded hover:bg-white/10 text-sm text-gray-200"
+                  onClick={() => performModeration('kick', { userId: contextMenu.userId })}
+                >
+                    {t('channelSidebar.kick')}
+                </button>
                 </>
               ) : null}
             </div>
@@ -1014,7 +1014,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
             <div className="flex items-center justify-between gap-2">
               <div className="flex flex-col overflow-hidden mr-2">
                 <div className="text-green-500 text-[10px] font-bold uppercase flex items-center gap-1.5 mb-0.5">
-                  <Mic size={10} className="animate-pulse" /> Verbunden
+                  <Mic size={10} className="animate-pulse" /> {t('channelSidebar.connected')}
                 </div>
                 <div className="text-white text-xs font-bold truncate">{activeChannelName}</div>
                 {(cameraError || screenShareError) && (
@@ -1025,7 +1025,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
               <div className="flex items-center gap-2">
                 <div className="relative group">
                   <button
-                    aria-label={isCameraEnabled ? 'Kamera stoppen' : 'Kamera starten'}
+                    aria-label={isCameraEnabled ? t('channelSidebar.stopCamera') : t('channelSidebar.startCamera')}
                     onClick={(e) => {
                       e.stopPropagation();
                       toggleCamera().catch(console.error);
@@ -1039,18 +1039,18 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
                         ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-200'
                         : 'bg-white/5 border-white/10 text-gray-300 hover:text-white'
                     } ${isPublishingCamera ? 'opacity-60 cursor-wait' : ''}`}
-                    title={isCameraEnabled ? 'Kamera stoppen' : 'Kamera starten'}
+                    title={isCameraEnabled ? t('channelSidebar.stopCamera') : t('channelSidebar.startCamera')}
                     disabled={isPublishingCamera}
                   >
                     <Camera size={14} />
                   </button>
                   <div className="pointer-events-none absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black px-2 py-1 text-[10px] text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
-                    {isCameraEnabled ? 'Kamera stoppen' : 'Kamera starten'}
+                    {isCameraEnabled ? t('channelSidebar.stopCamera') : t('channelSidebar.startCamera')}
                   </div>
                 </div>
                 <div className="relative group">
                   <button
-                    aria-label={isScreenSharing ? 'Screen-Sharing stoppen' : 'Screen teilen'}
+                    aria-label={isScreenSharing ? t('channelSidebar.stopScreenShare') : t('channelSidebar.startScreenShare')}
                     onClick={(e) => {
                       e.stopPropagation();
                       toggleScreenShare().catch(console.error);
@@ -1059,23 +1059,23 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
                       e.stopPropagation();
                       handleButtonKey(e, () => toggleScreenShare());
                     }}
-                    className={`w-8 h-8 flex items-center justify-center rounded-lg border text-xs transition-colors ${
-                      isScreenSharing
-                        ? 'bg-indigo-500/10 border-indigo-500/40 text-indigo-200'
-                        : 'bg-white/5 border-white/10 text-gray-300 hover:text-white'
-                    } ${isPublishingScreen ? 'opacity-60 cursor-wait' : ''}`}
-                    title={isScreenSharing ? 'Screen-Sharing stoppen' : 'Screen teilen'}
+                      className={`w-8 h-8 flex items-center justify-center rounded-lg border text-xs transition-colors ${
+                        isScreenSharing
+                          ? 'bg-indigo-500/10 border-indigo-500/40 text-indigo-200'
+                          : 'bg-white/5 border-white/10 text-gray-300 hover:text-white'
+                      } ${isPublishingScreen ? 'opacity-60 cursor-wait' : ''}`}
+                    title={isScreenSharing ? t('channelSidebar.stopScreenShare') : t('channelSidebar.startScreenShare')}
                     disabled={isPublishingScreen}
                   >
                     <ScreenShare size={14} />
                   </button>
                   <div className="pointer-events-none absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black px-2 py-1 text-[10px] text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
-                    {isScreenSharing ? 'Screen-Sharing stoppen' : 'Screen teilen'}
+                    {isScreenSharing ? t('channelSidebar.stopScreenShare') : t('channelSidebar.startScreenShare')}
                   </div>
                 </div>
                 <div className="relative group">
                   <button
-                    aria-label="Auflegen"
+                    aria-label={t('channelSidebar.hangUp')}
                     onClick={(e) => {
                       e.stopPropagation();
                       disconnect().catch(console.error);
@@ -1085,12 +1085,12 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
                       handleButtonKey(e, () => disconnect());
                     }}
                     className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"
-                    title="Auflegen"
+                    title={t('channelSidebar.hangUp')}
                   >
                     <PhoneOff size={16} aria-hidden />
                   </button>
                   <div className="pointer-events-none absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black px-2 py-1 text-[10px] text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
-                    Auflegen
+                    {t('channelSidebar.hangUp')}
                   </div>
                 </div>
               </div>
@@ -1098,31 +1098,31 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
 
             <div className="grid grid-cols-2 gap-2">
               <label className="flex flex-col gap-1 text-[10px] font-semibold text-gray-400">
-                Mikrofon
+                {t('channelSidebar.microphone')}
                 <select
                   value={selectedAudioInputId || ''}
                   onChange={(e) => handleDeviceChange('audioinput', e.target.value)}
                   className="w-full rounded-lg border border-white/10 bg-black/30 px-2 py-1.5 text-xs text-gray-200 focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/20"
                 >
-                  <option value="">System Mikrofon</option>
+                  <option value="">{t('channelSidebar.systemMicrophone')}</option>
                   {audioInputs.map((device) => (
                     <option key={device.deviceId} value={device.deviceId}>
-                      {device.label || 'Mikrofon'}
+                      {device.label || t('channelSidebar.microphone')}
                     </option>
                   ))}
                 </select>
               </label>
               <label className="flex flex-col gap-1 text-[10px] font-semibold text-gray-400">
-                Kamera
+                {t('channelSidebar.camera')}
                 <select
                   value={selectedVideoInputId || ''}
                   onChange={(e) => handleDeviceChange('videoinput', e.target.value)}
                   className="w-full rounded-lg border border-white/10 bg-black/30 px-2 py-1.5 text-xs text-gray-200 focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/20"
                 >
-                  <option value="">Standard Kamera</option>
+                  <option value="">{t('channelSidebar.defaultCamera')}</option>
                   {videoInputs.map((device) => (
                     <option key={device.deviceId} value={device.deviceId}>
-                      {device.label || 'Kamera'}
+                      {device.label || t('channelSidebar.camera')}
                     </option>
                   ))}
                 </select>
