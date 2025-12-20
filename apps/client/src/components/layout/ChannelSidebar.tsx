@@ -13,6 +13,7 @@ import { useSocket } from '../../context/SocketContext';
 import { useSettings } from '../../context/SettingsContext'; // Für aktuellen DisplayName
 import { defaultServerTheme, deriveServerThemeFromSettings, type ServerTheme } from '../../theme/serverTheme';
 import { storage } from '../../shared/config/storage';
+import { ErrorCard, Skeleton, Spinner } from '../ui';
 
 interface Channel { id: number; name: string; type: 'text' | 'voice' | 'web' | 'data-transfer' | 'spacer' | 'list'; custom_icon?: string; }
 interface Category { id: number; name: string; channels: Channel[]; }
@@ -804,24 +805,23 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
           </div>
 
           {isLoading && (
-            <div className="mx-2 mb-3 rounded-md border border-white/5 bg-white/5 px-3 py-2 text-xs text-gray-300">
-              {t('channelSidebar.loading')}
+            <div className="mx-2 mb-4 space-y-3">
+              <Spinner label={t('channelSidebar.loading')} />
+              <div className="space-y-2">
+                {[0, 1, 2, 3].map((index) => (
+                  <Skeleton key={`channel-skeleton-${index}`} className="h-9 w-full border border-white/5 bg-white/5" />
+                ))}
+              </div>
             </div>
           )}
 
           {error && (
-            <div className="mx-2 mb-3 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
-              <div className="flex items-start justify-between gap-3">
-                <span className="flex-1">{error}</span>
-                <button
-                  type="button"
-                  className="text-xs font-semibold text-red-100 underline-offset-2 hover:underline"
-                  onClick={() => fetchData()}
-                >
-                  {t('channelSidebar.retry')}
-                </button>
-              </div>
-            </div>
+            <ErrorCard
+              className="mx-2 mb-3"
+              message={error}
+              retryLabel={t('channelSidebar.retry') ?? undefined}
+              onRetry={() => fetchData()}
+            />
           )}
 
           {structureError && pendingReorder && (
