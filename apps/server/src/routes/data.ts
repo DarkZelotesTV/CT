@@ -1,4 +1,7 @@
-import { Router } from 'express';
+import { Router, type Express, type Request, type Response, type NextFunction } from 'express';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import { RoomServiceClient } from 'livekit-server-sdk';
 import { Server, Channel, ServerMember, Category, Role, MemberRole, ChannelPermissionOverride, ServerBan } from '../models';
 import { authenticateRequest, AuthRequest } from '../middleware/authMiddleware';
@@ -6,6 +9,46 @@ import { PermissionKey } from '../models/Role';
 import { emitToUser, getUserChannelIds, removeUserFromAllChannels, removeUserFromChannel } from '../realtime/registry';
 
 const router = Router();
+
+const SERVER_ICON_DIR = path.resolve(__dirname, '..', 'public', 'uploads', 'server-icons');
+
+const iconStorage = multer.diskStorage({
+  destination: async (_req, _file, cb) => {
+    try {
+      await fs.promises.mkdir(SERVER_ICON_DIR, { recursive: true });
+      cb(null, SERVER_ICON_DIR);
+    } catch (err) {
+      cb(err as Error, SERVER_ICON_DIR);
+    }
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname) || '.png';
+    const safeExt = ext.replace(/[^.a-zA-Z0-9]/g, '') || '.png';
+    const baseName = `server-${req.params.serverId || 'unknown'}-${Date.now()}`;
+    cb(null, `${baseName}${safeExt}`);
+  },
+});
+
+const iconUpload = multer({
+  storage: iconStorage,
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (!file.mimetype.startsWith('image/')) {
+      return cb(new Error('Nur Bilddateien sind erlaubt'));
+    }
+    cb(null, true);
+  },
+});
+
+const iconUploadMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  iconUpload.single('icon')(req, res, (err: any) => {
+    if (err) {
+      const message = err?.message === 'File too large' ? 'Datei überschreitet 2 MB' : err?.message || 'Ungültige Datei';
+      return res.status(400).json({ error: message });
+    }
+    next();
+  });
+};
 
 const PERMISSION_KEYS: PermissionKey[] = ['speak', 'move', 'kick', 'manage_channels', 'manage_roles', 'manage_overrides'];
 const FULL_PERMISSIONS = PERMISSION_KEYS.reduce((acc, key) => ({ ...acc, [key]: true }), {} as Record<PermissionKey, boolean>);
@@ -89,6 +132,17 @@ async function assignDefaultRoles(serverId: number, userId: number) {
 
 const statusForError = (err: any) => err?.message === 'Fehlende Berechtigung' ? 403 : 500;
 
+const ensureAdminOrOwner = async (serverId: number, userId: number) => {
+  const perms = await resolvePermissions(serverId, userId);
+  const server = await Server.findByPk(serverId);
+  if (!server) throw new Error('Server nicht gefunden');
+  const isAdmin = perms.manage_channels || perms.manage_roles;
+  if (server.owner_id !== userId && !isAdmin) {
+    throw new Error('Fehlende Berechtigung');
+  }
+  return { server, perms } as const;
+};
+
 // ==========================================
 // SERVER ROUTES
 // ==========================================
@@ -118,23 +172,58 @@ router.get('/servers/:serverId/permissions', authenticateRequest, async (req: Au
   }
 });
 
+// 1aa. Server Icon hochladen – nur Owner/Admin
+router.post('/servers/:serverId/icon', authenticateRequest, iconUploadMiddleware, async (req: AuthRequest & { file?: Express.Multer.File }, res) => {
+  try {
+    const serverId = Number(req.params.serverId);
+    const userId = req.user!.id;
+
+    const { server } = await ensureAdminOrOwner(serverId, userId);
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'Keine Datei hochgeladen' });
+    }
+
+    const relativePath = path.posix.join('/uploads/server-icons', req.file.filename);
+    server.icon_url = relativePath;
+    await server.save();
+
+    res.json({ iconUrl: relativePath, server });
+  } catch (err: any) {
+    const message = err?.message || 'Upload fehlgeschlagen';
+    const code = message === 'Fehlende Berechtigung' ? 403 : 400;
+    res.status(code).json({ error: message });
+  }
+});
+
 // 1b. Server aktualisieren (Name/Icon) – Admin/Owner
 router.put('/servers/:serverId', authenticateRequest, async (req: AuthRequest, res) => {
   try {
     const serverId = Number(req.params.serverId);
     const userId = req.user!.id;
 
-    // We treat server settings as admin-only. Either manage_channels OR manage_roles is sufficient.
-    const perms = await resolvePermissions(serverId, userId);
-    const server = await Server.findByPk(serverId);
-    if (!server) return res.status(404).json({ error: 'Server nicht gefunden' });
-    if (server.owner_id !== userId && !perms.manage_channels && !perms.manage_roles) {
-      return res.status(403).json({ error: 'Fehlende Berechtigung' });
-    }
+    const { server } = await ensureAdminOrOwner(serverId, userId);
 
-    const { name, icon_url, fallbackChannelId } = req.body as { name?: string; icon_url?: string; fallbackChannelId?: number | null };
+    const { name, iconPath, icon_url, iconUrl, fallbackChannelId } = req.body as {
+      name?: string;
+      iconPath?: string | null;
+      icon_url?: string | null;
+      iconUrl?: string | null;
+      fallbackChannelId?: number | null;
+    };
+
     if (typeof name === 'string' && name.trim()) server.name = name.trim();
-    if (typeof icon_url === 'string') server.icon_url = icon_url;
+
+    const nextIconPath = typeof iconPath !== 'undefined' ? iconPath : typeof iconUrl !== 'undefined' ? iconUrl : icon_url;
+    if (typeof nextIconPath !== 'undefined') {
+      if (nextIconPath === null || nextIconPath === '') {
+        server.icon_url = null;
+      } else if (typeof nextIconPath === 'string' && nextIconPath.startsWith('/uploads/server-icons/')) {
+        server.icon_url = nextIconPath;
+      } else {
+        return res.status(400).json({ error: 'Ungültiger Icon-Pfad' });
+      }
+    }
 
     if (typeof fallbackChannelId !== 'undefined') {
       if (fallbackChannelId === null) {

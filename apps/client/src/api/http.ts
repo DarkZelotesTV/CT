@@ -15,7 +15,9 @@ export async function apiFetch<T>(path: string, init: ApiFetchInit = {}): Promis
   const serverPassword = getServerPassword();
   const rawIdentity = storage.get("identity");
 
-  if (!headers.has("Content-Type") && init.body) headers.set("Content-Type", "application/json");
+  const isFormData = typeof FormData !== 'undefined' && init.body instanceof FormData;
+
+  if (!headers.has("Content-Type") && init.body && !isFormData) headers.set("Content-Type", "application/json");
   if (serverPassword) headers.set("X-Server-Password", serverPassword);
 
   if (rawIdentity) {

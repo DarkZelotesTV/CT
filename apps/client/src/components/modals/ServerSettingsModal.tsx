@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
 import { AlertTriangle, Image as ImageIcon, Loader2, Shield, Trash2 } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { ModalLayout } from './ModalLayout';
 import { ErrorCard, Spinner } from '../ui';
+import { getServerUrl } from '../../utils/apiConfig';
 
 interface Channel {
   id: number;
@@ -32,10 +33,15 @@ interface StructureResponse {
 export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }: ServerSettingsModalProps) => {
   const [name, setName] = useState('');
   const [iconUrl, setIconUrl] = useState('');
+  const [iconFile, setIconFile] = useState<File | null>(null);
+  const [iconPreview, setIconPreview] = useState<string | null>(null);
+  const [iconError, setIconError] = useState<string | null>(null);
+  const [removeIcon, setRemoveIcon] = useState(false);
   const [fallbackChannelId, setFallbackChannelId] = useState<number | null>(null);
   const [channels, setChannels] = useState<Channel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingIcon, setIsUploadingIcon] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -52,6 +58,9 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
       }
       setName(current.name ?? '');
       setIconUrl(current.icon_url ?? current.iconUrl ?? '');
+      setIconFile(null);
+      setIconPreview(null);
+      setRemoveIcon(false);
 
       const struct = await apiFetch<StructureResponse>(`/api/servers/${serverId}/structure`);
       const allChannels = [...struct.uncategorized, ...struct.categories.flatMap((c) => c.channels)];
@@ -74,6 +83,49 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
 
   const channelOptions = useMemo(() => channels, [channels]);
 
+  const resolveIconUrl = useCallback((value?: string | null) => {
+    if (!value) return '';
+    if (/^https?:\/\//i.test(value)) return value;
+    const normalized = value.startsWith('/') ? value : `/${value}`;
+    return `${getServerUrl()}${normalized}`;
+  }, []);
+
+  const previewUrl = iconPreview || resolveIconUrl(iconUrl);
+
+  const handleIconChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    setIconError(null);
+    setRemoveIcon(false);
+
+    if (!file) {
+      setIconFile(null);
+      setIconPreview(null);
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      setIconError('Bitte eine Bilddatei auswählen.');
+      return;
+    }
+
+    const maxSizeBytes = 2 * 1024 * 1024;
+    if (file.size > maxSizeBytes) {
+      setIconError('Das Icon darf maximal 2 MB groß sein.');
+      return;
+    }
+
+    setIconFile(file);
+    setIconPreview(URL.createObjectURL(file));
+  };
+
+  const handleRemoveIcon = () => {
+    setIconFile(null);
+    setIconPreview(null);
+    setIconError(null);
+    setRemoveIcon(true);
+    setIconUrl('');
+  };
+
   const handleSave = async (e?: FormEvent) => {
     e?.preventDefault();
     if (!name.trim()) {
@@ -84,12 +136,30 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
     setIsSaving(true);
     setActionError(null);
     try {
+      let nextIconPath: string | null | undefined = undefined;
+
+      if (iconFile) {
+        setIsUploadingIcon(true);
+        const formData = new FormData();
+        formData.append('icon', iconFile);
+        const uploadResult = await apiFetch<{ iconUrl: string }>(`/api/servers/${serverId}/icon`, {
+          method: 'POST',
+          body: formData,
+        });
+        nextIconPath = uploadResult.iconUrl;
+        setIconUrl(uploadResult.iconUrl);
+        setIconPreview(null);
+        setIconFile(null);
+      } else if (removeIcon) {
+        nextIconPath = null;
+      }
+
       await apiFetch(`/api/servers/${serverId}`, {
         method: 'PUT',
         body: JSON.stringify({
           name: name.trim(),
           fallbackChannelId: fallbackChannelId ?? null,
-          iconUrl: iconUrl || null,
+          ...(typeof nextIconPath !== 'undefined' ? { iconPath: nextIconPath } : {}),
         }),
       });
       onUpdated({ name: name.trim(), fallbackChannelId: fallbackChannelId ?? null });
@@ -99,6 +169,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
       setActionError(err?.response?.data?.error || err?.message || 'Aktualisierung fehlgeschlagen.');
     } finally {
       setIsSaving(false);
+      setIsUploadingIcon(false);
     }
   };
 
@@ -160,15 +231,15 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
         <ErrorCard message={error} onRetry={loadData} retryLabel="Erneut versuchen" />
       ) : (
         <form onSubmit={handleSave} className="space-y-6">
-          <div className="flex items-center gap-4">
+          <div className="flex items-start gap-4 flex-wrap">
             <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden">
-              {iconUrl ? (
-                <img src={iconUrl} alt="Server Icon" className="w-full h-full object-cover" />
+              {previewUrl ? (
+                <img src={previewUrl} alt="Server Icon" className="w-full h-full object-cover" />
               ) : (
                 <ImageIcon className="text-gray-500" />
               )}
             </div>
-            <div className="flex-1 space-y-3">
+            <div className="flex-1 space-y-3 min-w-[240px]">
               <div className="space-y-1">
                 <label className="text-xs font-bold text-gray-400 uppercase ml-1">Server Name</label>
                 <input
@@ -180,15 +251,35 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
                   className="w-full bg-black/30 text-white p-3 rounded-xl border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-600 font-medium"
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-400 uppercase ml-1">Icon URL (optional)</label>
-                <input
-                  type="url"
-                  value={iconUrl}
-                  onChange={(e) => setIconUrl(e.target.value)}
-                  placeholder="https://example.com/icon.png"
-                  className="w-full bg-black/30 text-white p-3 rounded-xl border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-600 font-medium"
-                />
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-400 uppercase ml-1">Server Icon</label>
+                <div className="flex flex-wrap gap-2 items-center">
+                  <label className="cursor-pointer inline-flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2 rounded-lg text-sm font-semibold hover:border-indigo-500 hover:text-indigo-300 transition-colors">
+                    <input type="file" accept="image/*" className="hidden" onChange={handleIconChange} />
+                    <ImageIcon size={16} />
+                    Icon auswählen
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleRemoveIcon}
+                    disabled={isSaving || isUploadingIcon || (!iconUrl && !iconFile)}
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-white/10 text-white/80 hover:text-white hover:border-red-400 hover:text-red-200 disabled:opacity-50"
+                  >
+                    <Trash2 size={16} />
+                    Icon entfernen
+                  </button>
+                  {(iconFile || removeIcon) && (
+                    <span className="text-xs text-indigo-300 bg-indigo-500/10 border border-indigo-500/30 rounded-full px-2 py-1">
+                      {iconFile ? `Ausgewählt: ${iconFile.name}` : 'Icon wird entfernt'}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-gray-500">
+                  Unterstützt PNG, JPG oder WebP bis 2 MB. Die Datei wird direkt auf den Server hochgeladen und sicher gespeichert.
+                </p>
+                {iconError && (
+                  <div className="text-red-400 text-sm bg-red-500/10 border border-red-500/30 rounded-lg p-2">{iconError}</div>
+                )}
               </div>
             </div>
           </div>

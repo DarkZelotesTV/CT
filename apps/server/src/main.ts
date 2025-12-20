@@ -3,6 +3,7 @@ import cors from 'cors';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { sequelize } from './config/database';
+import path from 'path';
 
 // Routen Importe
 import authRoutes from './routes/auth';
@@ -72,6 +73,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use('/uploads', express.static(path.resolve(__dirname, '..', 'public', 'uploads')));
 
 // ==========================================
 // 2. SOCKET.IO SETUP
