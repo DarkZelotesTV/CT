@@ -47,9 +47,14 @@ body,
   -webkit-app-region: no-drag;
 }
 
+:root {
+  /* Height of the custom Electron titlebar (used to keep overlays/modals from covering it) */
+  --ct-titlebar-height: 48px;
+}
+
 #modal-root {
   position: relative;
-  z-index: 2147483647; 
+  z-index: 2500; 
   isolation: isolate;
 }
 

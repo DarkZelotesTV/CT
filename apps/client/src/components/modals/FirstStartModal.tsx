@@ -88,8 +88,8 @@ export function FirstStartModal({ onComplete }: Props) {
 
   return createPortal(
     <div
-      className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200"
-      style={{ zIndex: 2147483647, transform: 'translateZ(0)', willChange: 'transform' }}
+      className="fixed left-0 right-0 bottom-0 top-[var(--ct-titlebar-height)] bg-black/90 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-200"
+      style={{ zIndex: 2500, transform: 'translateZ(0)', willChange: 'transform' }}
     >
       <div className="w-full max-w-3xl bg-[#0f1014] border border-white/10 rounded-3xl shadow-2xl overflow-hidden">
         <div className="p-6 border-b border-white/5">

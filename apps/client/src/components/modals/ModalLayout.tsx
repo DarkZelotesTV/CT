@@ -31,9 +31,9 @@ export const ModalLayout = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200 p-4"
-      // Keep the overlay in a compositor layer and above any glass sidebars.
-      style={{ zIndex: 2147483647, transform: 'translateZ(0)', willChange: 'transform' }}
+      className="fixed left-0 right-0 bottom-0 top-[var(--ct-titlebar-height)] bg-black/80 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200 p-4"
+      // Keep the overlay in a compositor layer and above any glass sidebars, but below the titlebar.
+      style={{ zIndex: 2500, transform: 'translateZ(0)', willChange: 'transform' }}
     >
       <div className="absolute inset-0" onClick={handleOverlayClick}></div>
 

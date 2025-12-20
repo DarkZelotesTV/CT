@@ -71,7 +71,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
 
     return fullOrder
       .map((id) => byId[id])
-      .filter(Boolean)
+      .filter((s): s is Server => Boolean(s))
       .sort((a, b) => {
         const aPinned = pinnedSet.has(a.id);
         const bPinned = pinnedSet.has(b.id);
@@ -148,7 +148,14 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
     instanceUrl?: string
   ) => {
     event.preventDefault();
-    setContextMenu({ serverId, type, instanceUrl, x: event.clientX, y: event.clientY });
+    // With `exactOptionalPropertyTypes`, optional props must be omitted (not set to `undefined`).
+    setContextMenu({
+      serverId,
+      type,
+      x: event.clientX,
+      y: event.clientY,
+      ...(instanceUrl ? { instanceUrl } : {}),
+    });
   };
 
   const handleKeyboardContext = (
@@ -159,7 +166,17 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
   ) => {
     if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
       event.preventDefault();
-      setContextMenu({ serverId, type, instanceUrl, x: event.clientX ?? 0, y: event.clientY ?? 0 });
+      const el = event.currentTarget as HTMLElement;
+      const rect = el.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      setContextMenu({
+        serverId,
+        type,
+        x,
+        y,
+        ...(instanceUrl ? { instanceUrl } : {}),
+      });
     }
   };
 

@@ -24,6 +24,7 @@ import {
 import { apiFetch } from '../../api/http';
 import { CreateChannelModal } from './CreateChannelModal';
 import { defaultServerTheme, deriveServerThemeFromSettings, type ServerTheme } from '../../theme/serverTheme';
+import { useSettings } from '../../context/SettingsContext';
 
 interface ServerSettingsProps {
   serverId: number;
@@ -58,6 +59,7 @@ interface Category {
 }
 
 export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }: ServerSettingsProps) => {
+  const { settings } = useSettings();
   const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'channels' | 'roles'>('overview');
   const [members, setMembers] = useState<any[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
@@ -425,8 +427,8 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
 
   return createPortal(
     <div
-      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 relative"
-      style={{ zIndex: 2147483647, transform: 'translateZ(0)', willChange: 'transform' }}
+      className="fixed left-0 right-0 bottom-0 top-[var(--ct-titlebar-height)] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 relative"
+      style={{ zIndex: 2500, transform: 'translateZ(0)', willChange: 'transform' }}
     >
       {/* Desktop Responsive Container: Wächst mit, maximale Breite begrenzt, fixe Höhe für konsistentes Layout */}
       <div className="bg-[#0f1014] w-11/12 max-w-5xl h-[85vh] rounded-3xl border border-white/10 shadow-2xl overflow-hidden flex flex-col">

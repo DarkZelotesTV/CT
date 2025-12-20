@@ -240,7 +240,11 @@ export const MainLayout = () => {
     if (!container) return;
     const focusable = getFocusableElements(container);
     if (focusable.length > 0) {
-      focusable[0].focus();
+      const first = focusable[0];
+      if (first) {
+        first.focus();
+        return;
+      }
       return;
     }
     container.focus({ preventScroll: true });
@@ -260,6 +264,7 @@ export const MainLayout = () => {
 
   const handleTouchStart = useCallback((event: React.TouchEvent) => {
     const touch = event.touches[0];
+    if (!touch) return;
     touchStartRef.current = { x: touch.clientX, y: touch.clientY };
   }, []);
 
@@ -270,6 +275,11 @@ export const MainLayout = () => {
       if (window.innerWidth >= MOBILE_BREAKPOINT) return;
 
       const touch = event.changedTouches[0];
+      if (!touch) {
+        touchStartRef.current = null;
+        return;
+      }
+
       const deltaX = touch.clientX - touchStartRef.current.x;
       const deltaY = touch.clientY - touchStartRef.current.y;
       const absX = Math.abs(deltaX);
@@ -501,6 +511,11 @@ export const MainLayout = () => {
 
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
+      if (!first || !last) {
+        target.focus();
+        event.preventDefault();
+        return;
+      }
       const active = document.activeElement as HTMLElement | null;
 
       if (event.shiftKey) {
@@ -816,20 +831,20 @@ export const MainLayout = () => {
       />
 
       {/* Overlay Backdrop für Mobile */}
-      <div 
-        className={classNames(
-          "fixed inset-0 bg-black/80 z-40 lg:hidden transition-opacity duration-300",
+	      <div 
+	        className={classNames(
+	          "fixed left-0 right-0 bottom-0 top-[var(--ct-titlebar-height)] bg-black/80 z-40 lg:hidden transition-opacity duration-300",
           showMobileNav ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         )}
         onClick={() => setShowMobileNav(false)}
       />
 
       {/* Navigation Container */}
-      <div className={classNames(
+	      <div className={classNames(
         "flex h-full z-50 transition-transform duration-300 ease-in-out",
-        "lg:relative lg:translate-x-0",
-        "fixed inset-y-0 left-0 max-lg:w-[85vw] max-lg:max-w-[320px]",
-        showMobileNav ? "translate-x-0" : "max-lg:-translate-x-full"
+        "relative lg:translate-x-0",
+	        "max-lg:fixed max-lg:left-0 max-lg:bottom-0 max-lg:top-[var(--ct-titlebar-height)] max-lg:w-[85vw] max-lg:max-w-[320px]",
+        showMobileNav ? "max-lg:translate-x-0" : "max-lg:-translate-x-full"
       )}
         ref={mobileNavRef}
         role="dialog"

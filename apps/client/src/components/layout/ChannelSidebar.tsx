@@ -4,7 +4,7 @@ import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type D
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useTranslation } from 'react-i18next';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 import { apiFetch } from '../../api/http';
 import { CreateChannelModal } from '../modals/CreateChannelModal';
 import { UserBottomBar } from './UserBottomBar';
@@ -36,7 +36,9 @@ interface SortableWrapperProps<T> {
 }
 
 const SortableWrapper = <T,>({ item: _, id, data, disabled, children }: SortableWrapperProps<T>) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, data, disabled });
+  // With `exactOptionalPropertyTypes`, we must omit optional props instead of passing `undefined`.
+  const sortableArgs = disabled === undefined ? { id, data } : { id, data, disabled };
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable(sortableArgs);
 
   const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -378,7 +380,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   const searchVirtualizer = useVirtualizer({
     count: virtualizedSearchItems.length,
     getScrollElement: () => searchListParentRef.current,
-    estimateSize: (index) => (virtualizedSearchItems[index]?.type === 'category' ? 40 : 52),
+    estimateSize: (index: number) => (virtualizedSearchItems[index]?.type === 'category' ? 40 : 52),
     overscan: 8,
   });
 
@@ -484,8 +486,11 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
       const categoryIndex = categories.findIndex((cat) => cat.id === categoryId);
       if (categoryIndex < 0) return;
 
-      const oldIndex = categories[categoryIndex].channels.findIndex((c) => c.id === fromId);
-      const newIndex = categories[categoryIndex].channels.findIndex((c) => c.id === toId);
+      const category = categories[categoryIndex];
+      if (!category) return;
+
+      const oldIndex = category.channels.findIndex((c) => c.id === fromId);
+      const newIndex = category.channels.findIndex((c) => c.id === toId);
       if (oldIndex < 0 || newIndex < 0) return;
 
       const updatedCategories = categories.map((cat) =>
@@ -883,7 +888,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
 
           {normalizedSearchTerm ? (
             <div style={{ height: searchVirtualizer.getTotalSize(), position: 'relative' }}>
-              {searchVirtualizer.getVirtualItems().map((virtualRow) => {
+              {searchVirtualizer.getVirtualItems().map((virtualRow: VirtualItem) => {
                 const row = virtualizedSearchItems[virtualRow.index];
                 if (!row) return null;
 
@@ -1030,7 +1035,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
         </div>
 
         {contextMenu && (
-          <div className="fixed inset-0 z-50" onClick={closeContextMenu}>
+          <div className="fixed left-0 right-0 bottom-0 top-[var(--ct-titlebar-height)] z-50" onClick={closeContextMenu}>
             <div
               className="absolute min-w-[240px] rounded-md bg-[#16181d] border border-white/10 shadow-xl p-2 space-y-1"
               style={{ top: contextMenu.y, left: contextMenu.x }}

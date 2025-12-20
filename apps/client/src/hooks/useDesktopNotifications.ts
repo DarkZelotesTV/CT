@@ -83,8 +83,8 @@ export const useDesktopNotifications = (onNavigate: (target: NotificationTarget)
 
       const notification = new Notification(title, {
         body: payload.body,
-        icon: payload.icon,
         silent: false,
+        ...(payload.icon ? { icon: payload.icon } : {}),
       });
 
       notification.onclick = () => {

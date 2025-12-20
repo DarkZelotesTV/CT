@@ -46,10 +46,11 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
     try {
       const screenshotData = screenshotFile ? await readFileAsDataUrl(screenshotFile) : undefined;
 
+      // With `exactOptionalPropertyTypes`, omit optional properties instead of passing `undefined`.
       await sendFeedback({
         category,
         message: message.trim(),
-        screenshot: screenshotData,
+        ...(screenshotData ? { screenshot: screenshotData } : {}),
       });
 
       setSuccess(true);

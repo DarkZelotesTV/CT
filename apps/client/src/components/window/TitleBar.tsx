@@ -6,11 +6,12 @@ import {
   Hash,
   HelpCircle,
   Inbox,
+  Maximize2,
   Minus,
+  Minimize2,
   Pin,
   Search,
   Settings,
-  Square,
   Users,
   Volume2,
   X,
@@ -81,6 +82,12 @@ export const TitleBar = ({
     titlebarHeight: 48,
   });
 
+  // Keep a CSS variable in sync so overlays/modals can avoid covering the titlebar.
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.documentElement.style.setProperty('--ct-titlebar-height', `${state.titlebarHeight}px`);
+  }, [state.titlebarHeight]);
+
   useEffect(() => {
     let off: (() => void) | undefined;
 
@@ -121,8 +128,46 @@ export const TitleBar = ({
     'no-drag h-8 w-10 flex items-center justify-center text-gray-300 hover:bg-white/10 active:bg-white/20 transition ' +
     focusRing;
 
+  const platform = state.platform ?? 'win32';
+  const isMac = platform === 'darwin';
+
+  const macTrafficLights = (
+    <div className="no-drag flex items-center gap-2 mr-2">
+      <button
+        type="button"
+        className={`no-drag h-3.5 w-3.5 rounded-full bg-red-500/90 hover:bg-red-500 transition ${focusRing}`}
+        onClick={() => void controls.close()}
+        aria-label={t('titlebar.close', { defaultValue: 'Schließen' })}
+        title={t('titlebar.close', { defaultValue: 'Schließen' })}
+      />
+      <button
+        type="button"
+        className={`no-drag h-3.5 w-3.5 rounded-full bg-yellow-500/90 hover:bg-yellow-500 transition ${focusRing}`}
+        onClick={() => void controls.minimize()}
+        aria-label={t('titlebar.minimize', { defaultValue: 'Minimieren' })}
+        title={t('titlebar.minimize', { defaultValue: 'Minimieren' })}
+      />
+      <button
+        type="button"
+        className={`no-drag h-3.5 w-3.5 rounded-full bg-green-500/90 hover:bg-green-500 transition ${focusRing}`}
+        onClick={() => void controls.toggleMaximize()}
+        aria-label={
+          state.isMaximized
+            ? t('titlebar.restore', { defaultValue: 'Wiederherstellen' })
+            : t('titlebar.maximize', { defaultValue: 'Maximieren' })
+        }
+        title={
+          state.isMaximized
+            ? t('titlebar.restore', { defaultValue: 'Wiederherstellen' })
+            : t('titlebar.maximize', { defaultValue: 'Maximieren' })
+        }
+      />
+    </div>
+  );
+
   const left = slots.left ?? (
     <div className="flex items-center gap-2 min-w-0">
+      {isMac ? macTrafficLights : null}
       <button
         type="button"
         className={`no-drag h-7 w-7 rounded-md bg-white/5 border border-white/10 hover:bg-white/10 flex items-center justify-center ${focusRing}`}
@@ -232,51 +277,57 @@ export const TitleBar = ({
       </div>
 
       {/* Window Controls */}
-      <div className="ml-2 flex items-center">
-        <button
-          type="button"
-          className={windowBtnBase}
-          onClick={() => void controls.minimize()}
-          aria-label={t('titlebar.minimize', { defaultValue: 'Minimieren' })}
-          title={t('titlebar.minimize', { defaultValue: 'Minimieren' })}
-        >
-          <Minus size={16} className="text-gray-200" aria-hidden="true" />
-        </button>
+      {!isMac && (
+        <div className="ml-2 flex items-center">
+          <button
+            type="button"
+            className={windowBtnBase}
+            onClick={() => void controls.minimize()}
+            aria-label={t('titlebar.minimize', { defaultValue: 'Minimieren' })}
+            title={t('titlebar.minimize', { defaultValue: 'Minimieren' })}
+          >
+            <Minus size={16} className="text-gray-200" aria-hidden="true" />
+          </button>
 
-        <button
-          type="button"
-          className={windowBtnBase}
-          onClick={() => void controls.toggleMaximize()}
-          aria-label={
-            state.isMaximized
-              ? t('titlebar.restore', { defaultValue: 'Wiederherstellen' })
-              : t('titlebar.maximize', { defaultValue: 'Maximieren' })
-          }
-          title={
-            state.isMaximized
-              ? t('titlebar.restore', { defaultValue: 'Wiederherstellen' })
-              : t('titlebar.maximize', { defaultValue: 'Maximieren' })
-          }
-        >
-          <Square size={14} className="text-gray-200" aria-hidden="true" />
-        </button>
+          <button
+            type="button"
+            className={windowBtnBase}
+            onClick={() => void controls.toggleMaximize()}
+            aria-label={
+              state.isMaximized
+                ? t('titlebar.restore', { defaultValue: 'Wiederherstellen' })
+                : t('titlebar.maximize', { defaultValue: 'Maximieren' })
+            }
+            title={
+              state.isMaximized
+                ? t('titlebar.restore', { defaultValue: 'Wiederherstellen' })
+                : t('titlebar.maximize', { defaultValue: 'Maximieren' })
+            }
+          >
+            {state.isMaximized ? (
+              <Minimize2 size={16} className="text-gray-200" aria-hidden="true" />
+            ) : (
+              <Maximize2 size={16} className="text-gray-200" aria-hidden="true" />
+            )}
+          </button>
 
-        <button
-          type="button"
-          className={windowBtnBase + ' hover:bg-red-500/30 hover:text-white'}
-          onClick={() => void controls.close()}
-          aria-label={t('titlebar.close', { defaultValue: 'Schließen' })}
-          title={t('titlebar.close', { defaultValue: 'Schließen' })}
-        >
-          <X size={16} className="text-gray-200" aria-hidden="true" />
-        </button>
-      </div>
+          <button
+            type="button"
+            className={windowBtnBase + ' hover:bg-red-500/30 hover:text-white'}
+            onClick={() => void controls.close()}
+            aria-label={t('titlebar.close', { defaultValue: 'Schließen' })}
+            title={t('titlebar.close', { defaultValue: 'Schließen' })}
+          >
+            <X size={16} className="text-gray-200" aria-hidden="true" />
+          </button>
+        </div>
+      )}
     </div>
   );
 
   return (
     <div
-      className="fixed top-0 left-0 right-0 z-50 drag border-b border-white/10 bg-black/70 backdrop-blur-md"
+      className="fixed top-0 left-0 right-0 z-[3000] drag border-b border-white/10 bg-black/70 backdrop-blur-md"
       style={{ height: state.titlebarHeight }}
     >
       <div className="h-full w-full flex items-center gap-3 px-3">

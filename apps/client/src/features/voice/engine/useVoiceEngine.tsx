@@ -293,7 +293,9 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
           analyser.getByteTimeDomainData(dataArray);
           let sum = 0;
           for (let i = 0; i < dataArray.length; i += 1) {
-            const value = (dataArray[i] - 128) / 128;
+            const sample = dataArray[i];
+            if (sample === undefined) continue;
+            const value = (sample - 128) / 128;
             sum += value * value;
           }
           const rms = Math.sqrt(sum / dataArray.length);
@@ -1324,8 +1326,10 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
     }
 
     const rnnoiseTrack = rnnoiseResourcesRef.current?.processedTrack;
-    const publication = Array.from(activeRoom.localParticipant.audioTracks.values())[0];
-    const liveKitTrack = publication?.track?.mediaStreamTrack ?? null;
+    // LiveKit v2 types no longer expose `audioTracks`; use a source-based lookup.
+    const publication = activeRoom.localParticipant.getTrackPublication(Track.Source.Microphone);
+    const liveKitTrack =
+      (publication as LocalTrackPublication | undefined)?.track?.mediaStreamTrack ?? null;
     const track = rnnoiseTrack?.readyState === 'live' ? rnnoiseTrack : liveKitTrack;
 
     startAudioLevelMeter(track);

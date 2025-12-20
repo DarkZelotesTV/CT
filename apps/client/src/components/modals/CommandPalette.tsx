@@ -190,14 +190,19 @@ export const CommandPalette = ({
       action: () => onSelectServer(server.id),
     }));
 
-    const channelItems = channels.map<PaletteItem>((channel) => ({
-      id: `channel-${channel.id}`,
-      type: 'channel',
-      label: channel.name,
-      description: serverName ?? 'Channel',
-      badge: channel.type === 'voice' ? 'Voice' : channel.type === 'web' ? 'Web' : undefined,
-      action: () => onSelectChannel(channel),
-    }));
+    const channelItems = channels.map<PaletteItem>((channel) => {
+      const badge = channel.type === 'voice' ? 'Voice' : channel.type === 'web' ? 'Web' : undefined;
+      const base: Omit<PaletteItem, 'badge'> & Partial<Pick<PaletteItem, 'badge'>> = {
+        id: `channel-${channel.id}`,
+        type: 'channel',
+        label: channel.name,
+        description: serverName ?? 'Channel',
+        action: () => onSelectChannel(channel),
+      };
+
+      // With `exactOptionalPropertyTypes`, omit optional properties instead of passing `undefined`.
+      return badge ? { ...base, badge } : base;
+    });
 
     const memberItems = members.map<PaletteItem>((member) => ({
       id: `member-${member.userId}`,
@@ -268,7 +273,11 @@ export const CommandPalette = ({
   const activeId = filtered[activeIndex]?.id;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-start justify-center p-6" role="dialog" aria-modal="true">
+    <div
+      className="fixed left-0 right-0 bottom-0 top-[var(--ct-titlebar-height)] z-[2400] flex items-start justify-center p-6"
+      role="dialog"
+      aria-modal="true"
+    >
       <div className="absolute inset-0 bg-black/60" onClick={onClose} aria-hidden="true" />
       <div className="relative w-full max-w-2xl bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-2xl overflow-hidden" role="document">
         <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-surface-alt)]">

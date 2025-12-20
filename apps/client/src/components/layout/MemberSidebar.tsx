@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../../api/http';
 import { useSocket } from '../../context/SocketContext';
 import { ErrorCard, Skeleton, Spinner } from '../ui';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 
 interface Member {
   userId: number;
@@ -277,10 +277,10 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
 
   const memberRows = useMemo<MemberRow[]>(() => {
     const rows: MemberRow[] = [
-      { type: 'section', key: 'online', label: t('memberSidebar.online'), count: onlineMembers.length },
-      ...onlineMembers.map((member) => ({ type: 'member', key: `member-${member.userId}`, member })),
-      { type: 'section', key: 'offline', label: t('memberSidebar.offline'), count: offlineMembers.length },
-      ...offlineMembers.map((member) => ({ type: 'member', key: `member-${member.userId}`, member })),
+      { type: 'section' as const, key: 'online', label: t('memberSidebar.online'), count: onlineMembers.length },
+      ...onlineMembers.map((member) => ({ type: 'member' as const, key: `member-${member.userId}`, member })),
+      { type: 'section' as const, key: 'offline', label: t('memberSidebar.offline'), count: offlineMembers.length },
+      ...offlineMembers.map((member) => ({ type: 'member' as const, key: `member-${member.userId}`, member })),
     ];
 
     return rows;
@@ -289,7 +289,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
   const memberVirtualizer = useVirtualizer({
     count: memberRows.length,
     getScrollElement: () => listParentRef.current,
-    estimateSize: (index) => (memberRows[index]?.type === 'section' ? 32 : 72),
+    estimateSize: (index: number) => (memberRows[index]?.type === 'section' ? 32 : 72),
     overscan: 8,
   });
 
@@ -391,7 +391,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
 
           {!loading && !error && filteredMembers.length > 0 && (
             <div style={{ height: memberVirtualizer.getTotalSize(), position: 'relative' }}>
-              {memberVirtualizer.getVirtualItems().map((virtualRow) => {
+              {memberVirtualizer.getVirtualItems().map((virtualRow: VirtualItem) => {
                 const row = memberRows[virtualRow.index];
                 if (!row) return null;
 
@@ -422,7 +422,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
       </div>
 
       {contextMenu && (
-        <div className="fixed inset-0 z-50" onClick={closeContextMenu}>
+        <div className="fixed left-0 right-0 bottom-0 top-[var(--ct-titlebar-height)] z-50" onClick={closeContextMenu}>
           <div
             className="absolute min-w-[240px] rounded-md bg-[#16181d] border border-white/10 shadow-xl p-2 space-y-1"
             style={{ top: contextMenu.y, left: contextMenu.x }}
