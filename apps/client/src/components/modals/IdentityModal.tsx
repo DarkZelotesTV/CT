@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { X, Upload, ShieldAlert, Download } from 'lucide-react';
-import { getModalRoot } from './modalRoot';
+import { Upload, ShieldAlert, Download } from 'lucide-react';
+import { ModalLayout } from './ModalLayout';
 import { clearIdentity, computeFingerprint, createIdentity, formatFingerprint, loadIdentity, saveIdentity, type IdentityFile } from '../../auth/identity';
 import { buildBackupPayload, getBackupFilename, parseIdentityBackup } from '../../auth/identityBackup';
 import { storage } from '../../shared/config/storage';
@@ -83,148 +82,125 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
     persistIdentity(updated);
   }
 
-  const target = getModalRoot();
-  if (!target) return null;
-
-  return createPortal(
-    <div
-      className="fixed left-0 right-0 bottom-0 top-[var(--ct-titlebar-height)] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
-      style={{ zIndex: 9999, transform: 'translateZ(0)', willChange: 'transform' }}
+  return (
+    <ModalLayout
+      title="Clover Identity verwalten"
+      description="Erstelle, importiere oder sichere deine lokale Identity. Sie bleibt nur auf deinem Gerät."
+      onClose={onClose}
+      onOverlayClick={onClose}
+      bodyClassName="p-6 space-y-4"
     >
-      <div className="bg-[#0f1014] w-full max-w-xl rounded-2xl shadow-2xl border border-white/10 relative">
+      <div>
+        <label className="text-xs uppercase font-bold text-gray-400 block mb-1">Anzeigename (optional)</label>
+        <input
+          type="text"
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
+          placeholder="z.B. jusbe"
+          className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+        />
         <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-white p-1 rounded-full hover:bg-white/10"
+          className="mt-2 text-sm text-indigo-400 hover:text-indigo-300"
+          onClick={handleSaveDisplayName}
+          disabled={!identity}
         >
-          <X size={20} />
+          Anzeigename speichern
         </button>
+      </div>
 
-        <div className="p-6 border-b border-white/5">
-          <h2 className="text-2xl font-bold text-white">Clover Identity verwalten</h2>
-          <p className="text-gray-400 text-sm mt-1">
-            Erstelle, importiere oder sichere deine lokale Identity. Sie bleibt nur auf deinem Gerät.
-          </p>
-        </div>
+      {!identity ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button
+            className="px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 transition text-white font-medium"
+            onClick={handleCreate}
+          >
+            Identity erstellen
+          </button>
 
-        <div className="p-6 space-y-4">
-          <div>
-            <label className="text-xs uppercase font-bold text-gray-400 block mb-1">Anzeigename (optional)</label>
+          <label className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition cursor-pointer text-center text-white font-medium">
+            <div className="flex items-center justify-center gap-2">
+              <Upload size={18} />
+              <span>Identity importieren</span>
+            </div>
             <input
-              type="text"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="z.B. jusbe"
-              className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+              type="file"
+              accept="application/json"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleImport(f);
+              }}
             />
-            <button
-              className="mt-2 text-sm text-indigo-400 hover:text-indigo-300"
-              onClick={handleSaveDisplayName}
-              disabled={!identity}
-            >
-              Anzeigename speichern
-            </button>
+          </label>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="text-sm bg-white/[0.02] border border-white/5 rounded-xl p-3">
+              <div className="text-gray-400 mb-1">Erstellt</div>
+              <div className="text-gray-200">{identity.createdAt ? new Date(identity.createdAt).toLocaleString() : '–'}</div>
+            </div>
+
+            <div className="text-sm bg-white/[0.02] border border-white/5 rounded-xl p-3">
+              <div className="text-gray-400 mb-1">Public Key</div>
+              <div className="font-mono break-all text-gray-200">{identity.publicKeyB64}</div>
+            </div>
           </div>
 
-          {!identity ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                className="px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 transition text-white font-medium"
-                onClick={handleCreate}
-              >
-                Identity erstellen
-              </button>
+          <div className="text-sm bg-white/[0.02] border border-white/5 rounded-xl p-3">
+            <div className="text-gray-400 mb-1">Fingerprint</div>
+            <div className="font-mono break-all text-gray-200">{fingerprint ? formatFingerprint(fingerprint) : '–'}</div>
+          </div>
 
-              <label className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition cursor-pointer text-center text-white font-medium">
-                <div className="flex items-center justify-center gap-2">
-                  <Upload size={18} />
-                  <span>Identity importieren</span>
-                </div>
-                <input
-                  type="file"
-                  accept="application/json"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) handleImport(f);
-                  }}
-                />
-              </label>
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="text-sm bg-white/[0.02] border border-white/5 rounded-xl p-3">
-                  <div className="text-gray-400 mb-1">Erstellt</div>
-                  <div className="text-gray-200">
-                    {identity.createdAt ? new Date(identity.createdAt).toLocaleString() : '–'}
-                  </div>
-                </div>
+          <div>
+            <label className="text-xs uppercase font-bold text-gray-400 block mb-1">Backup-Passphrase (optional)</label>
+            <input
+              type="password"
+              value={backupPassphrase}
+              onChange={(e) => setBackupPassphrase(e.target.value)}
+              placeholder="Leer lassen für Klartext-Export"
+              className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+            />
+            <p className="text-[11px] text-gray-500 mt-1">Wenn gesetzt, wird dein Backup AES-GCM verschlüsselt (PBKDF2).</p>
+          </div>
 
-                <div className="text-sm bg-white/[0.02] border border-white/5 rounded-xl p-3">
-                  <div className="text-gray-400 mb-1">Public Key</div>
-                  <div className="font-mono break-all text-gray-200">{identity.publicKeyB64}</div>
-                </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition text-white font-medium flex items-center justify-center gap-2"
+              onClick={handleExport}
+            >
+              <Download size={18} />
+              Export / Backup
+            </button>
+
+            <label className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition cursor-pointer text-center text-white font-medium">
+              <div className="flex items-center justify-center gap-2">
+                <Upload size={18} />
+                <span>Import (ersetzen)</span>
               </div>
+              <input
+                type="file"
+                accept="application/json"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleImport(f);
+                }}
+              />
+            </label>
 
-              <div className="text-sm bg-white/[0.02] border border-white/5 rounded-xl p-3">
-                <div className="text-gray-400 mb-1">Fingerprint</div>
-                <div className="font-mono break-all text-gray-200">{fingerprint ? formatFingerprint(fingerprint) : '–'}</div>
-              </div>
+            <button
+              className="px-4 py-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 transition text-red-100 font-medium flex items-center justify-center gap-2 sm:col-span-2"
+              onClick={handleReset}
+            >
+              <ShieldAlert size={18} />
+              Identity zurücksetzen
+            </button>
+          </div>
+        </>
+      )}
 
-              <div>
-                <label className="text-xs uppercase font-bold text-gray-400 block mb-1">Backup-Passphrase (optional)</label>
-                <input
-                  type="password"
-                  value={backupPassphrase}
-                  onChange={(e) => setBackupPassphrase(e.target.value)}
-                  placeholder="Leer lassen für Klartext-Export"
-                  className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
-                />
-                <p className="text-[11px] text-gray-500 mt-1">
-                  Wenn gesetzt, wird dein Backup AES-GCM verschlüsselt (PBKDF2).
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <button
-                  className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition text-white font-medium flex items-center justify-center gap-2"
-                  onClick={handleExport}
-                >
-                  <Download size={18} />
-                  Export / Backup
-                </button>
-
-                <label className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition cursor-pointer text-center text-white font-medium">
-                  <div className="flex items-center justify-center gap-2">
-                    <Upload size={18} />
-                    <span>Import (ersetzen)</span>
-                  </div>
-                  <input
-                    type="file"
-                    accept="application/json"
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) handleImport(f);
-                    }}
-                  />
-                </label>
-
-                <button
-                  className="px-4 py-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 transition text-red-100 font-medium flex items-center justify-center gap-2 sm:col-span-2"
-                  onClick={handleReset}
-                >
-                  <ShieldAlert size={18} />
-                  Identity zurücksetzen
-                </button>
-              </div>
-            </>
-          )}
-
-          {error && <div className="text-red-400 text-sm">{error}</div>}
-        </div>
-      </div>
-    </div>,
-    target
+      {error && <div className="text-red-400 text-sm">{error}</div>}
+    </ModalLayout>
   );
 };
