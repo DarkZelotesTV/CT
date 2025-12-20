@@ -25,6 +25,8 @@ import { JoinServerModal } from '../modals/JoinServerModal';
 
 import { useVoice, type VoiceContextType } from '../../features/voice';
 import { storage } from '../../shared/config/storage';
+import { useSettings } from '../../context/SettingsContext';
+import { applyAppTheme, buildAppTheme } from '../../theme/appTheme';
 
 const defaultChannelWidth = 256;
 const defaultMemberWidth = 256;
@@ -50,6 +52,7 @@ interface Channel {
 
 export const MainLayout = () => {
   const { t } = useTranslation();
+  const { settings } = useSettings();
   // UI State
   const [showMobileNav, setShowMobileNav] = useState(false);
   const [showRightSidebar, setShowRightSidebar] = useState(true);
@@ -101,6 +104,19 @@ export const MainLayout = () => {
     muted,
     connectToChannel,
   } = useVoice();
+
+  const activeAccent = useMemo(
+    () =>
+      selectedServerId
+        ? settings.theme.serverAccents?.[selectedServerId] ?? settings.theme.accentColor
+        : settings.theme.accentColor,
+    [selectedServerId, settings.theme]
+  );
+
+  useEffect(() => {
+    const theme = buildAppTheme(settings.theme.mode, activeAccent);
+    applyAppTheme(theme);
+  }, [activeAccent, settings.theme.mode]);
 
   const focusContainer = useCallback((container: HTMLElement | null) => {
     if (!container) return;
@@ -487,7 +503,7 @@ export const MainLayout = () => {
       ref={layoutRef}
       style={isDesktop ? { paddingTop: titlebarHeight } : undefined}
       className={classNames(
-        "flex h-screen w-screen overflow-visible relative bg-[#050507] text-gray-200 font-sans box-border"
+        "flex h-screen w-screen overflow-visible relative bg-[var(--color-background)] text-[color:var(--color-text)] font-sans box-border"
       )}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
@@ -533,7 +549,7 @@ export const MainLayout = () => {
           Give the rail a higher stacking context so the popover stays visible.
         */}
         <div className="w-[80px] flex-shrink-0 flex flex-col items-center py-3 h-full relative z-[80]">
-           <div className="w-full h-full bg-[#0a0a0c]/90 backdrop-blur-xl rounded-2xl border border-white/5 ml-3 shadow-2xl overflow-visible relative z-[80]">
+           <div className="w-full h-full bg-[var(--color-surface)] bg-opacity-90 backdrop-blur-xl rounded-2xl border border-[var(--color-border)] ml-3 shadow-2xl overflow-visible relative z-[80]">
              <ServerRail
                 selectedServerId={selectedServerId}
                 onSelectServer={handleServerSelect}
@@ -550,7 +566,7 @@ export const MainLayout = () => {
                 className="h-full py-3 pl-3 flex-shrink-0 transition-all duration-300 relative z-[60]"
                 style={{ width: typeof window !== 'undefined' && window.innerWidth < 1024 ? 'calc(100% - 80px)' : leftSidebarWidth }}
             >
-                <div className="w-full h-full bg-[#0e0e11]/90 backdrop-blur-xl rounded-2xl border border-white/5 overflow-hidden flex flex-col relative">
+                <div className="w-full h-full bg-[var(--color-surface)] bg-opacity-90 backdrop-blur-xl rounded-2xl border border-[var(--color-border)] overflow-hidden flex flex-col relative">
                     <ChannelSidebar onServerNameChange={(name) => setServerName(name)}
                         serverId={selectedServerId}
                         activeChannelId={activeChannel?.id || null}
@@ -589,7 +605,7 @@ export const MainLayout = () => {
             )}
         </div>
 
-        <div className="flex-1 bg-[#09090b] rounded-2xl border border-white/5 relative overflow-hidden shadow-2xl flex flex-col">
+        <div className="flex-1 bg-[var(--color-surface-alt)] rounded-2xl border border-[var(--color-border)] relative overflow-hidden shadow-2xl flex flex-col">
           {renderContent()}
         </div>
 
@@ -615,7 +631,7 @@ export const MainLayout = () => {
           )}
           style={{ width: showRightSidebar ? rightSidebarWidth : 0 }}
         >
-          <div className="w-full h-full bg-[#0e0e11]/80 backdrop-blur-xl rounded-2xl border border-white/5 overflow-hidden">
+          <div className="w-full h-full bg-[var(--color-surface)] bg-opacity-80 backdrop-blur-xl rounded-2xl border border-[var(--color-border)] overflow-hidden">
             <MemberSidebar serverId={selectedServerId} />
           </div>
           {showRightSidebar && (
@@ -638,9 +654,9 @@ export const MainLayout = () => {
             aria-modal="true"
             aria-hidden={!showMemberSheet}
             tabIndex={-1}
-            className="relative bg-[#0e0e11] border-t border-white/10 rounded-t-3xl overflow-hidden shadow-2xl h-[70vh] flex flex-col"
+            className="relative bg-[var(--color-surface)] border-t border-[var(--color-border)] rounded-t-3xl overflow-hidden shadow-2xl h-[70vh] flex flex-col"
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-[#1a1b1e]">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-surface-alt)]">
               <div className="flex items-center gap-2 text-sm font-semibold text-white">
                 <Users size={16} />
                 Mitglieder

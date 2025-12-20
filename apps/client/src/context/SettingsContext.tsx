@@ -17,6 +17,12 @@ export type HotkeySettings = {
   muteToggle: string | null;
 };
 
+export type ThemeSettings = {
+  mode: 'light' | 'dark';
+  accentColor: string;
+  serverAccents: Record<number, string>;
+};
+
 export type TalkSettings = {
   muted: boolean;
   micMuted: boolean;
@@ -35,6 +41,7 @@ export type SettingsState = {
   profile: ProfileSettings;
   devices: DeviceSettings;
   hotkeys: HotkeySettings;
+  theme: ThemeSettings;
   talk: TalkSettings;
 };
 
@@ -51,6 +58,11 @@ const defaultSettings: SettingsState = {
   hotkeys: {
     pushToTalk: null,
     muteToggle: null,
+  },
+  theme: {
+    mode: 'dark',
+    accentColor: '#6366f1',
+    serverAccents: {},
   },
   talk: {
     muted: false,
@@ -71,6 +83,7 @@ const createDefaultSettings = (): SettingsState => ({
   profile: { ...defaultSettings.profile },
   devices: { ...defaultSettings.devices },
   hotkeys: { ...defaultSettings.hotkeys },
+  theme: { ...defaultSettings.theme },
   talk: { ...defaultSettings.talk },
 });
 
@@ -79,6 +92,7 @@ const SettingsContext = createContext<{
   updateProfile: (nextProfile: Partial<ProfileSettings>) => void;
   updateDevices: (nextDevices: Partial<DeviceSettings>) => void;
   updateHotkeys: (nextHotkeys: Partial<HotkeySettings>) => void;
+  updateTheme: (nextTheme: Partial<ThemeSettings>) => void;
   updateTalk: (nextTalk: Partial<TalkSettings>) => void;
   resetSettings: () => void;
 } | null>(null);
@@ -91,6 +105,7 @@ const loadInitialSettings = (): SettingsState => {
         profile: { ...defaultSettings.profile, ...stored.profile },
         devices: { ...defaultSettings.devices, ...stored.devices },
         hotkeys: { ...defaultSettings.hotkeys, ...stored.hotkeys },
+        theme: { ...defaultSettings.theme, ...stored.theme, serverAccents: stored.theme?.serverAccents || {} },
         talk: { ...defaultSettings.talk, ...stored.talk },
       };
     } catch (err) {
@@ -152,10 +167,21 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
     }));
   };
 
+  const updateTheme = (nextTheme: Partial<ThemeSettings>) => {
+    setSettings((prev) => ({
+      ...prev,
+      theme: {
+        ...prev.theme,
+        ...nextTheme,
+        serverAccents: nextTheme.serverAccents ?? prev.theme.serverAccents,
+      },
+    }));
+  };
+
   const resetSettings = () => setSettings(createDefaultSettings());
 
   const value = useMemo(
-    () => ({ settings, updateProfile, updateDevices, updateHotkeys, updateTalk, resetSettings }),
+    () => ({ settings, updateProfile, updateDevices, updateHotkeys, updateTheme, updateTalk, resetSettings }),
     [settings]
   );
 

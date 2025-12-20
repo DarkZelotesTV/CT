@@ -7,10 +7,12 @@ import {
   Download,
   Headphones,
   Keyboard,
+  Palette,
   Mic,
   Play,
   RefreshCw,
   Save,
+  SunMoon,
   Settings,
   ShieldAlert,
   Upload,
@@ -92,7 +94,7 @@ type DeviceLists = {
 };
 
 export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
-  const { settings, updateDevices, updateHotkeys, updateProfile } = useSettings();
+  const { settings, updateDevices, updateHotkeys, updateProfile, updateTheme } = useSettings();
   const {
     muted,
     micMuted,
@@ -129,11 +131,17 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
   const [identityName, setIdentityName] = useState(identity?.displayName ?? '');
   const [backupPassphrase, setBackupPassphrase] = useState('');
   const [identityError, setIdentityError] = useState<string | null>(null);
+  const [themeMode, setThemeMode] = useState(settings.theme.mode);
+  const [accentColor, setAccentColor] = useState(settings.theme.accentColor);
+  const [serverAccentDraft, setServerAccentDraft] = useState<Record<number, string>>(settings.theme.serverAccents || {});
+  const [serverAccentTarget, setServerAccentTarget] = useState('');
+  const [serverAccentColor, setServerAccentColor] = useState(settings.theme.accentColor);
 
   // 'Talk & Audio' wurde in 'devices' integriert und entfernt
   const categories = useMemo(
     () => [
       { id: 'profile', label: 'Profil', icon: Settings },
+      { id: 'appearance', label: 'Design', icon: Palette },
       { id: 'devices', label: 'Audio & Video', icon: Camera },
       { id: 'hotkeys', label: 'Hotkeys', icon: Keyboard },
       { id: 'identity', label: 'Identity', icon: ShieldAlert },
@@ -331,6 +339,21 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
     persistIdentity(updated);
   };
 
+  const handleAddServerAccent = () => {
+    const parsedId = Number.parseInt(serverAccentTarget, 10);
+    if (!Number.isFinite(parsedId)) return;
+    setServerAccentDraft((prev) => ({ ...prev, [parsedId]: serverAccentColor }));
+    setServerAccentTarget('');
+  };
+
+  const handleRemoveServerAccent = (id: number) => {
+    setServerAccentDraft((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  };
+
   const handleSave = async () => {
     updateProfile({ displayName, avatarUrl });
     updateDevices({
@@ -342,6 +365,7 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
       pushToTalk: pushToTalk || null,
       muteToggle: muteToggle || null,
     });
+    updateTheme({ mode: themeMode, accentColor, serverAccents: serverAccentDraft });
     await setPushToTalkEnabledFlag(pushToTalkEnabled);
     await setMuted(locallyMuted);
     await setMicMuted(locallyMicMuted);
@@ -357,17 +381,17 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
 	    className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
 	    style={{ zIndex: 2147483647, transform: 'translateZ(0)', willChange: 'transform' }}
 	  >
-      <div className="bg-[#0f1014] w-11/12 max-w-5xl h-[85vh] rounded-3xl border border-white/10 shadow-2xl overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 shrink-0">
+      <div className="bg-[var(--color-surface)] w-11/12 max-w-5xl h-[85vh] rounded-3xl border border-[var(--color-border)] shadow-2xl overflow-hidden flex flex-col text-[color:var(--color-text)]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-border)] shrink-0">
           <div>
-            <div className="text-xs uppercase tracking-widest text-gray-500 flex items-center gap-2">
+            <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] flex items-center gap-2">
               <Settings size={14} /> Settings
             </div>
-            <h2 className="text-2xl font-bold text-white">Persönliche Einstellungen</h2>
+            <h2 className="text-2xl font-bold">Persönliche Einstellungen</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white"
+            className="p-2 rounded-full bg-[var(--color-surface-alt)] hover:bg-[var(--color-surface-hover)] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]"
           >
             <X size={18} />
           </button>
@@ -375,15 +399,15 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
 
         <div className="flex-1 overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-[240px,1fr] gap-0 h-full">
-            <nav className="bg-white/5 border-b md:border-b-0 md:border-r border-white/10 p-3 flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-y-auto shrink-0 md:shrink">
+            <nav className="bg-[var(--color-surface-alt)] border-b md:border-b-0 md:border-r border-[var(--color-border)] p-3 flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-y-auto shrink-0 md:shrink">
               {categories.map((cat) => (
                 <button
                   key={cat.id}
                   onClick={() => setActiveCategory(cat.id)}
                   className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition border w-auto md:w-full whitespace-nowrap text-left flex-shrink-0 ${
                     activeCategory === cat.id
-                      ? 'bg-cyan-500/20 border-cyan-400 text-cyan-100'
-                      : 'border-transparent text-gray-300 hover:text-white hover:bg-white/10'
+                      ? 'bg-[var(--color-accent)] bg-opacity-20 border-[var(--color-accent)] text-[color:var(--color-text)]'
+                      : 'border-[var(--color-border)] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] hover:bg-[var(--color-surface-hover)]'
                   }`}
                 >
                   <cat.icon size={16} />
@@ -428,6 +452,92 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
                         )}
                       </div>
                       <div className="text-xs text-gray-400 text-center">Vorschau</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeCategory === 'appearance' && (
+                <div className="space-y-6 animate-in fade-in zoom-in-95 duration-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Theme</div>
+                      <p className="text-sm text-gray-400">Schalte zwischen Light/Dark um und passe die Farben an.</p>
+                    </div>
+                    <button
+                      onClick={() => setThemeMode(themeMode === 'dark' ? 'light' : 'dark')}
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--color-border)] text-[color:var(--color-text)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-hover)]"
+                    >
+                      <SunMoon size={16} />
+                      <span>{themeMode === 'dark' ? 'Dark' : 'Light'}</span>
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-xs uppercase font-bold text-gray-400 block">Akzentfarbe</label>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="color"
+                          value={accentColor}
+                          onChange={(e) => setAccentColor(e.target.value)}
+                          className="h-10 w-16 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]"
+                        />
+                        <input
+                          type="text"
+                          value={accentColor}
+                          onChange={(e) => setAccentColor(e.target.value)}
+                          className="flex-1 bg-black/30 text-white p-3 rounded-xl border border-[var(--color-border)] focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs uppercase font-bold text-gray-400 block">Server Akzentfarbe</label>
+                      <div className="grid grid-cols-[1fr,110px,auto] gap-2 items-center">
+                        <input
+                          type="number"
+                          value={serverAccentTarget}
+                          onChange={(e) => setServerAccentTarget(e.target.value)}
+                          placeholder="Server ID"
+                          className="bg-black/30 text-white p-3 rounded-xl border border-[var(--color-border)] focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] outline-none"
+                        />
+                        <input
+                          type="color"
+                          value={serverAccentColor}
+                          onChange={(e) => setServerAccentColor(e.target.value)}
+                          className="h-12 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]"
+                        />
+                        <button
+                          onClick={handleAddServerAccent}
+                          className="px-3 py-2 rounded-xl bg-[var(--color-accent)] text-white font-semibold hover:bg-[var(--color-accent-hover)]"
+                        >
+                          Speichern
+                        </button>
+                      </div>
+                      <div className="space-y-2">
+                        {Object.keys(serverAccentDraft).length === 0 ? (
+                          <p className="text-sm text-gray-400">Keine server-spezifischen Farben hinterlegt.</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {Object.entries(serverAccentDraft).map(([id, color]) => (
+                              <div
+                                key={id}
+                                className="flex items-center gap-3 bg-[var(--color-surface-alt)] border border-[var(--color-border)] rounded-xl px-3 py-2"
+                              >
+                                <div className="w-10 h-10 rounded-lg border border-[var(--color-border)]" style={{ background: color }} />
+                                <div className="flex-1 text-sm text-[color:var(--color-text)]">Server {id}</div>
+                                <button
+                                  onClick={() => handleRemoveServerAccent(Number(id))}
+                                  className="text-xs text-red-300 hover:text-red-200"
+                                >
+                                  Entfernen
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
