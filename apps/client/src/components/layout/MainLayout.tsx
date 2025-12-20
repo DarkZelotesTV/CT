@@ -27,7 +27,7 @@ import { CommandPalette } from '../modals/CommandPalette';
 import { useVoice, type VoiceContextType } from '../../features/voice';
 import { useOnboardingReplay, type OnboardingReplayKey } from '../../features/onboarding/useOnboardingReplay';
 import { storage } from '../../shared/config/storage';
-import { useSettings } from '../../context/SettingsContext';
+import { defaultHotkeySettings, useSettings } from '../../context/SettingsContext';
 import { applyAppTheme, buildAppTheme } from '../../theme/appTheme';
 
 const defaultChannelWidth = 256;
@@ -45,6 +45,54 @@ const getFocusableElements = (container: HTMLElement) =>
   Array.from(container.querySelectorAll<HTMLElement>(focusableSelectors)).filter(
     (el) => !el.hasAttribute('aria-hidden') && el.tabIndex !== -1
   );
+
+const normalizeHotkey = (value: string | null | undefined) => value?.replace(/\s+/g, '').toLowerCase() ?? null;
+
+const parseHotkey = (value: string | null | undefined) => {
+  const normalized = normalizeHotkey(value);
+  if (!normalized) return null;
+
+  const parts = normalized.split('+');
+  const modifiers = new Set<string>();
+  let key: string | null = null;
+
+  parts.forEach((part) => {
+    if (part === 'ctrl' || part === 'control' || part === 'cmd' || part === 'meta') {
+      modifiers.add('ctrl');
+      return;
+    }
+    if (part === 'alt' || part === 'option') {
+      modifiers.add('alt');
+      return;
+    }
+    if (part === 'shift') {
+      modifiers.add('shift');
+      return;
+    }
+    key = part;
+  });
+
+  if (!key) return null;
+  return { key, modifiers };
+};
+
+const eventMatchesHotkey = (event: KeyboardEvent, hotkey: string | null | undefined) => {
+  const parsed = parseHotkey(hotkey);
+  if (!parsed) return false;
+
+  const eventKey = event.key.toLowerCase();
+  const eventModifiers = new Set<string>();
+  if (event.ctrlKey || event.metaKey) eventModifiers.add('ctrl');
+  if (event.altKey) eventModifiers.add('alt');
+  if (event.shiftKey) eventModifiers.add('shift');
+
+  if (eventKey !== parsed.key) return false;
+  if (eventModifiers.size !== parsed.modifiers.size) return false;
+  for (const mod of parsed.modifiers) {
+    if (!eventModifiers.has(mod)) return false;
+  }
+  return true;
+};
 
 interface Channel {
   id: number;
@@ -79,6 +127,7 @@ export const MainLayout = () => {
   const layoutRef = useRef<HTMLDivElement>(null);
   const mobileNavRef = useRef<HTMLDivElement>(null);
   const memberSheetRef = useRef<HTMLDivElement>(null);
+  const mainContentRef = useRef<HTMLDivElement>(null);
   const dragState = useRef<{ startX: number; startWidth: number }>({ startX: 0, startWidth: 0 });
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -128,6 +177,19 @@ export const MainLayout = () => {
         ? settings.theme.serverAccents?.[selectedServerId] ?? settings.theme.accentColor
         : settings.theme.accentColor,
     [selectedServerId, settings.theme]
+  );
+
+  const resolvedHotkeys = useMemo(
+    () => ({
+      commandPalette:
+        settings.hotkeys.commandPalette ?? defaultHotkeySettings.commandPalette,
+      toggleMembers: settings.hotkeys.toggleMembers ?? defaultHotkeySettings.toggleMembers,
+      toggleNavigation:
+        settings.hotkeys.toggleNavigation ?? defaultHotkeySettings.toggleNavigation,
+      skipToContent:
+        settings.hotkeys.skipToContent ?? defaultHotkeySettings.skipToContent,
+    }),
+    [settings.hotkeys]
   );
 
   useEffect(() => {
@@ -181,6 +243,11 @@ export const MainLayout = () => {
       return;
     }
     container.focus({ preventScroll: true });
+  }, []);
+
+  const focusMainContent = useCallback(() => {
+    if (!mainContentRef.current) return;
+    mainContentRef.current.focus({ preventScroll: false });
   }, []);
 
   const recordPreviousFocus = useCallback(() => {
@@ -342,32 +409,69 @@ export const MainLayout = () => {
   }, [focusContainer, showMemberSheet]);
 
   useEffect(() => {
-    if (showMobileNav || showMemberSheet) {
+    if (showCommandPalette) {
+      recordPreviousFocus();
+    }
+  }, [recordPreviousFocus, showCommandPalette]);
+
+  useEffect(() => {
+    if (showMobileNav || showMemberSheet || showCommandPalette) {
       return;
     }
     if (previousFocusRef.current) {
       previousFocusRef.current.focus();
       previousFocusRef.current = null;
     }
-  }, [showMemberSheet, showMobileNav]);
+  }, [showCommandPalette, showMemberSheet, showMobileNav]);
 
   useEffect(() => {
-    const handler = (event: KeyboardEvent) => {
+    const handleGlobalHotkeys = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
         return;
       }
 
-      const key = event.key.toLowerCase();
-      if ((event.metaKey || event.ctrlKey) && (key === 'k' || key === 'p')) {
+      if (eventMatchesHotkey(event, resolvedHotkeys.commandPalette)) {
         event.preventDefault();
+        recordPreviousFocus();
         setShowCommandPalette(true);
+        return;
+      }
+
+      if (eventMatchesHotkey(event, resolvedHotkeys.toggleNavigation)) {
+        if (typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT) {
+          event.preventDefault();
+          setShowMobileNav((prev) => {
+            if (!prev) recordPreviousFocus();
+            return !prev;
+          });
+        }
+        return;
+      }
+
+      if (eventMatchesHotkey(event, resolvedHotkeys.toggleMembers)) {
+        if (!selectedServerId) return;
+        event.preventDefault();
+        if (typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT) {
+          setShowMemberSheet((prev) => {
+            if (!prev) recordPreviousFocus();
+            return !prev;
+          });
+          return;
+        }
+        setShowRightSidebar((prev) => !prev);
+        return;
+      }
+
+      if (eventMatchesHotkey(event, resolvedHotkeys.skipToContent)) {
+        event.preventDefault();
+        focusMainContent();
       }
     };
 
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, []);
+    document.addEventListener('keydown', handleGlobalHotkeys);
+    return () => document.removeEventListener('keydown', handleGlobalHotkeys);
+  }, [focusMainContent, recordPreviousFocus, resolvedHotkeys, selectedServerId]);
 
   useEffect(() => {
     if (!showMobileNav && !showMemberSheet) return;
@@ -638,6 +742,16 @@ export const MainLayout = () => {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
+      <a
+        href="#main-content"
+        onClick={(event) => {
+          event.preventDefault();
+          focusMainContent();
+        }}
+        className="sr-only focus:not-sr-only focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400 absolute top-2 left-2 z-[70] bg-[var(--color-surface)] text-white px-3 py-2 rounded-md border border-[var(--color-border)] shadow-lg"
+      >
+        {t('layout.skipToContent', { defaultValue: 'Skip to content' })}
+      </a>
       {isDesktop && <TitleBar serverName={serverName} channel={activeChannel} showRightSidebar={showRightSidebar} onToggleRightSidebar={() => setShowRightSidebar((v) => !v)} onOpenServerSettings={handleOpenServerSettings} />}
 
       {/* --- GLOBAL MODALS --- */}
@@ -752,12 +866,17 @@ export const MainLayout = () => {
       </div>
 
       {/* === MAIN CONTENT AREA === */}
-      <div className="flex-1 flex flex-col min-w-0 relative h-full py-3 px-3 overflow-hidden">
+      <div
+        ref={mainContentRef}
+        id="main-content"
+        tabIndex={-1}
+        className="flex-1 flex flex-col min-w-0 relative h-full py-3 px-3 overflow-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+      >
         {/* MOBILE HEADER */}
         <div className="lg:hidden flex items-center gap-3 mb-3 px-1">
-            <button 
+            <button
                 onClick={() => setShowMobileNav(true)}
-                className="p-2 bg-[#1a1b1e] rounded-xl border border-white/10 text-white shadow-lg active:scale-95 transition-transform"
+                className="p-2 bg-[#1a1b1e] rounded-xl border border-white/10 text-white shadow-lg active:scale-95 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
             >
                 <Menu size={20} />
             </button>
@@ -765,9 +884,9 @@ export const MainLayout = () => {
                 {activeChannel?.name || "Chat"}
             </span>
             {selectedServerId && (
-                <button 
+                <button
                     onClick={() => setShowMemberSheet(true)}
-                    className="ml-auto p-2 bg-[#1a1b1e] rounded-xl border border-white/10 text-white shadow-lg"
+                    className="ml-auto p-2 bg-[#1a1b1e] rounded-xl border border-white/10 text-white shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                 >
                     <Users size={20} />
                 </button>
@@ -782,7 +901,7 @@ export const MainLayout = () => {
         {selectedServerId && (
           <button
             onClick={() => setShowRightSidebar(!showRightSidebar)}
-            className="hidden lg:flex absolute right-3 top-1/2 -translate-y-1/2 z-30 w-6 h-12 bg-black/50 hover:bg-indigo-600 rounded-l-xl backdrop-blur-md items-center justify-center text-white/50 hover:text-white transition-all cursor-pointer shadow-lg"
+            className="hidden lg:flex absolute right-3 top-1/2 -translate-y-1/2 z-30 w-6 h-12 bg-black/50 hover:bg-indigo-600 rounded-l-xl backdrop-blur-md items-center justify-center text-white/50 hover:text-white transition-all cursor-pointer shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
             style={{ right: showRightSidebar ? 12 : 12 }}
           >
             {showRightSidebar ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}

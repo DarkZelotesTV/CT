@@ -72,6 +72,8 @@ export const TitleBar = ({
   const controls = useMemo(getControls, []);
   const { t } = useTranslation();
   const { slots } = useTopBar();
+  const focusRing =
+    'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500';
 
   const [state, setState] = useState<WindowState>({
     isMaximized: false,
@@ -116,13 +118,14 @@ export const TitleBar = ({
     : t('titlebar.searchPlaceholderFallback', { defaultValue: 'Suchen…' });
 
   const windowBtnBase =
-    'no-drag h-8 w-10 flex items-center justify-center text-gray-300 hover:bg-white/10 active:bg-white/20 transition';
+    'no-drag h-8 w-10 flex items-center justify-center text-gray-300 hover:bg-white/10 active:bg-white/20 transition ' +
+    focusRing;
 
   const left = slots.left ?? (
     <div className="flex items-center gap-2 min-w-0">
       <button
         type="button"
-        className="no-drag h-7 w-7 rounded-md bg-white/5 border border-white/10 hover:bg-white/10 flex items-center justify-center"
+        className={`no-drag h-7 w-7 rounded-md bg-white/5 border border-white/10 hover:bg-white/10 flex items-center justify-center ${focusRing}`}
         aria-label={t('titlebar.openServerSettings', { defaultValue: 'Server-Einstellungen' })}
         title={t('titlebar.openServerSettings', { defaultValue: 'Server-Einstellungen' })}
         onClick={onOpenServerSettings}
@@ -169,7 +172,7 @@ export const TitleBar = ({
       <div className="flex items-center gap-1">
         <button
           type="button"
-          className="no-drag h-8 w-8 rounded-md hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
+          className={`no-drag h-8 w-8 rounded-md hover:bg-white/10 active:bg-white/20 flex items-center justify-center ${focusRing}`}
           aria-label={t('titlebar.copyChannel', { defaultValue: 'Channel-Link kopieren' })}
           title={t('titlebar.copyChannel', { defaultValue: 'Channel-Link kopieren' })}
           onClick={() => void navigator.clipboard?.writeText(title)}
@@ -179,7 +182,7 @@ export const TitleBar = ({
 
         <button
           type="button"
-          className="no-drag h-8 w-8 rounded-md hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
+          className={`no-drag h-8 w-8 rounded-md hover:bg-white/10 active:bg-white/20 flex items-center justify-center ${focusRing}`}
           aria-label={t('titlebar.pins', { defaultValue: 'Pins' })}
           title={t('titlebar.pins', { defaultValue: 'Pins' })}
         >
@@ -188,7 +191,7 @@ export const TitleBar = ({
 
         <button
           type="button"
-          className="no-drag h-8 w-8 rounded-md hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
+          className={`no-drag h-8 w-8 rounded-md hover:bg-white/10 active:bg-white/20 flex items-center justify-center ${focusRing}`}
           aria-label={t('titlebar.notifications', { defaultValue: 'Benachrichtigungen' })}
           title={t('titlebar.notifications', { defaultValue: 'Benachrichtigungen' })}
         >
@@ -197,7 +200,7 @@ export const TitleBar = ({
 
         <button
           type="button"
-          className="no-drag h-8 w-8 rounded-md hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
+          className={`no-drag h-8 w-8 rounded-md hover:bg-white/10 active:bg-white/20 flex items-center justify-center ${focusRing}`}
           aria-label={t('titlebar.members', { defaultValue: 'Mitglieder' })}
           title={t('titlebar.members', { defaultValue: 'Mitglieder' })}
           onClick={onToggleRightSidebar}
@@ -211,7 +214,7 @@ export const TitleBar = ({
 
         <button
           type="button"
-          className="no-drag h-8 w-8 rounded-md hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
+          className={`no-drag h-8 w-8 rounded-md hover:bg-white/10 active:bg-white/20 flex items-center justify-center ${focusRing}`}
           aria-label={t('titlebar.inbox', { defaultValue: 'Inbox' })}
           title={t('titlebar.inbox', { defaultValue: 'Inbox' })}
         >
@@ -220,7 +223,7 @@ export const TitleBar = ({
 
         <button
           type="button"
-          className="no-drag h-8 w-8 rounded-md hover:bg-white/10 active:bg-white/20 flex items-center justify-center"
+          className={`no-drag h-8 w-8 rounded-md hover:bg-white/10 active:bg-white/20 flex items-center justify-center ${focusRing}`}
           aria-label={t('titlebar.help', { defaultValue: 'Hilfe' })}
           title={t('titlebar.help', { defaultValue: 'Hilfe' })}
         >

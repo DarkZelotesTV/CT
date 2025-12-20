@@ -103,6 +103,14 @@ vi.mock('../../context/SettingsContext', () => ({
   useSettings: () => ({
     settings: {
       theme: { mode: 'dark', accentColor: '#6366f1', serverAccents: {} },
+      hotkeys: {
+        pushToTalk: null,
+        muteToggle: null,
+        commandPalette: 'Ctrl+K',
+        toggleMembers: 'Ctrl+Shift+M',
+        toggleNavigation: 'Ctrl+Shift+D',
+        skipToContent: 'Alt+S',
+      },
     },
   }),
 }));

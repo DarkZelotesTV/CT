@@ -19,7 +19,7 @@ import {
   Volume2,
   X,
 } from 'lucide-react';
-import { useSettings } from '../../context/SettingsContext';
+import { defaultHotkeySettings, useSettings } from '../../context/SettingsContext';
 import { useVoice } from '../../features/voice';
 import { clearIdentity, computeFingerprint, createIdentity, formatFingerprint, loadIdentity, saveIdentity, type IdentityFile } from '../../auth/identity';
 import { buildBackupPayload, getBackupFilename, parseIdentityBackup } from '../../auth/identityBackup';
@@ -116,6 +116,18 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
   const [videoInputId, setVideoInputId] = useState(settings.devices.videoInputId || '');
   const [pushToTalk, setPushToTalkHotkey] = useState(settings.hotkeys.pushToTalk || '');
   const [muteToggle, setMuteToggle] = useState(settings.hotkeys.muteToggle || '');
+  const [commandPaletteHotkey, setCommandPaletteHotkey] = useState(
+    settings.hotkeys.commandPalette ?? defaultHotkeySettings.commandPalette
+  );
+  const [toggleMembersHotkey, setToggleMembersHotkey] = useState(
+    settings.hotkeys.toggleMembers ?? defaultHotkeySettings.toggleMembers
+  );
+  const [toggleNavigationHotkey, setToggleNavigationHotkey] = useState(
+    settings.hotkeys.toggleNavigation ?? defaultHotkeySettings.toggleNavigation
+  );
+  const [skipToContentHotkey, setSkipToContentHotkey] = useState(
+    settings.hotkeys.skipToContent ?? defaultHotkeySettings.skipToContent
+  );
   const [deviceLists, setDeviceLists] = useState<DeviceLists>({ audioInputs: [], audioOutputs: [], videoInputs: [] });
   const [deviceError, setDeviceError] = useState<string | null>(null);
   const [pushToTalkEnabled, setPushToTalkEnabled] = useState(usePushToTalk);
@@ -364,6 +376,10 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
     updateHotkeys({
       pushToTalk: pushToTalk || null,
       muteToggle: muteToggle || null,
+      commandPalette: commandPaletteHotkey || null,
+      toggleMembers: toggleMembersHotkey || null,
+      toggleNavigation: toggleNavigationHotkey || null,
+      skipToContent: skipToContentHotkey || null,
     });
     updateTheme({ mode: themeMode, accentColor, serverAccents: serverAccentDraft });
     await setPushToTalkEnabledFlag(pushToTalkEnabled);
@@ -750,10 +766,38 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
               {activeCategory === 'hotkeys' && (
                 <div className="space-y-3 animate-in fade-in zoom-in-95 duration-200">
                   <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Hotkeys</div>
-                  <p className="text-gray-400 text-sm">Lege Tasten für Push-to-Talk oder schnelles Muten fest.</p>
+                  <p className="text-gray-400 text-sm">
+                    Lege Tasten für Push-to-Talk, Schnelles Muten und Navigation fest. Leere Felder deaktivieren den jeweiligen
+                    Hotkey.
+                  </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <HotkeyInput label="Push-to-Talk" value={pushToTalk} onChange={setPushToTalkHotkey} />
                     <HotkeyInput label="Mute Toggle" value={muteToggle} onChange={setMuteToggle} />
+                    <HotkeyInput
+                      label="Command Palette"
+                      value={commandPaletteHotkey}
+                      onChange={setCommandPaletteHotkey}
+                    />
+                    <HotkeyInput
+                      label="Mitglieder umschalten"
+                      value={toggleMembersHotkey}
+                      onChange={setToggleMembersHotkey}
+                    />
+                    <HotkeyInput
+                      label="Navigation umschalten"
+                      value={toggleNavigationHotkey}
+                      onChange={setToggleNavigationHotkey}
+                    />
+                    <HotkeyInput
+                      label="Skip to content"
+                      value={skipToContentHotkey}
+                      onChange={setSkipToContentHotkey}
+                    />
+                  </div>
+                  <div className="text-[11px] text-amber-200 bg-amber-400/10 border border-amber-400/40 rounded-xl p-3">
+                    <strong className="font-semibold">Hinweis zu Browser-Shortcuts:</strong> Einige Kombinationen werden ggf.
+                    vom Browser abgefangen (z. B. Ctrl+K für die Adressleiste oder Ctrl+Shift+D zum Speichern aller Tabs).
+                    Passe die Hotkeys an, wenn sie nicht ausgelöst werden.
                   </div>
                 </div>
               )}
