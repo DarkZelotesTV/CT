@@ -134,7 +134,29 @@
     "muteMic": "Mute microphone only",
     "unmuteAll": "Turn audio and mic back on",
     "muteAll": "Mute all inputs and outputs",
-    "settings": "Settings"
+    "settings": "Settings",
+    "feedback": "Feedback"
+  },
+  "feedbackModal": {
+    "title": "Send feedback",
+    "description": "Share bugs, ideas or anything else that helps us improve.",
+    "categoryLabel": "Category",
+    "categories": {
+      "bug": "Bug or issue",
+      "idea": "Idea or request",
+      "other": "Other"
+    },
+    "messageLabel": "What happened?",
+    "messagePlaceholder": "Describe what you experienced, what you expected, and any steps to reproduce...",
+    "messageHelp": "Details help us react faster. No personal data unless you include it yourself.",
+    "screenshotLabel": "Screenshot (optional)",
+    "screenshotPlaceholder": "Attach a screenshot",
+    "screenshotHelp": "Images are converted locally before sending and help us see what you see.",
+    "removeScreenshot": "Remove",
+    "submit": "Send feedback",
+    "success": "Feedback sent. Thank you!",
+    "error": "Could not send feedback.",
+    "errorFallback": "Something went wrong. Please try again."
   },
   "titlebar": {
     "home": "Home",

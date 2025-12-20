@@ -1,16 +1,18 @@
 import { useMemo, useState } from 'react';
-import { Headphones, MicOff, Settings } from 'lucide-react';
+import { Headphones, MessageSquare, MicOff, Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context/SettingsContext';
 import { UserSettingsModal } from '../modals/UserSettingsModal';
 import { useVoice } from '../../features/voice';
 import { useSocket } from '../../context/SocketContext';
 import { storage } from '../../shared/config/storage';
+import { FeedbackModal } from '../modals/FeedbackModal';
 
 export const UserBottomBar = () => {
   const { settings, updateLocale } = useSettings();
   const user = useMemo(() => storage.get('cloverUser'), []);
   const [showSettings, setShowSettings] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
   const { t } = useTranslation();
 
   const { muted, micMuted, setMuted, setMicMuted } = useVoice();
@@ -81,6 +83,14 @@ export const UserBottomBar = () => {
             <Headphones size={14} />
           </button>
           <button
+            className="px-2 py-1 rounded text-gray-100 bg-cyan-600/20 hover:bg-cyan-600/30 border border-cyan-600/30 text-[11px] font-semibold flex items-center gap-1"
+            onClick={() => setShowFeedback(true)}
+            title={t('userBottomBar.feedback')}
+          >
+            <MessageSquare size={14} aria-hidden="true" />
+            <span className="hidden sm:inline">{t('userBottomBar.feedback')}</span>
+          </button>
+          <button
             className="p-1 hover:bg-cyan-900/30 rounded text-gray-500 hover:text-cyan-400"
             onClick={() => setShowSettings(true)}
             title={t('userBottomBar.settings')}
@@ -91,6 +101,7 @@ export const UserBottomBar = () => {
       </div>
 
       {showSettings && <UserSettingsModal onClose={() => setShowSettings(false)} />}
+      {showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} />}
     </>
   );
 };
