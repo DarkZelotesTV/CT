@@ -4,6 +4,7 @@ import classNames from 'classnames';
 
 import { apiFetch } from '../../api/http';
 import type { ApiFetchInit } from '../../api/http';
+import { ModalLayout } from './ModalLayout';
 
 interface PaletteServer {
   id: number;
@@ -273,80 +274,77 @@ export const CommandPalette = ({
   const activeId = filtered[activeIndex]?.id;
 
   return (
-    <div
-      className="fixed left-0 right-0 bottom-0 top-[var(--ct-titlebar-height)] z-[2400] flex items-start justify-center p-6"
-      role="dialog"
-      aria-modal="true"
+    <ModalLayout
+      title="Command palette"
+      description="Search servers, channels, members, and commands."
+      onClose={onClose}
+      onOverlayClick={onClose}
+      bodyClassName="p-0"
     >
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} aria-hidden="true" />
-      <div className="relative w-full max-w-2xl bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-2xl overflow-hidden" role="document">
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-surface-alt)]">
-          <Search size={18} className="text-gray-400" aria-hidden="true" />
-          <input
-            ref={inputRef}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyNavigation}
-            placeholder="Search servers, channels, members, commands..."
-            className="flex-1 bg-transparent outline-none text-white placeholder:text-gray-500"
-            aria-label="Command palette search"
-          />
-          <div className="text-xs text-gray-500 bg-white/5 rounded-md px-2 py-1 border border-white/10" aria-hidden="true">
-            Ctrl/Cmd + K
-          </div>
-        </div>
-
-        <div className="max-h-[60vh] overflow-y-auto" role="listbox" aria-activedescendant={activeId}>
-          {loading && (
-            <div className="px-4 py-3 text-sm text-gray-400">Loading...</div>
-          )}
-
-          {!loading && filtered.length === 0 && (
-            <div className="px-4 py-6 text-center text-sm text-gray-400">No results found</div>
-          )}
-
-          {!loading && filtered.length > 0 && (
-            <div className="divide-y divide-[var(--color-border)]">
-              {filtered.map((item, index) => {
-                const isActive = index === activeIndex;
-                return (
-                  <div
-                    key={item.id}
-                    id={item.id}
-                    role="option"
-                    aria-selected={isActive}
-                    ref={(node) => {
-                      optionRefs.current[item.id] = node;
-                    }}
-                    className={classNames(
-                      'px-4 py-3 cursor-pointer flex items-center gap-3 transition-colors',
-                      isActive ? 'bg-white/10 text-white' : 'hover:bg-white/5 text-gray-200'
-                    )}
-                    onMouseEnter={() => setActiveIndex(index)}
-                    onClick={() => selectItem(item)}
-                  >
-                    <span className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-gray-300">
-                      {item.type === 'command' && <CommandIcon size={16} />}
-                      {item.type === 'server' && <Server size={16} />}
-                      {item.type === 'channel' && (item.badge === 'Voice' ? <Volume2 size={16} /> : <Hash size={16} />)}
-                      {item.type === 'member' && <Users size={16} />}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-semibold truncate">{item.label}</div>
-                      <div className="text-xs text-gray-400 truncate">{item.description}</div>
-                    </div>
-                    {item.badge && (
-                      <span className="text-[10px] uppercase tracking-wide text-gray-400 border border-white/10 rounded-full px-2 py-0.5">
-                        {item.badge}
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-surface-alt)]">
+        <Search size={18} className="text-gray-400" aria-hidden="true" />
+        <input
+          ref={inputRef}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={handleKeyNavigation}
+          placeholder="Search servers, channels, members, commands..."
+          className="flex-1 bg-transparent outline-none text-white placeholder:text-gray-500"
+          aria-label="Command palette search"
+        />
+        <div className="text-xs text-gray-500 bg-white/5 rounded-md px-2 py-1 border border-white/10" aria-hidden="true">
+          Ctrl/Cmd + K
         </div>
       </div>
-    </div>
+
+      <div className="max-h-[60vh] overflow-y-auto" role="listbox" aria-activedescendant={activeId}>
+        {loading && <div className="px-4 py-3 text-sm text-gray-400">Loading...</div>}
+
+        {!loading && filtered.length === 0 && (
+          <div className="px-4 py-6 text-center text-sm text-gray-400">No results found</div>
+        )}
+
+        {!loading && filtered.length > 0 && (
+          <div className="divide-y divide-[var(--color-border)]">
+            {filtered.map((item, index) => {
+              const isActive = index === activeIndex;
+              return (
+                <div
+                  key={item.id}
+                  id={item.id}
+                  role="option"
+                  aria-selected={isActive}
+                  ref={(node) => {
+                    optionRefs.current[item.id] = node;
+                  }}
+                  className={classNames(
+                    'px-4 py-3 cursor-pointer flex items-center gap-3 transition-colors',
+                    isActive ? 'bg-white/10 text-white' : 'hover:bg-white/5 text-gray-200'
+                  )}
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onClick={() => selectItem(item)}
+                >
+                  <span className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-gray-300">
+                    {item.type === 'command' && <CommandIcon size={16} />}
+                    {item.type === 'server' && <Server size={16} />}
+                    {item.type === 'channel' && (item.badge === 'Voice' ? <Volume2 size={16} /> : <Hash size={16} />)}
+                    {item.type === 'member' && <Users size={16} />}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold truncate">{item.label}</div>
+                    <div className="text-xs text-gray-400 truncate">{item.description}</div>
+                  </div>
+                  {item.badge && (
+                    <span className="text-[10px] uppercase tracking-wide text-gray-400 border border-white/10 rounded-full px-2 py-0.5">
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </ModalLayout>
   );
 };
