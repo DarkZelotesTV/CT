@@ -1,0 +1,30 @@
+<svg width="640" height="360" viewBox="0 0 640 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradIdentity" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#6366F1" stop-opacity="0.95" offset="0%"/>
+      <stop stop-color="#1F2937" stop-opacity="0.2" offset="100%"/>
+    </linearGradient>
+    <linearGradient id="gradAccent" x1="0" y1="0" x2="1" y2="0">
+      <stop stop-color="#22D3EE" offset="0%"/>
+      <stop stop-color="#A855F7" offset="100%"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" rx="28" fill="#0D0F18"/>
+  <rect x="28" y="32" width="584" height="296" rx="24" fill="url(#gradIdentity)" stroke="#4C51BF" stroke-opacity="0.2"/>
+  <rect x="64" y="72" width="160" height="160" rx="28" fill="#0B1120" stroke="#4C51BF" stroke-opacity="0.35"/>
+  <circle cx="144" cy="120" r="44" fill="#1D4ED8" fill-opacity="0.4" stroke="#22D3EE" stroke-opacity="0.6" stroke-width="8"/>
+  <circle cx="144" cy="120" r="18" fill="#C4D1FF"/>
+  <path d="M92 210C104 188 122 176 144 176C166 176 186 188 196 210" stroke="#C4D1FF" stroke-width="10" stroke-linecap="round"/>
+  <rect x="260" y="90" width="308" height="40" rx="12" fill="#111827" stroke="#22D3EE" stroke-opacity="0.4"/>
+  <rect x="260" y="150" width="240" height="18" rx="9" fill="#1F2937"/>
+  <rect x="260" y="190" width="210" height="18" rx="9" fill="#1F2937"/>
+  <rect x="260" y="230" width="280" height="18" rx="9" fill="#1F2937"/>
+  <rect x="260" y="270" width="180" height="18" rx="9" fill="#1F2937"/>
+  <rect x="276" y="98" width="54" height="24" rx="12" fill="url(#gradAccent)"/>
+  <rect x="260" y="150" width="140" height="18" rx="9" fill="url(#gradAccent)" fill-opacity="0.8"/>
+  <rect x="260" y="230" width="96" height="18" rx="9" fill="url(#gradAccent)" fill-opacity="0.8"/>
+  <circle cx="414" cy="210" r="62" fill="#111827" stroke="#22D3EE" stroke-opacity="0.35" stroke-width="8"/>
+  <path d="M414 160C444 160 468 184 468 214C468 244 444 268 414 268C384 268 360 244 360 214C360 184 384 160 414 160Z" fill="#0EA5E9" fill-opacity="0.3"/>
+  <path d="M392 214C392 201.297 402.297 191 415 191C427.703 191 438 201.297 438 214C438 226.703 427.703 237 415 237C402.297 237 392 226.703 392 214Z" fill="#C4D1FF"/>
+  <path d="M392 236C401.333 222.667 412 216 425 216C438 216 449.333 222.667 459 236" stroke="#C4D1FF" stroke-width="8" stroke-linecap="round"/>
+</svg>

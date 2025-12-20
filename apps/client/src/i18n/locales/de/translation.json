@@ -14,6 +14,13 @@
     "skip": "Überspringen",
     "next": "Weiter",
     "finish": "Los geht's",
+    "progressLabel": "Schritt {{index}} von {{total}}",
+    "actions": {
+      "identity": "Identität verwalten",
+      "servers": "Server erstellen",
+      "voice": "Voice beitreten",
+      "settings": "Einstellungen öffnen"
+    },
     "steps": {
       "identity": {
         "title": "Deine Clover Identity",
