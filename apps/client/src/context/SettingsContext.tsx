@@ -16,6 +16,19 @@ export type DeviceSettings = {
 export type HotkeySettings = {
   pushToTalk: string | null;
   muteToggle: string | null;
+  commandPalette: string | null;
+  toggleMembers: string | null;
+  toggleNavigation: string | null;
+  skipToContent: string | null;
+};
+
+export const defaultHotkeySettings: HotkeySettings = {
+  pushToTalk: null,
+  muteToggle: null,
+  commandPalette: 'Ctrl+K',
+  toggleMembers: 'Ctrl+Shift+M',
+  toggleNavigation: 'Ctrl+Shift+D',
+  skipToContent: 'Alt+S',
 };
 
 export type ThemeSettings = {
@@ -57,10 +70,7 @@ const defaultSettings: SettingsState = {
     audioOutputId: null,
     videoInputId: null,
   },
-  hotkeys: {
-    pushToTalk: null,
-    muteToggle: null,
-  },
+  hotkeys: { ...defaultHotkeySettings },
   theme: {
     mode: 'dark',
     accentColor: '#6366f1',
