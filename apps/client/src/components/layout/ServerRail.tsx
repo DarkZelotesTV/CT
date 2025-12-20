@@ -80,6 +80,14 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
       });
   }, [pinnedLocalIds, serverOrder, servers]);
 
+  const resolveIconUrl = useCallback((iconUrl?: string, instanceUrl?: string) => {
+    if (!iconUrl) return '';
+    if (/^https?:\/\//i.test(iconUrl)) return iconUrl;
+    const base = (instanceUrl && normalizeInstanceUrl(instanceUrl)) || getServerUrl();
+    const normalized = iconUrl.startsWith('/') ? iconUrl : `/${iconUrl}`;
+    return `${base}${normalized}`;
+  }, []);
+
   const persistOrder = useCallback((next: number[]) => {
     setServerOrder(next);
     storage.set('serverRailOrder', next);
@@ -455,7 +463,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
 
                 {server.icon_url ? (
                   <img
-                    src={server.icon_url}
+                    src={resolveIconUrl(server.icon_url)}
                     alt={name}
                     className={`w-full h-full object-cover transition-all ${selectedServerId === server.id ? 'rounded-[16px]' : 'rounded-[24px] group-hover:rounded-[16px]'}`}
                   />
@@ -509,7 +517,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
 
                   {p.iconUrl ? (
                     <img
-                      src={p.iconUrl}
+                      src={resolveIconUrl(p.iconUrl, p.instanceUrl)}
                       alt={p.name ?? 'Remote'}
                       className="w-full h-full object-cover transition-all rounded-[24px] group-hover:rounded-[16px]"
                     />

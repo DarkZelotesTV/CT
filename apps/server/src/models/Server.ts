@@ -4,7 +4,7 @@ import { sequelize } from '../config/database';
 export class Server extends Model {
   public id!: number;
   public name!: string;
-  public icon_url!: string;
+  public icon_url!: string | null;
   public owner_id!: number;
   public fallback_channel_id!: number | null;
 }
