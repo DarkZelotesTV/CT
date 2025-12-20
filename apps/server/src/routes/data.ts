@@ -279,12 +279,13 @@ router.put('/servers/:serverId', authenticateRequest, async (req: AuthRequest, r
 
     const { server } = await ensureAdminOrOwner(serverId, userId);
 
-    const { name, iconPath, icon_url, iconUrl, fallbackChannelId } = req.body as {
+    const { name, iconPath, icon_url, iconUrl, fallbackChannelId, dragAndDropEnabled } = req.body as {
       name?: string;
       iconPath?: string | null;
       icon_url?: string | null;
       iconUrl?: string | null;
       fallbackChannelId?: number | null;
+      dragAndDropEnabled?: boolean;
     };
 
     if (typeof name === 'string' && name.trim()) server.name = name.trim();
@@ -313,6 +314,10 @@ router.put('/servers/:serverId', authenticateRequest, async (req: AuthRequest, r
         }
         server.fallback_channel_id = fallbackChannelId;
       }
+    }
+
+    if (typeof dragAndDropEnabled !== 'undefined') {
+      server.drag_drop_enabled = Boolean(dragAndDropEnabled);
     }
     await server.save();
 
@@ -359,7 +364,8 @@ router.post('/servers', authenticateRequest, async (req: AuthRequest, res) => {
     const server = await Server.create({
       name,
       owner_id: req.user!.id,
-      icon_url: `https://ui-avatars.com/api/?name=${name}&background=random`
+      icon_url: `https://ui-avatars.com/api/?name=${name}&background=random`,
+      drag_drop_enabled: true,
     });
 
     // Owner automatisch als Mitglied hinzufügen

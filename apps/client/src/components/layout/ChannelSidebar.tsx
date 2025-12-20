@@ -79,6 +79,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
+  const [serverOwnerId, setServerOwnerId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [contextMenu, setContextMenu] = useState<{
@@ -97,6 +98,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
     next: { categories: Category[]; uncategorized: Channel[] };
   } | null>(null);
   const [isSavingStructure, setIsSavingStructure] = useState(false);
+  const [dragAndDropEnabled, setDragAndDropEnabled] = useState(true);
 
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const retryTimer = useRef<NodeJS.Timeout | null>(null);
@@ -180,6 +182,8 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
           setServerName(current.name);
           setServerThemeSource(current.settings || current.theme);
           setServerTheme(deriveServerThemeFromSettings(current.settings || current.theme, accentColor));
+          setServerOwnerId(current.owner_id ?? null);
+          setDragAndDropEnabled(current.drag_drop_enabled ?? current.dragAndDropEnabled ?? true);
         }
         const structRes = await apiFetch<{ categories: Category[]; uncategorized: Channel[]; fallbackChannelId?: number | null }>(`/api/servers/${serverId}/structure`);
         setCategories(structRes.categories);
@@ -325,7 +329,15 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   };
 
   const normalizedSearchTerm = debouncedSearchTerm.trim().toLowerCase();
-  const dragDisabled = Boolean(normalizedSearchTerm);
+  const isServerAdmin = useMemo(
+    () =>
+      Boolean(
+        (localUser?.id && serverOwnerId === localUser.id) || permissions.manage_channels || permissions.manage_roles
+      ),
+    [localUser?.id, permissions.manage_channels, permissions.manage_roles, serverOwnerId]
+  );
+  const canDrag = !normalizedSearchTerm && dragAndDropEnabled && isServerAdmin;
+  const dragDisabled = !canDrag;
   const matchesSearch = useCallback(
     (channel: Channel) => {
       if (!normalizedSearchTerm) return true;
@@ -637,6 +649,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
     const hasPresence = displayParticipants.length > 0;
 
     const dragHandleLabel = t('channelSidebar.reorderChannel', { channel: c.name }) ?? `Kanal ${c.name} verschieben`;
+    const handleProps = dragMeta?.isDisabled ? {} : dragMeta?.handleProps;
 
     return (
       <div key={c.id} className="relative" ref={dragMeta?.setNodeRef} style={dragMeta?.style}>
@@ -665,7 +678,8 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
               aria-label={dragHandleLabel}
               aria-roledescription="Reorder handle"
               aria-disabled={dragMeta.isDisabled}
-              {...dragMeta.handleProps}
+              disabled={dragMeta.isDisabled}
+              {...handleProps}
             >
               <GripVertical size={14} aria-hidden />
             </button>
@@ -955,71 +969,76 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
                       data={{ type: 'category', categoryId: cat.id }}
                       disabled={dragDisabled}
                     >
-                      {(dragMeta) => (
-                        <div className={`mt-4 ${dragMeta.isDragging ? 'opacity-80' : ''}`} ref={dragMeta.setNodeRef} style={dragMeta.style}>
-                          <div className="flex items-center justify-between group no-drag mb-1 pl-1 pr-2 gap-2">
-                            <div className="flex items-center gap-2">
+                      {(dragMeta) => {
+                        const handleProps = dragMeta.isDisabled ? {} : dragMeta.handleProps;
+
+                        return (
+                          <div className={`mt-4 ${dragMeta.isDragging ? 'opacity-80' : ''}`} ref={dragMeta.setNodeRef} style={dragMeta.style}>
+                            <div className="flex items-center justify-between group no-drag mb-1 pl-1 pr-2 gap-2">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  className={`flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-gray-600 hover:text-gray-300 focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317] ${dragMeta.isDisabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-white/5'}`}
+                                  aria-roledescription="Reorder handle"
+                                  aria-label={t('channelSidebar.reorderCategory', { category: cat.name }) ?? `Kategorie ${cat.name} verschieben`}
+                                  aria-disabled={dragMeta.isDisabled}
+                                  disabled={dragMeta.isDisabled}
+                                  {...handleProps}
+                                >
+                                  <GripVertical size={14} aria-hidden />
+                                </button>
+                                <button
+                                  type="button"
+                                  className="flex items-center gap-1 text-gray-500 text-xs font-bold uppercase hover:text-gray-300 rounded-md px-1 py-0.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317] focus-visible:text-gray-200"
+                                  onClick={() => toggleCategory(cat.id)}
+                                  aria-expanded={!isCollapsed}
+                                  aria-controls={`category-${cat.id}-channels`}
+                                  aria-label={t('channelSidebar.toggleCategory', { category: cat.name })}
+                                  data-no-drag
+                                >
+                                  {isCollapsed ? <ChevronRight size={10} /> : <ChevronDown size={10} />}
+                                  {cat.name}
+                                </button>
+                              </div>
                               <button
                                 type="button"
-                                className={`flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-gray-600 hover:text-gray-300 focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317] ${dragMeta.isDisabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-white/5'}`}
-                                aria-roledescription="Reorder handle"
-                                aria-label={t('channelSidebar.reorderCategory', { category: cat.name }) ?? `Kategorie ${cat.name} verschieben`}
-                                aria-disabled={dragMeta.isDisabled}
-                                {...dragMeta.handleProps}
+                                className="no-drag p-1 rounded-md text-gray-500 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-white hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317]"
+                                title={t('channelSidebar.createChannelInCategory', { category: cat.name })}
+                                aria-label={t('channelSidebar.createChannelInCategory', { category: cat.name })}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setCreateType('text');
+                                  setCreateCategoryId(cat.id);
+                                  setShowCreateModal(true);
+                                }}
                               >
-                                <GripVertical size={14} aria-hidden />
-                              </button>
-                              <button
-                                type="button"
-                                className="flex items-center gap-1 text-gray-500 text-xs font-bold uppercase hover:text-gray-300 rounded-md px-1 py-0.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317] focus-visible:text-gray-200"
-                                onClick={() => toggleCategory(cat.id)}
-                                aria-expanded={!isCollapsed}
-                                aria-controls={`category-${cat.id}-channels`}
-                                aria-label={t('channelSidebar.toggleCategory', { category: cat.name })}
-                                data-no-drag
-                              >
-                                {isCollapsed ? <ChevronRight size={10} /> : <ChevronDown size={10} />}
-                                {cat.name}
+                                <Plus size={14} />
                               </button>
                             </div>
-                            <button
-                              type="button"
-                              className="no-drag p-1 rounded-md text-gray-500 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-white hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121317]"
-                              title={t('channelSidebar.createChannelInCategory', { category: cat.name })}
-                              aria-label={t('channelSidebar.createChannelInCategory', { category: cat.name })}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setCreateType('text');
-                                setCreateCategoryId(cat.id);
-                                setShowCreateModal(true);
-                              }}
-                            >
-                              <Plus size={14} />
-                            </button>
+                            {!isCollapsed && (
+                              <SortableContext
+                                id={`${parentKey}-context`}
+                                items={cat.channels.map((c) => channelKey(c.id, parentKey))}
+                                strategy={verticalListSortingStrategy}
+                              >
+                                <div id={`category-${cat.id}-channels`}>
+                                  {cat.channels.map((c) => (
+                                    <SortableWrapper
+                                      key={c.id}
+                                      item={c}
+                                      id={channelKey(c.id, parentKey)}
+                                      data={{ type: 'channel', channelId: c.id, parent: parentKey }}
+                                      disabled={dragDisabled}
+                                    >
+                                      {(channelMeta) => renderChannel(c, true, channelMeta)}
+                                    </SortableWrapper>
+                                  ))}
+                                </div>
+                              </SortableContext>
+                            )}
                           </div>
-                          {!isCollapsed && (
-                            <SortableContext
-                              id={`${parentKey}-context`}
-                              items={cat.channels.map((c) => channelKey(c.id, parentKey))}
-                              strategy={verticalListSortingStrategy}
-                            >
-                              <div id={`category-${cat.id}-channels`}>
-                                {cat.channels.map((c) => (
-                                  <SortableWrapper
-                                    key={c.id}
-                                    item={c}
-                                    id={channelKey(c.id, parentKey)}
-                                    data={{ type: 'channel', channelId: c.id, parent: parentKey }}
-                                    disabled={dragDisabled}
-                                  >
-                                    {(channelMeta) => renderChannel(c, true, channelMeta)}
-                                  </SortableWrapper>
-                                ))}
-                              </div>
-                            </SortableContext>
-                          )}
-                        </div>
-                      )}
+                        );
+                      }}
                     </SortableWrapper>
                   );
                 })}
