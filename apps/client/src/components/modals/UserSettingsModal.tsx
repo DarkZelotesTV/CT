@@ -24,6 +24,7 @@ import {
   User,
   X,
   Monitor,
+  type LucideIcon,
 } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { defaultHotkeySettings, useSettings } from '../../context/SettingsContext';
@@ -102,6 +103,7 @@ type DeviceLists = {
 };
 
 type CategoryId = 'profile' | 'appearance' | 'notifications' | 'devices' | 'hotkeys' | 'identity';
+type Category = { id: CategoryId; label: string; icon: LucideIcon };
 
 export const UserSettingsModal = ({
   onClose,
@@ -200,7 +202,7 @@ export const UserSettingsModal = ({
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
 
   // 'Talk & Audio' wurde in 'devices' integriert und entfernt
-  const categories = useMemo(
+  const categories = useMemo<Category[]>(
     () => [
       { id: 'profile', label: 'Profil', icon: Settings },
       { id: 'appearance', label: 'Design', icon: Palette },
