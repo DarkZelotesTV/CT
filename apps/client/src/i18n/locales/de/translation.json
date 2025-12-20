@@ -81,6 +81,7 @@
     "hangUp": "Auflegen",
     "disconnect": "Trennen",
     "microphone": "Mikrofon",
+    "micLevelLabel": "Dein Mikrofonpegel liegt bei {{level}}%",
     "systemMicrophone": "System Mikrofon",
     "camera": "Kamera",
     "defaultCamera": "Standard Kamera"

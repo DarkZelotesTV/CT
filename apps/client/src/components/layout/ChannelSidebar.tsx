@@ -123,6 +123,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
     isPublishingScreen,
     selectedAudioInputId,
     selectedVideoInputId,
+    localAudioLevel,
   } = useVoice();
   const { channelPresence } = useSocket();
 
@@ -512,6 +513,32 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
     [categories, dragDisabled, persistStructure, reorderChannels, uncategorized]
   );
 
+  const renderLocalMicLevel = (level: number) => {
+    const bars = [0.18, 0.38, 0.58, 0.78];
+    const percent = Math.round(level * 100);
+
+    return (
+      <div
+        className="ml-1 flex items-end gap-[2px]"
+        aria-live="polite"
+        aria-label={t('channelSidebar.micLevelLabel', { level: percent })}
+      >
+        <span className="sr-only">{t('channelSidebar.micLevelLabel', { level: percent })}</span>
+        {bars.map((threshold) => (
+          <div
+            key={threshold}
+            className="w-1 rounded-full bg-green-400 transition-[height,opacity] duration-150 ease-out"
+            style={{
+              height: `${4 + Math.max(0, level - threshold) * 26}px`,
+              opacity: level >= threshold - 0.05 ? 1 : 0.35,
+            }}
+            aria-hidden
+          />
+        ))}
+      </div>
+    );
+  };
+
   const renderChannel = (
     c: Channel,
     isInside: boolean,
@@ -549,6 +576,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
     const isActive = activeChannelId === c.id;
     // Visuelle Indikation: Grüner Text, wenn ICH hier verbunden bin
     const isConnected = c.type === 'voice' && voiceChannelId === c.id && connectionState === 'connected';
+    const isVoiceReady = connectionState === 'connected';
 
     // --- OPTIMISTISCHE TEILNEHMER-LISTE ---
     // Start mit der Liste vom Server
@@ -614,12 +642,18 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
         </div>
 
         {c.type === 'voice' && hasPresence && (
-          <div className={`${isInside ? 'ml-8' : 'ml-6'} mr-2 mb-1 rounded-md border border-white/5 bg-white/5 px-2 py-1.5 animate-in slide-in-from-top-1 duration-200`}>
+          <div
+            className={`${isInside ? 'ml-8' : 'ml-6'} mr-2 mb-1 rounded-md border border-white/5 bg-white/5 px-2 py-1.5 animate-in slide-in-from-top-1 duration-200 transition-all ${isVoiceReady ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1 pointer-events-none'}`}
+            aria-hidden={!isVoiceReady}
+          >
             <div className="text-[10px] uppercase tracking-[0.08em] text-gray-500 mb-1 font-bold flex items-center gap-1">
               {t('channelSidebar.inChannel')}
             </div>
             <div className="space-y-1">
-                {displayParticipants.map((user) => (
+                {displayParticipants.map((user) => {
+                  const isLocalUser = String(user.id) === localUserId;
+
+                  return (
                   <div
                     key={user.id}
                     className="flex items-center gap-2 text-xs text-gray-200 group/user"
@@ -655,11 +689,15 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
                         <span className={`absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full border border-[#1e1f22] ${user.status === 'online' ? 'bg-green-500' : 'bg-gray-500'}`}></span>
                     </div>
                     
-                    <span className={`font-medium truncate flex-1 ${String(user.id) === localUserId ? 'text-green-300' : ''}`} title={user.username}>
-                        {user.username} {String(user.id) === localUserId && '(Du)'}
-                    </span>
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <span className={`font-medium truncate flex-1 ${isLocalUser ? 'text-green-300' : ''}`} title={user.username}>
+                        {user.username} {isLocalUser && '(Du)'}
+                      </span>
+                      {isLocalUser && renderLocalMicLevel(localAudioLevel)}
+                    </div>
                   </div>
-                ))}
+                );
+              })}
             </div>
           </div>
         )}
