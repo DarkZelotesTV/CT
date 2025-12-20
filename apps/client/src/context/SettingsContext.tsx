@@ -43,9 +43,9 @@ export type TalkSettings = {
   pushToTalkEnabled: boolean;
   outputVolume?: number;
   cameraQuality?: 'low' | 'medium' | 'high';
-  screenQuality?: 'low' | 'medium' | 'high';
-  screenFrameRate?: number;
-  screenBitrateProfile?: 'low' | 'medium' | 'high';
+  screenQuality?: 'low' | 'medium' | 'high' | 'native';
+  screenFrameRate?: number | 'native';
+  screenBitrateProfile?: 'low' | 'medium' | 'high' | 'max';
   participantVolumes?: Record<string, number>;
   rnnoiseEnabled?: boolean;
   vadSensitivity?: number; // Hinzugefügt
