@@ -93,6 +93,10 @@
     "offline": "Offline",
     "onlineStatus": "Bereit zum Zocken",
     "offlineStatus": "Offline",
+    "loading": "Mitglieder werden geladen...",
+    "loadError": "Mitglieder konnten nicht geladen werden. Bitte versuche es erneut.",
+    "retry": "Erneut versuchen",
+    "empty": "Noch keine Mitglieder.",
     "unknownUser": "Unbekannt",
     "errors": {
       "missingChannel": "Kein Kanal angegeben",
@@ -104,6 +108,12 @@
     "move": "Verschieben",
     "ban": "Bann aussprechen",
     "kick": "Vom Server kicken"
+  },
+  "serverRail": {
+    "loading": "Server werden geladen...",
+    "loadError": "Server konnten nicht geladen werden. Bitte versuche es erneut.",
+    "retry": "Erneut versuchen",
+    "empty": "Noch keine Server"
   },
   "userBottomBar": {
     "fallbackDisplayName": "Trooper",

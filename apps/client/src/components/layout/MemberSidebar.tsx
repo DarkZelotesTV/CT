@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Shield, Crown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../../api/http';
 import { useSocket } from '../../context/SocketContext';
+import { ErrorCard, Skeleton, Spinner } from '../ui';
 
 interface Member {
   userId: number;
@@ -15,6 +16,7 @@ interface Member {
 export const MemberSidebar = ({ serverId }: { serverId: number }) => {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
   const [voiceChannels, setVoiceChannels] = useState<{ id: number; name: string }[]>([]);
   const [contextMenu, setContextMenu] = useState<{
@@ -29,22 +31,48 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
   } | null>(null);
   const { socket, presenceSnapshot, channelPresence } = useSocket();
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const { t } = useTranslation();
+
+  useEffect(() => () => {
+    isMountedRef.current = false;
+  }, []);
 
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 250);
     return () => clearTimeout(handler);
   }, [searchTerm]);
 
-  const normalizeMember = (m: any): Member => ({
-    userId: m.userId ?? m.user_id ?? m.User?.id ?? m.user?.id,
-    username: m.username ?? m.User?.username ?? m.user?.username ?? t('memberSidebar.unknownUser'),
-    avatarUrl: m.avatarUrl ?? m.avatar_url ?? m.User?.avatar_url ?? m.user?.avatar_url,
-    status: m.status ?? m.User?.status ?? m.user?.status ?? 'offline',
-    roles: m.roles ?? (m.role ? [m.role] : []),
-  });
+  const normalizeMember = useCallback(
+    (m: any): Member => ({
+      userId: m.userId ?? m.user_id ?? m.User?.id ?? m.user?.id,
+      username: m.username ?? m.User?.username ?? m.user?.username ?? t('memberSidebar.unknownUser'),
+      avatarUrl: m.avatarUrl ?? m.avatar_url ?? m.User?.avatar_url ?? m.user?.avatar_url,
+      status: m.status ?? m.User?.status ?? m.user?.status ?? 'offline',
+      roles: m.roles ?? (m.role ? [m.role] : []),
+    }),
+    [t]
+  );
+
+  const fetchMembers = useCallback(async () => {
+    if (!serverId) return;
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await apiFetch<any[]>(`/api/servers/${serverId}/members`);
+      if (!isMountedRef.current) return;
+      setMembers(res.map(normalizeMember));
+    } catch (err) {
+      console.error('Fehler beim Laden der Member:', err);
+      if (!isMountedRef.current) return;
+      setError(t('memberSidebar.loadError'));
+    } finally {
+      if (isMountedRef.current) setLoading(false);
+    }
+  }, [normalizeMember, serverId, t]);
 
   const closeContextMenu = () => setContextMenu(null);
 
@@ -137,22 +165,13 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
     if (!serverId) return;
 
     let isActive = true;
-    const fetchMembers = async () => {
-      setLoading(true);
-      try {
-        const res = await apiFetch<any[]>(`/api/servers/${serverId}/members`);
-        if (isActive) setMembers(res.map(normalizeMember));
-      } catch (err) {
-        console.error("Fehler beim Laden der Member:", err);
-      } finally {
-        if (isActive) setLoading(false);
-      }
-    };
 
     if (socket) {
+      setLoading(true);
+      setError(null);
       socket.emit('request_server_members', { serverId });
       const fallbackTimer = setTimeout(() => {
-        if (isActive) fetchMembers();
+        if (isActive) void fetchMembers();
       }, 5_000);
 
       return () => {
@@ -161,12 +180,12 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
       };
     }
 
-    fetchMembers();
+    void fetchMembers();
 
     return () => {
       isActive = false;
     };
-  }, [serverId, socket]);
+  }, [fetchMembers, serverId, socket]);
 
   useEffect(() => {
     if (!serverId) return;
@@ -193,6 +212,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
     const handleMemberSnapshot = ({ serverId: incomingServerId, members: incomingMembers }: { serverId: number; members: any[] }) => {
       if (incomingServerId !== serverId) return;
       setMembers(incomingMembers.map(normalizeMember));
+      setError(null);
       setLoading(false);
     };
 
@@ -311,21 +331,57 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
               className="w-full px-3 py-2 text-sm bg-white/5 border border-white/10 rounded-md text-gray-200 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
           </div>
-          {/* Online Group */}
-          <div>
-              <div className="text-[10px] font-bold text-gray-500 mb-2 px-2 uppercase tracking-wider flex items-center gap-2">
-                 {t('memberSidebar.online')} <span className="text-[9px] text-gray-600">— {onlineMembers.length}</span>
-              </div>
-              {onlineMembers.map(renderMember)}
-          </div>
 
-          {/* Offline Group */}
-           <div>
-              <div className="text-[10px] font-bold text-gray-500 mb-2 px-2 uppercase tracking-wider flex items-center gap-2">
-                 {t('memberSidebar.offline')} <span className="text-[9px] text-gray-600">— {offlineMembers.length}</span>
+          {loading && (
+            <div className="space-y-3 px-2">
+              <Spinner label={t('memberSidebar.loading')} />
+              <div className="space-y-3">
+                {[0, 1, 2, 3].map((index) => (
+                  <div key={`member-skeleton-${index}`} className="flex items-center gap-3">
+                    <Skeleton className="h-10 w-10 rounded-full bg-white/5" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-3 w-1/3 bg-white/5" />
+                      <Skeleton className="h-2.5 w-1/4 bg-white/5" />
+                    </div>
+                  </div>
+                ))}
               </div>
-              {offlineMembers.map(renderMember)}
-          </div>
+            </div>
+          )}
+
+          {!loading && error && (
+            <div className="px-2">
+              <ErrorCard
+                message={error}
+                retryLabel={t('memberSidebar.retry') ?? undefined}
+                onRetry={() => fetchMembers()}
+              />
+            </div>
+          )}
+
+          {!loading && !error && filteredMembers.length === 0 && (
+            <div className="px-2 text-xs text-gray-400">{t('memberSidebar.empty')}</div>
+          )}
+
+          {!loading && !error && filteredMembers.length > 0 && (
+            <>
+              {/* Online Group */}
+              <div>
+                <div className="text-[10px] font-bold text-gray-500 mb-2 px-2 uppercase tracking-wider flex items-center gap-2">
+                  {t('memberSidebar.online')} <span className="text-[9px] text-gray-600">— {onlineMembers.length}</span>
+                </div>
+                {onlineMembers.map(renderMember)}
+              </div>
+
+              {/* Offline Group */}
+              <div>
+                <div className="text-[10px] font-bold text-gray-500 mb-2 px-2 uppercase tracking-wider flex items-center gap-2">
+                  {t('memberSidebar.offline')} <span className="text-[9px] text-gray-600">— {offlineMembers.length}</span>
+                </div>
+                {offlineMembers.map(renderMember)}
+              </div>
+            </>
+          )}
       </div>
 
       {contextMenu && (

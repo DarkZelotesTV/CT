@@ -1,9 +1,11 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
-import { Home, Plus, Loader2, Globe, X } from 'lucide-react';
+import { Home, Plus, Globe, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../../api/http';
 import { getServerUrl, setServerUrl } from '../../utils/apiConfig';
 import { readPinnedServers, removePinnedServer, normalizeInstanceUrl } from '../../utils/pinnedServers';
 import { storage } from '../../shared/config/storage';
+import { ErrorCard, Spinner } from '../ui';
 
 // Props erweitert: onCreateServer und onJoinServer hinzugefügt
 interface ServerRailProps {
@@ -20,6 +22,7 @@ interface Server {
 }
 
 export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, onJoinServer }: ServerRailProps) => {
+  const { t } = useTranslation();
   const [servers, setServers] = useState<Server[]>([]);
   // Lokale Modals entfernt - werden jetzt von MainLayout gesteuert
   const [showAddMenu, setShowAddMenu] = useState(false);
@@ -49,12 +52,11 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
       setLastError(null);
     } catch (err) {
       console.error(err);
-      const message = err instanceof Error ? err.message : 'Failed to load servers';
-      setLastError(message);
+      setLastError(t('serverRail.loadError'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchServers();
@@ -131,19 +133,17 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
           <div className="w-8 h-[2px] bg-white/5 rounded-full flex-shrink-0" />
 
           {/* LOCAL SERVERS */}
-          {loading && <Loader2 className="animate-spin text-gray-600" />}
+          {loading && <Spinner label={t('serverRail.loading')} className="text-gray-400" />}
           {lastError && (
-            <button
-              type="button"
-              onClick={fetchServers}
-              className="text-xs text-red-200 bg-red-500/10 border border-red-500/40 rounded-full px-3 py-1 hover:bg-red-500/20 transition-colors"
-              title="Erneut versuchen"
-            >
-              !
-            </button>
+            <ErrorCard
+              className="w-full px-2 text-xs"
+              message={lastError}
+              retryLabel={t('serverRail.retry') ?? undefined}
+              onRetry={fetchServers}
+            />
           )}
           {!loading && servers.length === 0 && !lastError && (
-            <div className="text-xs text-gray-400">Noch keine Server</div>
+            <div className="text-xs text-gray-400">{t('serverRail.empty')}</div>
           )}
           {servers.map((server) => (
             <button
