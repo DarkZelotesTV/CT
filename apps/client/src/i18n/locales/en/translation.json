@@ -113,7 +113,15 @@
     "loading": "Loading servers...",
     "loadError": "Could not load servers. Please try again.",
     "retry": "Try again",
-    "empty": "No servers yet."
+    "empty": "No servers yet.",
+    "renamePrompt": "Rename server",
+    "contextMenuAria": "Server actions",
+    "context": {
+      "rename": "Rename",
+      "pin": "Pin to top",
+      "unpin": "Unpin",
+      "remove": "Remove"
+    }
   },
   "userBottomBar": {
     "fallbackDisplayName": "Trooper",

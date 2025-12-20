@@ -116,6 +116,24 @@ const STORAGE_CONFIG = {
     deserialize: (raw: string) => safeJsonParse(raw, []),
     serialize: (value: any[]) => JSON.stringify(value ?? []),
   },
+  serverRailOrder: {
+    key: 'ct.server_rail.order.v1',
+    defaultValue: [] as number[],
+    deserialize: (raw: string) => safeJsonParse(raw, [] as number[]),
+    serialize: (value: number[]) => JSON.stringify(value ?? []),
+  },
+  serverRailPinned: {
+    key: 'ct.server_rail.pinned.v1',
+    defaultValue: [] as number[],
+    deserialize: (raw: string) => safeJsonParse(raw, [] as number[]),
+    serialize: (value: number[]) => JSON.stringify(value ?? []),
+  },
+  serverRailAliases: {
+    key: 'ct.server_rail.aliases.v1',
+    defaultValue: {} as Record<number, string>,
+    deserialize: (raw: string) => safeJsonParse(raw, {} as Record<number, string>),
+    serialize: (value: Record<number, string>) => JSON.stringify(value ?? {}),
+  },
 } satisfies Record<string, StorageConfig<any>>;
 
 export type StorageKey = keyof typeof STORAGE_CONFIG;

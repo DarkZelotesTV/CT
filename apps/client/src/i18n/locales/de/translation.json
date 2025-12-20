@@ -113,7 +113,15 @@
     "loading": "Server werden geladen...",
     "loadError": "Server konnten nicht geladen werden. Bitte versuche es erneut.",
     "retry": "Erneut versuchen",
-    "empty": "Noch keine Server"
+    "empty": "Noch keine Server",
+    "renamePrompt": "Server umbenennen",
+    "contextMenuAria": "Server-Aktionen",
+    "context": {
+      "rename": "Umbenennen",
+      "pin": "Anheften",
+      "unpin": "Lösen",
+      "remove": "Entfernen"
+    }
   },
   "userBottomBar": {
     "fallbackDisplayName": "Trooper",

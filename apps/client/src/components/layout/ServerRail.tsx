@@ -1,11 +1,13 @@
+import type React from 'react';
 import { useMemo, useState, useEffect, useCallback } from 'react';
-import { Home, Plus, Globe, X } from 'lucide-react';
+import { Home, Plus, Globe, X, Pin, PinOff, Pencil, Trash2, Bell } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../../api/http';
 import { getServerUrl, setServerUrl } from '../../utils/apiConfig';
 import { readPinnedServers, removePinnedServer, normalizeInstanceUrl } from '../../utils/pinnedServers';
 import { storage } from '../../shared/config/storage';
 import { ErrorCard, Spinner } from '../ui';
+import { useSocket } from '../../context/SocketContext';
 
 // Props erweitert: onCreateServer und onJoinServer hinzugefügt
 interface ServerRailProps {
@@ -19,6 +21,8 @@ interface Server {
   id: number;
   name: string;
   icon_url?: string;
+  unread_count?: number;
+  unreadCount?: number;
 }
 
 export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, onJoinServer }: ServerRailProps) => {
@@ -29,6 +33,19 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
   const [loading, setLoading] = useState(false);
   const [pinnedTick, setPinnedTick] = useState(0);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [serverOrder, setServerOrder] = useState<number[]>(() => storage.get('serverRailOrder'));
+  const [pinnedLocalIds, setPinnedLocalIds] = useState<number[]>(() => storage.get('serverRailPinned'));
+  const [serverAliases, setServerAliases] = useState<Record<number, string>>(() => storage.get('serverRailAliases'));
+  const [contextMenu, setContextMenu] = useState<{
+    serverId: number;
+    type: 'local' | 'remote';
+    instanceUrl?: string;
+    x: number;
+    y: number;
+  } | null>(null);
+  const [draggingId, setDraggingId] = useState<number | null>(null);
+  const [unreadCounts, setUnreadCounts] = useState<Record<number, number>>({});
+  const { socket } = useSocket();
 
   const pinned = useMemo(() => {
     // tick forces recompute after mutations
@@ -44,11 +61,176 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
     [pinned, currentInstance]
   );
 
+  const orderedServers = useMemo(() => {
+    const knownOrder = serverOrder.filter((id) => servers.some((s) => s.id === id));
+    const missing = servers.map((s) => s.id).filter((id) => !knownOrder.includes(id));
+    const fullOrder = [...knownOrder, ...missing];
+
+    const pinnedSet = new Set(pinnedLocalIds);
+    const byId = Object.fromEntries(servers.map((s) => [s.id, s]));
+
+    return fullOrder
+      .map((id) => byId[id])
+      .filter(Boolean)
+      .sort((a, b) => {
+        const aPinned = pinnedSet.has(a.id);
+        const bPinned = pinnedSet.has(b.id);
+        if (aPinned !== bPinned) return aPinned ? -1 : 1;
+        return fullOrder.indexOf(a.id) - fullOrder.indexOf(b.id);
+      });
+  }, [pinnedLocalIds, serverOrder, servers]);
+
+  const persistOrder = useCallback((next: number[]) => {
+    setServerOrder(next);
+    storage.set('serverRailOrder', next);
+  }, []);
+
+  const togglePinned = useCallback((serverId: number) => {
+    setPinnedLocalIds((prev) => {
+      const exists = prev.includes(serverId);
+      const next = exists ? prev.filter((id) => id !== serverId) : [...prev, serverId];
+      storage.set('serverRailPinned', next);
+      return next;
+    });
+  }, []);
+
+  const renameServer = useCallback((serverId: number) => {
+    const current = serverAliases[serverId] ?? servers.find((s) => s.id === serverId)?.name ?? '';
+    const next = window.prompt(t('serverRail.renamePrompt'), current);
+    if (next === null) return;
+    setServerAliases((prev) => {
+      const updated = { ...prev };
+      if (!next.trim()) {
+        delete updated[serverId];
+      } else {
+        updated[serverId] = next.trim();
+      }
+      storage.set('serverRailAliases', updated);
+      return updated;
+    });
+  }, [serverAliases, servers, t]);
+
+  const displayName = useCallback((server: Server) => serverAliases[server.id] ?? server.name, [serverAliases]);
+
+  const applyUnreadFromServers = useCallback((list: Server[]) => {
+    setUnreadCounts((prev) => {
+      const next = { ...prev };
+      list.forEach((srv) => {
+        const count = srv.unreadCount ?? srv.unread_count;
+        if (typeof count === 'number' && !Number.isNaN(count)) {
+          next[srv.id] = count;
+        }
+      });
+      return next;
+    });
+  }, []);
+
+  const reorderServers = useCallback(
+    (sourceId: number, targetId: number) => {
+      if (sourceId === targetId) return;
+      const currentOrder = orderedServers.map((s) => s.id);
+      const sourceIndex = currentOrder.indexOf(sourceId);
+      const targetIndex = currentOrder.indexOf(targetId);
+      if (sourceIndex === -1 || targetIndex === -1) return;
+
+      const next = [...currentOrder];
+      next.splice(sourceIndex, 1);
+      next.splice(targetIndex, 0, sourceId);
+      persistOrder(next);
+    },
+    [orderedServers, persistOrder]
+  );
+
+  const handleContextMenu = (
+    event: React.MouseEvent,
+    serverId: number,
+    type: 'local' | 'remote',
+    instanceUrl?: string
+  ) => {
+    event.preventDefault();
+    setContextMenu({ serverId, type, instanceUrl, x: event.clientX, y: event.clientY });
+  };
+
+  const handleKeyboardContext = (
+    event: React.KeyboardEvent,
+    serverId: number,
+    type: 'local' | 'remote',
+    instanceUrl?: string
+  ) => {
+    if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
+      event.preventDefault();
+      setContextMenu({ serverId, type, instanceUrl, x: event.clientX ?? 0, y: event.clientY ?? 0 });
+    }
+  };
+
+  const handleDragStart = (serverId: number) => setDraggingId(serverId);
+  const handleDragEnd = () => setDraggingId(null);
+  const handleDropOn = (targetId: number) => {
+    if (draggingId === null) return;
+    reorderServers(draggingId, targetId);
+    setDraggingId(null);
+  };
+
+  const renamePinnedServer = useCallback(
+    (serverId: number, instanceUrl?: string) => {
+      const list = readPinnedServers();
+      const target = list.find(
+        (p) =>
+          Number(p.serverId) === Number(serverId) &&
+          (!instanceUrl || normalizeInstanceUrl(p.instanceUrl) === normalizeInstanceUrl(instanceUrl))
+      );
+
+      const fallback = target?.name ?? `Server ${serverId}`;
+      const next = window.prompt(t('serverRail.renamePrompt'), fallback);
+      if (next === null) return;
+      const trimmed = next.trim();
+      const updated = list.map((p) =>
+        Number(p.serverId) === Number(serverId) && (!instanceUrl || normalizeInstanceUrl(p.instanceUrl) === normalizeInstanceUrl(instanceUrl))
+          ? { ...p, name: trimmed || undefined }
+          : p
+      );
+      storage.set('pinnedServers', updated);
+      setPinnedTick((x) => x + 1);
+    },
+    [t]
+  );
+
+  const handleContextAction = useCallback(
+    (action: 'rename' | 'pin-toggle' | 'remove') => {
+      if (!contextMenu) return;
+      const { serverId, type, instanceUrl } = contextMenu;
+      if (action === 'rename') {
+        if (type === 'local') renameServer(serverId);
+        else renamePinnedServer(serverId, instanceUrl);
+      }
+
+      if (action === 'pin-toggle' && type === 'local') {
+        togglePinned(serverId);
+      }
+
+      if (action === 'remove' && type === 'remote' && instanceUrl) {
+        removePinnedServer(instanceUrl, serverId);
+        setPinnedTick((x) => x + 1);
+      }
+
+      setContextMenu(null);
+    },
+    [contextMenu, renamePinnedServer, renameServer, togglePinned]
+  );
+
   const fetchServers = useCallback(async () => {
     setLoading(true);
     try {
       const res = await apiFetch<Server[]>(`/api/servers`);
       setServers(res);
+      applyUnreadFromServers(res);
+      setServerOrder((prev) => {
+        const filtered = prev.filter((id) => res.some((srv) => srv.id === id));
+        const missing = res.map((srv) => srv.id).filter((id) => !filtered.includes(id));
+        const next = [...filtered, ...missing];
+        storage.set('serverRailOrder', next);
+        return next;
+      });
       setLastError(null);
     } catch (err) {
       console.error(err);
@@ -56,11 +238,22 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [applyUnreadFromServers, t]);
 
   useEffect(() => {
     fetchServers();
   }, [fetchServers]);
+
+  const fetchUnreadCounts = useCallback(async () => {
+    try {
+      const res = await apiFetch<Record<number, number>>(`/api/servers/unread-counts`);
+      if (res && typeof res === 'object') {
+        setUnreadCounts(res);
+      }
+    } catch (err) {
+      console.debug('Could not load unread counts', err);
+    }
+  }, []);
 
   useEffect(() => {
     const handleServersChanged = () => {
@@ -72,6 +265,53 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
       window.removeEventListener('ct-servers-changed', handleServersChanged);
     };
   }, [fetchServers]);
+
+  useEffect(() => {
+    fetchUnreadCounts();
+  }, [fetchUnreadCounts]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleUnread = (payload: Record<number, number> | { serverId: number; count: number }) => {
+      if (!payload) return;
+      if ('serverId' in payload && typeof payload.serverId === 'number') {
+        setUnreadCounts((prev) => ({ ...prev, [payload.serverId]: Number(payload.count) || 0 }));
+        return;
+      }
+      setUnreadCounts((prev) => ({ ...prev, ...(payload as Record<number, number>) }));
+    };
+
+    socket.on('server_unread', handleUnread);
+    socket.on('server_unread_counts', handleUnread);
+
+    return () => {
+      socket.off('server_unread', handleUnread);
+      socket.off('server_unread_counts', handleUnread);
+    };
+  }, [socket]);
+
+  useEffect(() => {
+    if (!contextMenu) return;
+
+    const close = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('[data-server-menu]')) return;
+      setContextMenu(null);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setContextMenu(null);
+    };
+    const blurHandler = () => setContextMenu(null);
+    document.addEventListener('mousedown', close);
+    window.addEventListener('blur', blurHandler);
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      window.removeEventListener('blur', blurHandler);
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [contextMenu]);
 
   // Close the add menu on outside click / ESC
   useEffect(() => {
@@ -145,40 +385,71 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
           {!loading && servers.length === 0 && !lastError && (
             <div className="text-xs text-gray-400">{t('serverRail.empty')}</div>
           )}
-          {servers.map((server) => (
-            <button
-              key={`local-${server.id}`}
-              type="button"
-              onClick={() => onSelectServer(server.id)}
-              className={
-                `
+          {orderedServers.map((server) => {
+            const name = displayName(server);
+            const tooltip = name === server.name ? name : `${name} (${server.name})`;
+            const unread = unreadCounts[server.id] ?? 0;
+            const isPinned = pinnedLocalIds.includes(server.id);
+
+            return (
+              <button
+                key={`local-${server.id}`}
+                type="button"
+                onClick={() => onSelectServer(server.id)}
+                className={
+                  `
                 w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 relative group no-drag
                 ${selectedServerId === server.id ? 'rounded-[16px]' : 'rounded-[24px] hover:rounded-[16px]'}
                 bg-white/5 hover:bg-white/10
               `
-              }
-              title={server.name}
-              aria-label={`Server ${server.name}`}
-            >
-              <div
-                className={`absolute left-[-12px] w-1 bg-white rounded-r-full transition-all duration-300
+                }
+                title={tooltip}
+                aria-label={`Server ${name}`}
+                draggable
+                aria-grabbed={draggingId === server.id}
+                onDragStart={() => handleDragStart(server.id)}
+                onDragEnd={handleDragEnd}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  handleDropOn(server.id);
+                }}
+                onContextMenu={(e) => handleContextMenu(e, server.id, 'local')}
+                onKeyDown={(e) => handleKeyboardContext(e, server.id, 'local')}
+              >
+                <div
+                  className={`absolute left-[-12px] w-1 bg-white rounded-r-full transition-all duration-300
                   ${selectedServerId === server.id ? 'h-8 opacity-100' : 'h-2 opacity-0 group-hover:opacity-50 group-hover:h-4'}
                 `}
-              />
-
-              {server.icon_url ? (
-                <img
-                  src={server.icon_url}
-                  alt={server.name}
-                  className={`w-full h-full object-cover transition-all ${selectedServerId === server.id ? 'rounded-[16px]' : 'rounded-[24px] group-hover:rounded-[16px]'}`}
                 />
-              ) : (
-                <span className="text-gray-200 font-bold text-sm group-hover:text-white transition-colors">
-                  {server.name.substring(0, 2).toUpperCase()}
-                </span>
-              )}
-            </button>
-          ))}
+
+                {unread > 0 && (
+                  <div className="absolute -top-1 -right-1 bg-rose-500 text-[10px] leading-none text-white rounded-full px-1.5 py-0.5 flex items-center gap-1 shadow-lg">
+                    <Bell size={10} />
+                    <span className="font-semibold">{unread > 99 ? '99+' : unread}</span>
+                  </div>
+                )}
+
+                {isPinned && (
+                  <div className="absolute -bottom-2 text-[10px] text-indigo-300" aria-hidden>
+                    <Pin size={12} />
+                  </div>
+                )}
+
+                {server.icon_url ? (
+                  <img
+                    src={server.icon_url}
+                    alt={name}
+                    className={`w-full h-full object-cover transition-all ${selectedServerId === server.id ? 'rounded-[16px]' : 'rounded-[24px] group-hover:rounded-[16px]'}`}
+                  />
+                ) : (
+                  <span className="text-gray-200 font-bold text-sm group-hover:text-white transition-colors">
+                    {name.substring(0, 2).toUpperCase()}
+                  </span>
+                )}
+              </button>
+            );
+          })}
 
           {/* REMOTE / PINNED SERVERS */}
           {pinnedRemote.length > 0 && (
@@ -191,10 +462,15 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                   tabIndex={0}
                   onClick={() => openPinned(p.instanceUrl, p.serverId)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') openPinned(p.instanceUrl, p.serverId);
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      openPinned(p.instanceUrl, p.serverId);
+                      return;
+                    }
+                    handleKeyboardContext(e, p.serverId, 'remote', p.instanceUrl);
                   }}
                   className="no-drag w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 relative group no-drag rounded-[24px] hover:rounded-[16px] bg-white/5 hover:bg-white/10 outline-none"
                   title={`${p.name ?? `Server ${p.serverId}`} (${p.instanceUrl})`}
+                  onContextMenu={(e) => handleContextMenu(e, p.serverId, 'remote', p.instanceUrl)}
                 >
                   <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-black/70 border border-white/10 flex items-center justify-center text-cyan-300">
                     <Globe size={12} />
@@ -274,7 +550,76 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
         </div>
 
       </div>
-      
+
+      {contextMenu && (
+        <div className="fixed inset-0 z-50 pointer-events-none">
+          <div
+            role="menu"
+            tabIndex={-1}
+            data-server-menu
+            aria-label={t('serverRail.contextMenuAria') ?? 'Server Menü'}
+            className="pointer-events-auto absolute min-w-[180px] bg-[#0f1014] border border-white/10 rounded-xl shadow-2xl p-2 text-sm text-white"
+            style={{ left: contextMenu.x, top: contextMenu.y }}
+          >
+            <button
+              type="button"
+              role="menuitem"
+              className="flex w-full items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 focus:bg-white/10 focus:outline-none"
+              onClick={() => handleContextAction('rename')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleContextAction('rename');
+                }
+              }}
+            >
+              <Pencil size={16} />
+              <span>{t('serverRail.context.rename')}</span>
+            </button>
+
+            {contextMenu.type === 'local' && (
+              <button
+                type="button"
+                role="menuitem"
+                className="flex w-full items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 focus:bg-white/10 focus:outline-none"
+                onClick={() => handleContextAction('pin-toggle')}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleContextAction('pin-toggle');
+                  }
+                }}
+              >
+                {pinnedLocalIds.includes(contextMenu.serverId) ? <PinOff size={16} /> : <Pin size={16} />}
+                <span>
+                  {pinnedLocalIds.includes(contextMenu.serverId)
+                    ? t('serverRail.context.unpin')
+                    : t('serverRail.context.pin')}
+                </span>
+              </button>
+            )}
+
+            {contextMenu.type === 'remote' && (
+              <button
+                type="button"
+                role="menuitem"
+                className="flex w-full items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 focus:bg-white/10 focus:outline-none"
+                onClick={() => handleContextAction('remove')}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleContextAction('remove');
+                  }
+                }}
+              >
+                <Trash2 size={16} />
+                <span>{t('serverRail.context.remove')}</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Modals wurden hier entfernt und befinden sich nun in MainLayout */}
     </>
   );
