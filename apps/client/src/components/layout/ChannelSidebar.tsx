@@ -96,6 +96,15 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   } | null>(null);
   const [isSavingStructure, setIsSavingStructure] = useState(false);
   const [dragAndDropEnabled, setDragAndDropEnabled] = useState(true);
+  const [channelContextMenu, setChannelContextMenu] = useState<{
+    channel: Channel;
+    x: number;
+    y: number;
+    target?: HTMLElement | null;
+  } | null>(null);
+  const [channelInfo, setChannelInfo] = useState<Channel | null>(null);
+  const [serverContextMenu, setServerContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [showServerInfo, setShowServerInfo] = useState(false);
 
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const retryTimer = useRef<NodeJS.Timeout | null>(null);
@@ -241,6 +250,34 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   }, [contextMenu]);
 
   useEffect(() => {
+    if (!channelContextMenu) return;
+    const handleGlobalClick = (e: MouseEvent) => {
+      if (!channelContextMenu.target) return setChannelContextMenu(null);
+      if (!(channelContextMenu.target as HTMLElement).contains(e.target as HTMLElement)) {
+        setChannelContextMenu(null);
+      }
+    };
+
+    window.addEventListener('click', handleGlobalClick);
+    window.addEventListener('contextmenu', handleGlobalClick);
+    return () => {
+      window.removeEventListener('click', handleGlobalClick);
+      window.removeEventListener('contextmenu', handleGlobalClick);
+    };
+  }, [channelContextMenu]);
+
+  useEffect(() => {
+    if (!serverContextMenu) return;
+    const handler = () => setServerContextMenu(null);
+    window.addEventListener('click', handler);
+    window.addEventListener('contextmenu', handler);
+    return () => {
+      window.removeEventListener('click', handler);
+      window.removeEventListener('contextmenu', handler);
+    };
+  }, [serverContextMenu]);
+
+  useEffect(() => {
     if (!contextMenu?.channelId) return;
     const nextOption = voiceChannels.find((vc) => vc.id !== contextMenu.channelId);
     if (!nextOption) return;
@@ -371,6 +408,21 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
     }
   };
 
+  const handleLeaveServer = async () => {
+    if (!serverId || !localUser?.id) return;
+    try {
+      await apiFetch(`/api/servers/${serverId}/members/${localUser.id}`, { method: 'DELETE' });
+      window.location.reload();
+    } catch (err: any) {
+      alert(err?.response?.data?.error || err?.message || t('channelSidebar.errors.actionFailed'));
+    }
+  };
+
+  const openServerMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setServerContextMenu({ x: e.clientX, y: e.clientY });
+  };
+
   const performModeration = async (
     action: 'mute' | 'kick' | 'ban' | 'remove' | 'move',
     payload: { userId: number; channelId?: number | null; targetChannelId?: number | null }
@@ -411,6 +463,29 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
     } finally {
       closeContextMenu();
       fetchData();
+    }
+  };
+
+  const openChannelMenu = (origin: { x: number; y: number; target?: HTMLElement | null }, channel: Channel) => {
+    setChannelContextMenu({ channel, x: origin.x, y: origin.y, target: origin.target ?? null });
+  };
+
+  const closeChannelMenu = () => setChannelContextMenu(null);
+
+  const handleChannelInfo = (channel: Channel) => {
+    setChannelInfo(channel);
+    closeChannelMenu();
+  };
+
+  const handleDeleteChannel = async (channel: Channel) => {
+    if (!serverId) return;
+    try {
+      await apiFetch(`/api/channels/${channel.id}`, { method: 'DELETE' });
+      await fetchData();
+    } catch (err: any) {
+      alert(err?.response?.data?.error || err?.message || t('channelSidebar.loadError'));
+    } finally {
+      closeChannelMenu();
     }
   };
 
@@ -590,6 +665,10 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
       <div key={c.id} className="relative" ref={dragMeta?.setNodeRef} style={dragMeta?.style}>
         <div
           onClick={() => handleChannelClick(c)}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            openChannelMenu({ x: e.clientX, y: e.clientY, target: e.currentTarget as HTMLElement }, c);
+          }}
           role="button"
           tabIndex={0}
           aria-label={t('channelSidebar.channelButtonLabel', { channel: c.name })}
@@ -690,8 +769,12 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   const toggleCategory = (id: number) => setCollapsed(prev => ({ ...prev, [id]: !prev[id] }));
 
   const handleOpenServerSettings = useCallback(() => {
+    if (!isServerAdmin) {
+      setShowServerInfo(true);
+      return;
+    }
     onOpenServerSettings();
-  }, [onOpenServerSettings]);
+  }, [isServerAdmin, onOpenServerSettings]);
 
   return (
     <div className="flex flex-col h-full bg-transparent relative">
@@ -699,6 +782,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
         <div
           className="relative z-10 flex h-12 items-center border-b border-[var(--color-border)] bg-[var(--color-surface-alt)] px-3 sm:px-4 transition-colors no-drag"
           data-no-drag
+          onContextMenu={openServerMenu}
         >
           <button
             type="button"
@@ -934,6 +1018,48 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
           )}
         </div>
 
+      {channelContextMenu && (
+        <div className="fixed left-0 right-0 bottom-0 top-[var(--ct-titlebar-height)] z-50" onClick={closeChannelMenu}>
+          <div
+            className="absolute min-w-[220px] rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] shadow-xl p-2 space-y-1"
+            style={{ top: channelContextMenu.y, left: channelContextMenu.x }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-[11px] text-[color:var(--color-text-muted)] uppercase tracking-wide px-2 pb-1">
+              {channelContextMenu.channel.name}
+            </div>
+            <button
+              type="button"
+              className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)]"
+              onClick={() => handleChannelInfo(channelContextMenu.channel)}
+            >
+              {t('channelSidebar.channelInfo')}
+            </button>
+            {permissions.manage_channels ? (
+              <button
+                type="button"
+                className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)] text-red-400"
+                onClick={() => handleDeleteChannel(channelContextMenu.channel)}
+              >
+                {t('channelSidebar.deleteChannel')}
+              </button>
+            ) : (
+              <div className="px-2 py-1 text-xs text-[color:var(--color-text-muted)]">{t('channelSidebar.noChannelActions')}</div>
+            )}
+            <button
+              type="button"
+              className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)]"
+              onClick={() => {
+                handleChannelClick(channelContextMenu.channel);
+                closeChannelMenu();
+              }}
+            >
+              {t('channelSidebar.openChannel')}
+            </button>
+          </div>
+        </div>
+      )}
+
       {contextMenu && (
         <div className="fixed left-0 right-0 bottom-0 top-[var(--ct-titlebar-height)] z-50" onClick={closeContextMenu}>
           <div
@@ -1010,6 +1136,110 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
                 </button>
               </>
             ) : null}
+          </div>
+        </div>
+      )}
+
+      {channelInfo && (
+        <div className="fixed inset-0 z-40 bg-black/40 flex items-center justify-center" onClick={() => setChannelInfo(null)}>
+          <div
+            className="w-full max-w-sm rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-sm font-bold text-[color:var(--color-text)]">{t('channelSidebar.channelInfo')}</div>
+              <button
+                type="button"
+                className="text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]"
+                onClick={() => setChannelInfo(null)}
+              >
+                {t('channelSidebar.closeNavigation')}
+              </button>
+            </div>
+            <div className="space-y-1 text-sm text-[color:var(--color-text)]">
+              <div className="flex justify-between">
+                <span className="text-[color:var(--color-text-muted)]">{t('channelSidebar.channelButtonLabel', { channel: '' })}</span>
+                <span className="font-semibold">{channelInfo.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[color:var(--color-text-muted)]">Type</span>
+                <span className="font-medium uppercase">{channelInfo.type}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {serverContextMenu && (
+        <div className="fixed left-0 right-0 bottom-0 top-[var(--ct-titlebar-height)] z-50" onClick={() => setServerContextMenu(null)}>
+          <div
+            className="absolute min-w-[220px] rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] shadow-xl p-2 space-y-1"
+            style={{ top: serverContextMenu.y, left: serverContextMenu.x }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-[11px] text-[color:var(--color-text-muted)] uppercase tracking-wide px-2 pb-1">
+              {serverName || t('channelSidebar.defaultServerName')}
+            </div>
+            <button
+              type="button"
+              className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)]"
+              onClick={() => {
+                setShowServerInfo(true);
+                setServerContextMenu(null);
+              }}
+            >
+              {t('channelSidebar.serverInfo')}
+            </button>
+            <button
+              type="button"
+              className={`w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm ${
+                isServerAdmin ? 'text-[color:var(--color-text)]' : 'text-[color:var(--color-text-muted)] cursor-not-allowed'
+              }`}
+              disabled={!isServerAdmin}
+              onClick={() => {
+                handleOpenServerSettings();
+                setServerContextMenu(null);
+              }}
+            >
+              {t('channelSidebar.openServerSettings', { server: serverName || t('channelSidebar.defaultServerName') })}
+            </button>
+            <button
+              type="button"
+              className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-red-400"
+              onClick={handleLeaveServer}
+            >
+              {t('channelSidebar.leaveServer')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showServerInfo && (
+        <div className="fixed inset-0 z-40 bg-black/40 flex items-center justify-center" onClick={() => setShowServerInfo(false)}>
+          <div
+            className="w-full max-w-sm rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-sm font-bold text-[color:var(--color-text)]">{t('channelSidebar.serverInfo')}</div>
+              <button
+                type="button"
+                className="text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]"
+                onClick={() => setShowServerInfo(false)}
+              >
+                {t('channelSidebar.closeNavigation')}
+              </button>
+            </div>
+            <div className="space-y-1 text-sm text-[color:var(--color-text)]">
+              <div className="flex justify-between">
+                <span className="text-[color:var(--color-text-muted)]">{t('channelSidebar.defaultServerName')}</span>
+                <span className="font-semibold">{serverName || t('channelSidebar.defaultServerName')}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[color:var(--color-text-muted)]">ID</span>
+                <span className="font-medium">{serverId ?? '—'}</span>
+              </div>
+            </div>
           </div>
         </div>
       )}
