@@ -16,6 +16,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context/SettingsContext';
 import { FeedbackModal } from '../modals/FeedbackModal';
+import { ModalLayout } from '../modals/ModalLayout';
 import { useTopBar } from './TopBarContext';
 
 type WindowState = {
@@ -73,6 +74,9 @@ export const TitleBar = ({ serverName, channel, onOpenServerSettings }: TitleBar
     'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500';
 
   const [showFeedback, setShowFeedback] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showInbox, setShowInbox] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   const [state, setState] = useState<WindowState>({
     isMaximized: false,
@@ -250,6 +254,7 @@ export const TitleBar = ({ serverName, channel, onOpenServerSettings }: TitleBar
           className={`no-drag h-8 w-8 rounded-md hover:bg-white/10 active:bg-white/20 flex items-center justify-center ${focusRing}`}
           aria-label={t('titlebar.notifications', { defaultValue: 'Benachrichtigungen' })}
           title={t('titlebar.notifications', { defaultValue: 'Benachrichtigungen' })}
+          onClick={() => setShowNotifications(true)}
         >
           <Bell size={16} className="text-gray-300" aria-hidden="true" />
         </button>
@@ -259,6 +264,7 @@ export const TitleBar = ({ serverName, channel, onOpenServerSettings }: TitleBar
           className={`no-drag h-8 w-8 rounded-md hover:bg-white/10 active:bg-white/20 flex items-center justify-center ${focusRing}`}
           aria-label={t('titlebar.inbox', { defaultValue: 'Inbox' })}
           title={t('titlebar.inbox', { defaultValue: 'Inbox' })}
+          onClick={() => setShowInbox(true)}
         >
           <Inbox size={16} className="text-gray-300" aria-hidden="true" />
         </button>
@@ -268,6 +274,7 @@ export const TitleBar = ({ serverName, channel, onOpenServerSettings }: TitleBar
           className={`no-drag h-8 w-8 rounded-md hover:bg-white/10 active:bg-white/20 flex items-center justify-center ${focusRing}`}
           aria-label={t('titlebar.help', { defaultValue: 'Hilfe' })}
           title={t('titlebar.help', { defaultValue: 'Hilfe' })}
+          onClick={() => setShowHelp(true)}
         >
           <HelpCircle size={16} className="text-gray-300" aria-hidden="true" />
         </button>
@@ -338,6 +345,66 @@ export const TitleBar = ({ serverName, channel, onOpenServerSettings }: TitleBar
       </div>
 
       {showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} />}
+      {showNotifications && (
+        <ModalLayout
+          title={t('titlebar.notifications', { defaultValue: 'Benachrichtigungen' })}
+          description={t('titlebar.notificationsDescription', {
+            defaultValue: 'Aktuelle Hinweise aus deinen Servern und Kanälen',
+          })}
+          onClose={() => setShowNotifications(false)}
+          onOverlayClick={() => setShowNotifications(false)}
+        >
+          <div className="space-y-3 text-gray-200 text-sm leading-relaxed">
+            <p>{t('titlebar.notificationsEmpty', { defaultValue: 'Keine neuen Benachrichtigungen.' })}</p>
+            <p className="text-gray-400">
+              {t('titlebar.notificationsHint', {
+                defaultValue: 'Hinweise erscheinen hier, sobald es Erwähnungen oder Server-Aktivitäten gibt.',
+              })}
+            </p>
+          </div>
+        </ModalLayout>
+      )}
+      {showInbox && (
+        <ModalLayout
+          title={t('titlebar.inbox', { defaultValue: 'Inbox' })}
+          description={t('titlebar.inboxDescription', {
+            defaultValue: 'Direktnachrichten, Anfragen und ungelesene Unterhaltungen',
+          })}
+          onClose={() => setShowInbox(false)}
+          onOverlayClick={() => setShowInbox(false)}
+        >
+          <div className="space-y-3 text-gray-200 text-sm leading-relaxed">
+            <p>{t('titlebar.inboxEmpty', { defaultValue: 'Deine Inbox ist leer.' })}</p>
+            <p className="text-gray-400">
+              {t('titlebar.inboxHint', {
+                defaultValue: 'Neue Nachrichten oder Einladungen erscheinen hier, sobald sie eintreffen.',
+              })}
+            </p>
+          </div>
+        </ModalLayout>
+      )}
+      {showHelp && (
+        <ModalLayout
+          title={t('titlebar.help', { defaultValue: 'Hilfe' })}
+          description={t('titlebar.helpDescription', {
+            defaultValue: 'Antworten finden oder Feedback geben',
+          })}
+          onClose={() => setShowHelp(false)}
+          onOverlayClick={() => setShowHelp(false)}
+        >
+          <div className="space-y-3 text-gray-200 text-sm leading-relaxed">
+            <p>
+              {t('titlebar.helpOverview', {
+                defaultValue: 'Schau in die FAQ oder sende uns direkt Feedback, wenn du Unterstützung brauchst.',
+              })}
+            </p>
+            <ul className="list-disc list-inside text-gray-400 space-y-1">
+              <li>{t('titlebar.helpFaq', { defaultValue: 'FAQ & Kurzinfos' })}</li>
+              <li>{t('titlebar.helpContact', { defaultValue: 'Kontaktiere das Team über Feedback oder Support.' })}</li>
+            </ul>
+          </div>
+        </ModalLayout>
+      )}
     </>
   );
 };
