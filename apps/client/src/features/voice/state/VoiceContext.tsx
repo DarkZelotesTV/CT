@@ -36,11 +36,11 @@ export interface VoiceContextType {
   startScreenShare: (
     options?: {
       sourceId?: string;
-      quality?: 'low' | 'medium' | 'high';
-      frameRate?: number;
+      quality?: 'low' | 'medium' | 'high' | 'native';
+      frameRate?: number | 'native';
       track?: MediaStreamTrack;
       withAudio?: boolean;
-      bitrateProfile?: 'low' | 'medium' | 'high';
+      bitrateProfile?: 'low' | 'medium' | 'high' | 'max';
     },
     targetRoom?: Room | null
   ) => Promise<void>;

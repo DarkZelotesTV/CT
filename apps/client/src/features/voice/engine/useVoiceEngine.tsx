@@ -623,11 +623,18 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
 
       try {
         const preset = qualityPresets[quality] || qualityPresets.medium;
-        await roomToUse.localParticipant.setCameraEnabled(true, {
+        const captureOptions: {
+          deviceId?: string;
+          resolution?: { width: number; height: number };
+          frameRate?: number;
+        } = {
           ...(settings.devices.videoInputId ? { deviceId: settings.devices.videoInputId } : {}),
-          resolution: preset.resolution,
-          frameRate: preset.frameRate,
-        });
+        };
+
+        if (preset.resolution) captureOptions.resolution = preset.resolution;
+        if (preset.frameRate != null) captureOptions.frameRate = preset.frameRate;
+
+        await roomToUse.localParticipant.setCameraEnabled(true, captureOptions);
         desiredMediaStateRef.current = { ...desiredMediaStateRef.current, cameraEnabled: true };
         syncLocalMediaState(roomToUse);
       } catch (err: any) {
