@@ -31,8 +31,27 @@ export const resolveServerTheme = (theme?: Partial<ServerTheme> | null): ServerT
   ...(theme || {}),
 });
 
-export const deriveServerThemeFromSettings = (settings?: any): ServerTheme => {
+const adjustAccent = (hex?: string) => {
+  if (!hex || !hex.startsWith('#') || (hex.length !== 7 && hex.length !== 4)) return hex;
+  const normalized = hex.length === 4
+    ? `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}`
+    : hex;
+
+  const clamp = (value: number) => Math.min(255, Math.max(0, value));
+  const r = clamp(parseInt(normalized.slice(1, 3), 16) - 10);
+  const g = clamp(parseInt(normalized.slice(3, 5), 16) - 10);
+  const b = clamp(parseInt(normalized.slice(5, 7), 16) - 10);
+
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b
+    .toString(16)
+    .padStart(2, '0')}`;
+};
+
+export const deriveServerThemeFromSettings = (settings?: any, fallbackAccent?: string): ServerTheme => {
   const source = settings?.theme || settings?.appearance || settings?.colors || settings || {};
+
+  const accent = source.accent ?? source.primary ?? fallbackAccent;
+  const accentHover = source.accentHover ?? source.primaryHover ?? adjustAccent(accent);
 
   const partial: Partial<ServerTheme> = {
     background: source.background ?? source.bg ?? source.base,
@@ -43,8 +62,8 @@ export const deriveServerThemeFromSettings = (settings?: any): ServerTheme => {
     borderStrong: source.borderStrong,
     text: source.text,
     textMuted: source.textMuted ?? source.muted,
-    accent: source.accent ?? source.primary,
-    accentHover: source.accentHover ?? source.primaryHover,
+    accent,
+    accentHover,
     overlay: source.overlay,
   };
 

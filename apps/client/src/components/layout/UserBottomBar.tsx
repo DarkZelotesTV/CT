@@ -26,8 +26,8 @@ export const UserBottomBar = () => {
 
   return (
     <>
-      <div className="p-3 bg-[#0a0a0a] flex items-center gap-3">
-        <div className="w-8 h-8 bg-cyan-700/20 border border-cyan-500/50 rounded flex items-center justify-center text-cyan-400 font-bold text-xs relative overflow-hidden">
+      <div className="p-3 bg-[var(--color-surface)] flex items-center gap-3 border-t border-[var(--color-border)]">
+        <div className="w-8 h-8 bg-[var(--color-accent)]/20 border border-[var(--color-accent)]/50 rounded flex items-center justify-center text-[color:var(--color-accent)] font-bold text-xs relative overflow-hidden">
           {avatarUrl ? (
             <img src={avatarUrl} className="w-full h-full object-cover" alt="User Avatar" />
           ) : (
@@ -41,8 +41,8 @@ export const UserBottomBar = () => {
         </div>
 
         <div className="flex-1 overflow-hidden">
-          <div className="text-xs font-bold text-gray-300 truncate tracking-wider">{displayName}</div>
-          <div className="text-[9px] text-cyan-600 uppercase tracking-widest">ID: {user.id || 'Unknown'}</div>
+          <div className="text-xs font-bold text-[color:var(--color-text)] truncate tracking-wider">{displayName}</div>
+          <div className="text-[9px] text-[color:var(--color-text-muted)] uppercase tracking-widest">ID: {user.id || 'Unknown'}</div>
         </div>
 
         <div className="flex gap-1">

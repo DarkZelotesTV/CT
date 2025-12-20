@@ -67,6 +67,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   }, [serverName, onServerNameChange]);
 
   const [serverTheme, setServerTheme] = useState<ServerTheme>(defaultServerTheme);
+  const [serverThemeSource, setServerThemeSource] = useState<any>(null);
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createType, setCreateType] = useState<Channel['type']>('text');
@@ -147,6 +148,16 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
   const participantCount = activeRoom ? activeRoom.numParticipants : 0;
   const shouldShowVoiceParticipants = connectionState === 'connected' && participantCount > 0;
 
+  const accentColor = useMemo(
+    () => (serverId ? settings.theme.serverAccents?.[serverId] ?? settings.theme.accentColor : settings.theme.accentColor),
+    [serverId, settings.theme]
+  );
+
+  useEffect(() => {
+    if (!serverThemeSource) return;
+    setServerTheme(deriveServerThemeFromSettings(serverThemeSource, accentColor));
+  }, [accentColor, serverThemeSource]);
+
   const fetchData = useCallback(
     async (attempt = 1) => {
       clearRetryTimer();
@@ -162,7 +173,8 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
         const current = srvRes.find((s: any) => s.id === serverId);
         if (current) {
           setServerName(current.name);
-          setServerTheme(deriveServerThemeFromSettings(current.settings || current.theme));
+          setServerThemeSource(current.settings || current.theme);
+          setServerTheme(deriveServerThemeFromSettings(current.settings || current.theme, accentColor));
         }
         const structRes = await apiFetch<{ categories: Category[]; uncategorized: Channel[]; fallbackChannelId?: number | null }>(`/api/servers/${serverId}/structure`);
         setCategories(structRes.categories);
@@ -194,7 +206,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
         }
       }
     },
-    [activeChannelId, clearRetryTimer, onResolveFallback, onSelectChannel, refreshKey, serverId]
+    [accentColor, activeChannelId, clearRetryTimer, onResolveFallback, onSelectChannel, refreshKey, serverId]
   );
   useEffect(() => { fetchData(); }, [fetchData]);
 

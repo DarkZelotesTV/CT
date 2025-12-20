@@ -90,6 +90,16 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
   const [selectedOverrideRole, setSelectedOverrideRole] = useState<number | null>(null);
   const [overrideDraft, setOverrideDraft] = useState<{ allow: Record<string, boolean>; deny: Record<string, boolean> }>({ allow: {}, deny: {} });
 
+  const accentColor = useMemo(
+    () => settings.theme.serverAccents?.[serverId] ?? settings.theme.accentColor,
+    [serverId, settings.theme]
+  );
+
+  useEffect(() => {
+    if (!serverSettings || Object.keys(serverSettings).length === 0) return;
+    setServerTheme(deriveServerThemeFromSettings(serverSettings.theme || serverSettings, accentColor));
+  }, [accentColor, serverSettings]);
+
   // Use the dedicated portal target so the modal never gets trapped behind
   // backdrop-filter stacking contexts (Electron/Chromium quirk).
   const portalTarget = getModalRoot();
@@ -124,7 +134,10 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
         if (myServer) {
           setServerName(myServer.name);
           setFallbackChannelId(myServer.fallback_channel_id ?? null);
-          const nextTheme = deriveServerThemeFromSettings(myServer.settings || myServer.theme);
+          const nextTheme = deriveServerThemeFromSettings(
+            myServer.settings || myServer.theme,
+            settings.theme.serverAccents?.[serverId] ?? settings.theme.accentColor
+          );
           setServerTheme(nextTheme);
           setServerSettings(myServer.settings || {});
           const connection = myServer.settings?.connection || {};
