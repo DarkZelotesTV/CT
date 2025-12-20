@@ -23,6 +23,7 @@ import {
   Search,
   User,
   X,
+  Monitor,
 } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { defaultHotkeySettings, useSettings } from '../../context/SettingsContext';
@@ -100,7 +101,17 @@ type DeviceLists = {
   videoInputs: MediaDeviceInfo[];
 };
 
-export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
+type CategoryId = 'profile' | 'appearance' | 'notifications' | 'devices' | 'hotkeys' | 'identity';
+
+export const UserSettingsModal = ({
+  onClose,
+  initialCategory,
+  initialDevicesTab = 'voice',
+}: {
+  onClose: () => void;
+  initialCategory?: CategoryId;
+  initialDevicesTab?: 'voice' | 'video' | 'stream';
+}) => {
   const { slots, setSlots } = useTopBar();
   const baseSlotsRef = useRef(slots);
   const modalTitle = 'Persönliche Einstellungen';
@@ -121,7 +132,7 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
     return () => setSlots(base);
   }, [setSlots, modalTitle]);
 
-  const { settings, updateDevices, updateHotkeys, updateProfile, updateTheme, updateNotifications } = useSettings();
+  const { settings, updateDevices, updateHotkeys, updateProfile, updateTheme, updateNotifications, updateTalk } = useSettings();
   const {
     muted,
     micMuted,
@@ -165,11 +176,14 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
   const [locallyMuted, setLocallyMuted] = useState(muted);
   const [locallyMicMuted, setLocallyMicMuted] = useState(micMuted);
   const [inputLevel, setInputLevel] = useState(0);
-  const [sensitivity, setSensitivity] = useState(1);
+  const [sensitivity, setSensitivity] = useState(settings.talk.vadSensitivity ?? 50);
   const [meterError, setMeterError] = useState<string | null>(null);
   const [isTestingOutput, setIsTestingOutput] = useState(false);
   const [outputError, setOutputError] = useState<string | null>(null);
   const [useRnnoise, setUseRnnoise] = useState(rnnoiseEnabled);
+  const [cameraQuality, setCameraQuality] = useState(settings.talk.cameraQuality || 'medium');
+  const [screenQuality, setScreenQuality] = useState(settings.talk.screenQuality || 'high');
+  const [screenFrameRate, setScreenFrameRate] = useState(settings.talk.screenFrameRate || 30);
   const [identity, setIdentity] = useState<IdentityFile | null>(() => loadIdentity());
   const [identityName, setIdentityName] = useState(identity?.displayName ?? '');
   const [backupPassphrase, setBackupPassphrase] = useState('');
@@ -198,9 +212,9 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
     []
   );
 
-  const [activeCategory, setActiveCategory] = useState(categories[0]?.id ?? '');
+  const [activeCategory, setActiveCategory] = useState<CategoryId>(initialCategory ?? (categories[0]?.id as CategoryId));
   const [navQuery, setNavQuery] = useState('');
-  const [devicesTab, setDevicesTab] = useState<'voice' | 'video'>('voice');
+  const [devicesTab, setDevicesTab] = useState<'voice' | 'video' | 'stream'>(initialDevicesTab);
   const [micTestNonce, setMicTestNonce] = useState(0);
 
 
@@ -293,7 +307,7 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
             sum += value * value;
           }
           const rms = Math.sqrt(sum / data.length) / 128;
-          const level = Math.min(1, rms * 2 * sensitivity);
+          const level = Math.min(1, rms * 2 * (sensitivity / 50));
           smoothedLevel = smoothedLevel + (level - smoothedLevel) * smoothing;
           setInputLevel(smoothedLevel);
           lastUpdate = time;
@@ -371,6 +385,10 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
     if (locallyMuted !== muted) return true;
     if (locallyMicMuted !== micMuted) return true;
     if (useRnnoise !== rnnoiseEnabled) return true;
+    if (cameraQuality !== (settings.talk.cameraQuality || 'medium')) return true;
+    if (screenQuality !== (settings.talk.screenQuality || 'high')) return true;
+    if (screenFrameRate !== (settings.talk.screenFrameRate || 30)) return true;
+    if (sensitivity !== (settings.talk.vadSensitivity ?? 50)) return true;
 
     return false;
   }, [
@@ -400,6 +418,10 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
     micMuted,
     useRnnoise,
     rnnoiseEnabled,
+    cameraQuality,
+    screenQuality,
+    screenFrameRate,
+    sensitivity,
     settings,
   ]);
 
@@ -434,6 +456,10 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
     setLocallyMuted(muted);
     setLocallyMicMuted(micMuted);
     setUseRnnoise(rnnoiseEnabled);
+    setCameraQuality(settings.talk.cameraQuality || 'medium');
+    setScreenQuality(settings.talk.screenQuality || 'high');
+    setScreenFrameRate(settings.talk.screenFrameRate || 30);
+    setSensitivity(settings.talk.vadSensitivity ?? 50);
   }, [
     muted,
     micMuted,
@@ -624,6 +650,12 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
       mentions: notifyMentions,
       directMessages: notifyDirectMessages,
       invites: notifyInvites,
+    });
+    updateTalk({
+      cameraQuality,
+      screenQuality,
+      screenFrameRate,
+      vadSensitivity: sensitivity,
     });
     await setPushToTalkEnabledFlag(pushToTalkEnabled);
     await setMuted(locallyMuted);
@@ -970,6 +1002,16 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
                       >
                         Video
                       </button>
+                      <button
+                        onClick={() => setDevicesTab('stream')}
+                        className={`pb-3 -mb-px border-b-2 transition ${
+                          devicesTab === 'stream'
+                            ? 'border-[var(--color-accent)] text-[color:var(--color-text)]'
+                            : 'border-transparent text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]'
+                        }`}
+                      >
+                        Stream
+                      </button>
                     </div>
                   </div>
 
@@ -1043,13 +1085,13 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
                             <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold">
                               Eingabelautstärke
                             </div>
-                            <div className="text-xs text-[color:var(--color-text-muted)]">{Math.round(sensitivity * 100)}%</div>
+                            <div className="text-xs text-[color:var(--color-text-muted)]">{Math.round(sensitivity)}%</div>
                           </div>
                           <input
                             type="range"
-                            min="0.25"
-                            max="2"
-                            step="0.05"
+                            min="0"
+                            max="100"
+                            step="1"
                             value={sensitivity}
                             onChange={(e) => setSensitivity(Number(e.target.value))}
                             className="w-full accent-[var(--color-accent)]"
@@ -1249,8 +1291,82 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
                             ))}
                           </select>
                         </label>
+                        <label className="space-y-2">
+                          <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold flex items-center gap-2">
+                            <Monitor size={14} /> Kameraqualität
+                          </div>
+                          <select
+                            value={cameraQuality}
+                            onChange={(e) => setCameraQuality(e.target.value as typeof cameraQuality)}
+                            className="w-full bg-[var(--color-surface-alt)] text-[color:var(--color-text)] p-3 rounded-xl border border-[var(--color-border)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] focus:border-[var(--color-accent)]"
+                          >
+                            <option value="low">Niedrig</option>
+                            <option value="medium">Mittel</option>
+                            <option value="high">Hoch</option>
+                          </select>
+                          <p className="text-xs text-[color:var(--color-text-muted)]">Beeinflusst die Standardqualität deiner Kameraübertragung.</p>
+                        </label>
                         <div className="h-48 rounded-2xl bg-black/20 border border-[var(--color-border)] flex items-center justify-center text-sm text-[color:var(--color-text-muted)]">
                           Vorschau folgt (optional).
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {devicesTab === 'stream' && (
+                    <div className="space-y-6">
+                      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-4">
+                        <div className="text-sm font-semibold">Stream-Qualität</div>
+                        <p className="text-sm text-[color:var(--color-text-muted)]">
+                          Passe Standardauflösung und Bildrate für Bildschirmübertragungen an.
+                        </p>
+
+                        <div className="space-y-2">
+                          <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold">Auflösung</div>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            {['low', 'medium', 'high'].map((quality) => (
+                              <button
+                                key={quality}
+                                onClick={() => setScreenQuality(quality as typeof screenQuality)}
+                                className={`p-4 rounded-xl border text-left transition ${
+                                  screenQuality === quality
+                                    ? 'bg-white/5 border-[var(--color-accent)]'
+                                    : 'bg-transparent border-[var(--color-border)] hover:bg-white/5'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="text-sm font-semibold capitalize">{quality}</div>
+                                  {screenQuality === quality && <Check size={16} />}
+                                </div>
+                                <div className="text-xs text-[color:var(--color-text-muted)]">
+                                  {quality === 'low' ? '480p' : quality === 'medium' ? '720p' : '1080p'}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold">Bildrate</div>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            {[15, 30, 60].map((fps) => (
+                              <button
+                                key={fps}
+                                onClick={() => setScreenFrameRate(fps)}
+                                className={`p-4 rounded-xl border text-left transition ${
+                                  screenFrameRate === fps
+                                    ? 'bg-white/5 border-[var(--color-accent)]'
+                                    : 'bg-transparent border-[var(--color-border)] hover:bg-white/5'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="text-sm font-semibold">{fps} FPS</div>
+                                  {screenFrameRate === fps && <Check size={16} />}
+                                </div>
+                                <div className="text-xs text-[color:var(--color-text-muted)]">{fps === 60 ? 'Flüssig' : 'Standard'}</div>
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </div>
