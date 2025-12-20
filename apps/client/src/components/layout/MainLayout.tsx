@@ -29,6 +29,7 @@ import { useOnboardingReplay, type OnboardingReplayKey } from '../../features/on
 import { storage } from '../../shared/config/storage';
 import { defaultHotkeySettings, useSettings } from '../../context/SettingsContext';
 import { applyAppTheme, buildAppTheme } from '../../theme/appTheme';
+import { useDesktopNotifications } from '../../hooks/useDesktopNotifications';
 
 const defaultChannelWidth = 256;
 const defaultMemberWidth = 256;
@@ -638,6 +639,22 @@ export const MainLayout = () => {
     }
     setShowRightSidebar(true);
   }, [selectedServerId]);
+
+  const handleNotificationNavigate = useCallback(
+    (target: { serverId?: number; channelId?: number; channelName?: string; channelType?: Channel['type'] }) => {
+      if (typeof target.serverId === 'number') {
+        handleServerSelect(target.serverId);
+      }
+      if (target.channelId && target.channelName && target.channelType) {
+        handleChannelSelect({ id: target.channelId, name: target.channelName, type: target.channelType });
+      }
+      setShowMobileNav(false);
+      focusMainContent();
+    },
+    [focusMainContent, handleChannelSelect, handleServerSelect]
+  );
+
+  useDesktopNotifications(handleNotificationNavigate);
 
   // --- Dragging Handlers ---
   const startDragLeft = (event: React.MouseEvent) => {
