@@ -73,6 +73,12 @@
     "move": "Verschieben",
     "ban": "Bann aussprechen",
     "kick": "Vom Server kicken",
+    "channelInfo": "Kanalinfo",
+    "deleteChannel": "Kanal löschen",
+    "openChannel": "Kanal öffnen",
+    "serverInfo": "Serverinfos",
+    "leaveServer": "Server verlassen",
+    "noChannelActions": "Keine Kanalaktionen verfügbar",
     "connected": "Verbunden",
     "startCamera": "Kamera starten",
     "stopCamera": "Kamera stoppen",
@@ -100,14 +106,16 @@
     "unknownUser": "Unbekannt",
     "errors": {
       "missingChannel": "Kein Kanal angegeben",
-      "actionFailed": "Aktion fehlgeschlagen"
+      "actionFailed": "Aktion fehlgeschlagen",
+      "missingPermissions": "Du hast keine Berechtigung für diese Aktion"
     },
     "mute": "Stummschalten",
     "removeFromTalk": "Aus dem Talk entfernen",
     "moveToTalk": "In Talk verschieben",
     "move": "Verschieben",
     "ban": "Bann aussprechen",
-    "kick": "Vom Server kicken"
+    "kick": "Vom Server kicken",
+    "noActions": "Keine Aktionen für dieses Mitglied verfügbar"
   },
   "serverRail": {
     "loading": "Server werden geladen...",

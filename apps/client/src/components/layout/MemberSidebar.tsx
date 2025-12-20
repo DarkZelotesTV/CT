@@ -135,6 +135,8 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const { t } = useTranslation();
   const listParentRef = useRef<HTMLDivElement | null>(null);
+  const canMoveMembers = Boolean(permissions.move);
+  const canKickMembers = Boolean(permissions.kick);
 
   useEffect(() => () => {
     isMountedRef.current = false;
@@ -180,7 +182,6 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
     origin: { x: number; y: number; target?: HTMLElement | null },
     member: Member
   ) => {
-    if (!permissions.move && !permissions.kick) return;
     const active = findActiveVoiceChannel(member.userId);
     setContextMenu({
       userId: member.userId,
@@ -211,6 +212,17 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
     payload: { userId: number; channelId?: number | null; targetChannelId?: number | null }
   ) => {
     if (!serverId) return;
+    const canMove = Boolean(permissions.move);
+    const canKick = Boolean(permissions.kick);
+    const canActOnVoice = canMove && Boolean(payload.channelId);
+    if (['mute', 'remove', 'move'].includes(action) && !canActOnVoice) {
+      alert(t('memberSidebar.errors.missingPermissions'));
+      return;
+    }
+    if ((action === 'kick' || action === 'ban') && !canKick) {
+      alert(t('memberSidebar.errors.missingPermissions'));
+      return;
+    }
     try {
       switch (action) {
         case 'mute':
@@ -344,6 +356,15 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
       window.removeEventListener('contextmenu', handleGlobal);
     };
   }, [contextMenu]);
+
+  const targetMember = useMemo(
+    () => (contextMenu ? members.find((m) => m.userId === contextMenu.userId) ?? null : null),
+    [contextMenu, members]
+  );
+  const targetIsProtected = Boolean(targetMember?.roles?.some((r: any) => r.name === 'owner'));
+  const canActOnVoice = Boolean(contextMenu?.channelId) && canMoveMembers && !targetIsProtected;
+  const canModerateMember = canKickMembers && !targetIsProtected;
+  const hasContextActions = canActOnVoice || canModerateMember;
 
   useEffect(() => {
     if (!contextMenu?.channelId) return;
@@ -512,7 +533,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="text-[11px] text-[color:var(--color-text-muted)] uppercase tracking-wide px-2 pb-1">{contextMenu.username}</div>
-            {permissions.move && contextMenu.channelId ? (
+            {canActOnVoice ? (
               <button
                 type="button"
                 className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)]"
@@ -521,7 +542,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
                 {t('memberSidebar.mute')}
               </button>
             ) : null}
-            {permissions.move && contextMenu.channelId ? (
+            {canActOnVoice ? (
               <button
                 type="button"
                 className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)]"
@@ -530,7 +551,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
                 {t('memberSidebar.removeFromTalk')}
               </button>
             ) : null}
-            {permissions.move && contextMenu.channelId && voiceChannels.length > 1 ? (
+            {canActOnVoice && voiceChannels.length > 1 ? (
               <div className="px-2 py-1 space-y-1">
                 <div className="text-[11px] text-[color:var(--color-text-muted)]">{t('memberSidebar.moveToTalk')}</div>
                 <div className="flex items-center gap-2">
@@ -562,7 +583,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
                 </div>
               </div>
             ) : null}
-            {permissions.kick ? (
+            {canModerateMember ? (
               <>
                 <button
                   type="button"
@@ -580,6 +601,9 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
                 </button>
               </>
             ) : null}
+            {!hasContextActions && (
+              <div className="text-xs text-[color:var(--color-text-muted)] px-2 py-1">{t('memberSidebar.noActions')}</div>
+            )}
           </div>
         </div>
       )}

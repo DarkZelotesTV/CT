@@ -73,6 +73,12 @@
     "move": "Move",
     "ban": "Ban user",
     "kick": "Kick from server",
+    "channelInfo": "Channel info",
+    "deleteChannel": "Delete channel",
+    "openChannel": "Open channel",
+    "serverInfo": "Server info",
+    "leaveServer": "Leave server",
+    "noChannelActions": "No channel actions available",
     "connected": "Connected",
     "startCamera": "Start camera",
     "stopCamera": "Stop camera",
@@ -100,14 +106,16 @@
     "unknownUser": "Unknown",
     "errors": {
       "missingChannel": "No channel provided",
-      "actionFailed": "Action failed"
+      "actionFailed": "Action failed",
+      "missingPermissions": "You don't have permission to run that action"
     },
     "mute": "Mute",
     "removeFromTalk": "Remove from talk",
     "moveToTalk": "Move to talk",
     "move": "Move",
     "ban": "Ban user",
-    "kick": "Kick from server"
+    "kick": "Kick from server",
+    "noActions": "No available actions for this member"
   },
   "serverRail": {
     "loading": "Loading servers...",
