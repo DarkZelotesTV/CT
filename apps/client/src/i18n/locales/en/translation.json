@@ -48,5 +48,21 @@
     "searchPlaceholder": "Search channels or types",
     "noChannels": "No channels available yet.",
     "noChannelsFound": "No channels match your search."
+  },
+  "titlebar": {
+    "home": "Home",
+    "noServer": "No server",
+    "openServerSettings": "Server settings",
+    "searchPlaceholder": "Search {{server}}",
+    "searchAria": "Search",
+    "toggleMembers": "Toggle members",
+    "notifications": "Notifications",
+    "pins": "Pins",
+    "inbox": "Inbox",
+    "help": "Help",
+    "minimize": "Minimize",
+    "maximize": "Maximize",
+    "restore": "Restore",
+    "close": "Close"
   }
 }

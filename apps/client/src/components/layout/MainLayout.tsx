@@ -9,6 +9,8 @@ import { useTranslation } from 'react-i18next';
 import { ServerRail } from './ServerRail';
 import { MemberSidebar } from './MemberSidebar';
 import { ChannelSidebar } from './ChannelSidebar';
+import { TitleBar } from '../window/TitleBar';
+import { TopBarProvider } from '../window/TopBarContext';
 
 // Web & Voice Views
 import { WebChannelView } from '../server/WebChannelView';
@@ -56,9 +58,14 @@ export const MainLayout = () => {
   const rightSidebarRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef<HTMLDivElement>(null);
   const dragState = useRef<{ startX: number; startWidth: number }>({ startX: 0, startWidth: 0 });
+
+  const isDesktop = typeof window !== 'undefined' && !!window.ct?.windowControls;
   
   // App Data State
   const [selectedServerId, setSelectedServerId] = useState<number | null>(null);
+  const [serverName, setServerName] = useState<string>('');
+  const [titlebarHeight, setTitlebarHeight] = useState<number>(48);
+
   const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
   const [fallbackChannel, setFallbackChannel] = useState<Channel | null>(null);
   
@@ -335,10 +342,15 @@ export const MainLayout = () => {
   };
 
   const ui = (
+    <TopBarProvider>
     <div
       ref={layoutRef}
-      className="flex h-screen w-screen overflow-visible relative bg-[#050507] text-gray-200 font-sans"
+      style={isDesktop ? { paddingTop: titlebarHeight } : undefined}
+      className={classNames(
+        "flex h-screen w-screen overflow-visible relative bg-[#050507] text-gray-200 font-sans box-border"
+      )}
     >
+      {isDesktop && <TitleBar serverName={serverName} channel={activeChannel} showRightSidebar={showRightSidebar} onToggleRightSidebar={() => setShowRightSidebar((v) => !v)} onOpenServerSettings={() => setShowServerSettings(true)} />}
       
       {/* --- GLOBAL MODALS --- */}
       {showOnboarding && <OnboardingModal onClose={() => setShowOnboarding(false)} />}
@@ -391,7 +403,7 @@ export const MainLayout = () => {
                 style={{ width: typeof window !== 'undefined' && window.innerWidth < 1024 ? 'calc(100% - 80px)' : leftSidebarWidth }}
             >
                 <div className="w-full h-full bg-[#0e0e11]/90 backdrop-blur-xl rounded-2xl border border-white/5 overflow-hidden flex flex-col relative">
-                    <ChannelSidebar
+                    <ChannelSidebar onServerNameChange={(name) => setServerName(name)}
                         serverId={selectedServerId}
                         activeChannelId={activeChannel?.id || null}
                         onSelectChannel={handleChannelSelect}
@@ -491,6 +503,7 @@ export const MainLayout = () => {
 
       {activeRoom && !muted && <RoomAudioRenderer />}
     </div>
+    </TopBarProvider>
   );
 
   if (!activeRoom) return ui;

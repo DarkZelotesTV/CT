@@ -19,6 +19,30 @@ const INDEX_HTML = path.join(RENDERER_DIST, "index.html");
 let mainWindow: BrowserWindow | null = null;
 const chatWindows = new Map<string, BrowserWindow>();
 
+const TITLEBAR_HEIGHT = 48;
+
+function winFromEvent(event: any) {
+  return BrowserWindow.fromWebContents(event.sender);
+}
+
+function sendWindowState(win: BrowserWindow) {
+  // renderer may not be ready yet
+  if (win.isDestroyed()) return;
+  win.webContents.send("window:state", {
+    isMaximized: win.isMaximized(),
+    isFullScreen: win.isFullScreen(),
+  });
+}
+
+function wireWindowStateEvents(win: BrowserWindow) {
+  const send = () => sendWindowState(win);
+  win.on("maximize", send);
+  win.on("unmaximize", send);
+  win.on("enter-full-screen", send);
+  win.on("leave-full-screen", send);
+}
+
+
 /**
  * Simple JSON Store als Ersatz für SQLite (Settings/Cache).
  * Liegt unter: %APPDATA%/<AppName>/local-store.json
@@ -58,6 +82,8 @@ function createWindow() {
     minWidth: 960,
     minHeight: 600,
     backgroundColor: "#050507",
+    frame: false,
+    autoHideMenuBar: true,
     show: false,
     webPreferences: {
       preload: PRELOAD_PATH,
@@ -66,6 +92,8 @@ function createWindow() {
       sandbox: false,
     },
   });
+
+  wireWindowStateEvents(mainWindow);
 
   mainWindow.once("ready-to-show", () => mainWindow?.show());
 
@@ -158,6 +186,39 @@ function registerIpc() {
     }
   });
 
+  // Window Controls (für Custom Titlebar)
+  ipcMain.handle("window:getState", async (event) => {
+    const win = winFromEvent(event);
+    if (!win) return { isMaximized: false, isFullScreen: false, platform: process.platform, titlebarHeight: TITLEBAR_HEIGHT };
+    return {
+      isMaximized: win.isMaximized(),
+      isFullScreen: win.isFullScreen(),
+      platform: process.platform,
+      titlebarHeight: TITLEBAR_HEIGHT,
+    };
+  });
+
+  ipcMain.handle("window:minimize", async (event) => {
+    const win = winFromEvent(event);
+    win?.minimize();
+    return true;
+  });
+
+  ipcMain.handle("window:toggleMaximize", async (event) => {
+    const win = winFromEvent(event);
+    if (!win) return false;
+    if (win.isMaximized()) win.unmaximize();
+    else win.maximize();
+    return true;
+  });
+
+  ipcMain.handle("window:close", async (event) => {
+    const win = winFromEvent(event);
+    win?.close();
+    return true;
+  });
+;
+
   ipcMain.handle("chat:openWindow", async (_event, chatId: string | number, chatName: string) => {
     const id = String(chatId);
     const existing = chatWindows.get(id);
@@ -173,6 +234,7 @@ function registerIpc() {
       minHeight: 480,
       title: chatName,
       backgroundColor: "#050507",
+      frame: false,
       autoHideMenuBar: true,
       webPreferences: {
         preload: PRELOAD_PATH,
@@ -181,6 +243,8 @@ function registerIpc() {
         sandbox: false,
       },
     });
+
+    wireWindowStateEvents(chatWindow);
 
     chatWindows.set(id, chatWindow);
 

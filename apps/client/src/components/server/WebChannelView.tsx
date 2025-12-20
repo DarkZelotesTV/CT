@@ -5,6 +5,7 @@ import type Quill from 'quill';
 import 'react-quill/dist/quill.snow.css';
 import { Globe, Edit, Save, X, LayoutGrid, Columns, Image, FileInput, Eye, Sparkles } from 'lucide-react';
 import { apiFetch } from '../../api/http';
+import { useTopBar } from '../window/TopBarContext';
 
 interface WebChannelViewProps {
   channelId: number;
@@ -161,6 +162,9 @@ const placeholderHtml =
   '<div class="text-center text-gray-500 mt-10"><h1>Willkommen</h1><p>Diese Seite ist noch leer.</p></div>';
 
 export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) => {
+  const { setSlots, clearSlots } = useTopBar();
+  const isDesktop = typeof window !== 'undefined' && !!window.ct?.windowControls;
+
   const [htmlContent, setHtmlContent] = useState('');
   const [contentBody, setContentBody] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -404,10 +408,48 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
 
   const activeLayout = layoutOptions.find((option) => option.key === layoutMode);
 
+  const desktopRightControls = useMemo(
+    () => (
+      <div className="no-drag flex items-center gap-2">
+        {layoutBadge}
+        {statusMessage && !isEditing && (
+          <span className="text-green-300 text-xs bg-green-900/50 px-3 py-1 rounded-full border border-green-700">
+            {statusMessage}
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={() => {
+            if (!isEditing) setEditValue(contentBody || '<h1>Willkommen!</h1><p>Bearbeite mich...</p>');
+            setIsEditing(!isEditing);
+            setStatusMessage(null);
+            setError(null);
+          }}
+          className={`flex items-center gap-2 text-xs uppercase font-bold px-3 py-2 rounded border transition ${
+            isEditing
+              ? 'text-red-200 border-red-400/40 hover:border-red-300'
+              : 'text-gray-200 border-dark-400 hover:border-dark-200'
+          }`}
+        >
+          {isEditing ? <X size={16} /> : <Edit size={16} />}
+          {isEditing ? 'Abbrechen' : 'Seite bearbeiten'}
+        </button>
+      </div>
+    ),
+    [layoutBadge, statusMessage, isEditing, contentBody],
+  );
+
+  useEffect(() => {
+    if (!isDesktop) return;
+    setSlots({ right: desktopRightControls });
+    return () => clearSlots();
+  }, [isDesktop, setSlots, clearSlots, desktopRightControls]);
+
+
   return (
     <div className="flex-1 flex flex-col bg-dark-100 relative z-0 h-full overflow-hidden">
 
-      {/* Header */}
+      {!isDesktop && (
       <div className="h-12 border-b border-dark-400 flex items-center px-4 shadow-sm bg-dark-100 flex-shrink-0 justify-between">
         <div className="flex items-center gap-3">
           <Globe className="text-gray-400" size={20} />
@@ -440,6 +482,8 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
           </button>
         </div>
       </div>
+      )}
+
 
       {error && (
         <div className="bg-red-900/50 text-red-100 text-sm px-4 py-2 border-b border-red-800">

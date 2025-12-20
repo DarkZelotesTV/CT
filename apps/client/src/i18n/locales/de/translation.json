@@ -48,5 +48,21 @@
     "searchPlaceholder": "Nach Kanal oder Typ suchen",
     "noChannels": "Noch keine Kanäle vorhanden.",
     "noChannelsFound": "Keine Kanäle passen zur Suche."
+  },
+  "titlebar": {
+    "home": "Start",
+    "noServer": "Kein Server",
+    "openServerSettings": "Server-Einstellungen",
+    "searchPlaceholder": "{{server}} suchen",
+    "searchAria": "Suchen",
+    "toggleMembers": "Mitglieder ein-/ausblenden",
+    "notifications": "Benachrichtigungen",
+    "pins": "Pins",
+    "inbox": "Inbox",
+    "help": "Hilfe",
+    "minimize": "Minimieren",
+    "maximize": "Maximieren",
+    "restore": "Wiederherstellen",
+    "close": "Schließen"
   }
 }

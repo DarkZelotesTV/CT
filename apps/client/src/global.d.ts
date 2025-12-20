@@ -9,6 +9,15 @@ declare global {
       dockChatWindow: (chatId: string | number, chatName: string) => Promise<void>;
       onChatDocked: (callback: (chatId: number, chatName: string) => void) => () => void;
       getScreenSources: () => Promise<import("electron").DesktopCapturerSource[]>;
+      windowControls?: {
+        getState: () => Promise<{ isMaximized: boolean; isFullScreen: boolean; platform: string; titlebarHeight: number }>;
+        minimize: () => Promise<boolean>;
+        toggleMaximize: () => Promise<boolean>;
+        close: () => Promise<boolean>;
+        onStateChange: (
+          callback: (state: { isMaximized: boolean; isFullScreen: boolean }) => void
+        ) => () => void;
+      };
     };
     clover?: {
       filterSystemAudioTrack?: (track: MediaStreamTrack) => MediaStreamTrack | null | undefined;

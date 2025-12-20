@@ -17,6 +17,18 @@ contextBridge.exposeInMainWorld("ct", {
     return () => ipcRenderer.removeListener("chat:docked", listener);
   },
   getScreenSources: () => ipcRenderer.invoke("media:getSources"),
+  windowControls: {
+    getState: () => ipcRenderer.invoke("window:getState"),
+    minimize: () => ipcRenderer.invoke("window:minimize"),
+    toggleMaximize: () => ipcRenderer.invoke("window:toggleMaximize"),
+    close: () => ipcRenderer.invoke("window:close"),
+    onStateChange: (callback: (state: { isMaximized: boolean; isFullScreen: boolean }) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, state: { isMaximized: boolean; isFullScreen: boolean }) =>
+        callback(state);
+      ipcRenderer.on("window:state", listener);
+      return () => ipcRenderer.removeListener("window:state", listener);
+    },
+  },
 });
 
 export {};

@@ -18,15 +18,22 @@ interface ChannelSidebarProps {
   activeChannelId: number | null;
   onSelectChannel: (channel: Channel) => void;
   onOpenServerSettings: () => void;
+  onServerNameChange?: (name: string) => void;
   onCloseMobileNav?: () => void;
   onResolveFallback?: (channel: Channel | null) => void;
   refreshKey?: number;
 }
 
-export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onOpenServerSettings, onCloseMobileNav, onResolveFallback, refreshKey = 0 }: ChannelSidebarProps) => {
+export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onOpenServerSettings, onServerNameChange, onCloseMobileNav, onResolveFallback, refreshKey = 0 }: ChannelSidebarProps) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [uncategorized, setUncategorized] = useState<Channel[]>([]);
+  const isDesktop = typeof window !== 'undefined' && !!window.ct?.windowControls;
   const [serverName, setServerName] = useState('Server');
+
+  useEffect(() => {
+    if (serverName) onServerNameChange?.(serverName);
+  }, [serverName, onServerNameChange]);
+
   const [serverTheme, setServerTheme] = useState<ServerTheme>(defaultServerTheme);
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -481,7 +488,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
 
   return (
     <div className="flex flex-col h-full bg-transparent relative">
-      {/* Header */}
+      {!isDesktop && (
       <div
         className="h-12 flex items-center gap-2 px-4 border-b border-white/5 transition-colors no-drag relative z-10"
         data-no-drag
@@ -549,6 +556,8 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
           </button>
         )}
       </div>
+      )}
+
 
         {/* Suche & Liste */}
         <div className="flex-1 overflow-y-auto px-2 pb-4 pt-3 custom-scrollbar relative z-0">
