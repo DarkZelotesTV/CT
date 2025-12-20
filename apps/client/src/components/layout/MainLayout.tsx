@@ -115,12 +115,14 @@ export const MainLayout = () => {
   const [showMobileNav, setShowMobileNav] = useState(false);
   const [showRightSidebar, setShowRightSidebar] = useState(true);
   const [containerWidth, setContainerWidth] = useState(() => (typeof window === 'undefined' ? 0 : window.innerWidth));
+  const isMobileLayout = containerWidth < MOBILE_BREAKPOINT;
   
   // Resizable Widths (Desktop)
-  const [leftSidebarWidth, setLeftSidebarWidth] = useState(() => storage.get('layoutLeftWidth'));
-  const [rightSidebarWidth, setRightSidebarWidth] = useState(() => storage.get('layoutRightWidth'));
+  const [leftSidebarWidth, setLeftSidebarWidth] = useState(() => storage.get('layoutLeftWidth') ?? defaultChannelWidth);
+  const [rightSidebarWidth, setRightSidebarWidth] = useState(() => storage.get('layoutRightWidth') ?? defaultMemberWidth);
   const [isDraggingLeft, setIsDraggingLeft] = useState(false);
   const [isDraggingRight, setIsDraggingRight] = useState(false);
+  const [showLeftSidebar, setShowLeftSidebar] = useState(true);
   
   // Logic Refs
   const leftSidebarRef = useRef<HTMLDivElement>(null);
@@ -320,13 +322,18 @@ export const MainLayout = () => {
     [computedMaxSidebarWidth]
   );
 
+  const effectiveLeftSidebarWidth = useMemo(
+    () => clampSidebarWidth(leftSidebarWidth ?? defaultChannelWidth),
+    [clampSidebarWidth, leftSidebarWidth]
+  );
+
   // --- LocalStorage für Sidebar Breite ---
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const storedLeft = storage.get('layoutLeftWidth');
+    const storedLeft = storage.get('layoutLeftWidth') ?? defaultChannelWidth;
     setLeftSidebarWidth(clampSidebarWidth(storedLeft));
 
-    const storedRight = storage.get('layoutRightWidth');
+    const storedRight = storage.get('layoutRightWidth') ?? defaultMemberWidth;
     setRightSidebarWidth(clampSidebarWidth(storedRight));
   }, [clampSidebarWidth]);
 
@@ -875,8 +882,19 @@ export const MainLayout = () => {
         {selectedServerId && (
             <div
                 ref={leftSidebarRef}
-                className="h-full py-4 pl-4 flex-shrink-0 transition-all duration-300 relative z-[60]"
-                style={{ width: typeof window !== 'undefined' && window.innerWidth < 1024 ? 'calc(100% - 80px)' : leftSidebarWidth }}
+                className={classNames(
+                  "h-full flex-shrink-0 transition-all duration-500 relative z-[60]",
+                  isMobileLayout || showLeftSidebar ? "py-4 pl-4 opacity-100 translate-x-0" : "py-4 pl-0 opacity-0 -translate-x-6"
+                )}
+                style={{
+                  width:
+                    isMobileLayout
+                      ? 'calc(100% - 80px)'
+                      : showLeftSidebar
+                        ? effectiveLeftSidebarWidth
+                        : 0,
+                }}
+                aria-hidden={!showLeftSidebar && !isMobileLayout}
             >
                 <div className="w-full h-full bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border-strong)] overflow-hidden flex flex-col relative shadow-lg">
                     <ChannelSidebar onServerNameChange={(name) => setServerName(name)}
@@ -892,8 +910,19 @@ export const MainLayout = () => {
                         refreshKey={serverRefreshKey}
                     />
                 </div>
-                <div className="hidden lg:block absolute top-0 right-0 h-full w-2 cursor-ew-resize hover:bg-white/5" onMouseDown={startDragLeft} />
+                {!isMobileLayout && showLeftSidebar && (
+                  <div className="hidden lg:block absolute top-0 right-0 h-full w-2 cursor-ew-resize hover:bg-white/5" onMouseDown={startDragLeft} />
+                )}
             </div>
+        )}
+        {selectedServerId && (
+          <button
+            onClick={() => setShowLeftSidebar(!showLeftSidebar)}
+            className="hidden lg:flex absolute -right-3 top-1/2 -translate-y-1/2 z-30 w-7 h-14 bg-[var(--color-surface-hover)] hover:bg-[var(--color-accent)] rounded-r-xl items-center justify-center text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] transition-all cursor-pointer shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+            aria-label={showLeftSidebar ? t('layout.hideNavigation', { defaultValue: 'Hide navigation' }) : t('layout.showNavigation', { defaultValue: 'Show navigation' })}
+          >
+            {showLeftSidebar ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+          </button>
         )}
       </div>
 
