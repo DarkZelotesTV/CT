@@ -4,6 +4,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { sequelize } from './config/database';
 import path from 'path';
+import fs from 'fs';
 
 // Routen Importe
 import authRoutes from './routes/auth';
@@ -73,7 +74,9 @@ app.use(cors({
 }));
 
 app.use(express.json());
-app.use('/uploads', express.static(path.resolve(__dirname, '..', 'public', 'uploads')));
+const uploadRoot = path.resolve(__dirname, '..', 'public', 'uploads');
+fs.promises.mkdir(uploadRoot, { recursive: true }).catch(() => {});
+app.use('/uploads', express.static(uploadRoot));
 
 // ==========================================
 // 2. SOCKET.IO SETUP

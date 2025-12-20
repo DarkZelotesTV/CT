@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type KeyboardEvent, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useState, type KeyboardEvent, type ChangeEvent, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { getModalRoot } from './modalRoot';
 import { useTopBar } from '../window/TopBarContext';
@@ -6,6 +6,7 @@ import {
   Camera,
   Check,
   Download,
+  Loader2,
   Headphones,
   Keyboard,
   Palette,
@@ -23,6 +24,7 @@ import {
   User,
   X,
 } from 'lucide-react';
+import { apiFetch } from '../../api/http';
 import { defaultHotkeySettings, useSettings } from '../../context/SettingsContext';
 import { useVoice } from '../../features/voice';
 import { clearIdentity, computeFingerprint, createIdentity, formatFingerprint, loadIdentity, saveIdentity, type IdentityFile } from '../../auth/identity';
@@ -177,6 +179,11 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
   const [serverAccentDraft, setServerAccentDraft] = useState<Record<number, string>>(settings.theme.serverAccents || {});
   const [serverAccentTarget, setServerAccentTarget] = useState('');
   const [serverAccentColor, setServerAccentColor] = useState(settings.theme.accentColor);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState(settings.profile.avatarUrl || '');
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
 
   // 'Talk & Audio' wurde in 'devices' integriert und entfernt
   const categories = useMemo(
@@ -310,11 +317,17 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
     };
   }, [audioInputId, sensitivity, micTestNonce]);
 
-  const avatarPreview = useMemo(() => {
-    if (avatarUrl) return avatarUrl;
-    if (settings.profile.avatarUrl) return settings.profile.avatarUrl;
-    return '';
-  }, [avatarUrl, settings.profile.avatarUrl]);
+  useEffect(() => {
+    if (!avatarFile) return;
+    const objectUrl = URL.createObjectURL(avatarFile);
+    setAvatarPreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [avatarFile]);
+
+  useEffect(() => {
+    if (avatarFile) return;
+    setAvatarPreview(avatarUrl || settings.profile.avatarUrl || '');
+  }, [avatarFile, avatarUrl, settings.profile.avatarUrl]);
 
   const levelPercent = useMemo(() => Math.round(inputLevel * 100), [inputLevel]);
   const fingerprint = useMemo(() => (identity ? computeFingerprint(identity) : null), [identity]);
@@ -332,6 +345,7 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
 
     if (displayName !== settings.profile.displayName) return true;
     if (avatarUrl !== settings.profile.avatarUrl) return true;
+    if (avatarFile) return true;
 
     if (normalizeDevice(audioInputId) !== settings.devices.audioInputId) return true;
     if (normalizeDevice(audioOutputId) !== settings.devices.audioOutputId) return true;
@@ -392,6 +406,9 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
   const resetDraft = useCallback(() => {
     setDisplayName(settings.profile.displayName);
     setAvatarUrl(settings.profile.avatarUrl);
+    setAvatarPreview(settings.profile.avatarUrl || '');
+    setAvatarFile(null);
+    setAvatarError(null);
 
     setAudioInputId(settings.devices.audioInputId || selectedAudioInputId || '');
     setAudioOutputId(settings.devices.audioOutputId || selectedAudioOutputId || '');
@@ -546,7 +563,47 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
     updateNotifications({ permission: result });
   }, [updateNotifications]);
 
+  const handleAvatarFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarFile(file);
+    setAvatarError(null);
+  };
+
+  const handleAvatarUpload = async () => {
+    if (!avatarFile) {
+      setAvatarError('Bitte wähle eine Bilddatei aus.');
+      return;
+    }
+
+    setAvatarUploading(true);
+    setAvatarError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('avatar', avatarFile);
+
+      const response = await apiFetch<{ avatar_url: string }>('/api/users/me/avatar', {
+        method: 'POST',
+        body: formData,
+      });
+
+      setAvatarUrl(response.avatar_url);
+      setAvatarPreview(response.avatar_url);
+      setAvatarFile(null);
+      updateProfile({ avatarUrl: response.avatar_url });
+    } catch (err: any) {
+      setAvatarError(err?.message || 'Upload fehlgeschlagen');
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
   const handleSave = async () => {
+    if (avatarFile) {
+      setAvatarError('Bitte lade den ausgewählten Avatar hoch oder entferne die Auswahl.');
+      return;
+    }
     updateProfile({ displayName, avatarUrl });
     updateDevices({
       audioInputId: audioInputId || null,
@@ -604,7 +661,7 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
             <nav className="bg-[var(--color-surface-alt)] border-r border-[var(--color-border)] p-4 flex flex-col gap-3 overflow-hidden">
   <button
     onClick={() => setActiveCategory('profile')}
-    className="w-full flex items-center gap-3 p-3 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] transition text-left"
+          className="w-full flex items-center gap-3 p-3 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] transition text-left"
   >
     <div className="w-10 h-10 rounded-full overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
       {avatarPreview ? (
@@ -681,14 +738,42 @@ export const UserSettingsModal = ({ onClose }: { onClose: () => void }) => {
                             className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] outline-none"
                           />
                         </div>
-                        <div className="space-y-1">
-                          <label className="text-xs text-gray-400 uppercase font-semibold">Avatar-URL</label>
+                        <div className="space-y-2">
+                          <label className="text-xs text-gray-400 uppercase font-semibold">Avatar</label>
                           <input
-                            value={avatarUrl}
-                            onChange={(e) => setAvatarUrl(e.target.value)}
-                            placeholder="https://..."
-                            className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] outline-none"
+                            ref={avatarInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleAvatarFileChange}
                           />
+                          <div className="flex flex-col gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <button
+                                onClick={() => avatarInputRef.current?.click()}
+                                className="px-4 py-2 rounded-xl border border-white/10 bg-white/5 text-sm text-gray-200 hover:bg-white/10"
+                              >
+                                Datei wählen
+                              </button>
+                              {avatarFile && (
+                                <span className="text-xs text-gray-300 truncate max-w-[160px]" title={avatarFile.name}>
+                                  {avatarFile.name}
+                                </span>
+                              )}
+                              <button
+                                onClick={handleAvatarUpload}
+                                disabled={avatarUploading || (!avatarFile && !avatarUrl)}
+                                className="px-4 py-2 rounded-xl bg-[var(--color-accent)]/80 hover:bg-[var(--color-accent)] text-sm font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
+                              >
+                                {avatarUploading ? <Loader2 className="animate-spin" size={16} /> : <Upload size={16} />}
+                                {avatarUploading ? 'Lade hoch...' : 'Avatar hochladen'}
+                              </button>
+                            </div>
+                            <p className="text-xs text-gray-400">
+                              Unterstützt Bilddateien bis 3 MB. Bereits gesetzte Avatar-Links bleiben bestehen, bis ein neuer Upload erfolgt.
+                            </p>
+                            {avatarError && <p className="text-xs text-red-400">{avatarError}</p>}
+                          </div>
                         </div>
                       </div>
                     </div>
