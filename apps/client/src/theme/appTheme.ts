@@ -18,27 +18,27 @@ export type AppTheme = {
 };
 
 const darkBase: Omit<AppTheme, 'mode' | 'accent' | 'accentHover'> = {
-  background: '#050507',
-  surface: '#0e0e11',
-  surfaceAlt: '#111214',
-  surfaceHover: 'rgba(255, 255, 255, 0.04)',
-  border: 'rgba(255, 255, 255, 0.08)',
-  borderStrong: 'rgba(255, 255, 255, 0.16)',
-  text: '#ffffff',
-  textMuted: '#9ca3af',
-  overlay: 'rgba(0, 0, 0, 0.7)',
+  background: '#0b1021',
+  surface: '#111827',
+  surfaceAlt: '#0f1625',
+  surfaceHover: '#1f2937',
+  border: '#1f2a3a',
+  borderStrong: '#303a4e',
+  text: '#e5e7eb',
+  textMuted: '#cbd5e1',
+  overlay: 'rgba(6, 8, 16, 0.78)',
 };
 
 const lightBase: Omit<AppTheme, 'mode' | 'accent' | 'accentHover'> = {
-  background: '#f3f4f6',
+  background: '#f5f7fb',
   surface: '#ffffff',
-  surfaceAlt: '#f8fafc',
-  surfaceHover: 'rgba(0, 0, 0, 0.04)',
-  border: 'rgba(0, 0, 0, 0.08)',
-  borderStrong: 'rgba(0, 0, 0, 0.16)',
+  surfaceAlt: '#eef2ff',
+  surfaceHover: '#e2e8f0',
+  border: '#cbd5e1',
+  borderStrong: '#94a3b8',
   text: '#0f172a',
   textMuted: '#475569',
-  overlay: 'rgba(255, 255, 255, 0.65)',
+  overlay: 'rgba(15, 23, 42, 0.4)',
 };
 
 const clamp = (value: number) => Math.min(255, Math.max(0, value));

@@ -364,10 +364,10 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
               <div className="space-y-3">
                 {[0, 1, 2, 3].map((index) => (
                   <div key={`member-skeleton-${index}`} className="flex items-center gap-3">
-                    <Skeleton className="h-10 w-10 rounded-full bg-white/5" />
+                    <Skeleton className="h-10 w-10 rounded-full bg-[var(--color-surface-hover)]" />
                     <div className="flex-1 space-y-2">
-                      <Skeleton className="h-3 w-1/3 bg-white/5" />
-                      <Skeleton className="h-2.5 w-1/4 bg-white/5" />
+                      <Skeleton className="h-3 w-1/3 bg-[var(--color-surface-hover)]" />
+                      <Skeleton className="h-2.5 w-1/4 bg-[var(--color-surface-hover)]" />
                     </div>
                   </div>
                 ))}
@@ -386,7 +386,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
           )}
 
           {!loading && !error && filteredMembers.length === 0 && (
-            <div className="px-2 text-xs text-gray-400">{t('memberSidebar.empty')}</div>
+            <div className="px-2 text-xs text-[color:var(--color-text-muted)]">{t('memberSidebar.empty')}</div>
           )}
 
           {!loading && !error && filteredMembers.length > 0 && (
@@ -424,15 +424,15 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
       {contextMenu && (
         <div className="fixed left-0 right-0 bottom-0 top-[var(--ct-titlebar-height)] z-50" onClick={closeContextMenu}>
           <div
-            className="absolute min-w-[240px] rounded-md bg-[#16181d] border border-white/10 shadow-xl p-2 space-y-1"
+            className="absolute min-w-[240px] rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] shadow-xl p-2 space-y-1"
             style={{ top: contextMenu.y, left: contextMenu.x }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="text-[11px] text-gray-400 uppercase tracking-wide px-2 pb-1">{contextMenu.username}</div>
+            <div className="text-[11px] text-[color:var(--color-text-muted)] uppercase tracking-wide px-2 pb-1">{contextMenu.username}</div>
             {permissions.move && contextMenu.channelId ? (
               <button
                 type="button"
-                className="w-full text-left px-2 py-1 rounded hover:bg-white/10 text-sm text-gray-200"
+                className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)]"
                 onClick={() => performModeration('mute', { userId: contextMenu.userId, channelId: contextMenu.channelId })}
               >
                 {t('memberSidebar.mute')}
@@ -441,7 +441,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
             {permissions.move && contextMenu.channelId ? (
               <button
                 type="button"
-                className="w-full text-left px-2 py-1 rounded hover:bg-white/10 text-sm text-gray-200"
+                className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)]"
                 onClick={() => performModeration('remove', { userId: contextMenu.userId, channelId: contextMenu.channelId })}
               >
                 {t('memberSidebar.removeFromTalk')}
@@ -449,10 +449,10 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
             ) : null}
             {permissions.move && contextMenu.channelId && voiceChannels.length > 1 ? (
               <div className="px-2 py-1 space-y-1">
-                <div className="text-[11px] text-gray-500">{t('memberSidebar.moveToTalk')}</div>
+                <div className="text-[11px] text-[color:var(--color-text-muted)]">{t('memberSidebar.moveToTalk')}</div>
                 <div className="flex items-center gap-2">
                   <select
-                    className="flex-1 bg-[#0f1115] border border-white/10 rounded px-2 py-1 text-sm text-gray-200"
+                    className="flex-1 bg-[var(--color-surface-alt)] border border-[var(--color-border)] rounded px-2 py-1 text-sm text-[color:var(--color-text)]"
                     value={contextMenu.moveTargetId || ''}
                     onChange={(e) => setContextMenu((prev) => (prev ? { ...prev, moveTargetId: Number(e.target.value) } : prev))}
                   >
@@ -464,7 +464,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
                   </select>
                   <button
                     type="button"
-                    className="px-2 py-1 rounded bg-primary/20 text-primary text-sm hover:bg-primary/30"
+                    className="px-2 py-1 rounded bg-[var(--color-accent)]/15 text-[color:var(--color-text)] text-sm hover:bg-[var(--color-accent)]/25"
                     disabled={!contextMenu.moveTargetId}
                     onClick={() =>
                       performModeration('move', {
@@ -483,14 +483,14 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
               <>
                 <button
                   type="button"
-                  className="w-full text-left px-2 py-1 rounded hover:bg-white/10 text-sm text-gray-200"
+                  className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)]"
                   onClick={() => performModeration('ban', { userId: contextMenu.userId })}
                 >
                   {t('memberSidebar.ban')}
                 </button>
                 <button
                   type="button"
-                  className="w-full text-left px-2 py-1 rounded hover:bg-white/10 text-sm text-gray-200"
+                  className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)]"
                   onClick={() => performModeration('kick', { userId: contextMenu.userId })}
                 >
                   {t('memberSidebar.kick')}
