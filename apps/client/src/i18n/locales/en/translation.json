@@ -81,6 +81,7 @@
     "hangUp": "Hang up",
     "disconnect": "Disconnect",
     "microphone": "Microphone",
+    "micLevelLabel": "Your mic level is {{level}}%",
     "systemMicrophone": "System microphone",
     "camera": "Camera",
     "defaultCamera": "Default camera"

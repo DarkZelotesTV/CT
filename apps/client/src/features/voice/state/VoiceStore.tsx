@@ -30,6 +30,7 @@ const createInitialState = (settings: ReturnType<typeof useSettings>['settings']
   localParticipantId: null,
   shareSystemAudio: false,
   outputVolume: typeof settings.talk.outputVolume === 'number' ? settings.talk.outputVolume : 1,
+  localAudioLevel: 0,
 });
 
 export const VoiceStoreProvider = ({ children }: { children: React.ReactNode }) => {

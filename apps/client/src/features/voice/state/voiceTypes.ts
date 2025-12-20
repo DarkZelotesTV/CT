@@ -26,6 +26,7 @@ export interface VoiceState {
   localParticipantId: string | null;
   shareSystemAudio: boolean;
   outputVolume: number;
+  localAudioLevel: number;
 }
 
 export type VoiceAction =

@@ -55,6 +55,7 @@ export interface VoiceContextType {
   outputVolume: number;
   setOutputVolume: (volume: number) => Promise<void> | void;
   screenShareAudioError?: string | null;
+  localAudioLevel: number;
 }
 
 export const VoiceContext = createContext<VoiceContextType | null>(null);

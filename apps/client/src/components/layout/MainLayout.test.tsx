@@ -115,6 +115,7 @@ vi.mock('../../features/voice', () => ({
     connectionState: 'disconnected',
     muted: true,
     connectToChannel: connectToChannelMock,
+    localAudioLevel: 0,
   }),
 }));
 

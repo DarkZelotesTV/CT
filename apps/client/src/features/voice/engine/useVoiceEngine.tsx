@@ -62,6 +62,7 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
     rnnoiseAvailable,
     rnnoiseError,
     outputVolume,
+    localAudioLevel,
   } = state;
 
   const setActiveRoom = useCallback((room: Room | null) => setState({ activeRoom: room }), [setState]);
@@ -128,6 +129,14 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
     rawTrack: MediaStreamTrack;
     rawStream: MediaStream;
     publication: LocalTrackPublication | null;
+  } | null>(null);
+  const audioLevelMeterRef = useRef<{
+    context: AudioContext;
+    analyser: AnalyserNode;
+    source: MediaStreamAudioSourceNode;
+    dataArray: Uint8Array;
+    rafId: number | null;
+    track: MediaStreamTrack;
   } | null>(null);
 
   const isConnecting = useRef(false);
@@ -232,6 +241,76 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
       }
     },
     []
+  );
+
+  const stopAudioLevelMeter = useCallback(() => {
+    const meter = audioLevelMeterRef.current;
+    if (!meter) return;
+
+    if (meter.rafId) cancelAnimationFrame(meter.rafId);
+    try {
+      meter.source.disconnect();
+      meter.analyser.disconnect();
+    } catch (err) {
+      console.warn('Pegelanzeige konnte nicht getrennt werden', err);
+    }
+
+    meter.context.close().catch(() => {});
+    audioLevelMeterRef.current = null;
+    setState({ localAudioLevel: 0 });
+  }, [setState]);
+
+  const startAudioLevelMeter = useCallback(
+    async (track: MediaStreamTrack | null | undefined) => {
+      if (!track || track.readyState !== 'live') {
+        stopAudioLevelMeter();
+        return;
+      }
+
+      if (audioLevelMeterRef.current?.track === track) return;
+
+      stopAudioLevelMeter();
+
+      try {
+        const context = new AudioContext();
+        const source = context.createMediaStreamSource(new MediaStream([track]));
+        const analyser = context.createAnalyser();
+        analyser.fftSize = 256;
+        analyser.smoothingTimeConstant = 0.7;
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        source.connect(analyser);
+
+        const meterState = {
+          context,
+          analyser,
+          source,
+          dataArray,
+          rafId: null as number | null,
+          track,
+        };
+
+        const updateLevel = () => {
+          analyser.getByteTimeDomainData(dataArray);
+          let sum = 0;
+          for (let i = 0; i < dataArray.length; i += 1) {
+            const value = (dataArray[i] - 128) / 128;
+            sum += value * value;
+          }
+          const rms = Math.sqrt(sum / dataArray.length);
+          const normalized = Math.min(1, rms * 4);
+          setState({ localAudioLevel: normalized });
+          meterState.rafId = requestAnimationFrame(updateLevel);
+        };
+
+        audioLevelMeterRef.current = meterState;
+        await context.resume();
+        updateLevel();
+      } catch (err) {
+        console.warn('Pegelanzeige konnte nicht gestartet werden', err);
+        stopAudioLevelMeter();
+      }
+    },
+    [setState, stopAudioLevelMeter]
   );
 
   const enableMicrophoneWithRnnoise = useCallback(
@@ -1235,6 +1314,26 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
   }, [activeRoom, applyOutputVolume, outputVolume]);
 
   useEffect(() => {
+    const shouldMeasure =
+      connectionState === 'connected' && !muted && !micMuted && (!usePushToTalk || isTalking);
+
+    if (!activeRoom || !shouldMeasure) {
+      setState({ localAudioLevel: 0 });
+      stopAudioLevelMeter();
+      return;
+    }
+
+    const rnnoiseTrack = rnnoiseResourcesRef.current?.processedTrack;
+    const publication = Array.from(activeRoom.localParticipant.audioTracks.values())[0];
+    const liveKitTrack = publication?.track?.mediaStreamTrack ?? null;
+    const track = rnnoiseTrack?.readyState === 'live' ? rnnoiseTrack : liveKitTrack;
+
+    startAudioLevelMeter(track);
+  }, [activeRoom, connectionState, isTalking, micMuted, muted, setState, startAudioLevelMeter, stopAudioLevelMeter, usePushToTalk]);
+
+  useEffect(() => () => stopAudioLevelMeter(), [stopAudioLevelMeter]);
+
+  useEffect(() => {
     if (!activeRoom) {
       syncLocalMediaState(null);
       return;
@@ -1286,6 +1385,7 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
     outputVolume,
     setOutputVolume,
     screenShareAudioError,
+    localAudioLevel,
   };
 
   return contextValue;
