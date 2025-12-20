@@ -915,15 +915,6 @@ export const MainLayout = () => {
                 )}
             </div>
         )}
-        {selectedServerId && (
-          <button
-            onClick={() => setShowLeftSidebar(!showLeftSidebar)}
-            className="hidden lg:flex absolute -right-3 top-1/2 -translate-y-1/2 z-[90] w-7 h-14 bg-[var(--color-surface-hover)] hover:bg-[var(--color-accent)] rounded-r-xl items-center justify-center text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] transition-all cursor-pointer shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
-            aria-label={showLeftSidebar ? t('layout.hideNavigation', { defaultValue: 'Hide navigation' }) : t('layout.showNavigation', { defaultValue: 'Show navigation' })}
-          >
-            {showLeftSidebar ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
-          </button>
-        )}
       </div>
 
       {/* === MAIN CONTENT AREA === */}
@@ -966,6 +957,15 @@ export const MainLayout = () => {
             style={{ right: showRightSidebar ? 12 : 12 }}
           >
             {showRightSidebar ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          </button>
+        )}
+        {selectedServerId && (
+          <button
+            onClick={() => setShowLeftSidebar(!showLeftSidebar)}
+            className="hidden lg:flex absolute left-3 top-1/2 -translate-y-1/2 z-30 w-7 h-14 bg-[var(--color-surface-hover)] hover:bg-[var(--color-accent)] rounded-r-xl items-center justify-center text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] transition-all cursor-pointer shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+            aria-label={showLeftSidebar ? t('layout.hideNavigation', { defaultValue: 'Hide navigation' }) : t('layout.showNavigation', { defaultValue: 'Show navigation' })}
+          >
+            {showLeftSidebar ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
           </button>
         )}
       </div>
