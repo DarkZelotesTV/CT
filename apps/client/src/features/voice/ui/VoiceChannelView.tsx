@@ -7,7 +7,7 @@ import {
 import { VoiceMediaStage } from './VoiceMediaStage';
 import { useVoice } from '..';
 import { useSettings } from '../../../context/SettingsContext';
-import { TalkSettingsModal } from '../../../components/modals/TalkSettingsModal';
+import { UserSettingsModal } from '../../../components/modals/UserSettingsModal';
 
 // --- Helper Components ---
 const DialButton = ({ 
@@ -267,7 +267,13 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
         </div>
 
         {/* Modal */}
-        {showSettings && <TalkSettingsModal onClose={() => setShowSettings(false)} />}
+        {showSettings && (
+            <UserSettingsModal
+                onClose={() => setShowSettings(false)}
+                initialCategory="devices"
+                initialDevicesTab="stream"
+            />
+        )}
 
     </div>
   );
