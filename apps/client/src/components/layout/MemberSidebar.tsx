@@ -6,13 +6,111 @@ import { useSocket } from '../../context/SocketContext';
 import { ErrorCard, Skeleton, Spinner } from '../ui';
 import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 
-interface Member {
+export interface Member {
   userId: number;
   username: string;
   avatarUrl?: string;
   status: 'online' | 'offline';
   roles?: any[];
 }
+
+export const MemberAvatar = ({
+  member,
+  avatarAlt,
+  initialsLabel,
+  statusLabel,
+}: {
+  member: Member;
+  avatarAlt?: string;
+  initialsLabel?: string;
+  statusLabel?: (status: Member['status']) => string;
+}) => {
+  const avatarInitial = member.username?.[0]?.toUpperCase() ?? '?';
+  const finalAvatarAlt = avatarAlt ?? `${member.username} avatar`;
+  const finalStatusLabel = statusLabel?.(member.status) ?? `Status: ${member.status}`;
+
+  return (
+    <div className="mr-3 flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-glass-300 relative">
+      {member.avatarUrl ? (
+        <img src={member.avatarUrl} alt={finalAvatarAlt} className="h-full w-full object-cover" />
+      ) : (
+        <span className="select-none text-xs font-bold text-gray-400" aria-label={initialsLabel}>
+          {avatarInitial}
+        </span>
+      )}
+      <span
+        className={`pointer-events-none absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#111214] ${
+          member.status === 'online' ? 'bg-success' : 'bg-gray-500'
+        }`}
+        aria-label={finalStatusLabel}
+      />
+    </div>
+  );
+};
+
+export const getAvatarUrl = (avatarPayload: any): string | undefined => {
+  if (!avatarPayload) return undefined;
+
+  if (typeof avatarPayload === 'string') return avatarPayload;
+
+  if (typeof avatarPayload !== 'object') return undefined;
+
+  if (typeof avatarPayload.url === 'string') return avatarPayload.url;
+  if (typeof avatarPayload.avatar_url === 'string') return avatarPayload.avatar_url;
+
+  const cdnKey = avatarPayload.cdnKey ?? avatarPayload.cdn_key;
+  if (typeof cdnKey === 'string') return cdnKey;
+
+  const variants =
+    avatarPayload.variants || avatarPayload.imageVariants || avatarPayload.image_variants || avatarPayload.images;
+  if (variants && typeof variants === 'object') {
+    const preferredVariants = [variants.default, variants.avatar, variants.full];
+    for (const candidate of preferredVariants) {
+      const resolved = getAvatarUrl(candidate);
+      if (resolved) return resolved;
+    }
+
+    for (const value of Object.values(variants)) {
+      const resolved = getAvatarUrl(value);
+      if (resolved) return resolved;
+    }
+  }
+
+  const nestedCandidates = [avatarPayload.image, avatarPayload.avatar, avatarPayload.data];
+  for (const candidate of nestedCandidates) {
+    const resolved = getAvatarUrl(candidate);
+    if (resolved) return resolved;
+  }
+
+  for (const value of Object.values(avatarPayload)) {
+    const resolved = getAvatarUrl(value);
+    if (resolved) return resolved;
+  }
+
+  return undefined;
+};
+
+export const normalizeMemberData = (payload: any, unknownUserLabel: string): Member => {
+  const avatarSources = [
+    payload.avatar,
+    payload.avatarUrl,
+    payload.avatar_url,
+    payload.User?.avatar,
+    payload.User?.avatar_url,
+    payload.user?.avatar,
+    payload.user?.avatar_url,
+  ];
+
+  const avatarUrl = avatarSources.map(getAvatarUrl).find(Boolean);
+
+  return {
+    userId: payload.userId ?? payload.user_id ?? payload.User?.id ?? payload.user?.id,
+    username: payload.username ?? payload.User?.username ?? payload.user?.username ?? unknownUserLabel,
+    ...(avatarUrl ? { avatarUrl } : {}),
+    status: payload.status ?? payload.User?.status ?? payload.user?.status ?? 'offline',
+    roles: payload.roles ?? (payload.role ? [payload.role] : []),
+  };
+};
 
 export const MemberSidebar = ({ serverId }: { serverId: number }) => {
   const [members, setMembers] = useState<Member[]>([]);
@@ -47,16 +145,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
     return () => clearTimeout(handler);
   }, [searchTerm]);
 
-  const normalizeMember = useCallback(
-    (m: any): Member => ({
-      userId: m.userId ?? m.user_id ?? m.User?.id ?? m.user?.id,
-      username: m.username ?? m.User?.username ?? m.user?.username ?? t('memberSidebar.unknownUser'),
-      avatarUrl: m.avatarUrl ?? m.avatar_url ?? m.User?.avatar_url ?? m.user?.avatar_url,
-      status: m.status ?? m.User?.status ?? m.user?.status ?? 'offline',
-      roles: m.roles ?? (m.role ? [m.role] : []),
-    }),
-    [t]
-  );
+  const normalizeMember = useCallback((m: any): Member => normalizeMemberData(m, t('memberSidebar.unknownUser')), [t]);
 
   const fetchMembers = useCallback(async () => {
     if (!serverId) return;
@@ -231,11 +320,12 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
     setMembers((prev) => prev.map((member) => {
       const snapshot = presenceSnapshot[member.userId];
       if (!snapshot) return member;
-      const avatarUrl = snapshot.avatar_url ?? member.avatarUrl;
+      const snapshotAvatar =
+        getAvatarUrl(snapshot.avatar) || getAvatarUrl(snapshot.avatar_url) || getAvatarUrl(snapshot.avatarUrl) || member.avatarUrl;
       return {
         ...member,
         username: snapshot.username ?? member.username,
-        ...(avatarUrl ? { avatarUrl } : {}),
+        ...(snapshotAvatar ? { avatarUrl: snapshotAvatar } : {}),
         status: snapshot.status ?? member.status,
       };
     }));
@@ -311,19 +401,12 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
       onTouchEnd={cancelLongPress}
       onTouchMove={cancelLongPress}
     >
-      <div className="w-9 h-9 rounded-full bg-glass-300 mr-3 relative flex items-center justify-center flex-shrink-0">
-        {m.avatarUrl ? (
-          <img src={m.avatarUrl} className="w-full h-full rounded-full object-cover" />
-        ) : (
-          <span className="font-bold text-gray-400 text-xs">{m.username?.[0]?.toUpperCase()}</span>
-        )}
-
-        {/* Status Dot */}
-        <div
-          className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#111214]
-                  ${m.status === 'online' ? 'bg-success' : 'bg-gray-500'}`}
-        ></div>
-      </div>
+      <MemberAvatar
+        member={m}
+        avatarAlt={t('memberSidebar.avatarAlt', { username: m.username }) ?? `${m.username} avatar`}
+        initialsLabel={t('memberSidebar.initialsAvatar') ?? undefined}
+        statusLabel={(status) => t('memberSidebar.statusLabel', { status }) ?? `Status: ${status}`}
+      />
 
       <div className="overflow-hidden">
         <div className="text-sm font-medium text-gray-300 group-hover:text-white truncate flex items-center gap-1">
