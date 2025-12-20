@@ -184,8 +184,13 @@ export const UserSettingsModal = ({
   const [outputError, setOutputError] = useState<string | null>(null);
   const [useRnnoise, setUseRnnoise] = useState(rnnoiseEnabled);
   const [cameraQuality, setCameraQuality] = useState(settings.talk.cameraQuality || 'medium');
-  const [screenQuality, setScreenQuality] = useState(settings.talk.screenQuality || 'high');
-  const [screenFrameRate, setScreenFrameRate] = useState(settings.talk.screenFrameRate || 30);
+  const [screenQuality, setScreenQuality] = useState<'low' | 'medium' | 'high' | 'native'>(
+    settings.talk.screenQuality || 'high'
+  );
+  const [screenFrameRate, setScreenFrameRate] = useState<number | 'native'>(settings.talk.screenFrameRate ?? 30);
+  const [screenBitrateProfile, setScreenBitrateProfile] = useState<'low' | 'medium' | 'high' | 'max'>(
+    settings.talk.screenBitrateProfile || 'medium'
+  );
   const [identity, setIdentity] = useState<IdentityFile | null>(() => loadIdentity());
   const [identityName, setIdentityName] = useState(identity?.displayName ?? '');
   const [backupPassphrase, setBackupPassphrase] = useState('');
@@ -213,6 +218,27 @@ export const UserSettingsModal = ({
     ],
     []
   );
+
+  const screenResolutionOptions = [
+    { value: 'low', label: 'Niedrig', description: '480p' },
+    { value: 'medium', label: 'Mittel', description: '720p' },
+    { value: 'high', label: 'Hoch', description: '1080p' },
+    { value: 'native', label: 'Nativ', description: 'Geräte-Standard' },
+  ] as const;
+
+  const screenFrameRateOptions = [
+    { value: 15, label: '15 FPS', description: 'Sparsam' },
+    { value: 30, label: '30 FPS', description: 'Standard' },
+    { value: 60, label: '60 FPS', description: 'Flüssig' },
+    { value: 'native', label: 'Nativ', description: 'Systemstandard' },
+  ] as const;
+
+  const screenBitrateOptions = [
+    { value: 'low', label: 'Low', description: '5 Mbit/s' },
+    { value: 'medium', label: 'Mittel', description: '7,5 Mbit/s' },
+    { value: 'high', label: 'High', description: '10 Mbit/s' },
+    { value: 'max', label: 'Max', description: '15 Mbit/s' },
+  ] as const;
 
   const [activeCategory, setActiveCategory] = useState<CategoryId>(initialCategory ?? (categories[0]?.id as CategoryId));
   const [navQuery, setNavQuery] = useState('');
@@ -389,7 +415,8 @@ export const UserSettingsModal = ({
     if (useRnnoise !== rnnoiseEnabled) return true;
     if (cameraQuality !== (settings.talk.cameraQuality || 'medium')) return true;
     if (screenQuality !== (settings.talk.screenQuality || 'high')) return true;
-    if (screenFrameRate !== (settings.talk.screenFrameRate || 30)) return true;
+    if (screenFrameRate !== (settings.talk.screenFrameRate ?? 30)) return true;
+    if (screenBitrateProfile !== (settings.talk.screenBitrateProfile || 'medium')) return true;
     if (sensitivity !== (settings.talk.vadSensitivity ?? 50)) return true;
 
     return false;
@@ -423,6 +450,7 @@ export const UserSettingsModal = ({
     cameraQuality,
     screenQuality,
     screenFrameRate,
+    screenBitrateProfile,
     sensitivity,
     settings,
   ]);
@@ -460,7 +488,8 @@ export const UserSettingsModal = ({
     setUseRnnoise(rnnoiseEnabled);
     setCameraQuality(settings.talk.cameraQuality || 'medium');
     setScreenQuality(settings.talk.screenQuality || 'high');
-    setScreenFrameRate(settings.talk.screenFrameRate || 30);
+    setScreenFrameRate(settings.talk.screenFrameRate ?? 30);
+    setScreenBitrateProfile(settings.talk.screenBitrateProfile || 'medium');
     setSensitivity(settings.talk.vadSensitivity ?? 50);
   }, [
     muted,
@@ -657,6 +686,7 @@ export const UserSettingsModal = ({
       cameraQuality,
       screenQuality,
       screenFrameRate,
+      screenBitrateProfile,
       vadSensitivity: sensitivity,
     });
     await setPushToTalkEnabledFlag(pushToTalkEnabled);
@@ -1325,24 +1355,22 @@ export const UserSettingsModal = ({
 
                         <div className="space-y-2">
                           <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold">Auflösung</div>
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            {['low', 'medium', 'high'].map((quality) => (
+                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                            {screenResolutionOptions.map((option) => (
                               <button
-                                key={quality}
-                                onClick={() => setScreenQuality(quality as typeof screenQuality)}
+                                key={option.value}
+                                onClick={() => setScreenQuality(option.value)}
                                 className={`p-4 rounded-xl border text-left transition ${
-                                  screenQuality === quality
+                                  screenQuality === option.value
                                     ? 'bg-white/5 border-[var(--color-accent)]'
                                     : 'bg-transparent border-[var(--color-border)] hover:bg-white/5'
                                 }`}
                               >
                                 <div className="flex items-center justify-between">
-                                  <div className="text-sm font-semibold capitalize">{quality}</div>
-                                  {screenQuality === quality && <Check size={16} />}
+                                  <div className="text-sm font-semibold">{option.label}</div>
+                                  {screenQuality === option.value && <Check size={16} />}
                                 </div>
-                                <div className="text-xs text-[color:var(--color-text-muted)]">
-                                  {quality === 'low' ? '480p' : quality === 'medium' ? '720p' : '1080p'}
-                                </div>
+                                <div className="text-xs text-[color:var(--color-text-muted)]">{option.description}</div>
                               </button>
                             ))}
                           </div>
@@ -1350,22 +1378,45 @@ export const UserSettingsModal = ({
 
                         <div className="space-y-2">
                           <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold">Bildrate</div>
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            {[15, 30, 60].map((fps) => (
+                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                            {screenFrameRateOptions.map((option) => (
                               <button
-                                key={fps}
-                                onClick={() => setScreenFrameRate(fps)}
+                                key={option.value}
+                                onClick={() => setScreenFrameRate(option.value)}
                                 className={`p-4 rounded-xl border text-left transition ${
-                                  screenFrameRate === fps
+                                  screenFrameRate === option.value
                                     ? 'bg-white/5 border-[var(--color-accent)]'
                                     : 'bg-transparent border-[var(--color-border)] hover:bg-white/5'
                                 }`}
                               >
                                 <div className="flex items-center justify-between">
-                                  <div className="text-sm font-semibold">{fps} FPS</div>
-                                  {screenFrameRate === fps && <Check size={16} />}
+                                  <div className="text-sm font-semibold">{option.label}</div>
+                                  {screenFrameRate === option.value && <Check size={16} />}
                                 </div>
-                                <div className="text-xs text-[color:var(--color-text-muted)]">{fps === 60 ? 'Flüssig' : 'Standard'}</div>
+                                <div className="text-xs text-[color:var(--color-text-muted)]">{option.description}</div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold">Bitrate</div>
+                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                            {screenBitrateOptions.map((option) => (
+                              <button
+                                key={option.value}
+                                onClick={() => setScreenBitrateProfile(option.value)}
+                                className={`p-4 rounded-xl border text-left transition ${
+                                  screenBitrateProfile === option.value
+                                    ? 'bg-white/5 border-[var(--color-accent)]'
+                                    : 'bg-transparent border-[var(--color-border)] hover:bg-white/5'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="text-sm font-semibold">{option.label}</div>
+                                  {screenBitrateProfile === option.value && <Check size={16} />}
+                                </div>
+                                <div className="text-xs text-[color:var(--color-text-muted)]">{option.description}</div>
                               </button>
                             ))}
                           </div>

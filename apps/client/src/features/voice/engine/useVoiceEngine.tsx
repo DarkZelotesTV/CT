@@ -17,16 +17,23 @@ import { getLiveKitConfig } from '../../../utils/apiConfig';
 import { VoiceContextType } from '../state/VoiceContext';
 import { VoiceState } from '../state/voiceTypes';
 
-const qualityPresets = {
+type QualityPreset = {
+  resolution?: { width: number; height: number } | null;
+  frameRate?: number | null;
+};
+
+const qualityPresets: Record<'low' | 'medium' | 'high' | 'native', QualityPreset> = {
   low: { resolution: { width: 640, height: 360 }, frameRate: 24 },
   medium: { resolution: { width: 1280, height: 720 }, frameRate: 30 },
   high: { resolution: { width: 1920, height: 1080 }, frameRate: 60 },
+  native: { resolution: null, frameRate: null },
 };
 
 const bitrateProfiles = {
-  low: { maxBitrate: 2_500_000 },
-  medium: { maxBitrate: 5_000_000 },
+  low: { maxBitrate: 5_000_000 },
+  medium: { maxBitrate: 7_500_000 },
   high: { maxBitrate: 10_000_000 },
+  max: { maxBitrate: 15_000_000 },
 };
 
 type VoiceEngineDeps = {
@@ -665,11 +672,11 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
     async (
       options?: {
         sourceId?: string;
-        quality?: 'low' | 'medium' | 'high';
-        frameRate?: number;
+        quality?: 'low' | 'medium' | 'high' | 'native';
+        frameRate?: number | 'native';
         track?: MediaStreamTrack;
         withAudio?: boolean;
-        bitrateProfile?: 'low' | 'medium' | 'high';
+        bitrateProfile?: 'low' | 'medium' | 'high' | 'max';
       },
       targetRoom?: Room | null
     ) => {
@@ -691,7 +698,7 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
       }
 
       const preset = options?.quality ? qualityPresets[options.quality] ?? qualityPresets.high : qualityPresets.high;
-      const preferredFrameRate = options?.frameRate ?? preset.frameRate;
+      const preferredFrameRate = options?.frameRate === 'native' ? null : options?.frameRate ?? preset.frameRate ?? null;
       const shouldShareAudio = options?.withAudio ?? shareSystemAudio;
       const bitrateProfile = options?.bitrateProfile ?? settings.talk.screenBitrateProfile ?? 'medium';
       const selectedBitrate = bitrateProfiles[bitrateProfile] ?? bitrateProfiles.medium;
@@ -743,14 +750,20 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
               mandatory: {
                 chromeMediaSource: 'desktop',
                 chromeMediaSourceId: options?.sourceId,
-                minWidth: preset.resolution.width,
-                maxWidth: preset.resolution.width,
-                minHeight: preset.resolution.height,
-                maxHeight: preset.resolution.height,
-                minFrameRate: preferredFrameRate,
-                maxFrameRate: preferredFrameRate,
               }
             };
+
+            if (preset.resolution?.width && preset.resolution?.height) {
+              videoConstraints.mandatory.minWidth = preset.resolution.width;
+              videoConstraints.mandatory.maxWidth = preset.resolution.width;
+              videoConstraints.mandatory.minHeight = preset.resolution.height;
+              videoConstraints.mandatory.maxHeight = preset.resolution.height;
+            }
+
+            if (preferredFrameRate) {
+              videoConstraints.mandatory.minFrameRate = preferredFrameRate;
+              videoConstraints.mandatory.maxFrameRate = preferredFrameRate;
+            }
 
             const audioConstraints: any = shouldShareAudio
               ? {
@@ -788,7 +801,7 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
             simulcast: false,
             videoEncoding: {
               maxBitrate: selectedBitrate.maxBitrate,
-              maxFramerate: preferredFrameRate,
+              ...(preferredFrameRate ? { maxFramerate: preferredFrameRate } : {}),
             },
           });
           applySenderBitrate((publication as any)?.track?.sender ?? (publication as any)?.sender);
@@ -829,12 +842,19 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
         if (!shouldShareAudio && options?.track) {
           videoTrack = options.track;
         } else {
+          const videoConstraints: MediaTrackConstraints = {};
+
+          if (preset.resolution?.width && preset.resolution?.height) {
+            videoConstraints.width = preset.resolution.width;
+            videoConstraints.height = preset.resolution.height;
+          }
+
+          if (preferredFrameRate) {
+            videoConstraints.frameRate = { ideal: preferredFrameRate, max: preferredFrameRate };
+          }
+
           stream = await navigator.mediaDevices.getDisplayMedia({
-            video: {
-              width: preset.resolution.width,
-              height: preset.resolution.height,
-              frameRate: { ideal: preferredFrameRate, max: preferredFrameRate },
-            },
+            video: videoConstraints,
             audio: shouldShareAudio
               ? ({
                   suppressLocalAudioPlayback: false,
@@ -868,7 +888,7 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
           simulcast: false,
           videoEncoding: {
             maxBitrate: selectedBitrate.maxBitrate,
-            maxFramerate: preferredFrameRate,
+            ...(preferredFrameRate ? { maxFramerate: preferredFrameRate } : {}),
           },
         });
         applySenderBitrate((publication as any)?.track?.sender ?? (publication as any)?.sender);

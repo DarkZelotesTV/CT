@@ -132,9 +132,9 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
       } else {
           await startScreenShare({
               ...(sourceId ? { sourceId } : {}),
-              quality: settings.talk.screenQuality || 'high',
-              frameRate: settings.talk.screenFrameRate || 30,
-              bitrateProfile: settings.talk.screenBitrateProfile || 'medium',
+              quality: settings.talk.screenQuality ?? 'high',
+              frameRate: settings.talk.screenFrameRate ?? 30,
+              bitrateProfile: settings.talk.screenBitrateProfile ?? 'medium',
               withAudio: shareSystemAudio
           });
       }
