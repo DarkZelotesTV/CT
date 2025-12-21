@@ -16,6 +16,8 @@ export interface PresenceUserSnapshot {
   id: number;
   username: string;
   avatar_url?: string;
+  avatar?: string;
+  avatarUrl?: string;
   status?: 'online' | 'offline';
 }
 
