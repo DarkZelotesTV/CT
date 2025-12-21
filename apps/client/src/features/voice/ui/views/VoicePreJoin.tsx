@@ -129,7 +129,7 @@ export const VoicePreJoin = ({
       : 'Bitte prüfe deine Geräte-Einstellungen vor dem Beitritt.';
 
   return (
-    <div className="flex-1 min-h-0 relative font-sans overflow-hidden bg-[var(--color-background)] text-[var(--color-text)]">
+    <div className="flex-1 min-h-0 h-full flex flex-col relative font-sans overflow-hidden bg-[var(--color-background)] text-[var(--color-text)]">
       {/* Background Decor */}
       <div
         className="absolute inset-0 pointer-events-none opacity-20"
@@ -140,7 +140,7 @@ export const VoicePreJoin = ({
       />
 
       {/* Main Scroll Container */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar w-full">
+      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar w-full overscroll-contain">
         <div className="min-h-full flex flex-col p-4 md:p-8 pb-[calc(env(safe-area-inset-bottom,0px)+32px)]">
           <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-6 relative z-10 my-auto mx-auto min-h-0">
             

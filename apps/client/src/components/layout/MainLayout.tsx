@@ -864,7 +864,7 @@ export const MainLayout = () => {
             )}
         </div>
 
-        <div className="flex-1 bg-[var(--color-surface-alt)] rounded-3xl border border-[var(--color-border-strong)] relative overflow-hidden shadow-2xl flex flex-col">
+        <div className="flex-1 bg-[var(--color-surface-alt)] rounded-3xl border border-[var(--color-border-strong)] relative overflow-hidden shadow-2xl flex flex-col min-h-0">
           {renderContent()}
         </div>
         
