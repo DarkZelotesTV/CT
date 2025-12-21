@@ -1,7 +1,7 @@
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
-import { ChevronDown, ChevronLeft, ChevronRight, Users, Menu, X } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Users, Menu } from 'lucide-react';
 import { RoomAudioRenderer, RoomContext } from '@livekit/components-react';
 import '@livekit/components-styles';
 import { useTranslation } from 'react-i18next';

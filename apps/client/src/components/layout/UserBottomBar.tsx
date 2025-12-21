@@ -9,7 +9,7 @@ import { useSocket } from '../../context/SocketContext';
 import { storage } from '../../shared/config/storage';
 import { FeedbackModal } from '../modals/FeedbackModal';
 
-export const UserBottomBar = () => {
+export const UserBottomBar = ({ onOpenUserSettings }: { onOpenUserSettings?: () => void }) => {
   const { settings, updateLocale } = useSettings();
   const user = useMemo(() => storage.get('cloverUser'), []);
   const [showSettings, setShowSettings] = useState(false);
@@ -94,7 +94,7 @@ export const UserBottomBar = () => {
 
           <button
             className="p-1 hover:bg-cyan-900/30 rounded text-gray-500 hover:text-cyan-400"
-            onClick={() => setShowSettings(true)}
+            onClick={() => (onOpenUserSettings ? onOpenUserSettings() : setShowSettings(true))}
             title={t('userBottomBar.settings')}
           >
             <Settings size={14} />

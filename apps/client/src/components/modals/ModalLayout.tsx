@@ -6,6 +6,7 @@ import { useTopBar } from '../window/TopBarContext';
 
 interface ModalLayoutProps {
   title: string;
+  topbarIcon?: ReactNode;
   description?: string;
   onClose: () => void;
   children: ReactNode;
@@ -16,6 +17,7 @@ interface ModalLayoutProps {
 
 export const ModalLayout = ({
   title,
+  topbarIcon,
   description,
   onClose,
   children,
@@ -33,10 +35,11 @@ export const ModalLayout = ({
     setSlots({
       ...base,
       center: (
-        <div className="px-3 py-1 rounded-md bg-white/5 border border-white/10 max-w-[720px]">
-          <div className="text-[13px] text-gray-200 truncate" title={title}>
+        <div className="flex items-center gap-2 text-[13px] text-gray-100 leading-tight min-w-0">
+          {topbarIcon ? <span className="text-gray-300">{topbarIcon}</span> : null}
+          <span className="truncate" title={title}>
             {title}
-          </div>
+          </span>
         </div>
       ),
     });
@@ -44,7 +47,7 @@ export const ModalLayout = ({
     return () => {
       setSlots(base);
     };
-  }, [setSlots, title]);
+  }, [setSlots, title, topbarIcon]);
 
   if (!target) return null;
 

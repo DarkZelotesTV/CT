@@ -124,10 +124,11 @@ export const UserSettingsModal = ({
     setSlots({
       ...base,
       center: (
-        <div className="px-3 py-1 rounded-md bg-white/5 border border-white/10 max-w-[720px]">
-          <div className="text-[13px] text-gray-200 truncate" title={modalTitle}>
+        <div className="flex items-center gap-2 text-[13px] text-gray-100 leading-tight min-w-0">
+          <Settings size={16} className="text-gray-300" aria-hidden />
+          <span className="truncate" title={modalTitle}>
             {modalTitle}
-          </div>
+          </span>
         </div>
       ),
     });

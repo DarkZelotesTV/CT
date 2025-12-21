@@ -645,7 +645,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
           ? {
               ...u,
               username: settings.profile.displayName || u.username,
-              avatar_url: settings.profile.avatarUrl || u.avatar_url,
+              avatar_url: settings.profile.avatarUrl || u.avatar_url || '', // Fix: Fallback to empty string for strict types
             }
           : u,
       );
