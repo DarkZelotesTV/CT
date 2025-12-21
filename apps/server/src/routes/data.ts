@@ -237,6 +237,29 @@ router.get('/servers', authenticateRequest, async (req: AuthRequest, res) => {
   }
 });
 
+
+// 1b. Unread Counts (Placeholder)
+// Aktuell gibt es in diesem Repo noch kein Message/Read-State Modell.
+// Damit der Client (ServerRail) nicht mit 404 antwortet, liefern wir vorerst 0er-Werte.
+router.get('/servers/unread-counts', authenticateRequest, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+
+    const servers = await Server.findAll({
+      attributes: ['id'],
+      include: [{ model: ServerMember, as: 'members', where: { user_id: userId }, required: true }],
+    });
+
+    const result: Record<number, number> = {};
+    for (const srv of servers) result[srv.id] = 0;
+
+    return res.json(result);
+  } catch (err) {
+    console.error('Fehler beim Laden der Unread-Counts:', err);
+    return res.status(500).json({ error: 'Fehler beim Laden der Unread-Counts' });
+  }
+});
+
 router.get('/servers/:serverId/permissions', authenticateRequest, async (req: AuthRequest, res) => {
   try {
     const serverId = Number(req.params.serverId);

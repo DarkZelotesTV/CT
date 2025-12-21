@@ -114,6 +114,23 @@ export const MainLayout = () => {
   
   // UI State
   const [showMobileNav, setShowMobileNav] = useState(false);
+
+  // Wenn die Mobile-Navigation geschlossen wird, darf kein Fokus in einem aria-hidden Bereich "hängen bleiben".
+  // Sonst kommt es zu Warnungen (und in Electron teils zu focus/keyboard glitches).
+  useEffect(() => {
+    if (showMobileNav) return;
+
+    const active = document.activeElement;
+    if (!(active instanceof HTMLElement)) return;
+
+    if (mobileNavRef.current && mobileNavRef.current.contains(active)) {
+      active.blur();
+      // Fokus zurück auf den Trigger-Button, damit Screenreader/Keyboard nicht im Offcanvas hängen.
+      mobileNavButtonRef.current?.focus({ preventScroll: true });
+    }
+  }, [showMobileNav]);
+
+
   const [showRightSidebar, setShowRightSidebar] = useState(true);
   const [containerWidth, setContainerWidth] = useState(() => (typeof window === 'undefined' ? 0 : window.innerWidth));
   const isMobileLayout = containerWidth < MOBILE_BREAKPOINT;
@@ -130,6 +147,7 @@ export const MainLayout = () => {
   const rightSidebarRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef<HTMLDivElement>(null);
   const mobileNavRef = useRef<HTMLDivElement>(null);
+  const mobileNavButtonRef = useRef<HTMLButtonElement>(null);
   const memberSheetRef = useRef<HTMLDivElement>(null);
   const mainContentRef = useRef<HTMLDivElement>(null);
   const dragState = useRef<{ startX: number; startWidth: number }>({ startX: 0, startWidth: 0 });
@@ -847,6 +865,7 @@ export const MainLayout = () => {
         <div className="lg:hidden flex items-center gap-3 mb-4 px-1 text-[color:var(--color-text)]">
             <button
                 onClick={() => setShowMobileNav(true)}
+                ref={mobileNavButtonRef}
                 className="p-2 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] text-[color:var(--color-text)] shadow-md active:scale-95 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
             >
                 <Menu size={20} />
