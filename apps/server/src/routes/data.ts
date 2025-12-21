@@ -2,6 +2,7 @@ import { Router, type Express, type Request, type Response, type NextFunction } 
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { AVATARS_DIR, SERVER_ICONS_DIR, PUBLIC_DIR } from '../utils/paths';
 import { RoomServiceClient } from 'livekit-server-sdk';
 import { Server, Channel, ServerMember, Category, Role, MemberRole, ChannelPermissionOverride, ServerBan, User } from '../models';
 import { authenticateRequest, AuthRequest } from '../middleware/authMiddleware';
@@ -10,9 +11,8 @@ import { emitToUser, getUserChannelIds, removeUserFromAllChannels, removeUserFro
 
 const router = Router();
 
-const SERVER_ICON_DIR = path.resolve(__dirname, '..', 'public', 'uploads', 'server-icons');
-const AVATAR_UPLOAD_DIR = path.resolve(__dirname, '..', 'public', 'uploads', 'avatars');
-
+const SERVER_ICON_DIR = SERVER_ICONS_DIR;
+const AVATAR_UPLOAD_DIR = AVATARS_DIR;
 const iconStorage = multer.diskStorage({
   destination: async (_req, _file, cb) => {
     try {
@@ -207,7 +207,7 @@ router.post('/users/me/avatar', authenticateRequest, avatarUploadMiddleware, asy
     await user.save();
 
     if (previousAvatar && previousAvatar.startsWith('/uploads/avatars/') && previousAvatar !== relativePath) {
-      const absolutePreviousPath = path.resolve(__dirname, '..', 'public', previousAvatar.replace(/^\//, ''));
+      const absolutePreviousPath = path.resolve(PUBLIC_DIR, previousAvatar.replace(/^\//, ''));
       fs.promises.unlink(absolutePreviousPath).catch(() => {});
     }
 
