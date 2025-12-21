@@ -1,10 +1,15 @@
 import { storage } from '../shared/config/storage';
 
 const getAppOrigin = () => {
-  if (typeof window !== "undefined" && window.location?.origin) {
-    return window.location.origin;
-  }
-  return "";
+  if (typeof window === 'undefined') return '';
+
+  const origin = window.location?.origin ?? '';
+
+  // In Electron (file://) oder bei Browsern mit file-origin ("null") darf die App-Origin
+  // NICHT als Server-URL verwendet werden – sonst werden Requests/Assets gegen file:// aufgelöst.
+  if (!origin || origin === 'null' || origin.startsWith('file:')) return '';
+
+  return origin;
 };
 
 export const getDefaultServerUrl = () => {

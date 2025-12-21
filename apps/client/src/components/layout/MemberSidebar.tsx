@@ -5,6 +5,7 @@ import { apiFetch } from '../../api/http';
 import { useSocket } from '../../context/SocketContext';
 import { ErrorCard, Skeleton, Spinner } from '../ui';
 import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
+import { resolveServerAssetUrl } from '../../utils/assetUrl';
 
 export interface Member {
   userId: number;
@@ -32,7 +33,7 @@ export const MemberAvatar = ({
   return (
     <div className="mr-3 flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-glass-300 relative">
       {member.avatarUrl ? (
-        <img src={member.avatarUrl} alt={finalAvatarAlt} className="h-full w-full object-cover" />
+        <img src={resolveServerAssetUrl(member.avatarUrl)} alt={finalAvatarAlt} className="h-full w-full object-cover" />
       ) : (
         <span className="select-none text-xs font-bold text-gray-400" aria-label={initialsLabel}>
           {avatarInitial}

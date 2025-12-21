@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ArrowLeft, MessageSquare, MoreVertical, Search, UserPlus, Check, X, Loader2, Ban } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { useSocket } from '../../context/SocketContext';
+import { resolveServerAssetUrl } from '../../utils/assetUrl';
 
 interface FriendListStageProps {
   onBackToHome?: () => void;
@@ -216,7 +217,7 @@ export const FriendListStage = ({ onBackToHome }: FriendListStageProps) => {
                       <div className="flex items-center gap-3">
                          <div className="w-9 h-9 rounded-full bg-gray-500 relative flex items-center justify-center overflow-hidden">
                            {friend.avatar_url ? (
-                             <img src={friend.avatar_url} className="w-full h-full object-cover" />
+                             <img src={resolveServerAssetUrl(friend.avatar_url)} className="w-full h-full object-cover" />
                            ) : (
                              <span className="text-white font-bold">{friend.username?.[0]?.toUpperCase() ?? ''}</span>
                            )}
@@ -240,7 +241,7 @@ export const FriendListStage = ({ onBackToHome }: FriendListStageProps) => {
                    <div key={request.id} className="flex items-center justify-between group p-2.5 rounded hover:bg-dark-300/50 cursor-pointer border-t border-dark-400/30 first:border-none">
                       <div className="flex items-center gap-3">
                          <div className="w-9 h-9 rounded-full bg-gray-500 relative flex items-center justify-center overflow-hidden">
-                            {request.user?.avatar_url ? <img src={request.user.avatar_url} className="w-full h-full object-cover" /> : <span className="text-white font-bold">{request.user?.username?.[0]?.toUpperCase()}</span>}
+                            {request.user?.avatar_url ? <img src={resolveServerAssetUrl(request.user.avatar_url)} className="w-full h-full object-cover" /> : <span className="text-white font-bold">{request.user?.username?.[0]?.toUpperCase()}</span>}
                             {request.user && renderStatusBadge(request.user.status)}
                          </div>
                          <div>
@@ -268,7 +269,7 @@ export const FriendListStage = ({ onBackToHome }: FriendListStageProps) => {
                    <div key={entry.id} className="flex items-center justify-between group p-2.5 rounded hover:bg-dark-300/50 cursor-pointer border-t border-dark-400/30 first:border-none">
                       <div className="flex items-center gap-3">
                          <div className="w-9 h-9 rounded-full bg-gray-500 relative flex items-center justify-center overflow-hidden">
-                            {entry.user?.avatar_url ? <img src={entry.user.avatar_url} className="w-full h-full object-cover" /> : <span className="text-white font-bold">{entry.user?.username?.[0]?.toUpperCase()}</span>}
+                            {entry.user?.avatar_url ? <img src={resolveServerAssetUrl(entry.user.avatar_url)} className="w-full h-full object-cover" /> : <span className="text-white font-bold">{entry.user?.username?.[0]?.toUpperCase()}</span>}
                             {entry.user && renderStatusBadge(entry.user.status)}
                          </div>
                          <div>

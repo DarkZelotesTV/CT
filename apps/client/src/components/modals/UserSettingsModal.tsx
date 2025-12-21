@@ -32,6 +32,7 @@ import { useVoice } from '../../features/voice';
 import { clearIdentity, computeFingerprint, createIdentity, formatFingerprint, loadIdentity, saveIdentity, type IdentityFile } from '../../auth/identity';
 import { buildBackupPayload, getBackupFilename, parseIdentityBackup } from '../../auth/identityBackup';
 import { storage } from '../../shared/config/storage';
+import { resolveServerAssetUrl } from '../../utils/assetUrl';
 
 const modifierKeys = ['Control', 'Shift', 'Alt', 'Meta'];
 
@@ -202,7 +203,7 @@ export const UserSettingsModal = ({
   const [serverAccentTarget, setServerAccentTarget] = useState('');
   const [serverAccentColor, setServerAccentColor] = useState(settings.theme.accentColor);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [avatarPreview, setAvatarPreview] = useState(settings.profile.avatarUrl || '');
+  const [avatarPreview, setAvatarPreview] = useState(resolveServerAssetUrl(settings.profile.avatarUrl || ''));
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
@@ -369,7 +370,7 @@ export const UserSettingsModal = ({
 
   useEffect(() => {
     if (avatarFile) return;
-    setAvatarPreview(avatarUrl || settings.profile.avatarUrl || '');
+    setAvatarPreview(resolveServerAssetUrl(avatarUrl || settings.profile.avatarUrl || ''));
   }, [avatarFile, avatarUrl, settings.profile.avatarUrl]);
 
   const levelPercent = useMemo(() => Math.round(inputLevel * 100), [inputLevel]);
@@ -647,7 +648,7 @@ export const UserSettingsModal = ({
       });
 
       setAvatarUrl(response.avatar_url);
-      setAvatarPreview(response.avatar_url);
+      setAvatarPreview(resolveServerAssetUrl(response.avatar_url));
       setAvatarFile(null);
       updateProfile({ avatarUrl: response.avatar_url });
     } catch (err: any) {

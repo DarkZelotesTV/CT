@@ -14,6 +14,7 @@ import { useSettings } from '../../context/SettingsContext'; // Für aktuellen D
 import { defaultServerTheme, deriveServerThemeFromSettings, type ServerTheme } from '../../theme/serverTheme';
 import { storage } from '../../shared/config/storage';
 import { ErrorCard, Skeleton, Spinner } from '../ui';
+import { resolveServerAssetUrl } from '../../utils/assetUrl';
 
 interface Channel { id: number; name: string; type: 'text' | 'voice' | 'web' | 'data-transfer' | 'spacer' | 'list'; custom_icon?: string; }
 interface Category { id: number; name: string; channels: Channel[]; }
@@ -738,7 +739,7 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
                     <div className="relative">
                         {user.avatar_url ? (
                           <img
-                              src={user.avatar_url}
+                              src={resolveServerAssetUrl(user.avatar_url)}
                               className="w-4 h-4 rounded-full object-cover"
                               alt={`${user.username || t('channelSidebar.fallbackUser')} Avatar`}
                             />

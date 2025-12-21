@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite';
-import path from 'path';
 import react from '@vitejs/plugin-react';
 import electron from 'vite-plugin-electron';
 import renderer from 'vite-plugin-electron-renderer';
@@ -7,18 +6,6 @@ import renderer from 'vite-plugin-electron-renderer';
 export default defineConfig({
   resolve: {
     dedupe: ['react', 'react-dom'],
-    alias: {
-      react: path.resolve(__dirname, 'node_modules/react'),
-      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
-      'react/jsx-runtime': path.resolve(
-        __dirname,
-        'node_modules/react/jsx-runtime.js',
-      ),
-      'react/jsx-dev-runtime': path.resolve(
-        __dirname,
-        'node_modules/react/jsx-dev-runtime.js',
-      ),
-    },
   },
   plugins: [
     react(),
@@ -36,7 +23,7 @@ export default defineConfig({
             outDir: 'dist-electron',
             rollupOptions: {
               // WICHTIG: Hier sagen wir Vite, dass es SQLite ignorieren soll
-              external: ['better-sqlite3'], 
+              external: ['better-sqlite3'],
               output: {
                 format: 'cjs',
                 entryFileNames: '[name].cjs',
