@@ -99,19 +99,24 @@ vi.mock('../modals/JoinServerModal', () => ({
   JoinServerModal: () => <div data-testid="join-server" />,
 }));
 
+const settingsMock = {
+  theme: { mode: 'dark', accentColor: '#6366f1', serverAccents: {} },
+  hotkeys: {
+    pushToTalk: null,
+    muteToggle: null,
+    commandPalette: 'Ctrl+K',
+    toggleMembers: 'Ctrl+Shift+M',
+    toggleNavigation: 'Ctrl+Shift+D',
+    skipToContent: 'Alt+S',
+  },
+  talk: {
+    showVoicePreJoin: true,
+  },
+};
+
 vi.mock('../../context/SettingsContext', () => ({
   useSettings: () => ({
-    settings: {
-      theme: { mode: 'dark', accentColor: '#6366f1', serverAccents: {} },
-      hotkeys: {
-        pushToTalk: null,
-        muteToggle: null,
-        commandPalette: 'Ctrl+K',
-        toggleMembers: 'Ctrl+Shift+M',
-        toggleNavigation: 'Ctrl+Shift+D',
-        skipToContent: 'Alt+S',
-      },
-    },
+    settings: settingsMock,
   }),
 }));
 
@@ -131,6 +136,7 @@ describe('MainLayout', () => {
   beforeEach(() => {
     connectToChannelMock.mockClear();
     localStorage.clear();
+    settingsMock.talk.showVoicePreJoin = true;
   });
 
   it('shows onboarding content when no server is selected', () => {
@@ -157,6 +163,18 @@ describe('MainLayout', () => {
     expect(preJoin).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('Join voice'));
+    expect(connectToChannelMock).toHaveBeenCalledWith(99, 'Voice Channel');
+  });
+
+  it('skips pre-join when the voice check is disabled and joins automatically', () => {
+    settingsMock.talk.showVoicePreJoin = false;
+    render(<MainLayout />);
+
+    fireEvent.click(screen.getByTestId('select-server'));
+    fireEvent.click(screen.getByTestId('select-voice-channel'));
+
+    expect(screen.queryByTestId('voice-pre-join')).not.toBeInTheDocument();
+    expect(screen.getByTestId('voice-channel-view')).toBeInTheDocument();
     expect(connectToChannelMock).toHaveBeenCalledWith(99, 'Voice Channel');
   });
 
