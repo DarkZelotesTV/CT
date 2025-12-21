@@ -99,21 +99,41 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
   const [devices, setDevices] = useState<{audio: MediaDeviceInfo[], video: MediaDeviceInfo[]}>({ audio: [], video: [] });
   const [screenSources, setScreenSources] = useState<any[]>([]);
 
-  // Device Loading
+  // Device Loading (nur wenn ein Gerätemenü offen ist)
   useEffect(() => {
-      navigator.mediaDevices.enumerateDevices().then(devs => {
-          setDevices({
-              audio: devs.filter(d => d.kind === 'audioinput'),
-              video: devs.filter(d => d.kind === 'videoinput')
-          });
-      });
-  }, [menuOpen]); // Reload when menu opens
+      if (!menuOpen) return;
+      let cancelled = false;
+
+      const enumerate = async () => {
+          try {
+              const devs = await navigator.mediaDevices.enumerateDevices();
+              if (cancelled) return;
+              setDevices({
+                  audio: devs.filter(d => d.kind === 'audioinput'),
+                  video: devs.filter(d => d.kind === 'videoinput')
+              });
+          } catch (err) {
+              console.warn('enumerateDevices fehlgeschlagen', err);
+          }
+      };
+
+      void enumerate();
+      return () => { cancelled = true; };
+  }, [menuOpen]);
 
   // Screen Sources
   useEffect(() => {
-      if (menuOpen === 'screen' && window.ct?.getScreenSources) {
-          window.ct.getScreenSources().then(setScreenSources);
-      }
+      if (menuOpen !== 'screen' || !window.ct?.getScreenSources) return;
+
+      let cancelled = false;
+
+      window.ct.getScreenSources()
+          .then((sources) => {
+              if (!cancelled) setScreenSources(sources);
+          })
+          .catch((err) => console.warn('getScreenSources fehlgeschlagen', err));
+
+      return () => { cancelled = true; };
   }, [menuOpen]);
 
   // Actions

@@ -461,9 +461,27 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
       const shouldEnable = !isMuted && !isMicMuted && (!pushToTalk || talking);
       if (!room) return;
 
+      const safeStopRnnoise = async () => {
+        try {
+          await stopRnnoisePipeline(room);
+        } catch (err) {
+          console.warn('[voice] stopRnnoisePipeline failed', err);
+        }
+      };
+
+      const safeSetMicrophoneEnabled = async (enabled: boolean) => {
+        try {
+          await room.localParticipant.setMicrophoneEnabled(enabled);
+        } catch (err: any) {
+          console.warn(`[voice] setMicrophoneEnabled(${enabled}) failed`, err);
+          // Do not crash the renderer on mic init failures (common with stale device IDs / permissions).
+          setError(err?.message || 'Mikrofon konnte nicht initialisiert werden.');
+        }
+      };
+
       if (!shouldEnable) {
-        await stopRnnoisePipeline(room);
-        await room.localParticipant.setMicrophoneEnabled(false);
+        await safeStopRnnoise();
+        await safeSetMicrophoneEnabled(false);
         return;
       }
 
@@ -472,10 +490,10 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
         if (success) return;
       }
 
-      await stopRnnoisePipeline(room);
-      await room.localParticipant.setMicrophoneEnabled(true);
+      await safeStopRnnoise();
+      await safeSetMicrophoneEnabled(true);
     },
-    [enableMicrophoneWithRnnoise, isTalking, micMuted, muted, rnnoiseEnabled, stopRnnoisePipeline, usePushToTalk]
+    [enableMicrophoneWithRnnoise, isTalking, micMuted, muted, rnnoiseEnabled, stopRnnoisePipeline, usePushToTalk, setError]
   );
 
   const setMuted = useCallback(
@@ -1192,7 +1210,7 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
           attemptReconnect();
         });
 
-        room.on(RoomEvent.Connected, async () => {
+        room.on(RoomEvent.Connected, () => {
           setConnectionState('connected');
           setError(null);
           reconnectAttemptsRef.current = 0;
@@ -1202,15 +1220,23 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
           }
           isConnecting.current = false;
           syncLocalMediaState(room);
-          await restoreMediaState(room);
+
+          // IMPORTANT: EventEmitter ignores returned promises; avoid unhandled rejections that can crash Electron.
+          const safeRestoreMediaState = () => {
+            void restoreMediaState(room).catch((err) => {
+              console.warn('[voice] restoreMediaState failed', err);
+            });
+          };
+
+          safeRestoreMediaState();
         });
 
-        room.on(RoomEvent.ConnectionStateChanged, (state) => {
-          console.warn('[voice] ConnectionState', state);
+        room.on(RoomEvent.Reconnecting, () => {
+          setConnectionState('reconnecting');
+          console.warn('[voice] Reconnecting');
         });
 
-        room.on(RoomEvent.Reconnecting, () => setConnectionState('reconnecting'));
-        room.on(RoomEvent.Reconnected, async () => {
+        room.on(RoomEvent.Reconnected, () => {
           setConnectionState('connected');
           setError(null);
           reconnectAttemptsRef.current = 0;
@@ -1218,10 +1244,12 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
             clearTimeout(reconnectTimeoutRef.current);
             reconnectTimeoutRef.current = null;
           }
-          await restoreMediaState(room);
+          console.warn('[voice] Reconnected');
+
+          void restoreMediaState(room).catch((err) => {
+            console.warn('[voice] restoreMediaState failed after reconnect', err);
+          });
         });
-        room.on(RoomEvent.Reconnecting, () => console.warn('[voice] Reconnecting'));
-        room.on(RoomEvent.Reconnected, () => console.warn('[voice] Reconnected'));
 
         const handleTrackChange = () => syncLocalMediaState(room);
         room.on(RoomEvent.LocalTrackPublished, handleTrackChange);

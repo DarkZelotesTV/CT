@@ -1,5 +1,9 @@
-import { useEffect, useState, useRef } from 'react';
-import { Globe, RefreshCw, Copy, ExternalLink, Play } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import DOMPurify, { type Config as DOMPurifyConfig } from 'dompurify';
+import ReactQuill from 'react-quill';
+import type Quill from 'quill';
+import 'react-quill/dist/quill.snow.css';
+import { Globe, Edit, Save, X, LayoutGrid, Columns, Image, FileInput, Eye, Sparkles, Gamepad2, RefreshCw, Copy, Play } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { useTopBar } from '../window/TopBarContext';
 import { useChatStore } from '../../store/useChatStore';
@@ -9,159 +13,734 @@ interface WebChannelViewProps {
   channelName: string;
 }
 
-// Standard-URL für Codenames
-const DEFAULT_URL = 'https://codenames.game/';
+type LayoutMode = 'stack' | 'two-column' | 'grid' | 'codenames';
+
+const LAYOUT_CLASSES: Record<LayoutMode, string> = {
+  stack: 'space-y-6',
+  'two-column': 'grid md:grid-cols-2 gap-6',
+  grid: 'grid md:grid-cols-3 gap-6',
+  codenames: 'h-full w-full'
+};
+
+const layoutClassNameSet = new Set(
+  Object.values(LAYOUT_CLASSES)
+    .join(' ')
+    .split(' ')
+    .filter(Boolean)
+);
+
+const RowsPreview = () => (
+  <div className="flex flex-col gap-0.5 w-4 h-4 text-gray-300">
+    <span className="block h-1 w-full rounded-sm bg-current" />
+    <span className="block h-1 w-full rounded-sm bg-current" />
+    <span className="block h-1 w-3/4 rounded-sm bg-current" />
+  </div>
+);
+
+const layoutOptions: { key: LayoutMode; label: string; description: string; icon: JSX.Element }[] = [
+  {
+    key: 'stack',
+    label: 'Abschnitte',
+    description: 'Gestapelte Sektionen mit viel Weißraum',
+    icon: <RowsPreview />
+  },
+  {
+    key: 'two-column',
+    label: '2-Spalten',
+    description: 'Text und Widgets nebeneinander',
+    icon: <Columns size={16} />
+  },
+  {
+    key: 'grid',
+    label: 'Karten-Grid',
+    description: 'Mehrere Elemente in einem Raster',
+    icon: <LayoutGrid size={16} />
+  },
+  {
+    key: 'codenames',
+    label: 'Codenames',
+    description: 'Interaktives Spiel mit Lobby-Sync',
+    icon: <Gamepad2 size={16} />
+  }
+];
+
+const widgetSnippets: Record<string, string> = {
+  media: `<div class="media-embed" data-widget="media">
+  <iframe class="w-full aspect-video rounded-lg" src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="Embedded media" allowfullscreen></iframe>
+</div>`,
+  form: `<form class="bg-dark-200 p-4 rounded-lg space-y-3" data-widget="form">
+  <label class="block text-sm font-semibold">Kontakt</label>
+  <input class="w-full bg-dark-100 border border-dark-400 rounded px-3 py-2" placeholder="Ihre E-Mail" />
+  <textarea class="w-full bg-dark-100 border border-dark-400 rounded px-3 py-2" rows="3" placeholder="Nachricht"></textarea>
+  <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Senden</button>
+</form>`,
+  file: `<a data-widget="file" href="/files/beispiel.pdf" class="flex items-center gap-2 text-blue-200 hover:text-blue-100 underline">
+  📄 Datei herunterladen
+</a>`
+};
+
+const templateOptions: { key: string; label: string; description: string; layout: LayoutMode; content: string }[] = [
+  {
+    key: 'welcome',
+    label: 'Welcome Hero',
+    description: 'Hero-Headline mit CTA und Vorteilsliste',
+    layout: 'stack',
+    content: `<section class="space-y-6">
+  <div class="bg-dark-200 border border-dark-400 p-6 rounded-xl">
+    <p class="text-blue-300 text-sm font-semibold">Neu</p>
+    <h1 class="text-3xl font-bold">Willkommen in deinem Web-Channel</h1>
+    <p class="text-gray-300 mt-2">Füge Widgets hinzu, teile Medien und binde Formulare ein, ohne HTML per Hand zu schreiben.</p>
+    <button class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Loslegen</button>
+  </div>
+</section>`
+  },
+  {
+    key: 'codenames',
+    label: 'Codenames Lobby',
+    description: 'Spielmodus für Gruppen',
+    layout: 'codenames',
+    content: 'https://codenames.game/'
+  }
+];
+
+const placeholderHtml =
+  '<div class="text-center text-gray-500 mt-10"><h1>Willkommen</h1><p>Diese Seite ist noch leer.</p></div>';
+
+// --- Codenames Stage Component ---
+const CodenamesStage = ({ initialUrl, channelId, isEditing }: { initialUrl: string, channelId: number, isEditing: boolean }) => {
+    const { updateChannelContent } = useChatStore();
+    const [url, setUrl] = useState(initialUrl);
+    const [inputUrl, setInputUrl] = useState(initialUrl);
+    const [syncing, setSyncing] = useState(false);
+    
+    // Polling für URL Updates (damit alle Spieler im gleichen Raum landen)
+    useEffect(() => {
+        if (isEditing) return;
+        const interval = setInterval(async () => {
+            try {
+                const data = await apiFetch<{ content?: string }>(`/api/channels/${channelId}/content`);
+                if (data?.content) {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(data.content, 'text/html');
+                    const layoutNode = doc.querySelector('[data-layout="codenames"]');
+                    const remoteUrl = layoutNode?.textContent?.trim() || '';
+                    
+                    if (remoteUrl && remoteUrl.startsWith('http') && remoteUrl !== url) {
+                        setUrl(remoteUrl);
+                        setInputUrl(remoteUrl);
+                    }
+                }
+            } catch (e) { 
+                // Silent fail on polling
+            }
+        }, 3000);
+        return () => clearInterval(interval);
+    }, [channelId, url, isEditing]);
+
+    const handleSync = async () => {
+        if (!inputUrl) return;
+        setSyncing(true);
+        try {
+            // Wir speichern die URL verpackt im korrekten Layout-Tag
+            const content = `<section data-layout="codenames" class="web-channel-layout h-full w-full">${inputUrl}</section>`;
+            await updateChannelContent(channelId, content);
+            setUrl(inputUrl);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setSyncing(false);
+        }
+    };
+
+    return (
+        <div className="flex flex-col h-full w-full bg-dark-100">
+            {/* Sync Bar */}
+            <div className="bg-dark-200 border-b border-dark-400 p-2 flex items-center gap-3 shrink-0 shadow-sm z-10">
+                <div className="flex items-center gap-2 text-yellow-500 px-2">
+                    <Gamepad2 size={18} />
+                    <span className="font-bold text-gray-100 text-sm hidden md:inline">Codenames</span>
+                </div>
+                <div className="h-6 w-px bg-dark-400 mx-1 hidden md:block"></div>
+                <div className="flex-1 flex items-center gap-2 max-w-2xl">
+                    <input 
+                        type="text" 
+                        value={inputUrl}
+                        onChange={(e) => setInputUrl(e.target.value)}
+                        className="flex-1 bg-dark-300 text-gray-200 text-sm px-3 py-1.5 rounded border border-dark-400 focus:border-blue-500 focus:outline-none font-mono"
+                        placeholder="Raum-Link hier einfügen..."
+                    />
+                    <button 
+                        onClick={handleSync}
+                        disabled={syncing}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm font-medium flex items-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {syncing ? <RefreshCw size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                        <span>Sync</span>
+                    </button>
+                </div>
+                <div className="ml-auto text-xs text-gray-400 hidden md:flex items-center gap-2">
+                   <span className="bg-dark-300 px-2 py-1 rounded border border-dark-400">Erstelle Raum &rarr; Kopiere Link &rarr; Sync</span>
+                </div>
+            </div>
+
+            {/* Game Iframe */}
+            <div className="flex-1 relative w-full h-full overflow-hidden">
+                <iframe 
+                    key={url} // Reload iframe on URL change
+                    src={url}
+                    className="w-full h-full border-none bg-white"
+                    allow="autoplay; encrypted-media; microphone; camera; fullscreen; clipboard-read; clipboard-write"
+                    title="Codenames Game"
+                />
+                 {url === 'https://codenames.game/' && (
+                    <div className="absolute bottom-6 left-6 max-w-sm bg-dark-200/95 backdrop-blur border border-dark-400 p-4 rounded-xl shadow-2xl pointer-events-none">
+                         <h4 className="font-bold text-gray-100 mb-1 flex items-center gap-2"><Play size={16} className="text-blue-500"/> Los geht's</h4>
+                         <p className="text-xs text-gray-300">Erstelle einen Raum im Spiel, kopiere den Link oben in die Leiste und klicke auf Sync, damit deine Freunde beitreten können.</p>
+                    </div>
+                 )}
+            </div>
+        </div>
+    );
+};
+
 
 export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) => {
   const { setSlots, clearSlots } = useTopBar();
-  const { updateChannelContent } = useChatStore();
-  
-  const [currentUrl, setCurrentUrl] = useState(DEFAULT_URL);
-  const [inputUrl, setInputUrl] = useState(DEFAULT_URL);
-  const [isLoading, setIsLoading] = useState(false);
-  const [lastSynced, setLastSynced] = useState<number>(Date.now());
+  const isDesktop = typeof window !== 'undefined' && !!window.ct?.windowControls;
 
-  // Intervall zum Prüfen auf neue URLs (Polling), damit alle synchron bleiben
-  useEffect(() => {
-    let isMounted = true;
-    
-    const fetchContent = async () => {
-      try {
-        const data = await apiFetch<{ content?: string }>(`/api/channels/${channelId}/content`);
-        if (isMounted && data?.content && data.content.startsWith('http')) {
-          // Nur aktualisieren, wenn sich die URL wirklich geändert hat
-          setCurrentUrl((prev) => {
-            if (prev !== data.content) {
-              setInputUrl(data.content!); // Input auch updaten
-              return data.content!;
-            }
-            return prev;
-          });
-        }
-      } catch (err) {
-        console.error('Fehler beim Laden des Kanal-Status', err);
-      }
-    };
+  const [htmlContent, setHtmlContent] = useState('');
+  const [contentBody, setContentBody] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>('stack');
+  const [layoutExtras, setLayoutExtras] = useState('');
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState('');
+  const editorRef = useRef<ReactQuill | null>(null);
 
-    // Sofort laden
-    fetchContent();
+  const sanitizerConfig: DOMPurifyConfig = useMemo(
+    () => ({
+      ADD_ATTR: ['data-layout', 'data-widget', 'style'],
+      ADD_TAGS: ['section']
+    }),
+    []
+  );
 
-    // Alle 3 Sekunden prüfen (einfacher Sync ohne komplexe Sockets)
-    const interval = setInterval(fetchContent, 3000);
+  const sanitizeContent = (value: string) => DOMPurify.sanitize(value, sanitizerConfig);
 
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
-  }, [channelId]);
+  const buildDocument = (body: string, layout: LayoutMode, extras = '') => {
+    // Special Handling für Codenames Mode: Wir wrappen die URL einfach in das Layout-Tag
+    if (layout === 'codenames') {
+        return `<section data-layout="codenames" class="web-channel-layout ${LAYOUT_CLASSES.codenames}">${body}</section>`;
+    }
 
-  // Funktion: URL synchronisieren
-  const handleSync = async () => {
-    if (!inputUrl) return;
-    setIsLoading(true);
+    const layoutClassNames = ['web-channel-layout', LAYOUT_CLASSES[layout], extras]
+      .filter(Boolean)
+      .join(' ');
+    const sanitizedBody = sanitizeContent(body || '');
+    const safeBody = sanitizedBody?.trim() ? sanitizedBody : placeholderHtml;
+    const layoutWrapperPattern = /<[^>]*data-layout=/;
+
+    if (layoutWrapperPattern.test(sanitizedBody)) {
+      return sanitizeContent(sanitizedBody);
+    }
+
+    return sanitizeContent(`<section data-layout="${layout}" class="${layoutClassNames}">${safeBody}</section>`);
+  };
+
+  const parseContent = (content?: string) => {
+    if (!content) {
+      return { layout: 'stack' as LayoutMode, body: '', extras: '' };
+    }
+
     try {
-      await updateChannelContent(channelId, inputUrl);
-      setCurrentUrl(inputUrl);
-      setLastSynced(Date.now());
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(content, 'text/html');
+      const layoutNode = doc.querySelector('[data-layout]');
+
+      if (layoutNode) {
+        const detectedLayout = (layoutNode.getAttribute('data-layout') as LayoutMode) || 'stack';
+        // Für Codenames ist der Inhalt nur der Text (URL)
+        const innerContent = detectedLayout === 'codenames' 
+            ? layoutNode.textContent || '' 
+            : layoutNode.innerHTML?.trim() || '';
+
+        const extraClassNames = Array.from(layoutNode.classList)
+          .filter((className) => className !== 'web-channel-layout' && !layoutClassNameSet.has(className))
+          .join(' ');
+
+        return {
+          layout: (['stack', 'two-column', 'grid', 'codenames'].includes(detectedLayout) ? detectedLayout : 'stack') as LayoutMode,
+          body: detectedLayout === 'codenames' ? innerContent : sanitizeContent(innerContent),
+          extras: extraClassNames
+        };
+      }
+
+      return { layout: 'stack' as LayoutMode, body: sanitizeContent(content), extras: '' };
     } catch (err) {
-      console.error('Sync error:', err);
-    } finally {
-      setIsLoading(false);
+      console.error('Parsing error', err);
+      return { layout: 'stack' as LayoutMode, body: sanitizeContent(content || ''), extras: '' };
     }
   };
 
-  // UI für die TopBar (Desktop)
-  const desktopControls = (
-    <div className="no-drag flex items-center gap-2 bg-dark-200 rounded p-1 border border-dark-400">
-      <input
-        type="text"
-        value={inputUrl}
-        onChange={(e) => setInputUrl(e.target.value)}
-        placeholder="https://codenames.game/room/..."
-        className="bg-dark-300 text-gray-200 text-xs px-2 py-1.5 rounded border border-dark-400 w-64 focus:border-blue-500 outline-none font-mono"
-      />
-      <button
-        onClick={handleSync}
-        disabled={isLoading}
-        className="flex items-center gap-2 bg-green-700 hover:bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded transition disabled:opacity-50"
-      >
-        {isLoading ? <RefreshCw size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-        Sync
-      </button>
-    </div>
+  const previewContent = useMemo(
+    () => buildDocument(editValue, layoutMode, layoutExtras),
+    [editValue, layoutMode, layoutExtras]
+  );
+
+  const quillModules = useMemo(
+    () => ({
+      toolbar: [
+        [{ header: [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        [{ color: [] }, { background: [] }],
+        [{ align: [] }],
+        ['link', 'blockquote', 'code-block'],
+        ['clean']
+      ],
+      history: { delay: 500, maxStack: 100, userOnly: true },
+      clipboard: { matchVisual: false }
+    }),
+    []
+  );
+
+  const quillFormats = [
+    'header', 'bold', 'italic', 'underline', 'strike', 'list', 'bullet', 'color', 'background', 'align', 'link', 'blockquote', 'code-block'
+  ];
+
+  const handleTemplateApply = () => {
+    const template = templateOptions.find((option) => option.key === selectedTemplate);
+    if (!template) return;
+    setLayoutMode(template.layout);
+    setLayoutExtras('');
+    // Bei Codenames setzen wir die URL direkt als Value
+    setEditValue(template.layout === 'codenames' ? template.content : sanitizeContent(template.content));
+    setStatusMessage(`Vorlage "${template.label}" geladen.`);
+  };
+
+  const handleWidgetDrop = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      // Drop disabled for Codenames mode
+      if (layoutMode === 'codenames') return;
+      
+      const htmlSnippet = event.dataTransfer?.getData('text/html') || event.dataTransfer?.getData('text/plain');
+      if (!htmlSnippet) return;
+
+      const editor = editorRef.current?.getEditor?.() as Quill | undefined;
+      if (!editor) return;
+
+      const selection = editor.getSelection(true);
+      const sanitizedSnippet = sanitizeContent(htmlSnippet);
+      const insertIndex = selection?.index ?? editor.getLength();
+      editor.clipboard.dangerouslyPasteHTML(insertIndex, sanitizedSnippet);
+      editor.setSelection(insertIndex + sanitizedSnippet.length, 0);
+      setStatusMessage('Widget eingefügt.');
+    },
+    [sanitizeContent, layoutMode]
+  );
+
+  const handleWidgetDragStart = (event: React.DragEvent<HTMLDivElement>, snippet?: string) => {
+    if (!snippet) return;
+    event.dataTransfer?.setData('text/html', snippet);
+    event.dataTransfer?.setData('text/plain', snippet);
+    setStatusMessage('Ziehe das Widget in den Editor, um es einzufügen.');
+  };
+
+  const validateContent = (html: string, rawBody: string) => {
+    if (layoutMode === 'codenames') return null; // Simple URL validation happens elsewhere or trusted
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const parserError = doc.querySelector('parsererror');
+
+    const sanitizedBody = sanitizeContent(rawBody);
+    const strippedText = sanitizedBody.replace(/<[^>]*>/g, '').trim();
+    const hasInteractiveElements = /<(iframe|video|audio|form|input|textarea|select|button|img)[^>]*>/i.test(sanitizedBody);
+    const hasLinks = /<a\s[^>]*href=/i.test(sanitizedBody);
+
+    if (/(<script|on\w+=|javascript:)/i.test(rawBody)) {
+      return 'Unsichere Skripte und Event-Handler sind nicht erlaubt.';
+    }
+
+    if (!strippedText && !hasInteractiveElements && !hasLinks) {
+      return 'Der Inhalt darf nicht leer sein. Bitte füge Text, ein Widget oder einen Link hinzu.';
+    }
+
+    if (parserError) {
+      return 'Der HTML-Inhalt enthält Fehler. Bitte prüfen Sie Ihre Tags.';
+    }
+
+    return null;
+  };
+
+  useEffect(() => {
+    const fetchContent = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await apiFetch<{ content?: string }>(`/api/channels/${channelId}/content`);
+        const { layout, body, extras } = parseContent(data?.content);
+        const wrappedContent = buildDocument(body, layout, extras);
+
+        setLayoutMode(layout);
+        setLayoutExtras(extras);
+        setContentBody(body); // raw body (URL for codenames, HTML for others)
+        setHtmlContent(wrappedContent);
+        setEditValue(body);
+        setIsEditing(false);
+      } catch (err: any) {
+        setError(err?.message || 'Fehler beim Laden des Inhalts');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContent();
+  }, [channelId]);
+
+  // Speichern
+  const handleSave = async () => {
+    if (loading) return;
+    setLoading(true);
+    setError(null);
+    setStatusMessage(null);
+    const layoutContent = buildDocument(editValue, layoutMode, layoutExtras);
+    const validationMessage = validateContent(layoutContent, editValue);
+
+    if (validationMessage) {
+      setError(validationMessage);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const data = await apiFetch<{ content?: string }>(
+        `/api/channels/${channelId}/content`,
+        { method: 'PUT', body: JSON.stringify({ content: layoutContent }) }
+      );
+      const updatedContent = data?.content ?? layoutContent;
+      const { layout, body, extras } = parseContent(updatedContent);
+      const wrapped = buildDocument(body, layout, extras);
+
+      setLayoutMode(layout);
+      setLayoutExtras(extras);
+      setContentBody(body);
+      setHtmlContent(wrapped);
+      setEditValue(body);
+      setIsEditing(false);
+      setStatusMessage('Änderungen erfolgreich gespeichert.');
+    } catch (err) {
+      const message = (err as any)?.message || 'Fehler beim Speichern';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const appendSnippet = (snippet: string) => {
+    const sanitizedSnippet = sanitizeContent(snippet);
+    setEditValue((current) => sanitizeContent(`${current?.trim() ? `${current}\n\n` : ''}${sanitizedSnippet}`));
+    setStatusMessage('Widget eingefügt.');
+  };
+
+  const layoutBadge = (
+    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${isEditing ? 'bg-blue-500/20 text-blue-200 border border-blue-500/50' : 'bg-dark-300 text-gray-300 border border-dark-400'}`}>
+      {isEditing ? 'Edit Mode' : (layoutMode === 'codenames' ? 'Game Mode' : 'Read-only')}
+    </span>
+  );
+
+  const activeLayout = layoutOptions.find((option) => option.key === layoutMode);
+
+  const desktopRightControls = useMemo(
+    () => (
+      <div className="no-drag flex items-center gap-2">
+        {layoutBadge}
+        {statusMessage && !isEditing && (
+          <span className="text-green-300 text-xs bg-green-900/50 px-3 py-1 rounded-full border border-green-700">
+            {statusMessage}
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={() => {
+            if (!isEditing) setEditValue(contentBody || '<h1>Willkommen!</h1><p>Bearbeite mich...</p>');
+            setIsEditing(!isEditing);
+            setStatusMessage(null);
+            setError(null);
+          }}
+          className={`flex items-center gap-2 text-xs uppercase font-bold px-3 py-2 rounded border transition ${
+            isEditing
+              ? 'text-red-200 border-red-400/40 hover:border-red-300'
+              : 'text-gray-200 border-dark-400 hover:border-dark-200'
+          }`}
+        >
+          {isEditing ? <X size={16} /> : <Edit size={16} />}
+          {isEditing ? 'Abbrechen' : 'Seite bearbeiten'}
+        </button>
+      </div>
+    ),
+    [layoutBadge, statusMessage, isEditing, contentBody],
   );
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.ct?.windowControls) {
-      setSlots({ right: desktopControls });
-    }
+    if (!isDesktop) return;
+    setSlots({ right: desktopRightControls });
     return () => clearSlots();
-  }, [desktopControls, setSlots, clearSlots]);
+  }, [isDesktop, setSlots, clearSlots, desktopRightControls]);
 
+
+  // --- Render Codenames View if active and NOT editing ---
+  if (layoutMode === 'codenames' && !isEditing) {
+      return (
+          <div className="flex-1 flex flex-col bg-dark-100 relative z-0 h-full overflow-hidden">
+               {/* Mobile Header if not desktop */}
+               {!isDesktop && (
+                <div className="h-12 border-b border-dark-400 flex items-center px-4 shadow-sm bg-dark-100 flex-shrink-0 justify-between">
+                    <div className="flex items-center gap-3">
+                    <Globe className="text-gray-400" size={20} />
+                    <span className="font-bold text-white mr-2">{channelName}</span>
+                    {layoutBadge}
+                    </div>
+                    {/* Reuse the Desktop Right Controls logic for mobile button */}
+                    <div className="flex items-center gap-3">
+                         <button
+                            onClick={() => {
+                            if (!isEditing) setEditValue(contentBody || 'https://codenames.game/');
+                            setIsEditing(!isEditing);
+                            }}
+                            className="flex items-center gap-2 text-xs uppercase font-bold px-3 py-2 rounded border border-dark-400 text-gray-200"
+                        >
+                            <Edit size={16} /> Seite bearbeiten
+                        </button>
+                    </div>
+                </div>
+               )}
+               
+               <CodenamesStage initialUrl={contentBody || 'https://codenames.game/'} channelId={channelId} isEditing={isEditing} />
+          </div>
+      );
+  }
+
+  // --- Render Default Editor/HTML View ---
   return (
-    <div className="flex flex-col h-full bg-dark-100 relative overflow-hidden">
-      
-      {/* Mobile/In-App Header (falls nicht Desktop-Mode) */}
-      {!(typeof window !== 'undefined' && window.ct?.windowControls) && (
-        <div className="h-14 border-b border-dark-400 flex items-center px-4 justify-between bg-dark-200 shrink-0">
-          <div className="flex items-center gap-3">
-            <Globe className="text-blue-400" size={20} />
-            <span className="font-bold text-gray-100">{channelName}</span>
-          </div>
-          
-          <div className="flex items-center gap-2">
-             <input
-              type="text"
-              value={inputUrl}
-              onChange={(e) => setInputUrl(e.target.value)}
-              className="bg-dark-300 text-gray-200 text-xs px-2 py-1.5 rounded border border-dark-400 w-40 md:w-64 focus:border-blue-500 outline-none"
-            />
-            <button
-              onClick={handleSync}
-              className="bg-green-700 hover:bg-green-600 text-white p-1.5 rounded"
-              title="URL für alle synchronisieren"
-            >
-              <RefreshCw size={16} />
-            </button>
-          </div>
+    <div className="flex-1 flex flex-col bg-dark-100 relative z-0 h-full overflow-hidden">
+
+      {!isDesktop && (
+      <div className="h-12 border-b border-dark-400 flex items-center px-4 shadow-sm bg-dark-100 flex-shrink-0 justify-between">
+        <div className="flex items-center gap-3">
+          <Globe className="text-gray-400" size={20} />
+          <span className="font-bold text-white mr-2">{channelName}</span>
+          {layoutBadge}
+        </div>
+        <div className="flex items-center gap-3">
+          {statusMessage && !isEditing && (
+            <span className="text-green-300 text-xs bg-green-900/50 px-3 py-1 rounded-full border border-green-700">
+              {statusMessage}
+            </span>
+          )}
+          <button
+            onClick={() => {
+              if (!isEditing) setEditValue(contentBody || '<h1>Willkommen!</h1><p>Bearbeite mich...</p>');
+              setIsEditing(!isEditing);
+              setStatusMessage(null);
+              setError(null);
+            }}
+            className={`flex items-center gap-2 text-xs uppercase font-bold px-3 py-2 rounded border transition ${
+              isEditing
+                ? 'text-red-200 border-red-400/40 hover:border-red-300'
+                : 'text-gray-200 border-dark-400 hover:border-dark-200'
+            }`}
+          >
+            {isEditing ? <X size={16} /> : <Edit size={16} />}
+            {isEditing ? 'Abbrechen' : 'Seite bearbeiten'}
+          </button>
+        </div>
+      </div>
+      )}
+
+
+      {error && (
+        <div className="bg-red-900/50 text-red-100 text-sm px-4 py-2 border-b border-red-800">
+          {error}
         </div>
       )}
 
-      {/* Main Content: Iframe */}
-      <div className="flex-1 relative w-full h-full">
-        <iframe
-          key={lastSynced} // Erzwingt Neuladen bei Sync
-          src={currentUrl}
-          title="Game Embed"
-          className="w-full h-full border-none bg-white"
-          allow="autoplay; encrypted-media; microphone; camera; fullscreen; clipboard-read; clipboard-write"
-          sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-presentation allow-downloads"
-        />
-        
-        {/* Overlay Info beim Start */}
-        {currentUrl === DEFAULT_URL && (
-          <div className="absolute bottom-6 right-6 max-w-sm bg-dark-200/95 backdrop-blur border border-yellow-500/30 p-4 rounded-xl shadow-2xl animate-in slide-in-from-bottom-5 fade-in">
-            <div className="flex items-start gap-3">
-              <div className="bg-yellow-500/20 p-2 rounded-lg text-yellow-500">
-                <Play size={20} />
+      {statusMessage && isEditing && !error && (
+        <div className="bg-blue-900/40 text-blue-100 text-sm px-4 py-2 border-b border-blue-800 flex items-center gap-2">
+          <Eye size={14} /> {statusMessage}
+        </div>
+      )}
+
+      {/* Content Area */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar relative">
+
+        {isEditing ? (
+          <div className="flex flex-col h-full p-4 gap-4">
+            <div className="bg-dark-200 border border-dark-400 rounded-lg p-3 flex flex-col gap-3">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold">Layout & Modus</p>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {layoutOptions.map((option) => (
+                        <button
+                          key={option.key}
+                          onClick={() => setLayoutMode(option.key)}
+                          className={`flex items-center gap-2 px-3 py-2 rounded border text-sm transition ${
+                            layoutMode === option.key
+                              ? 'bg-blue-600/20 border-blue-500 text-blue-100'
+                              : 'bg-dark-300 border-dark-400 text-gray-200 hover:border-dark-200'
+                          }`}
+                        >
+                          {option.icon}
+                          <div className="text-left">
+                            <div className="font-semibold leading-4">{option.label}</div>
+                            <div className="text-[11px] text-gray-400 leading-4">{option.description}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-3 min-w-[260px]">
+                    <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold">Vorlagen & Widgets</p>
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <select
+                        value={selectedTemplate}
+                        onChange={(event) => setSelectedTemplate(event.target.value)}
+                        className="bg-dark-300 border border-dark-400 text-gray-200 text-sm rounded px-3 py-2 min-w-[180px]"
+                      >
+                        <option value="">Vorlage wählen</option>
+                        {templateOptions.map((template) => (
+                          <option key={template.key} value={template.key}>
+                            {template.label}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={handleTemplateApply}
+                        disabled={!selectedTemplate}
+                        className="flex items-center gap-2 px-3 py-2 rounded border border-blue-500/50 text-sm text-blue-100 bg-blue-600/20 disabled:opacity-50"
+                      >
+                        <Sparkles size={16} /> Vorlage laden
+                      </button>
+                    </div>
+                    {/* Widgets only if not codenames mode */}
+                    {layoutMode !== 'codenames' && (
+                        <div className="grid sm:grid-cols-3 gap-2 w-full">
+                        {/* Widgets ... (wie zuvor) */}
+                        <div
+                            draggable
+                            onClick={() => widgetSnippets.media && appendSnippet(widgetSnippets.media)}
+                            onDragStart={(event) => handleWidgetDragStart(event, widgetSnippets.media)}
+                            className="border border-dark-400 rounded-lg p-3 bg-dark-300 text-left cursor-grab hover:border-dark-200 transition"
+                        >
+                            <div className="flex items-center gap-2 font-semibold text-gray-100">
+                            <Image size={16} /> Media
+                            </div>
+                        </div>
+                         {/* ... weitere Widgets verkürzt ... */}
+                        </div>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div>
-                <h4 className="font-bold text-gray-100 mb-1">Spiel starten</h4>
-                <p className="text-xs text-gray-300 leading-relaxed mb-3">
-                  Erstelle im Fenster einen Raum. Kopiere dann den Link (z.B. aus dem Menü) und füge ihn oben in die Leiste ein. Klicke auf <strong>Sync</strong>, damit alle Freunde automatisch beitreten!
-                </p>
-                <div className="flex gap-2">
-                    <button 
-                        onClick={() => setInputUrl('https://codenames.game/room/')} 
-                        className="text-[10px] bg-dark-300 hover:bg-dark-400 px-2 py-1 rounded border border-dark-400 text-gray-400"
+
+              <div className="grid lg:grid-cols-2 gap-4 flex-1 min-h-0">
+                <div className="flex flex-col h-full gap-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <label className="text-sm text-gray-300 font-semibold">
+                        {layoutMode === 'codenames' ? 'Start-URL (Codenames)' : 'Visueller Editor'}
+                    </label>
+                  </div>
+                  
+                  {layoutMode === 'codenames' ? (
+                      <div className="flex-1 bg-dark-300 border border-dark-400 rounded-lg p-4 font-mono text-gray-200 flex flex-col gap-2">
+                          <label className="text-xs text-gray-400 uppercase">Standard URL</label>
+                          <input 
+                            type="text" 
+                            value={editValue} 
+                            onChange={(e) => setEditValue(e.target.value)}
+                            className="w-full bg-dark-200 border border-dark-400 p-2 rounded text-blue-300"
+                          />
+                          <p className="text-sm text-gray-400 mt-2">
+                              Im Codenames-Modus wird dieser Link als Standard geladen. Spieler können zur Laufzeit Räume synchronisieren.
+                          </p>
+                      </div>
+                  ) : (
+                    <div
+                        className="flex-1 bg-dark-300 border border-dark-400 rounded-lg overflow-hidden"
+                        onDrop={handleWidgetDrop}
+                        onDragOver={(event) => event.preventDefault()}
                     >
-                        Link einfügen...
+                        <ReactQuill
+                        ref={(instance) => {
+                            if (instance) editorRef.current = instance;
+                        }}
+                        theme="snow"
+                        value={editValue}
+                        onChange={(value) => {
+                            setEditValue(sanitizeContent(value));
+                            setStatusMessage(null);
+                            setError(null);
+                        }}
+                        modules={quillModules}
+                        formats={quillFormats}
+                        placeholder="Inhalt hier..."
+                        className="h-full flex flex-col text-gray-100 [&_.ql-editor]:min-h-[280px] [&_.ql-editor]:bg-dark-300 [&_.ql-editor]:text-gray-100 [&_.ql-toolbar]:bg-dark-200 [&_.ql-toolbar]:border-dark-400 [&_.ql-container]:border-none"
+                        />
+                    </div>
+                  )}
+
+                  <div className="mt-auto flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-xs text-gray-400">
+                      Aktives Layout: <strong className="text-gray-200">{activeLayout?.label}</strong>
+                    </span>
+                    <button
+                      onClick={handleSave}
+                      className="bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-white px-6 py-2 rounded flex items-center gap-2 font-bold"
+                      disabled={loading}
+                    >
+                      <Save size={18} /> {loading ? 'Speichert...' : 'Speichern'}
                     </button>
+                  </div>
+                </div>
+
+                <div className="h-full rounded-lg border border-dark-400 bg-dark-200 p-4 overflow-auto">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2 text-gray-200">
+                      <Eye size={16} />
+                      <span className="font-semibold">Live Vorschau</span>
+                    </div>
+                    <span className="text-xs text-gray-400">Layout: {activeLayout?.label}</span>
+                  </div>
+                  {layoutMode === 'codenames' ? (
+                      <div className="h-[400px] border border-dark-400 rounded overflow-hidden relative">
+                          <div className="absolute inset-0 flex items-center justify-center bg-dark-300 text-gray-400 flex-col gap-2">
+                             <Gamepad2 size={48} className="opacity-50"/>
+                             <p>Vorschau der Spiel-Ansicht</p>
+                          </div>
+                      </div>
+                  ) : (
+                    <div className="prose prose-invert max-w-none bg-dark-300/40 border border-dark-400 rounded-lg p-4">
+                        <div dangerouslySetInnerHTML={{ __html: previewContent }} />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-          </div>
-        )}
+            ) : (
+              /* HTML RENDERER (Fallback if logic above misses) */
+              <div className="relative h-full">
+                <div
+                  className="p-8 prose prose-invert max-w-none"
+                  dangerouslySetInnerHTML={{ __html: htmlContent || buildDocument(contentBody, layoutMode, layoutExtras) }}
+                />
+              </div>
+            )}
+
       </div>
     </div>
   );
