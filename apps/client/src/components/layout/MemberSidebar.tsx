@@ -31,17 +31,22 @@ export const MemberAvatar = ({
   const finalStatusLabel = statusLabel?.(member.status) ?? `Status: ${member.status}`;
 
   return (
-    <div className="mr-3 flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-glass-300 relative">
-      {member.avatarUrl ? (
-        <img src={resolveServerAssetUrl(member.avatarUrl)} alt={finalAvatarAlt} className="h-full w-full object-cover" />
-      ) : (
-        <span className="select-none text-xs font-bold text-gray-400" aria-label={initialsLabel}>
-          {avatarInitial}
-        </span>
-      )}
+    // WRAPPER: Relativ positioniert, aber KEIN overflow-hidden, damit der Punkt sichtbar bleibt
+    <div className="relative mr-3 flex-shrink-0">
+      {/* AVATAR CONTAINER: Rund und overflow-hidden für das Bild */}
+      <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-white/10">
+        {member.avatarUrl ? (
+          <img src={resolveServerAssetUrl(member.avatarUrl)} alt={finalAvatarAlt} className="h-full w-full object-cover" />
+        ) : (
+          <span className="select-none text-xs font-bold text-gray-400" aria-label={initialsLabel}>
+            {avatarInitial}
+          </span>
+        )}
+      </div>
+      {/* STATUS INDICATOR: Liegt nun außerhalb des beschnittenen Bereichs */}
       <span
         className={`pointer-events-none absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#111214] ${
-          member.status === 'online' ? 'bg-success' : 'bg-gray-500'
+          member.status === 'online' ? 'bg-green-500' : 'bg-gray-500'
         }`}
         aria-label={finalStatusLabel}
       />
@@ -436,8 +441,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
           {m.roles?.some((r: any) => r.name === 'owner') && <Crown size={12} className="text-yellow-500 fill-yellow-500/20" />}
           {m.roles?.some((r: any) => r.name === 'admin') && <Shield size={12} className="text-primary fill-primary/20" />}
         </div>
-        {/* Custom Status Text (Dummy für jetzt) */}
-        <div className="text-[10px] text-gray-500 truncate group-hover:text-gray-400">
+        <div className={`text-[10px] truncate ${m.status === 'online' ? 'text-green-400' : 'text-gray-500'} group-hover:text-gray-300`}>
           {m.status === 'online' ? t('memberSidebar.onlineStatus') : t('memberSidebar.offlineStatus')}
         </div>
       </div>
