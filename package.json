@@ -40,6 +40,7 @@
   "dependencies": {
     "@noble/ed25519": "^3.0.0",
     "@tanstack/react-virtual": "^3.13.13",
+    "helmet": "^8.1.0",
     "lucide-react": "^0.559.0"
   }
 }

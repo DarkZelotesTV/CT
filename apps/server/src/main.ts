@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet'; // <--- WICHTIG: Import hinzugefügt
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { sequelize } from './config/database';
@@ -68,6 +69,29 @@ const sendPresenceSnapshot = async (socket: any) => {
 // ==========================================
 // 1. CORS & MIDDLEWARE (Sicherheit lockern)
 // ==========================================
+
+// NEU: Helmet für Content Security Policy (CSP)
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        // Erlaubt Skripte und Styles (oft nötig für Dev-Tools/Vite)
+        'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        'style-src': ["'self'", "'unsafe-inline'"],
+        'img-src': ["'self'", "data:", "https:", "blob:"],
+        'connect-src': ["'self'", "ws:", "wss:", "http:", "https:"], 
+        // WICHTIG: Hier erlauben wir die Codenames-Seite im Iframe
+        'frame-src': ["'self'", "https://codenames.game/"], 
+      },
+    },
+    // Deaktiviert COEP, falls es Probleme beim Laden von Ressourcen gibt
+    crossOriginEmbedderPolicy: false,
+    // Erlaubt Laden von Ressourcen über Origins hinweg (hilfreich im Dev-Mode)
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
+
 app.use(cors({
   origin: true, // Erlaubt automatisch jede anfragende Quelle (Vite/Electron)
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
