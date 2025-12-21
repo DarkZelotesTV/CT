@@ -113,17 +113,17 @@ export const VoicePreJoin = ({ channel, onJoin, onCancel, isJoining, connectedCh
     : 'Bitte prüfe deine Geräte-Einstellungen vor dem Beitritt.';
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-gradient-to-br from-[#0b0c10] via-[#0d0f15] to-[#0b0c10] relative font-sans overflow-hidden">
+    <div className="flex-1 min-h-0 bg-gradient-to-br from-[#0b0c10] via-[#0d0f15] to-[#0b0c10] relative font-sans overflow-hidden text-white">
       {/* Background Decor */}
-      <div className="absolute inset-0 pointer-events-none fixed" style={{
+      <div className="absolute inset-0 pointer-events-none" style={{
         backgroundImage: 'radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.05), transparent 30%), radial-gradient(circle at 85% 85%, rgba(16, 185, 129, 0.05), transparent 30%)',
       }} />
 
       {/* Main Scroll Container */}
       <div className="flex-1 overflow-y-auto custom-scrollbar w-full">
         {/* FIX: 'items-center' entfernt, damit Inhalt bei Überlauf nicht oben abgeschnitten wird. 'my-auto' im Kind-Element regelt die Zentrierung. */}
-        <div className="min-h-full flex flex-col p-4 md:p-8">
-          <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-6 relative z-10 my-auto mx-auto">
+        <div className="min-h-full flex flex-col p-4 md:p-8 pb-[calc(env(safe-area-inset-bottom,0px)+32px)]">
+          <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-6 relative z-10 my-auto mx-auto min-h-0">
             
             {/* LEFT COLUMN: Controls */}
             <div className="bg-[#0f1117]/90 border border-white/10 rounded-3xl shadow-2xl p-5 md:p-8 backdrop-blur-xl flex flex-col gap-6 animate-in slide-in-from-bottom-4 duration-500">

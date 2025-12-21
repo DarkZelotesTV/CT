@@ -144,42 +144,47 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
   const statusColor = connectionState === 'connected' ? 'bg-green-500' : connectionState === 'connecting' ? 'bg-yellow-500' : 'bg-red-500';
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-black relative select-none">
-        
-        {/* Top Bar (Overlay) */}
-        <div className="absolute top-0 left-0 right-0 p-4 z-10 flex justify-between pointer-events-none">
-            <div className="pointer-events-auto bg-black/60 backdrop-blur rounded-lg px-3 py-2 flex items-center gap-3 border border-white/5">
-                <div className={`w-2 h-2 rounded-full ${statusColor}`} />
-                <div className="text-sm font-bold text-white">{channelName || 'Unbenannt'}</div>
-            </div>
-            <div className="pointer-events-auto bg-black/60 backdrop-blur rounded-lg p-1 flex gap-1 border border-white/5">
-                <button onClick={() => setLayout('grid')} className={`p-2 rounded ${layout === 'grid' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}`}><Grid size={18}/></button>
-                <button onClick={() => setLayout('speaker')} className={`p-2 rounded ${layout === 'speaker' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}`}><LayoutList size={18}/></button>
+    <div className="flex-1 min-h-0 bg-black text-white grid grid-rows-[auto,1fr,auto] select-none">
+
+        {/* Top Bar */}
+        <div className="px-4 md:px-6 lg:px-8 pt-4 md:pt-6 pb-2 md:pb-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="bg-[#0b0c10] border border-white/5 rounded-2xl px-4 py-2.5 flex items-center gap-3 shadow-sm">
+                    <div className={`w-2 h-2 rounded-full ${statusColor}`} />
+                    <div className="text-sm font-bold text-white truncate max-w-xs sm:max-w-sm md:max-w-md">{channelName || 'Unbenannt'}</div>
+                </div>
+                <div className="bg-[#0b0c10] border border-white/5 rounded-2xl p-1 flex gap-1 shadow-sm">
+                    <button onClick={() => setLayout('grid')} className={`p-2 rounded-xl ${layout === 'grid' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}`}><Grid size={18}/></button>
+                    <button onClick={() => setLayout('speaker')} className={`p-2 rounded-xl ${layout === 'speaker' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}`}><LayoutList size={18}/></button>
+                </div>
             </div>
         </div>
 
         {/* Stage */}
-        <div className="flex-1 overflow-hidden relative">
-            {activeRoom ? (
-                <VoiceMediaStage layout={layout} />
-            ) : (
-                <div className="flex h-full items-center justify-center text-gray-500 gap-2">
-                    <RefreshCw className="animate-spin" size={24}/>
-                    <span>Verbinde...</span>
-                </div>
-            )}
-            
-            {/* Error Toast */}
-            {(error || cameraError) && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-2 rounded-lg text-sm shadow-xl flex gap-2 items-center">
-                    <XCircle size={16}/> {error || cameraError}
-                </div>
-            )}
+        <div className="min-h-0 px-4 md:px-6 lg:px-8 pb-4 md:pb-6">
+            <div className="h-full min-h-[280px] rounded-3xl border border-white/5 bg-[#0b0c10] overflow-hidden relative">
+                {activeRoom ? (
+                    <VoiceMediaStage layout={layout} />
+                ) : (
+                    <div className="flex h-full items-center justify-center text-gray-500 gap-2">
+                        <RefreshCw className="animate-spin" size={24}/>
+                        <span>Verbinde...</span>
+                    </div>
+                )}
+
+                {/* Error Toast */}
+                {(error || cameraError) && (
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-2 rounded-lg text-sm shadow-xl flex gap-2 items-center">
+                        <XCircle size={16}/> {error || cameraError}
+                    </div>
+                )}
+            </div>
         </div>
 
         {/* Bottom Control Bar (Dial) */}
-        <div className="bg-[#000000] p-4 pb-6 flex justify-center items-center gap-4 relative z-20 shadow-[0_-1px_0_rgba(255,255,255,0.05)]">
-            
+        <div className="px-4 md:px-6 lg:px-8 pb-[calc(env(safe-area-inset-bottom,0px)+20px)] pt-3 md:pt-4 bg-[#050508]/95 backdrop-blur border-t border-white/5">
+            <div className="w-full max-w-4xl mx-auto flex flex-wrap justify-center items-center gap-3 md:gap-4">
+
             <DialGroup>
                 {/* MIC + MENU */}
                 <div className="relative flex items-center">
@@ -272,13 +277,14 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
             </DialGroup>
 
             {/* DISCONNECT */}
-            <DialButton 
-                icon={<PhoneOff size={24} fill="currentColor"/>} 
-                onClick={disconnect} 
-                danger 
-                className="rounded-full !w-16 ml-2" 
+            <DialButton
+                icon={<PhoneOff size={24} fill="currentColor"/>}
+                onClick={disconnect}
+                danger
+                className="rounded-full !w-16 ml-2"
             />
 
+            </div>
         </div>
 
         {/* Modal */}
