@@ -213,6 +213,13 @@ export const ChannelSidebar = ({
   }, []); 
 
 
+  const handleJumpToVoice = useCallback(() => {
+    if (!voiceChannelId) return;
+
+    onSelectChannel({ id: voiceChannelId, name: activeChannelName || t('channelSidebar.inChannel'), type: 'voice' as const });
+    onCloseMobileNav?.();
+  }, [activeChannelName, onCloseMobileNav, onSelectChannel, t, voiceChannelId]);
+
   const renderChannel = (c: Channel, isInside: boolean, dragMeta?: any) => {
     // Handling für Spacer
     if (c.type === 'spacer') {
@@ -363,10 +370,17 @@ export const ChannelSidebar = ({
       {connectionState === 'connected' && (
           <div className="bg-[#111214] border-t border-b border-white/5 p-2.5 space-y-2 relative z-10">
              <div className="flex items-center justify-between gap-2">
-                <div className="flex flex-col overflow-hidden mr-2">
-                    <div className="text-green-500 text-[10px] font-bold uppercase flex items-center gap-1.5 mb-0.5"><Mic size={10} className="animate-pulse" /> {t('channelSidebar.connected')}</div>
-                    <div className="text-white text-xs font-bold truncate">{activeChannelName}</div>
-                </div>
+                <button
+                  type="button"
+                  onClick={handleJumpToVoice}
+                  className="flex flex-col overflow-hidden mr-2 text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#111214] rounded"
+                  title={activeChannelName || t('channelSidebar.inChannel')}
+                >
+                    <div className="text-green-500 text-[10px] font-bold uppercase flex items-center gap-1.5 mb-0.5">
+                      <Mic size={10} className="animate-pulse" /> {t('channelSidebar.connected')}
+                    </div>
+                    <div className="text-white text-xs font-bold truncate group-hover:underline">{activeChannelName}</div>
+                </button>
                 <div className="flex items-center gap-2">
                     <button onClick={() => toggleCamera()} className={`w-8 h-8 flex items-center justify-center rounded-lg border text-xs transition-colors ${isCameraEnabled ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-200' : 'bg-white/5 border-white/10 text-gray-300 hover:text-white'}`}><Camera size={14} /></button>
                     <button onClick={() => toggleScreenShare()} className={`w-8 h-8 flex items-center justify-center rounded-lg border text-xs transition-colors ${isScreenSharing ? 'bg-indigo-500/10 border-indigo-500/40 text-indigo-200' : 'bg-white/5 border-white/10 text-gray-300 hover:text-white'}`}><ScreenShare size={14} /></button>
