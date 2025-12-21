@@ -177,6 +177,7 @@ export const UserSettingsModal = ({
   const [pushToTalkEnabled, setPushToTalkEnabled] = useState(usePushToTalk);
   const [locallyMuted, setLocallyMuted] = useState(muted);
   const [locallyMicMuted, setLocallyMicMuted] = useState(micMuted);
+  const [showVoicePreJoin, setShowVoicePreJoin] = useState(settings.talk.showVoicePreJoin ?? true);
   const [inputLevel, setInputLevel] = useState(0);
   const [sensitivity, setSensitivity] = useState(settings.talk.vadSensitivity ?? 50);
   const [meterError, setMeterError] = useState<string | null>(null);
@@ -683,6 +684,7 @@ export const UserSettingsModal = ({
       invites: notifyInvites,
     });
     updateTalk({
+      showVoicePreJoin,
       cameraQuality,
       screenQuality,
       screenFrameRate,
@@ -1049,6 +1051,28 @@ export const UserSettingsModal = ({
 
                   {devicesTab === 'voice' && (
                     <div className="space-y-6">
+                      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-3">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <div className="text-sm font-semibold">Voice-Check</div>
+                            <p className="text-sm text-[color:var(--color-text-muted)]">
+                              Überspringe die Vorabprüfung und trete Sprachkanälen direkt bei.
+                            </p>
+                          </div>
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={showVoicePreJoin}
+                              onChange={(e) => setShowVoicePreJoin(e.target.checked)}
+                              className="form-checkbox h-4 w-4"
+                            />
+                            <span className="text-[color:var(--color-text)]">
+                              {showVoicePreJoin ? 'Aktiviert' : 'Deaktiviert'}
+                            </span>
+                          </label>
+                        </div>
+                      </div>
+
                       {/* Geräte */}
                       <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-4">
                         <div className="flex items-start justify-between gap-4">

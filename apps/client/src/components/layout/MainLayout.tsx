@@ -578,6 +578,20 @@ export const MainLayout = () => {
     [ensureOnboardingForStep, handleVoiceJoin]
   );
 
+  useEffect(() => {
+    if (!activeChannel || activeChannel.type !== 'voice') return;
+    if (settings.talk.showVoicePreJoin !== false) return;
+
+    const isConnectedToTarget = connectedVoiceChannelId === activeChannel.id && connectionState === 'connected';
+    const isJoiningTarget =
+      pendingVoiceChannelId === activeChannel.id &&
+      (connectionState === 'connecting' || connectionState === 'reconnecting');
+
+    if (!isConnectedToTarget && !isJoiningTarget) {
+      attemptVoiceJoin(activeChannel);
+    }
+  }, [activeChannel, attemptVoiceJoin, connectedVoiceChannelId, connectionState, pendingVoiceChannelId, settings.talk.showVoicePreJoin]);
+
   const handleVoiceCancel = useCallback(() => {
     setPendingVoiceChannelId(null);
     if (connectedVoiceChannelId && connectedVoiceChannelName) {
@@ -744,8 +758,12 @@ export const MainLayout = () => {
     }
     if (activeChannel?.type === 'voice') {
       const isConnectedToTarget = connectedVoiceChannelId === activeChannel.id && connectionState === 'connected';
+      const showVoicePreJoin = settings.talk.showVoicePreJoin !== false;
+      const isJoiningTarget =
+        pendingVoiceChannelId === activeChannel.id &&
+        (connectionState === 'connecting' || connectionState === 'reconnecting');
       // ... (Voice logic bleibt gleich)
-      if (isConnectedToTarget) {
+      if (isConnectedToTarget || !showVoicePreJoin) {
         return <VoiceChannelView channelName={activeChannel.name} />;
       }
       return (
@@ -753,7 +771,7 @@ export const MainLayout = () => {
           channel={activeChannel}
           onJoin={() => attemptVoiceJoin(activeChannel)}
           onCancel={handleVoiceCancel}
-          isJoining={pendingVoiceChannelId === activeChannel.id && (connectionState === 'connecting' || connectionState === 'reconnecting')}
+          isJoining={isJoiningTarget}
           connectedChannelName={connectedVoiceChannelName}
           connectedElsewhere={connectedVoiceChannelId !== null && connectedVoiceChannelId !== activeChannel.id && connectionState !== 'disconnected'}
         />
