@@ -207,7 +207,10 @@ export const TitleBar = ({
   return (
     <>
       <div
-        className="fixed top-0 left-0 right-0 z-[3000] drag border-b border-black bg-[#111] select-none"
+        // Z-Index auf 50000 erhöht. 
+        // Dies liegt über dem ModalLayout (z-9999), sodass die Titlebar auch bei "Kanal erstellen" 
+        // oder "Server Einstellungen" sichtbar und im Vordergrund bleibt.
+        className="fixed top-0 left-0 right-0 z-[50000] drag border-b border-black bg-[#111] select-none"
         style={{ height: state.titlebarHeight }}
       >
         <div className="h-full w-full flex items-center justify-between">
