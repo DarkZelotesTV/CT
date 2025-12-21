@@ -11,10 +11,10 @@ import { useVoice } from '../../features/voice';
 import { VoiceParticipantsPanel } from '../../features/voice/ui';
 import { useSocket } from '../../context/SocketContext';
 import { useSettings } from '../../context/SettingsContext'; // Für aktuellen DisplayName
+import { resolveServerAssetUrl } from '../../utils/assetUrl';
 import { defaultServerTheme, deriveServerThemeFromSettings, type ServerTheme } from '../../theme/serverTheme';
 import { storage } from '../../shared/config/storage';
 import { ErrorCard, Skeleton, Spinner } from '../ui';
-import { resolveServerAssetUrl } from '../../utils/assetUrl';
 
 interface Channel { id: number; name: string; type: 'text' | 'voice' | 'web' | 'data-transfer' | 'spacer' | 'list'; custom_icon?: string; }
 interface Category { id: number; name: string; channels: Channel[]; }
@@ -637,6 +637,19 @@ export const ChannelSidebar = ({ serverId, activeChannelId, onSelectChannel, onO
     // --- OPTIMISTISCHE TEILNEHMER-LISTE ---
     // Start mit der Liste vom Server
     let displayParticipants = [...(channelPresence[c.id] || [])];
+    // Ensure my entry always reflects the latest local profile settings (avatar/displayName)
+    if (localUser?.id) {
+      const meId = String(localUser.id);
+      displayParticipants = displayParticipants.map((u) =>
+        String(u.id) === meId
+          ? {
+              ...u,
+              username: settings.profile.displayName || u.username,
+              avatar_url: settings.profile.avatarUrl || u.avatar_url,
+            }
+          : u,
+      );
+    }
     const localUserId = localUser?.id ? String(localUser.id) : null;
 
     if (localUserId && c.type === 'voice') {

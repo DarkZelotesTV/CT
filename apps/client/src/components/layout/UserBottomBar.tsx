@@ -3,6 +3,7 @@ import { Headphones, MessageSquare, MicOff, Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context/SettingsContext';
 import { UserSettingsModal } from '../modals/UserSettingsModal';
+import { resolveServerAssetUrl } from '../../utils/assetUrl';
 import { useVoice } from '../../features/voice';
 import { useSocket } from '../../context/SocketContext';
 import { storage } from '../../shared/config/storage';
@@ -22,14 +23,19 @@ export const UserBottomBar = () => {
   const handleLocaleChange = (locale: string) => updateLocale(locale);
 
   const displayName = settings.profile.displayName || user?.username || t('userBottomBar.fallbackDisplayName');
+  const avatarSrc = resolveServerAssetUrl(settings.profile.avatarUrl || (user as any)?.avatar_url || '');
 
   return (
     <>
       <div className="h-16 bg-dark-200 border-t border-dark-400 flex items-center justify-between px-3 gap-2">
         <div className="min-w-0 flex items-center gap-2">
-          <div className="w-8 h-8 bg-cyan-700 rounded-full flex items-center justify-center text-white text-sm font-bold">
-            {(displayName?.[0] ?? 'U').toUpperCase()}
-          </div>
+          <div className="w-8 h-8 rounded-full overflow-hidden bg-cyan-700 flex items-center justify-center text-white text-sm font-bold">
+  {avatarSrc ? (
+    <img src={avatarSrc} className="w-full h-full object-cover" alt={`${displayName} Avatar`} />
+  ) : (
+    (displayName?.[0] ?? 'U').toUpperCase()
+  )}
+</div>
           <div className="min-w-0">
             <div className="text-sm text-gray-200 font-semibold truncate">{displayName}</div>
             <div className="text-xs text-gray-500 truncate">
