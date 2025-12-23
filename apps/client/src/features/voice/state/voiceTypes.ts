@@ -29,6 +29,13 @@ export interface VoiceState {
   localAudioLevel: number;
 }
 
+// UPDATE: Payload erlaubt jetzt auch eine Funktion (Functional Update)
 export type VoiceAction =
-  | { type: 'patch'; payload: Partial<VoiceState> }
-  | { type: 'reset'; payload: VoiceState };
+  | { 
+      type: 'patch'; 
+      payload: Partial<VoiceState> | ((state: VoiceState) => Partial<VoiceState>) 
+    }
+  | { 
+      type: 'reset'; 
+      payload: VoiceState 
+    };

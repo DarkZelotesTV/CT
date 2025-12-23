@@ -42,10 +42,10 @@ export const VoiceStoreProvider = ({ children }: { children: React.ReactNode }) 
       setState: (patch: Partial<VoiceState> | ((prev: VoiceState) => Partial<VoiceState>)) =>
         dispatch({
           type: 'patch',
-          payload: typeof patch === 'function' ? patch(state) : patch,
+          payload: patch, // Die Payload wird nun direkt an den Reducer gereicht
         }),
     }),
-    [state]
+    [dispatch] // FIX: Nur noch von dispatch abhängig, damit die Referenz stabil bleibt
   );
 
   return (

@@ -1,93 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Check,
-  ChevronUp,
-  Grid,
-  Headphones,
-  Laptop2,
-  LayoutList,
-  Mic,
-  MicOff,
-  Monitor,
-  MonitorOff,
-  PhoneOff,
-  RefreshCw,
-  Settings,
-  Sliders,
-  Video,
-  VideoOff,
-  Volume2,
-  XCircle,
+  Check, ChevronUp, Grid, Headphones, Laptop2, LayoutList, Mic, MicOff,
+  Monitor, MonitorOff, PhoneOff, RefreshCw, Settings, Sliders, Video, VideoOff, XCircle,
 } from 'lucide-react';
 import { VoiceMediaStage } from '../tabs/VoiceMediaStage';
 import { useVoice } from '../..';
 import { useSettings } from '../../../../context/SettingsContext';
 import { UserSettingsModal } from '../../../../components/modals/UserSettingsModal';
 
-// --- Helper Components ---
-const DialButton = ({ 
-    active, 
-    onClick, 
-    icon, 
-    danger = false, 
-    className = "" 
-}: { 
-    active?: boolean, 
-    onClick: () => void, 
-    icon: React.ReactNode, 
-    danger?: boolean, 
-    className?: string 
-}) => (
-    <button
-        onClick={onClick}
-        className={`h-12 w-14 flex items-center justify-center rounded-lg transition-all active:scale-95 ${className} ${
-            danger 
-                ? 'bg-red-500 hover:bg-red-600 text-white' 
-                : active 
-                    ? 'bg-white text-black hover:bg-gray-200' 
-                    : 'bg-[#2b2d31] text-gray-100 hover:bg-[#3f4147]'
-        }`}
-    >
-        {icon}
-    </button>
-);
-
-const DialGroup = ({ children }: { children: React.ReactNode }) => (
-    <div className="flex items-center gap-0.5 bg-[#111214] p-1 rounded-lg">
-        {children}
-    </div>
-);
-
-const CaretButton = ({ onClick }: { onClick: () => void }) => (
-    <button 
-        onClick={(e) => { e.stopPropagation(); onClick(); }}
-        className="h-12 w-5 flex items-center justify-center rounded-r-lg bg-[#2b2d31] hover:bg-[#3f4147] text-gray-300 border-l border-[#1e1f22]"
-    >
-        <ChevronUp size={12} />
-    </button>
-);
-
-const ContextMenu = ({ onClose, children }: { onClose: () => void, children: React.ReactNode }) => {
-    const ref = useRef<HTMLDivElement>(null);
-    useEffect(() => {
-        const h = (e: MouseEvent) => { if(ref.current && !ref.current.contains(e.target as Node)) onClose(); };
-        document.addEventListener('mousedown', h);
-        return () => document.removeEventListener('mousedown', h);
-    }, [onClose]);
-    return (
-        <div ref={ref} className="absolute bottom-[115%] left-0 w-64 bg-[#111214] border border-[#1e1f22] rounded-lg shadow-xl p-1 z-50 text-gray-200 animate-in slide-in-from-bottom-2 duration-150">
-            {children}
-        </div>
-    );
-};
-
 export const VoiceChannelView = ({ channelName }: { channelName: string | null }) => {
   const {
-    activeRoom, connectionState, error, cameraError, screenShareError,
-    muted, micMuted, setMuted, setMicMuted,
-    isCameraEnabled, isScreenSharing, isPublishingCamera, isPublishingScreen,
-    shareSystemAudio, setShareSystemAudio,
-    startCamera, stopCamera, startScreenShare, stopScreenShare, toggleCamera, disconnect,
+    activeRoom, connectionState, error, cameraError, muted, micMuted, setMuted, setMicMuted,
+    isCameraEnabled, isScreenSharing, toggleCamera, disconnect, startScreenShare, stopScreenShare, shareSystemAudio
   } = useVoice();
   const { settings, updateDevices } = useSettings();
 
@@ -95,227 +19,92 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
   const [showSettings, setShowSettings] = useState(false);
   const [menuOpen, setMenuOpen] = useState<'mic' | 'video' | 'screen' | null>(null);
   
-  // Local Device State for Quick Menu
-  const [devices, setDevices] = useState<{audio: MediaDeviceInfo[], video: MediaDeviceInfo[]}>({ audio: [], video: [] });
-  const [screenSources, setScreenSources] = useState<any[]>([]);
-
-  // Device Loading (nur wenn ein Gerätemenü offen ist)
-  useEffect(() => {
-      if (!menuOpen) return;
-      let cancelled = false;
-
-      const enumerate = async () => {
-          try {
-              const devs = await navigator.mediaDevices.enumerateDevices();
-              if (cancelled) return;
-              setDevices({
-                  audio: devs.filter(d => d.kind === 'audioinput'),
-                  video: devs.filter(d => d.kind === 'videoinput')
-              });
-          } catch (err) {
-              console.warn('enumerateDevices fehlgeschlagen', err);
-          }
-      };
-
-      void enumerate();
-      return () => { cancelled = true; };
-  }, [menuOpen]);
-
-  // Screen Sources
-  useEffect(() => {
-      if (menuOpen !== 'screen' || !window.ct?.getScreenSources) return;
-
-      let cancelled = false;
-
-      window.ct.getScreenSources()
-          .then((sources) => {
-              if (!cancelled) setScreenSources(sources);
-          })
-          .catch((err) => console.warn('getScreenSources fehlgeschlagen', err));
-
-      return () => { cancelled = true; };
-  }, [menuOpen]);
-
-  // Actions
-  const handleDeviceSwitch = (type: 'audio'|'video', id: string) => {
-      if (type === 'audio') updateDevices({ audioInputId: id });
-      if (type === 'video') {
-          updateDevices({ videoInputId: id });
-          if(isCameraEnabled) { stopCamera().then(() => startCamera(settings.talk.cameraQuality)); }
-      }
-      setMenuOpen(null);
-  };
-
-  const handleScreenShare = async (sourceId?: string) => {
-      if (isScreenSharing) {
-          await stopScreenShare();
-      } else {
-          await startScreenShare({
-              ...(sourceId ? { sourceId } : {}),
-              quality: settings.talk.screenQuality ?? 'high',
-              frameRate: settings.talk.screenFrameRate ?? 30,
-              bitrateProfile: settings.talk.screenBitrateProfile ?? 'medium',
-              withAudio: shareSystemAudio
-          });
-      }
-      setMenuOpen(null);
-  };
-
-  const statusColor = connectionState === 'connected' ? 'bg-green-500' : connectionState === 'connecting' ? 'bg-yellow-500' : 'bg-red-500';
+  const statusColor = connectionState === 'connected' ? 'bg-green-500 shadow-[0_0_10px_#22c55e]' : 'bg-yellow-500 shadow-[0_0_10px_#eab308]';
 
   return (
-    <div className="flex-1 min-h-0 bg-black text-white grid grid-rows-[auto,1fr,auto] select-none">
+    <div className="flex-1 flex flex-col h-full bg-[#050505] relative select-none font-sans overflow-hidden">
+        
+        {/* Background Decorative Blur */}
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 blur-[120px] rounded-full pointer-events-none" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-purple-500/10 blur-[100px] rounded-full pointer-events-none" />
 
-        {/* Top Bar */}
-        <div className="px-4 md:px-6 lg:px-8 pt-4 md:pt-6 pb-2 md:pb-3">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="bg-[#0b0c10] border border-white/5 rounded-2xl px-4 py-2.5 flex items-center gap-3 shadow-sm">
-                    <div className={`w-2 h-2 rounded-full ${statusColor}`} />
-                    <div className="text-sm font-bold text-white truncate max-w-xs sm:max-w-sm md:max-w-md">{channelName || 'Unbenannt'}</div>
+        {/* Top Header - Glassmorphism */}
+        <div className="absolute top-0 left-0 right-0 p-6 z-20 flex justify-between items-start pointer-events-none">
+            <div className="pointer-events-auto bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl px-5 py-3 flex items-center gap-4 shadow-2xl transition-all hover:bg-white/10">
+                <div className={`w-3 h-3 rounded-full ${statusColor}`} />
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Verbunden mit</span>
+                  <span className="text-sm font-black text-white">{channelName || 'Sprachkanal'}</span>
                 </div>
-                <div className="bg-[#0b0c10] border border-white/5 rounded-2xl p-1 flex gap-1 shadow-sm">
-                    <button onClick={() => setLayout('grid')} className={`p-2 rounded-xl ${layout === 'grid' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}`}><Grid size={18}/></button>
-                    <button onClick={() => setLayout('speaker')} className={`p-2 rounded-xl ${layout === 'speaker' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}`}><LayoutList size={18}/></button>
-                </div>
+            </div>
+
+            <div className="pointer-events-auto flex gap-2 p-1.5 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl">
+                <button onClick={() => setLayout('grid')} className={`p-2.5 rounded-xl transition-all ${layout === 'grid' ? 'bg-indigo-500 text-white' : 'text-gray-400 hover:text-white'}`}>
+                  <Grid size={20}/>
+                </button>
+                <button onClick={() => setLayout('speaker')} className={`p-2.5 rounded-xl transition-all ${layout === 'speaker' ? 'bg-indigo-500 text-white' : 'text-gray-400 hover:text-white'}`}>
+                  <LayoutList size={20}/>
+                </button>
             </div>
         </div>
 
-        {/* Stage */}
-        <div className="min-h-0 px-4 md:px-6 lg:px-8 pb-4 md:pb-6">
-            <div className="h-full min-h-[280px] rounded-3xl border border-white/5 bg-[#0b0c10] overflow-hidden relative">
-                {activeRoom ? (
-                    <VoiceMediaStage layout={layout} />
-                ) : (
-                    <div className="flex h-full items-center justify-center text-gray-500 gap-2">
-                        <RefreshCw className="animate-spin" size={24}/>
-                        <span>Verbinde...</span>
+        {/* Stage Area */}
+        <div className="flex-1 relative z-10">
+            {activeRoom ? (
+                <VoiceMediaStage layout={layout} />
+            ) : (
+                <div className="flex h-full flex-col items-center justify-center text-gray-400 gap-5">
+                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center animate-spin border-t-2 border-indigo-500 shadow-xl">
+                      <RefreshCw size={32} className="text-indigo-400" />
                     </div>
-                )}
+                    <span className="font-bold tracking-tighter text-lg animate-pulse">Initialisiere Stream...</span>
+                </div>
+            )}
+        </div>
 
-                {/* Error Toast */}
-                {(error || cameraError) && (
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-2 rounded-lg text-sm shadow-xl flex gap-2 items-center">
-                        <XCircle size={16}/> {error || cameraError}
-                    </div>
-                )}
+        {/* Bottom Control Dial - Floating High-End Design */}
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 pointer-events-none w-full max-w-2xl px-6">
+            <div className="pointer-events-auto flex items-center justify-center gap-4 p-3 bg-black/40 backdrop-blur-3xl border border-white/10 rounded-[32px] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)]">
+                
+                {/* Audio Controls */}
+                <div className="flex gap-2 p-1.5 bg-white/5 rounded-2xl">
+                    <button onClick={() => setMicMuted(!micMuted)} className={`p-4 rounded-xl transition-all active:scale-90 ${micMuted ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : 'text-white hover:bg-white/10'}`}>
+                      {micMuted ? <MicOff size={24}/> : <Mic size={24}/>}
+                    </button>
+                    <button onClick={() => setMuted(!muted)} className={`p-4 rounded-xl transition-all active:scale-90 ${muted ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : 'text-white hover:bg-white/10'}`}>
+                      <Headphones size={24}/>
+                    </button>
+                </div>
+
+                {/* Media Controls */}
+                <div className="flex gap-2 p-1.5 bg-white/5 rounded-2xl">
+                    <button onClick={toggleCamera} className={`p-4 rounded-xl transition-all active:scale-90 ${isCameraEnabled ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'text-white hover:bg-white/10'}`}>
+                      <Video size={24}/>
+                    </button>
+                    <button onClick={() => isScreenSharing ? stopScreenShare() : startScreenShare()} className={`p-4 rounded-xl transition-all active:scale-90 ${isScreenSharing ? 'bg-green-500 text-white shadow-lg shadow-green-500/20' : 'text-white hover:bg-white/10'}`}>
+                      <Monitor size={24}/>
+                    </button>
+                </div>
+
+                {/* Settings & Disconnect */}
+                <button onClick={() => setShowSettings(true)} className="p-4 rounded-xl text-gray-400 hover:text-white transition-all bg-white/5">
+                    <Settings size={24}/>
+                </button>
+
+                <button onClick={disconnect} className="p-5 rounded-full bg-red-600 text-white hover:bg-red-500 transition-all shadow-xl shadow-red-600/30 active:scale-90 ml-2">
+                    <PhoneOff size={28} fill="currentColor"/>
+                </button>
             </div>
         </div>
 
-        {/* Bottom Control Bar (Dial) */}
-        <div className="px-4 md:px-6 lg:px-8 pb-[calc(env(safe-area-inset-bottom,0px)+20px)] pt-3 md:pt-4 bg-[#050508]/95 backdrop-blur border-t border-white/5">
-            <div className="w-full max-w-4xl mx-auto flex flex-wrap justify-center items-center gap-3 md:gap-4">
-
-            <DialGroup>
-                {/* MIC + MENU */}
-                <div className="relative flex items-center">
-                    <DialButton 
-                        icon={micMuted ? <MicOff size={22}/> : <Mic size={22}/>} 
-                        onClick={() => setMicMuted(!micMuted)} 
-                        active={!micMuted}
-                        className={micMuted ? "text-red-400 !bg-[#2b2d31]" : ""}
-                        danger={micMuted}
-                    />
-                    <CaretButton onClick={() => setMenuOpen(menuOpen === 'mic' ? null : 'mic')} />
-                    
-                    {menuOpen === 'mic' && (
-                        <ContextMenu onClose={() => setMenuOpen(null)}>
-                            <div className="text-[10px] uppercase font-bold text-gray-500 px-3 py-2">Eingabegerät</div>
-                            {devices.audio.map(d => (
-                                <button key={d.deviceId} onClick={() => handleDeviceSwitch('audio', d.deviceId)} className="w-full text-left px-3 py-2 text-sm hover:bg-white/10 rounded flex justify-between items-center">
-                                    <span className="truncate">{d.label}</span>
-                                    {settings.devices.audioInputId === d.deviceId && <Check size={14} className="text-green-400"/>}
-                                </button>
-                            ))}
-                            <div className="h-px bg-white/10 my-1"/>
-                            <button onClick={() => { setShowSettings(true); setMenuOpen(null); }} className="w-full text-left px-3 py-2 text-sm hover:bg-white/10 rounded flex gap-2 items-center">
-                                <Settings size={14} /> Audioeinstellungen
-                            </button>
-                        </ContextMenu>
-                    )}
-                </div>
-
-                {/* DEAFEN */}
-                <DialButton 
-                    icon={<Headphones size={22} className={muted ? "opacity-50" : ""}/>} 
-                    onClick={() => setMuted(!muted)} 
-                    active={!muted}
-                    danger={muted}
-                    className="ml-0.5 rounded-l-none" // visual merge if wanted, here separated by gap-0.5 in DialGroup
-                />
-            </DialGroup>
-
-            {/* VIDEO + SCREEN */}
-            <DialGroup>
-                {/* CAMERA + MENU */}
-                <div className="relative flex items-center">
-                    <DialButton 
-                        icon={isCameraEnabled ? <Video size={22}/> : <VideoOff size={22}/>} 
-                        onClick={toggleCamera} 
-                        active={isCameraEnabled}
-                    />
-                    <CaretButton onClick={() => setMenuOpen(menuOpen === 'video' ? null : 'video')} />
-                    {menuOpen === 'video' && (
-                        <ContextMenu onClose={() => setMenuOpen(null)}>
-                             <div className="text-[10px] uppercase font-bold text-gray-500 px-3 py-2">Kamera wählen</div>
-                             {devices.video.map(d => (
-                                <button key={d.deviceId} onClick={() => handleDeviceSwitch('video', d.deviceId)} className="w-full text-left px-3 py-2 text-sm hover:bg-white/10 rounded flex justify-between items-center">
-                                    <span className="truncate">{d.label}</span>
-                                    {settings.devices.videoInputId === d.deviceId && <Check size={14} className="text-green-400"/>}
-                                </button>
-                            ))}
-                        </ContextMenu>
-                    )}
-                </div>
-
-                {/* SCREEN + MENU */}
-                <div className="relative flex items-center ml-0.5">
-                    <DialButton 
-                        icon={isScreenSharing ? <MonitorOff size={22}/> : <Monitor size={22}/>} 
-                        onClick={() => handleScreenShare()} 
-                        active={isScreenSharing}
-                        className={isScreenSharing ? "text-green-400 !bg-[#111214]" : ""}
-                    />
-                     <CaretButton onClick={() => setMenuOpen(menuOpen === 'screen' ? null : 'screen')} />
-                     {menuOpen === 'screen' && !isScreenSharing && (
-                         <ContextMenu onClose={() => setMenuOpen(null)}>
-                            <div className="text-[10px] uppercase font-bold text-gray-500 px-3 py-2">Bildschirm freigeben</div>
-                            {screenSources.length > 0 ? screenSources.map(s => (
-                                <button key={s.id} onClick={() => handleScreenShare(s.id)} className="w-full text-left px-3 py-2 text-sm hover:bg-white/10 rounded flex gap-2 items-center">
-                                    {s.thumbnail ? <img src={s.thumbnail} className="w-5 h-5 rounded"/> : <Laptop2 size={16}/>}
-                                    <span className="truncate">{s.name}</span>
-                                </button>
-                            )) : (
-                                <div className="px-3 py-2 text-xs text-gray-500 italic">Browser-Dialog öffnet bei Klick auf Icon</div>
-                            )}
-                            <div className="h-px bg-white/10 my-1"/>
-                            <button onClick={() => { setShowSettings(true); setMenuOpen(null); }} className="w-full text-left px-3 py-2 text-sm hover:bg-white/10 rounded flex gap-2 items-center">
-                                <Sliders size={14} /> Qualität ändern
-                            </button>
-                         </ContextMenu>
-                     )}
-                </div>
-            </DialGroup>
-
-            {/* DISCONNECT */}
-            <DialButton
-                icon={<PhoneOff size={24} fill="currentColor"/>}
-                onClick={disconnect}
-                danger
-                className="rounded-full !w-16 ml-2"
-            />
-
+        {/* Error Notifications */}
+        {(error || cameraError) && (
+            <div className="absolute top-24 left-1/2 -translate-x-1/2 bg-red-500/20 backdrop-blur-xl border border-red-500/30 text-red-200 px-6 py-3 rounded-2xl text-sm flex gap-3 items-center animate-in slide-in-from-top-4">
+                <XCircle size={20} className="text-red-500"/> {error || cameraError}
             </div>
-        </div>
-
-        {/* Modal */}
-        {showSettings && (
-            <UserSettingsModal
-                onClose={() => setShowSettings(false)}
-                initialCategory="devices"
-                initialDevicesTab="stream"
-            />
         )}
 
+        {showSettings && <UserSettingsModal onClose={() => setShowSettings(false)} initialCategory="devices" initialDevicesTab="stream" />}
     </div>
   );
 };

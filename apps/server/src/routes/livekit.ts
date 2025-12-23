@@ -22,13 +22,19 @@ router.get('/token', authenticateRequest, async (req: AuthRequest, res) => {
       return res.status(500).json({ error: 'LiveKit API keys are missing' });
     }
 
-    // Try to load user for display name
+    // User laden, um Avatar und Anzeigenamen zu erhalten
     const user = await User.findByPk(req.user!.id).catch(() => null as any);
-    const name = (user?.display_name || user?.username || req.user?.fingerprint?.slice(0, 12) || `user_${userId}`) as string;
+    const displayName = (user?.display_name || user?.username || `User ${userId}`) as string;
+    const avatar = user?.avatar || null;
 
     const at = new AccessToken(apiKey, apiSecret, {
-      identity: userId, // stable per user in your DB
-      name,
+      identity: userId,
+      name: displayName,
+      // Metadaten als JSON-String hinterlegen
+      metadata: JSON.stringify({
+        avatar,
+        displayName
+      })
     });
 
     at.addGrant({
