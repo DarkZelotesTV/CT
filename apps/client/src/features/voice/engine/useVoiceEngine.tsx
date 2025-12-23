@@ -162,6 +162,12 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
     screenSharing: false,
   });
 
+  const lastAppliedPreferredDevicesRef = useRef<{
+    audioInputId: string | null;
+    audioOutputId: string | null;
+    videoInputId: string | null;
+  } | null>(null);
+
   useEffect(() => {
     if (typeof AudioContext === 'undefined' || typeof AudioWorkletNode === 'undefined') {
       setRnnoiseAvailable(false);
@@ -340,6 +346,31 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
 
       try {
         setRnnoiseAvailable(true);
+        const existing = rnnoiseResourcesRef.current;
+        if (existing && existing.processedTrack?.readyState === 'live') {
+          try {
+            await existing.context.resume();
+          } catch {
+            /* noop */
+          }
+          try {
+            (existing.publication as any)?.unmute?.();
+          } catch {
+            /* noop */
+          }
+          try {
+            existing.processedTrack.enabled = true;
+          } catch {
+            /* noop */
+          }
+          try {
+            await room.localParticipant.setMicrophoneEnabled(false);
+          } catch {
+            /* noop */
+          }
+          return true;
+        }
+
         await stopRnnoisePipeline(room);
 
         const audioConstraints: MediaTrackConstraints | boolean = settings.devices.audioInputId
@@ -469,6 +500,26 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
         }
       };
 
+      const safePauseRnnoise = async () => {
+        const resources = rnnoiseResourcesRef.current;
+        if (!resources) return;
+        try {
+          resources.processedTrack.enabled = false;
+        } catch {
+          /* noop */
+        }
+        try {
+          (resources.publication as any)?.mute?.();
+        } catch {
+          /* noop */
+        }
+        try {
+          await resources.context.suspend();
+        } catch {
+          /* noop */
+        }
+      };
+
       const safeSetMicrophoneEnabled = async (enabled: boolean) => {
         try {
           await room.localParticipant.setMicrophoneEnabled(enabled);
@@ -480,7 +531,11 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
       };
 
       if (!shouldEnable) {
-        await safeStopRnnoise();
+        if (rnnoiseEnabled) {
+          await safePauseRnnoise();
+        } else {
+          await safeStopRnnoise();
+        }
         await safeSetMicrophoneEnabled(false);
         return;
       }
@@ -495,6 +550,12 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
     },
     [enableMicrophoneWithRnnoise, isTalking, micMuted, muted, rnnoiseEnabled, stopRnnoisePipeline, usePushToTalk, setError]
   );
+
+  const applyMicrophoneStateRef = useRef(applyMicrophoneState);
+  useEffect(() => {
+    applyMicrophoneStateRef.current = applyMicrophoneState;
+  }, [applyMicrophoneState]);
+
 
   const setMuted = useCallback(
     async (nextMuted: boolean) => {
@@ -1346,25 +1407,44 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
   useEffect(() => {
     if (!activeRoom) return;
 
+    let disposed = false;
+    const room = activeRoom;
+
+    const next = {
+      audioInputId: settings.devices.audioInputId ?? null,
+      audioOutputId: settings.devices.audioOutputId ?? null,
+      videoInputId: settings.devices.videoInputId ?? null,
+    };
+
+    const prev = lastAppliedPreferredDevicesRef.current;
+    lastAppliedPreferredDevicesRef.current = next;
+
     const applyPreferredDevices = async () => {
       try {
-        if (settings.devices.audioInputId) {
-          await activeRoom.switchActiveDevice('audioinput', settings.devices.audioInputId, true);
+        if (!disposed && next.audioInputId && prev?.audioInputId !== next.audioInputId) {
+          await room.switchActiveDevice('audioinput', next.audioInputId, true);
         }
-        if (settings.devices.audioOutputId) {
-          await activeRoom.switchActiveDevice('audiooutput', settings.devices.audioOutputId, true);
+        if (!disposed && next.audioOutputId && prev?.audioOutputId !== next.audioOutputId) {
+          await room.switchActiveDevice('audiooutput', next.audioOutputId, true);
         }
-        if (settings.devices.videoInputId) {
-          await activeRoom.switchActiveDevice('videoinput', settings.devices.videoInputId, true);
+        if (!disposed && next.videoInputId && prev?.videoInputId !== next.videoInputId) {
+          await room.switchActiveDevice('videoinput', next.videoInputId, true);
         }
-        await applyMicrophoneState(activeRoom);
+
+        if (!disposed) {
+          await applyMicrophoneStateRef.current(room);
+        }
       } catch (err) {
         console.warn('Could not apply preferred devices', err);
       }
     };
 
-    applyPreferredDevices();
-  }, [activeRoom, applyMicrophoneState, settings.devices.audioInputId, settings.devices.audioOutputId, settings.devices.videoInputId]);
+    void applyPreferredDevices();
+
+    return () => {
+      disposed = true;
+    };
+  }, [activeRoom, settings.devices.audioInputId, settings.devices.audioOutputId, settings.devices.videoInputId]);
 
   useEffect(() => {
     applyOutputVolume(activeRoom, outputVolume);
