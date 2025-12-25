@@ -1,4 +1,11 @@
-const DEFAULT_BASE_URL = import.meta?.env?.VITE_API_URL || 'http://localhost:3000';
+import { getAllowInsecureHttp, normalizeServerUrlString } from '../utils/apiConfig';
+
+const DEFAULT_BASE_URL = (() => {
+  const allowInsecure = getAllowInsecureHttp();
+  const envValue = import.meta?.env?.VITE_API_URL as string | undefined;
+  const fallback = 'https://localhost:3000';
+  return normalizeServerUrlString(envValue || fallback, { allowInsecure });
+})();
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 

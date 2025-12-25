@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { computeFingerprint, formatFingerprint, loadIdentity, saveIdentity, type IdentityFile } from "./identity";
 import { performHandshake } from "./identityApi";
-import { getServerPassword, getServerUrl, setServerPassword, setServerUrl } from "../utils/apiConfig";
+import { getAllowInsecureHttp, getServerPassword, getServerUrl, normalizeServerUrlString, setAllowInsecureHttp, setServerPassword, setServerUrl } from "../utils/apiConfig";
 import { IdentityModal } from "../components/modals/IdentityModal";
 
 type Props = {
@@ -16,6 +16,7 @@ export function IdentityScreen({ onAuthed, onIdentityChanged }: Props) {
   const [err, setErr] = useState<string | null>(null);
   const [serverHost, setServerHost] = useState<string>(getServerUrl());
   const [serverPassword, setPassword] = useState<string>(getServerPassword());
+  const [allowInsecureHttp, setAllowHttp] = useState<boolean>(getAllowInsecureHttp());
   const [showIdentityModal, setShowIdentityModal] = useState(!identity);
 
   const fp = useMemo(() => (identity ? computeFingerprint(identity) : null), [identity]);
@@ -46,7 +47,9 @@ export function IdentityScreen({ onAuthed, onIdentityChanged }: Props) {
       const updated = buildUpdatedIdentity();
       saveIdentity(updated);
       setIdentity(updated);
-      setServerUrl(serverHost);
+      const normalizedHost = normalizeServerUrlString(serverHost);
+      setServerHost(normalizedHost);
+      setServerUrl(normalizedHost);
       setServerPassword(serverPassword);
 
       const { user } = await performHandshake(updated, serverPassword);
@@ -127,8 +130,26 @@ export function IdentityScreen({ onAuthed, onIdentityChanged }: Props) {
               className="w-full rounded-xl bg-black/40 border border-white/10 p-3 mb-4 outline-none"
               value={serverHost}
               onChange={(e) => setServerHost(e.target.value)}
-              placeholder="http://localhost:3001"
+              onBlur={() => setServerHost(normalizeServerUrlString(serverHost))}
+              placeholder="https://localhost:3001"
             />
+            <div className="flex items-center gap-2 mb-4 text-xs text-gray-400">
+              <input
+                id="allow-http-identity"
+                type="checkbox"
+                className="rounded border-white/20 bg-black/40"
+                checked={allowInsecureHttp}
+                onChange={(e) => {
+                  const allow = e.target.checked;
+                  setAllowHttp(allow);
+                  setAllowInsecureHttp(allow);
+                  setServerHost(normalizeServerUrlString(serverHost, { allowInsecure: allow }));
+                }}
+              />
+              <label htmlFor="allow-http-identity" className="leading-tight">
+                Unsichere <code className="text-gray-200">http://</code> Verbindungen erlauben (nur lokale Entwicklung)
+              </label>
+            </div>
 
             <label className="block text-sm text-gray-300 mb-2">Server Passwort (optional)
             </label>
