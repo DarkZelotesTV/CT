@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Mail, Lock, User, Loader2, ArrowRight, Clover, Server, CheckCircle2, RefreshCw } from 'lucide-react';
-import { getDefaultServerUrl, getServerPassword, getServerUrl, resetServerSettings, setServerPassword, setServerUrl } from '../../utils/apiConfig';
+import { getAllowInsecureHttp, getDefaultServerUrl, getServerPassword, getServerUrl, normalizeServerUrlString, resetServerSettings, setAllowInsecureHttp, setServerPassword, setServerUrl } from '../../utils/apiConfig';
 
 interface AuthScreenProps {
   onLoginSuccess: (token: string, userData: any) => void;
@@ -22,26 +22,30 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
   const [serverAddress, setServerAddress] = useState(() => getServerUrl());
   const [serverPassword, setServerPasswordState] = useState(() => getServerPassword());
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'checking' | 'ok' | 'error'>('idle');
+  const [allowInsecureHttp, setAllowHttp] = useState(() => getAllowInsecureHttp());
 
   // Beim Start: Gespeicherte Server-URL laden
   useEffect(() => {
     setServerAddress(getServerUrl());
     setServerPasswordState(getServerPassword());
+    setAllowHttp(getAllowInsecureHttp());
   }, []);
 
   // Server-Verbindung testen (Ping)
   const checkServerConnection = async (url: string) => {
     setConnectionStatus('checking');
+    const normalized = normalizeServerUrlString(url, { allowInsecure: allowInsecureHttp });
+    setServerAddress(normalized);
     try {
       // Wir pingen den Auth-Endpunkt an (ohne Daten), nur um zu sehen ob er da ist
       // Oder wir rufen einfach Root auf, falls es eine Route gibt. 
       // Hier nutzen wir einen Timeout, damit es nicht ewig lädt.
-      await axios.get(`${url}/api/auth/ping`, { timeout: 2000 }).catch(() => {
+      await axios.get(`${normalized}/api/auth/ping`, { timeout: 2000 }).catch(() => {
          // 404 ist okay, heißt Server antwortet. Network Error ist schlecht.
          return true; 
       });
       setConnectionStatus('ok');
-      setServerUrl(url); // Speichern, wenn erfolgreich
+      setServerUrl(normalized); // Speichern, wenn erfolgreich
       setServerPassword(serverPassword);
     } catch (err) {
       setConnectionStatus('error');
@@ -50,6 +54,8 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
 
   const handleRestoreServerSettings = () => {
     resetServerSettings();
+    setAllowHttp(false);
+    setAllowInsecureHttp(false);
     setServerAddress(getDefaultServerUrl());
     setServerPasswordState('');
     setConnectionStatus('idle');
@@ -60,8 +66,12 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
     setLoading(true);
     setError('');
 
+    const normalizedServerUrl = normalizeServerUrlString(serverAddress, { allowInsecure: allowInsecureHttp });
+    setServerAddress(normalizedServerUrl);
+    setServerUrl(normalizedServerUrl);
+
     // WICHTIG: Wir nutzen jetzt die dynamische Server-Adresse!
-    const baseUrl = getServerUrl();
+    const baseUrl = normalizedServerUrl;
     const endpoint = isRegistering ? '/api/auth/register' : '/api/auth/login';
     const payload = isRegistering 
       ? { email, password, username } 
@@ -148,10 +158,34 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
                         type="text"
                         value={serverAddress}
                         onChange={(e) => setServerAddress(e.target.value)}
-                        onBlur={() => { setServerUrl(serverAddress); checkServerConnection(serverAddress); }}
+                        onBlur={() => {
+                          const normalized = normalizeServerUrlString(serverAddress, { allowInsecure: allowInsecureHttp });
+                          setServerAddress(normalized);
+                          setServerUrl(normalized);
+                          checkServerConnection(normalized);
+                        }}
                         className="flex-1 bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-green-500 outline-none"
-                        placeholder="http://localhost:3001"
+                        placeholder="https://localhost:3001"
                     />
+                </div>
+                <div className="flex items-center gap-2 text-[11px] text-gray-400">
+                  <input
+                    id="allow-http-auth"
+                    type="checkbox"
+                    className="rounded border-white/20 bg-black/40"
+                    checked={allowInsecureHttp}
+                    onChange={(e) => {
+                      const allow = e.target.checked;
+                      setAllowHttp(allow);
+                      setAllowInsecureHttp(allow);
+                      const normalized = normalizeServerUrlString(serverAddress, { allowInsecure: allow });
+                      setServerAddress(normalized);
+                      setServerUrl(normalized);
+                    }}
+                  />
+                  <label htmlFor="allow-http-auth" className="cursor-pointer">
+                    Unsichere <code className="text-gray-200">http://</code>-Verbindungen erlauben (nur Entwicklung)
+                  </label>
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-gray-400 uppercase block">Server Passwort (optional)</label>

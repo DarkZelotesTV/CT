@@ -94,6 +94,12 @@ const STORAGE_CONFIG = {
     key: 'clover_server_url',
     defaultValue: '',
   },
+  allowInsecureHttp: {
+    key: 'clover_allow_insecure_http',
+    defaultValue: false,
+    deserialize: booleanDeserializer,
+    serialize: booleanSerializer,
+  },
   livekitUrl: {
     key: 'clover_livekit_url',
     defaultValue: null as string | null,

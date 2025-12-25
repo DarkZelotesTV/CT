@@ -1,5 +1,8 @@
 import { storage } from '../shared/config/storage';
 
+export const getAllowInsecureHttp = () => storage.get('allowInsecureHttp');
+export const setAllowInsecureHttp = (value: boolean) => storage.set('allowInsecureHttp', value);
+
 const getAppOrigin = () => {
   if (typeof window === 'undefined') return '';
 
@@ -12,16 +15,63 @@ const getAppOrigin = () => {
   return origin;
 };
 
+const preferredProtocol = (allowInsecure: boolean) => {
+  if (typeof window === 'undefined') return allowInsecure ? 'http:' : 'https:';
+  const protocol = window.location?.protocol;
+  if (!allowInsecure && protocol === 'http:') return 'https:';
+  if (protocol === 'https:' || protocol === 'http:') return protocol;
+  return allowInsecure ? 'http:' : 'https:';
+};
+
+const buildFallbackUrl = (allowInsecure: boolean) => {
+  const proto = preferredProtocol(allowInsecure);
+  const hostname = 'localhost:3001';
+  return `${proto}//${hostname}`;
+};
+
 export const getDefaultServerUrl = () => {
   // Wenn keine Server-URL gesetzt ist, verwenden wir die Herkunft der geladenen App.
-  return getAppOrigin() || 'http://localhost:3001';
+  const allowInsecure = getAllowInsecureHttp();
+  const origin = getAppOrigin();
+  if (origin) return normalizeServerUrlString(origin, { allowInsecure });
+  return buildFallbackUrl(allowInsecure);
+};
+
+export const normalizeServerUrlString = (
+  rawUrl: string,
+  { allowInsecure }: { allowInsecure?: boolean } = {}
+): string => {
+  const allow = allowInsecure ?? getAllowInsecureHttp();
+  const sanitizedUrl = rawUrl.trim();
+  const fallbackProtocol = preferredProtocol(allow);
+  const fallback = buildFallbackUrl(allow);
+
+  const parse = (candidate: string) => {
+    const parsed = new URL(candidate);
+    if (parsed.protocol === 'http:' && !allow) parsed.protocol = 'https:';
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') parsed.protocol = fallbackProtocol;
+    parsed.pathname = parsed.pathname || '';
+    return parsed.toString().replace(/\/$/, '');
+  };
+
+  try {
+    return parse(sanitizedUrl);
+  } catch (_err) {
+    try {
+      return parse(`${fallbackProtocol}//${sanitizedUrl}`);
+    } catch (error) {
+      const fallbackUrl = fallback;
+      console.error('Invalid server URL configured, falling back to app origin.', error);
+      return parse(fallbackUrl);
+    }
+  }
 };
 
 export const getServerUrl = (): string => {
   const stored = storage.get('cloverServerUrl');
   const url = (stored && stored.trim()) || getDefaultServerUrl();
 
-  return url.trim().replace(/\/$/, "");
+  return normalizeServerUrlString(url);
 };
 
 export const setServerUrl = (url: string) => {
@@ -52,28 +102,14 @@ export const resetServerSettings = () => {
   storage.remove('cloverServerUrl');
   storage.remove('cloverServerPassword');
   storage.remove('livekitUrl');
+  storage.set('allowInsecureHttp', false);
 };
 
 // --- URL Helpers ---
 
 const asUrl = (url: string) => new URL(url);
 
-const normalizeServerUrl = (rawUrl: string) => {
-  const sanitizedUrl = rawUrl.trim();
-
-  try {
-    return asUrl(sanitizedUrl);
-  } catch (_err) {
-    const fallbackProtocol = (typeof window !== "undefined" && window.location?.protocol) || 'http:';
-    try {
-      return asUrl(`${fallbackProtocol}//${sanitizedUrl}`);
-    } catch (error) {
-      const fallback = getDefaultServerUrl();
-      console.error('Invalid server URL configured, falling back to app origin.', error);
-      return asUrl(fallback);
-    }
-  }
-};
+const normalizeServerUrl = (rawUrl: string) => asUrl(normalizeServerUrlString(rawUrl));
 
 const getServerUrlObject = () => normalizeServerUrl(getServerUrl());
 

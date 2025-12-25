@@ -4,7 +4,7 @@ const isAbsoluteUrl = (value: string) => /^(https?:|data:|blob:|file:|app:|elect
 
 /**
  * Löst relative Server-Asset-Pfade wie "/uploads/avatars/xyz.png" zu einer absoluten URL auf,
- * basierend auf der konfigurierten Server-URL (z. B. "http://localhost:3001/uploads/avatars/xyz.png").
+ * basierend auf der konfigurierten Server-URL (z. B. "https://localhost:3001/uploads/avatars/xyz.png").
  *
  * Wichtig für Electron Builds, in denen der Renderer-Origin "file://" ist.
  */
@@ -17,9 +17,9 @@ export const resolveServerAssetUrl = (value?: string | null): string => {
 
   const base = getServerUrl();
 
-  // "/uploads/..." -> "http://localhost:3001/uploads/..."
+  // "/uploads/..." -> "https://localhost:3001/uploads/..."
   if (raw.startsWith('/')) return `${base}${raw}`;
 
-  // "uploads/..." oder "./uploads/..." -> "http://localhost:3001/uploads/..."
+  // "uploads/..." oder "./uploads/..." -> "https://localhost:3001/uploads/..."
   return `${base}/${raw.replace(/^\.\//, '')}`;
 };

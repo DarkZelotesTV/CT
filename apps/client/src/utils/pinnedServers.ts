@@ -1,4 +1,5 @@
 import { storage } from '../shared/config/storage';
+import { getAllowInsecureHttp } from './apiConfig';
 
 export type PinnedServer = {
   instanceUrl: string;
@@ -12,13 +13,18 @@ export function normalizeInstanceUrl(url: string): string {
   const trimmed = (url || '').trim();
   if (!trimmed) return '';
 
-  const withProto = /^https?:\/\//i.test(trimmed) ? trimmed : `http://${trimmed}`;
+  const allowInsecure = getAllowInsecureHttp();
+  const defaultProto = allowInsecure ? 'http' : 'https';
+  const withProto = /^https?:\/\//i.test(trimmed) ? trimmed : `${defaultProto}://${trimmed}`;
 
   try {
     const u = new URL(withProto);
+    if (u.protocol === 'http:' && !allowInsecure) u.protocol = 'https:';
     return `${u.protocol}//${u.host}`.replace(/\/$/, '');
   } catch {
-    return withProto.replace(/\/$/, '');
+    const safeUrl = withProto.replace(/\/$/, '');
+    if (!allowInsecure && safeUrl.startsWith('http://')) return safeUrl.replace(/^http:\/\//i, 'https://');
+    return safeUrl;
   }
 }
 
