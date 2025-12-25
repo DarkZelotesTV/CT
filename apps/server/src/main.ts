@@ -1,7 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet'; // <--- WICHTIG: Import hinzugefügt
-import { createServer } from 'http';
+import { createServer as createHttpServer } from 'http';
+import { createServer as createHttpsServer } from 'https';
 import { Server } from 'socket.io';
 import { sequelize } from './config/database';
 import path from 'path';
@@ -25,8 +26,95 @@ import {
 import { User, ServerMember, MemberRole, Role } from './models';
 import { resolveUserFromIdentity } from './utils/identityAuth';
 
+const PORT = Number(process.env.PORT || 3001);
+const TLS_CERT_PATH = process.env.TLS_CERT_PATH || process.env.HTTPS_CERT_PATH;
+const TLS_KEY_PATH = process.env.TLS_KEY_PATH || process.env.HTTPS_KEY_PATH;
+const configuredCorsOrigins = (process.env.CORS_ALLOWED_ORIGINS || process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const defaultCorsOrigins = [
+  'https://localhost:5173',
+  'https://127.0.0.1:5173',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+];
+
+const allowedHttpOrigins = configuredCorsOrigins.length ? configuredCorsOrigins : defaultCorsOrigins;
+const allowedSocketOrigins = Array.from(
+  new Set([
+    ...allowedHttpOrigins,
+    ...allowedHttpOrigins
+      .filter((origin) => origin.startsWith('http://') || origin.startsWith('https://'))
+      .map((origin) => origin.replace(/^http/, 'ws')),
+  ]),
+);
+
+const allowOrigin = (origin: string | undefined, allowed: string[]) => {
+  if (!origin || allowed.length === 0) return true;
+  return allowed.some((allowedOrigin) => origin === allowedOrigin);
+};
+
+const resolvePathIfExists = (maybePath?: string | null) => {
+  if (!maybePath) return null;
+  const resolved = path.resolve(maybePath);
+  if (!fs.existsSync(resolved)) {
+    console.warn(`⚠️ TLS asset not found at ${resolved}`);
+    return null;
+  }
+  return resolved;
+};
+
+type TlsCredentials = {
+  key: Buffer;
+  cert: Buffer;
+  keyPath: string;
+  certPath: string;
+};
+
+const loadTlsCredentials = (): TlsCredentials | null => {
+  const resolvedCertPath = resolvePathIfExists(TLS_CERT_PATH);
+  const resolvedKeyPath = resolvePathIfExists(TLS_KEY_PATH);
+
+  if (resolvedCertPath && resolvedKeyPath) {
+    try {
+      return {
+        cert: fs.readFileSync(resolvedCertPath),
+        key: fs.readFileSync(resolvedKeyPath),
+        certPath: resolvedCertPath,
+        keyPath: resolvedKeyPath,
+      };
+    } catch (err) {
+      console.warn('⚠️ Unable to read TLS credentials. Falling back to HTTP.', err);
+      return null;
+    }
+  }
+
+  if (TLS_CERT_PATH || TLS_KEY_PATH) {
+    console.warn('⚠️ TLS configuration incomplete. Provide both TLS_CERT_PATH and TLS_KEY_PATH to enable HTTPS.');
+  } else {
+    console.warn('ℹ️ No TLS certificate/key configured. Set TLS_CERT_PATH and TLS_KEY_PATH to enable HTTPS.');
+  }
+
+  return null;
+};
+
 const app = express();
-const httpServer = createServer(app);
+const tlsCredentials = loadTlsCredentials();
+const httpServer = tlsCredentials
+  ? createHttpsServer({ key: tlsCredentials.key, cert: tlsCredentials.cert }, app)
+  : createHttpServer(app);
+const serverProtocol = tlsCredentials ? 'https' : 'http';
+const websocketProtocol = tlsCredentials ? 'wss' : 'ws';
+
+if (tlsCredentials) {
+  console.log('🔒 TLS enabled. Using HTTPS server.');
+  console.log(`   - Certificate: ${tlsCredentials.certPath}`);
+  console.log(`   - Key:         ${tlsCredentials.keyPath}`);
+} else {
+  console.warn('⚠️ Running without TLS. HTTPS/WebSocket secure endpoints will not be available.');
+}
 const HEARTBEAT_INTERVAL_MS = 15_000;
 const OFFLINE_GRACE_MS = 30_000;
 const offlineTimers = new Map<number, NodeJS.Timeout>();
@@ -70,7 +158,6 @@ const sendPresenceSnapshot = async (socket: any) => {
 // 1. CORS & MIDDLEWARE (Sicherheit lockern)
 // ==========================================
 
-// NEU: Helmet für Content Security Policy (CSP)
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -80,9 +167,15 @@ app.use(
         'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
         'style-src': ["'self'", "'unsafe-inline'"],
         'img-src': ["'self'", "data:", "https:", "blob:"],
-        'connect-src': ["'self'", "ws:", "wss:", "http:", "https:"], 
+        'connect-src': [
+          "'self'",
+          `${serverProtocol}:`,
+          `${websocketProtocol}:`,
+          ...allowedHttpOrigins,
+          ...allowedSocketOrigins,
+        ],
         // WICHTIG: Hier erlauben wir die Codenames-Seite im Iframe
-        'frame-src': ["'self'", "https://codenames.game/"], 
+        'frame-src': ["'self'", "https://codenames.game/"],
       },
     },
     // Deaktiviert COEP, falls es Probleme beim Laden von Ressourcen gibt
@@ -93,7 +186,13 @@ app.use(
 );
 
 app.use(cors({
-  origin: true, // Erlaubt automatisch jede anfragende Quelle (Vite/Electron)
+  origin: (origin, callback) => {
+    if (allowOrigin(origin, allowedHttpOrigins)) {
+      return callback(null, true);
+    }
+    console.warn(`🚫 Blocked CORS request from origin: ${origin}`);
+    return callback(new Error('Not allowed by CORS'));
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   credentials: true // Erlaubt Cookies/Authorization Header
 }));
@@ -108,7 +207,13 @@ app.use('/uploads', express.static(uploadRoot));
 // ==========================================
 const io = new Server(httpServer, {
   cors: {
-    origin: "*", // Erlaubt Verbindungen von überall
+    origin: (origin, callback) => {
+      if (allowOrigin(origin, allowedSocketOrigins)) {
+        return callback(null, true);
+      }
+      console.warn(`🚫 Blocked Socket.IO connection from origin: ${origin}`);
+      return callback(new Error('Not allowed by CORS'));
+    },
     methods: ["GET", "POST"]
   }
 });
@@ -279,8 +384,6 @@ io.on('connection', async (socket) => {
 // ==========================================
 // 5. SERVER STARTEN
 // ==========================================
-const PORT = 3001;
-
 sequelize.sync({ alter: true }).then(() => {
   console.log("------------------------------------------------");
   console.log("✅ Datenbank verbunden & synchronisiert!");
@@ -288,8 +391,12 @@ sequelize.sync({ alter: true }).then(() => {
 
   httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 [Server] Läuft auf:`);
-    console.log(`   - Local:   http://localhost:${PORT}`);
-    console.log(`   - Network: http://127.0.0.1:${PORT}`);
+    console.log(`   - Local:   ${serverProtocol}://localhost:${PORT}`);
+    console.log(`   - Network: ${serverProtocol}://127.0.0.1:${PORT}`);
+    console.log(`   - Socket:  ${websocketProtocol}://localhost:${PORT}`);
+    if (!tlsCredentials) {
+      console.warn('⚠️ TLS assets not provided. HTTP/WebSocket insecure endpoints are active. Configure TLS_CERT_PATH and TLS_KEY_PATH for HTTPS/WSS.');
+    }
     console.log("------------------------------------------------");
   });
 }).catch(err => {
