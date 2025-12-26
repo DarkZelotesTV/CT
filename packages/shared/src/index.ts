@@ -7,3 +7,4 @@ export interface User {
 
 export * from './types';
 export * from './socket-events';
+export * from './socket/types';
