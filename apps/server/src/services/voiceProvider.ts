@@ -1,5 +1,6 @@
 import { AccessToken, RoomServiceClient, type ParticipantInfo } from 'livekit-server-sdk';
 import { getRoomManager } from '../rtc';
+import { disconnectUserRtc, parseChannelIdFromRoomName, pauseRtcProducers } from '../realtime/rtcModeration';
 
 export type VoiceProviderId = 'livekit' | 'mediasoup';
 
@@ -130,10 +131,27 @@ class MediasoupVoiceProvider implements VoiceProvider {
   }
 
   async muteParticipant(roomName: string, participantIdentity: string) {
-    return this.rtc.muteParticipant(roomName, participantIdentity);
+    const channelId = parseChannelIdFromRoomName(roomName);
+    const numericParticipantId = Number(participantIdentity);
+    const pausedTracks =
+      Number.isFinite(numericParticipantId) && channelId !== null
+        ? await pauseRtcProducers(numericParticipantId, channelId)
+        : Number.isFinite(numericParticipantId)
+          ? await pauseRtcProducers(numericParticipantId)
+          : [];
+
+    const rtcMutedTracks = this.rtc.muteParticipant(roomName, participantIdentity);
+    return Array.from(new Set([...(pausedTracks || []), ...(rtcMutedTracks || [])]));
   }
 
   async removeParticipant(roomName: string, participantIdentity: string) {
+    const channelId = parseChannelIdFromRoomName(roomName);
+    const numericParticipantId = Number(participantIdentity);
+
+    if (Number.isFinite(numericParticipantId)) {
+      disconnectUserRtc(numericParticipantId, { channelId: channelId ?? undefined });
+    }
+
     this.rtc.removeParticipant(roomName, participantIdentity);
   }
 }
