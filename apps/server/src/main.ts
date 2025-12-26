@@ -22,7 +22,7 @@ import {
 } from './realtime/registry';
 
 // Models Importe (für Socket Logik)
-import type { Router as MediasoupRouter, RtpCapabilities, RtpParameters, WebRtcTransport } from 'mediasoup/node/lib/types';
+import type { MediaKind, Router as MediasoupRouter, RtpCapabilities, RtpParameters, WebRtcTransport } from 'mediasoup/node/lib/types';
 import { User, ServerMember, MemberRole, Role, Channel } from './models';
 import { resolveUserFromIdentity } from './utils/identityAuth';
 import { resolveWebRtcTransportDefaults, rtcRoomManager, rtcWorkerPool, type RtcTransportDirection, type WebRtcTransportDefaults } from './rtc';
@@ -581,6 +581,114 @@ io.on('connection', async (socket) => {
       } catch (err: any) {
         console.error('Fehler bei rtc:produce:', err);
         respond({ success: false, error: err?.message || 'Konnte Producer nicht erstellen' });
+      }
+    }
+  );
+
+  socket.on(
+    'rtc:consume',
+    async (
+      payload: { channelId?: number; transportId?: string; producerId?: string; rtpCapabilities?: RtpCapabilities; appData?: Record<string, any> },
+      ack?: (payload: { success: boolean; error?: string; consumer?: { id: string; producerId: string; kind: MediaKind; rtpParameters: RtpParameters } }) => void
+    ) => {
+      const respond = (body: { success: boolean; error?: string; consumer?: { id: string; producerId: string; kind: MediaKind; rtpParameters: RtpParameters } }) => {
+        if (typeof ack === 'function') ack(body);
+      };
+
+      try {
+        if (!numericUserId) {
+          return respond({ success: false, error: 'unauthorized' });
+        }
+
+        const channelId = Number(payload?.channelId ?? NaN);
+        if (!Number.isFinite(channelId)) {
+          return respond({ success: false, error: 'Ungültige channelId' });
+        }
+
+        await ensureVoiceChannelAccess(channelId, numericUserId);
+
+        const transportId = payload?.transportId;
+        if (!transportId || typeof transportId !== 'string') {
+          return respond({ success: false, error: 'Ungültige transportId' });
+        }
+
+        const producerId = payload?.producerId;
+        if (!producerId || typeof producerId !== 'string') {
+          return respond({ success: false, error: 'Ungültige producerId' });
+        }
+
+        const rtpCapabilities = payload?.rtpCapabilities;
+        if (!rtpCapabilities || typeof rtpCapabilities !== 'object') {
+          return respond({ success: false, error: 'Ungültige rtpCapabilities' });
+        }
+
+        const rtcTransports: Map<string, WebRtcTransport> = (socket.data as any).rtcTransports || new Map();
+        const transport = rtcTransports.get(transportId);
+        if (!transport) {
+          return respond({ success: false, error: 'Transport nicht gefunden' });
+        }
+
+        if (transport.appData?.participantId && transport.appData.participantId !== numericUserId) {
+          return respond({ success: false, error: 'Fehlende Berechtigung für diesen Transport' });
+        }
+
+        if (transport.appData?.direction && transport.appData.direction !== 'recv') {
+          return respond({ success: false, error: 'Transport ist nicht zum Empfangen vorgesehen' });
+        }
+
+        const roomName = rtcRoomNameForChannel(channelId);
+        const rtcRooms: Set<string> = (socket.data as any).rtcRooms || new Set<string>();
+        if (!rtcRooms.has(roomName)) {
+          return respond({ success: false, error: 'Nicht im RTC-Raum' });
+        }
+
+        const router = await getOrCreateRtcRouter(channelId);
+        if (!router.canConsume({ producerId, rtpCapabilities })) {
+          return respond({ success: false, error: 'Inkompatible rtpCapabilities' });
+        }
+
+        const consumer = await transport.consume({
+          producerId,
+          rtpCapabilities,
+          appData: {
+            ...(payload?.appData || {}),
+            channelId,
+            participantId: numericUserId,
+            socketId: socket.id,
+          },
+        });
+
+        rtcRoomManager.upsertConsumer(roomName, String(numericUserId), consumer.id, {
+          producerId,
+          transportId: transport.id,
+          appData: consumer.appData as Record<string, any>,
+        });
+
+        consumer.on('transportclose', () => {
+          rtcRoomManager.removeConsumer(roomName, String(numericUserId), consumer.id);
+        });
+
+        consumer.on('producerclose', () => {
+          rtcRoomManager.removeConsumer(roomName, String(numericUserId), consumer.id);
+          try {
+            consumer.close();
+          } catch (err) {
+            console.warn('Fehler beim Schließen eines Consumers nach Producer-Schließung:', err);
+          }
+        });
+
+        respond({
+          success: true,
+          consumer: {
+            id: consumer.id,
+            producerId,
+            kind: consumer.kind,
+            rtpParameters: consumer.rtpParameters,
+          },
+        });
+      } catch (err: any) {
+        console.error('Fehler bei rtc:consume:', err);
+        respond({ success: false, error: err?.message || 'Konnte Consumer nicht erstellen' });
       }
     }
   );
