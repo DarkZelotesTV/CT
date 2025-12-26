@@ -384,21 +384,17 @@ io.on('connection', async (socket) => {
 // ==========================================
 // 5. SERVER STARTEN
 // ==========================================
-sequelize.sync({ alter: true }).then(() => {
-  console.log("------------------------------------------------");
-  console.log("✅ Datenbank verbunden & synchronisiert!");
-  console.log("------------------------------------------------");
+console.log('------------------------------------------------');
+console.log('ℹ️ Starte Server ohne automatisches sequelize.sync(). Bitte führe Migrations aus.');
+console.log('------------------------------------------------');
 
-  httpServer.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 [Server] Läuft auf:`);
-    console.log(`   - Local:   ${serverProtocol}://localhost:${PORT}`);
-    console.log(`   - Network: ${serverProtocol}://127.0.0.1:${PORT}`);
-    console.log(`   - Socket:  ${websocketProtocol}://localhost:${PORT}`);
-    if (!tlsCredentials) {
-      console.warn('⚠️ TLS assets not provided. HTTP/WebSocket insecure endpoints are active. Configure TLS_CERT_PATH and TLS_KEY_PATH for HTTPS/WSS.');
-    }
-    console.log("------------------------------------------------");
-  });
-}).catch(err => {
-  console.error("❌ Datenbank Fehler:", err);
+httpServer.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 [Server] Läuft auf:`);
+  console.log(`   - Local:   ${serverProtocol}://localhost:${PORT}`);
+  console.log(`   - Network: ${serverProtocol}://127.0.0.1:${PORT}`);
+  console.log(`   - Socket:  ${websocketProtocol}://localhost:${PORT}`);
+  if (!tlsCredentials) {
+    console.warn('⚠️ TLS assets not provided. HTTP/WebSocket insecure endpoints are active. Configure TLS_CERT_PATH and TLS_KEY_PATH for HTTPS/WSS.');
+  }
+  console.log("------------------------------------------------");
 });
