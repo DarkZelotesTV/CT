@@ -9,8 +9,7 @@
    - optional `displayName`
    - optional `serverPassword`
    - `signature` + `timestamp` proving private key possession
-4. On success the client stores the resolved user and reuses the same headers for all HTTP/Socke
-   t/LiveKit calls.
+4. On success the client stores the resolved user and reuses the same headers for all HTTP/Socket calls.
 
 ## Server-side validation
 - Password protection via `SERVER_PASSWORD`; `SERVER_FINGERPRINT_WHITELIST` allows bypass for

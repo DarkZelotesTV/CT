@@ -34,7 +34,6 @@ docker compose up -d mysql redis
 - `DB_DIALECT` (optional, `sqlite` oder `mysql`, Standard: `sqlite`)
 - `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` für MySQL
 - `DB_STORAGE` (optional, Pfad für SQLite-File, Standard: `apps/server/data/clovertalk.db`)
-- ggf. weitere LiveKit- oder JWT-Variablen gemäß `.env` Beispiel
 - ICE/STUN/TURN für den Client:
   - `VITE_ICE_SERVERS`: JSON-Array mit ICE-Server-Einträgen (z. B. `[{"urls":["stun:stun.example.org:3478"]},{"urls":["turn:turn.example.org:3478"],"username":"user","credential":"pass"}]`). Überschreibt die komplette ICE-Liste.
   - `VITE_STUN_URLS`: Komma- oder Whitespace-separierte STUN-URLs (Shortcut, wird mit TURN zusammengeführt).

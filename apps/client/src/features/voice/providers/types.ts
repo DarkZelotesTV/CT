@@ -1,6 +1,7 @@
 import React from 'react';
+import type { VoiceState } from '../state/voiceTypes';
 
-export type VoiceProviderId = 'livekit' | 'mediasoup' | 'p2p' | (string & {});
+export type VoiceProviderId = 'mediasoup' | 'p2p' | (string & {});
 
 export type VoiceConnectionHandle = {
   provider: VoiceProviderId;
@@ -43,6 +44,28 @@ export type VoiceProviderRenderers = {
   AudioRenderer?: React.ComponentType;
   DebugOverlay?: React.ComponentType;
   ProviderWrapper?: React.ComponentType<{ children: React.ReactNode }>;
+};
+
+export type VoiceConnectRequest = {
+  channelId: number;
+  channelName: string;
+};
+
+export type VoiceFallbackRequest = {
+  providerId: VoiceProviderId;
+  targetProviderId?: VoiceProviderId;
+  channelId?: number;
+  channelName?: string;
+  reason?: string;
+};
+
+export type VoiceEngineDeps = {
+  state: VoiceState;
+  setState: (patch: Partial<VoiceState> | ((prev: VoiceState) => Partial<VoiceState>)) => void;
+  providerId?: VoiceProviderId;
+  fallbackProviderId?: VoiceProviderId;
+  requestFallback?: (request: VoiceFallbackRequest) => void;
+  initialConnectRequest?: VoiceConnectRequest | null;
 };
 
 export interface VoiceProviderAdapter {

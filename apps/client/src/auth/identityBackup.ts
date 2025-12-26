@@ -1,5 +1,5 @@
 import { IdentityFile, computeFingerprint, signMessage } from "./identity";
-import { getServerUrl, getServerPassword, setLiveKitUrl } from "../utils/apiConfig";
+import { getServerUrl, getServerPassword } from "../utils/apiConfig";
 
 // ==========================================
 // 1) HANDSHAKE LOGIK
@@ -8,7 +8,7 @@ import { getServerUrl, getServerPassword, setLiveKitUrl } from "../utils/apiConf
 interface HandshakeResponse {
   user: { id: number; username?: string | null; displayName: string | null; fingerprint: string };
   access: { passwordRequired: boolean };
-  config?: { livekitUrl?: string };
+  config?: Record<string, never>;
 }
 
 async function postJson<T>(baseUrl: string, path: string, body: any): Promise<T> {
@@ -40,13 +40,6 @@ export async function performHandshake(id: IdentityFile, serverPassword?: string
   };
 
   const response = await postJson<HandshakeResponse>(baseUrl, "/api/auth/handshake", payload);
-
-  // Optional: LiveKit URL vom Server übernehmen
-  if (response.config?.livekitUrl) {
-    console.log("[Auth] Received Voice Config from Server:", response.config.livekitUrl);
-  }
-
-  setLiveKitUrl(response.config?.livekitUrl);
 
   return response;
 }

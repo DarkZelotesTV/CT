@@ -100,10 +100,6 @@ const STORAGE_CONFIG = {
     deserialize: booleanDeserializer,
     serialize: booleanSerializer,
   },
-  livekitUrl: {
-    key: 'clover_livekit_url',
-    defaultValue: null as string | null,
-  },
   identity: {
     key: 'ct.identity.v1',
     defaultValue: null as IdentityFile | null,

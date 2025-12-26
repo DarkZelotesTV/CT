@@ -86,22 +86,9 @@ export const setServerPassword = (password: string) => {
   storage.set('cloverServerPassword', password);
 };
 
-// --- LiveKit dynamic configuration persistence ---
-
-export const setLiveKitUrl = (livekitUrl?: string | null) => {
-  const trimmed = livekitUrl?.trim();
-
-  if (trimmed) {
-    storage.set('livekitUrl', trimmed);
-  } else {
-    storage.remove('livekitUrl');
-  }
-};
-
 export const resetServerSettings = () => {
   storage.remove('cloverServerUrl');
   storage.remove('cloverServerPassword');
-  storage.remove('livekitUrl');
   storage.set('allowInsecureHttp', false);
 };
 
@@ -125,7 +112,7 @@ export const getServerWebSocketUrl = () => {
   return serverUrl.toString().replace(/\/$/, "");
 };
 
-// --- LiveKit Configuration & ICE ---
+// --- ICE Configuration ---
 
 type IceServer = {
   urls: string | string[];
@@ -186,66 +173,6 @@ export const resolveIceServers = (options?: IceServerOptions) => {
   return DEFAULT_ICE_SERVERS;
 };
 
-export const getLiveKitConfig = (options?: IceServerOptions) => {
-  const iceServers = resolveIceServers(options);
-
-  const serverUrl = getServerUrlObject();
-  const isSecure = serverUrl.protocol === 'https:' || serverUrl.protocol === 'wss:';
-  const wsProtocol = isSecure ? 'wss:' : 'ws:';
-
-  const normalizeLivekitUrl = (rawUrl: string): string | null => {
-    try {
-      const parsed = new URL(rawUrl);
-
-      if (parsed.protocol === 'http:') parsed.protocol = 'ws:';
-      else if (parsed.protocol === 'https:') parsed.protocol = 'wss:';
-      else if (parsed.protocol !== 'ws:' && parsed.protocol !== 'wss:') parsed.protocol = wsProtocol;
-
-      parsed.pathname = parsed.pathname || '/';
-      return parsed.toString().replace(/\/$/, "");
-    } catch (error) {
-      console.warn('Failed to parse LiveKit URL from server, falling back to default.', error);
-      return null;
-    }
-  };
-
-  const buildConfig = (url: string) => ({
-    serverUrl: url,
-    connectOptions: {
-      rtcConfig: {
-        iceServers,
-      },
-    },
-  });
-
-  // 1. NEU: Prüfen, ob wir eine dynamische URL vom Server erhalten haben
-  // Diese hat die allerhöchste Priorität!
-  const dynamicUrl = storage.get('livekitUrl');
-
-  if (dynamicUrl && dynamicUrl.trim() !== "") {
-    const normalized = normalizeLivekitUrl(dynamicUrl.trim());
-    if (normalized) {
-      return buildConfig(normalized);
-    }
-  }
-
-  // 2. Fallback: Alte Logik (Environment Variable oder Server-Host Ableitung)
-  let url = import.meta.env.VITE_LIVEKIT_URL;
-  const fallbackUrl = `${wsProtocol}//${serverUrl.hostname}:7880`;
-
-  if (url) {
-    try {
-      const resolved = new URL(url, `${wsProtocol}//${serverUrl.host}`).toString();
-      url = normalizeLivekitUrl(resolved) || fallbackUrl;
-    } catch (error) {
-      console.error('Failed to parse VITE_LIVEKIT_URL, falling back to server host.', error);
-      url = fallbackUrl;
-    }
-  } else {
-    url = fallbackUrl;
-    // Warnung nur lokal interessant
-    // console.warn(`VITE_LIVEKIT_URL not set. Defaulting to ${url}`);
-  }
-
-  return buildConfig(url);
-};
+export const getRtcConfig = (options?: IceServerOptions): RTCConfiguration => ({
+  iceServers: resolveIceServers(options),
+});

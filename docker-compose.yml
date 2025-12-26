@@ -17,32 +17,9 @@ services:
       
       # Redis-Verbindung
       REDIS_HOST: redis
-      
-      # LiveKit API Keys (Müssen mit deiner livekit.yaml / .env übereinstimmen!)
-      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}
-      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET}
-      
-      # WICHTIG: Hier ist die URL, die an den Client gesendet wird!
-      LIVEKIT_PUBLIC_URL: ${LIVEKIT_PUBLIC_URL}
-      
     depends_on:
       - redis
-      - livekit
       # - mysql   # Optional: aktivieren, wenn MySQL statt SQLite genutzt wird
-
-  # --- LiveKit (Voice Server) ---
-  livekit:
-    image: livekit/livekit-server:v1.9.4
-    command: --config /etc/livekit.yaml
-    depends_on:
-      - redis
-    ports:
-      - "7880:7880"                   # HTTP/WS signaling
-      - "7881:7881"                   # ICE/TCP fallback
-      - "50000-50020:50000-50020/udp" # ICE/UDP media
-    volumes:
-      - ./livekit.yaml:/etc/livekit.yaml:ro
-    restart: unless-stopped
 
   # --- Redis (Cache & Message Bus) ---
   redis:
