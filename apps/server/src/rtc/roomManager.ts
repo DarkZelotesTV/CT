@@ -55,9 +55,9 @@ export class RoomManager {
     return removed;
   }
 
-  createTransport(roomName: string, peerId: string, direction: RtcTransportDirection, appData?: Record<string, any>) {
+  createTransport(roomName: string, peerId: string, direction: RtcTransportDirection, appData?: Record<string, any>, id?: string) {
     const peer = this.registerPeer(roomName, peerId);
-    const transport = new Transport(direction, appData);
+    const transport = new Transport(direction, appData, id);
     return peer.addTransport(transport);
   }
 
