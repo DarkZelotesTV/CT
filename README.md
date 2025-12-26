@@ -30,7 +30,9 @@ docker compose up -d mysql redis livekit
 3. Für Produktion kann der kompilierte Output (`apps/server/dist`) mit `node dist/main.js` gestartet werden.
 
 ### Umgebungsvariablen
+- `DB_DIALECT` (optional, `sqlite` oder `mysql`, Standard: `sqlite`)
 - `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` für MySQL
+- `DB_STORAGE` (optional, Pfad für SQLite-File, Standard: `database.sqlite`)
 - ggf. weitere LiveKit- oder JWT-Variablen gemäß `.env` Beispiel
 
 ## Desktop-Client (apps/client)
