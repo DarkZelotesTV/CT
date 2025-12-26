@@ -14,7 +14,7 @@ COPY packages/shared/package.json ./packages/shared/
 
 # 2. Abhängigkeiten installieren
 # 'npm ci' ist schneller und sauberer für CI/CD/Docker als 'npm install'
-RUN apk add --no-cache python3 py3-pip make g++ \
+RUN apk add --no-cache python3 py3-pip make g++ linux-headers \
     && ln -sf python3 /usr/bin/python
 RUN npm ci
 
