@@ -48,6 +48,13 @@ export type RtcNewProducerPayload = {
   peer?: any;
 };
 
+export type RtcProducerClosedPayload = {
+  roomName?: string;
+  channelId?: number;
+  producerId?: string;
+  peer?: any;
+};
+
 export type JoinRoomAck = {
   success: boolean;
   roomName?: string;
@@ -90,6 +97,7 @@ export type ServerToClientEvents = {
   direct_message: (payload: NotificationEventPayload) => void;
   server_invite: (payload: NotificationEventPayload) => void;
   'rtc:newProducer': (payload: RtcNewProducerPayload) => void;
+  producerClosed: (payload: RtcProducerClosedPayload) => void;
 };
 
 export type ClientToServerEvents = {

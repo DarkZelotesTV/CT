@@ -26,6 +26,7 @@ export const socketEvents = {
   rtcResumeConsumer: 'rtc:resumeConsumer',
   rtcTransportDefaults: 'rtc:transport-defaults',
   rtcNewProducer: 'rtc:newProducer',
+  producerClosed: 'producerClosed',
 };
 
 export type SocketEventKey = keyof typeof socketEvents;
