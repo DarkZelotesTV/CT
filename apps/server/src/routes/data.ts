@@ -3,13 +3,14 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { AVATARS_DIR, SERVER_ICONS_DIR, PUBLIC_DIR } from '../utils/paths';
-import { RoomServiceClient } from 'livekit-server-sdk';
 import { Server, Channel, ServerMember, Category, Role, MemberRole, ChannelPermissionOverride, ServerBan, User } from '../models';
 import { authenticateRequest, AuthRequest } from '../middleware/authMiddleware';
 import { PermissionKey } from '../models/Role';
 import { emitToUser, getUserChannelIds, removeUserFromAllChannels, removeUserFromChannel } from '../realtime/registry';
+import { getVoiceProvider } from '../services/voiceProvider';
 
 const router = Router();
+const voiceProvider = getVoiceProvider();
 
 const SERVER_ICON_DIR = SERVER_ICONS_DIR;
 const AVATAR_UPLOAD_DIR = AVATARS_DIR;
@@ -93,17 +94,8 @@ const avatarUploadMiddleware = (req: Request, res: Response, next: NextFunction)
 const PERMISSION_KEYS: PermissionKey[] = ['speak', 'move', 'kick', 'manage_channels', 'manage_roles', 'manage_overrides'];
 const FULL_PERMISSIONS = PERMISSION_KEYS.reduce((acc, key) => ({ ...acc, [key]: true }), {} as Record<PermissionKey, boolean>);
 
-const buildRoomService = () => {
-  const apiKey = process.env.LIVEKIT_API_KEY;
-  const apiSecret = process.env.LIVEKIT_API_SECRET;
-  const rawUrl = process.env.LIVEKIT_ADMIN_URL || process.env.LIVEKIT_PUBLIC_URL || process.env.VITE_LIVEKIT_URL;
-
-  if (!apiKey || !apiSecret || !rawUrl) {
-    throw new Error('LiveKit Konfiguration fehlt');
-  }
-
-  const host = rawUrl.startsWith('ws') ? rawUrl.replace(/^ws/, 'http') : rawUrl;
-  return new RoomServiceClient(host, apiKey, apiSecret);
+const logMissingVoiceModeration = (action: string) => {
+  console.warn(`[Voice][${voiceProvider.id}] ${action} requested but participant controls are unavailable. TODO: implement mediasoup moderation.`);
 };
 
 async function getUserRoles(serverId: number, userId: number) {
@@ -625,14 +617,17 @@ router.delete('/servers/:serverId/members/:userId', authenticateRequest, async (
     await requirePermission(serverId, req.user!.id, 'kick');
 
     const activeChannels = Array.from(getUserChannelIds(userId));
-    const service = activeChannels.length ? buildRoomService() : null;
 
     await MemberRole.destroy({ where: { server_id: serverId, user_id: userId } });
     await ServerMember.destroy({ where: { server_id: serverId, user_id: userId } });
 
-    await Promise.all(
-      activeChannels.map((channelId) => service?.removeParticipant(`channel_${channelId}`, String(userId)).catch(() => null))
-    );
+    if (activeChannels.length && voiceProvider.capabilities.participantControls) {
+      await Promise.all(
+        activeChannels.map((channelId) => voiceProvider.removeParticipant(`channel_${channelId}`, String(userId)).catch(() => null))
+      );
+    } else if (activeChannels.length) {
+      logMissingVoiceModeration(`disconnect user ${userId} from active channels ${activeChannels.join(',')}`);
+    }
     removeUserFromAllChannels(userId);
     emitToUser(userId, 'voice:force-disconnect', { serverId, reason: 'Du wurdest vom Server entfernt.' });
 
@@ -652,15 +647,18 @@ router.post('/servers/:serverId/members/:userId/ban', authenticateRequest, async
     await requirePermission(serverId, req.user!.id, 'kick');
 
     const activeChannels = Array.from(getUserChannelIds(userId));
-    const service = activeChannels.length ? buildRoomService() : null;
 
     await MemberRole.destroy({ where: { server_id: serverId, user_id: userId } });
     await ServerMember.destroy({ where: { server_id: serverId, user_id: userId } });
     await ServerBan.create({ server_id: serverId, user_id: userId, reason: reason || null });
 
-    await Promise.all(
-      activeChannels.map((channelId) => service?.removeParticipant(`channel_${channelId}`, String(userId)).catch(() => null))
-    );
+    if (activeChannels.length && voiceProvider.capabilities.participantControls) {
+      await Promise.all(
+        activeChannels.map((channelId) => voiceProvider.removeParticipant(`channel_${channelId}`, String(userId)).catch(() => null))
+      );
+    } else if (activeChannels.length) {
+      logMissingVoiceModeration(`disconnect banned user ${userId} from active channels ${activeChannels.join(',')}`);
+    }
     removeUserFromAllChannels(userId);
     emitToUser(userId, 'voice:force-disconnect', { serverId, reason: 'Du wurdest gebannt.' });
 
@@ -684,19 +682,17 @@ router.post('/servers/:serverId/members/:userId/mute', authenticateRequest, asyn
 
     await requirePermission(serverId, req.user!.id, 'move');
 
-    const service = buildRoomService();
+    if (!voiceProvider.capabilities.participantControls) {
+      logMissingVoiceModeration('mute participant');
+      return res.status(501).json({ error: 'Voice-Moderation für diesen Provider noch nicht verfügbar' });
+    }
+
     const roomName = `channel_${channelId}`;
-    const participants = await service.listParticipants(roomName);
+    const participants = await voiceProvider.listParticipants(roomName);
     const target = participants.find((p) => p.identity === String(targetUserId));
     if (!target) return res.status(404).json({ error: 'Teilnehmer nicht im Talk' });
 
-    const mutedTracks: string[] = [];
-    await Promise.all(
-      (target.tracks || []).map(async (track) => {
-        mutedTracks.push(track.sid);
-        return service.mutePublishedTrack(roomName, target.identity, track.sid, true);
-      })
-    );
+    const mutedTracks = await voiceProvider.muteParticipant(roomName, target.identity);
 
     emitToUser(targetUserId, 'voice:force-mute', { channelId, serverId, trackSids: mutedTracks });
     res.json({ success: true, mutedTracks });
@@ -718,9 +714,13 @@ router.post('/servers/:serverId/members/:userId/remove-from-talk', authenticateR
 
     await requirePermission(serverId, req.user!.id, 'move');
 
-    const service = buildRoomService();
+    if (!voiceProvider.capabilities.participantControls) {
+      logMissingVoiceModeration('remove participant from talk');
+      return res.status(501).json({ error: 'Voice-Moderation für diesen Provider noch nicht verfügbar' });
+    }
+
     const roomName = `channel_${channelId}`;
-    await service.removeParticipant(roomName, String(targetUserId));
+    await voiceProvider.removeParticipant(roomName, String(targetUserId));
     removeUserFromChannel(channelId, targetUserId);
     emitToUser(targetUserId, 'voice:force-disconnect', { serverId, channelId });
 
@@ -745,8 +745,12 @@ router.post('/servers/:serverId/members/:userId/move', authenticateRequest, asyn
 
     await requirePermission(serverId, req.user!.id, 'move');
 
-    const service = buildRoomService();
-    await service.removeParticipant(`channel_${fromChannelId}`, String(targetUserId)).catch(() => null);
+    if (!voiceProvider.capabilities.participantControls) {
+      logMissingVoiceModeration('move participant between talks');
+      return res.status(501).json({ error: 'Voice-Moderation für diesen Provider noch nicht verfügbar' });
+    }
+
+    await voiceProvider.removeParticipant(`channel_${fromChannelId}`, String(targetUserId)).catch(() => null);
     removeUserFromChannel(fromChannelId, targetUserId);
     emitToUser(targetUserId, 'voice:force-move', { fromChannelId, toChannelId, serverId, toChannelName: toChannel.name });
 
