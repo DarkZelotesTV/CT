@@ -25,7 +25,8 @@ export const VoiceMediaStage = ({
   floatingScreenShare?: boolean;
   onRequestAnchor?: () => void;
 }) => {
-  const { activeRoom, connectionState } = useVoice();
+  const { providerId, connectionState, getNativeHandle } = useVoice();
+  const room = providerId === 'livekit' ? ((getNativeHandle?.() as any) as import('livekit-client').Room | null) : null;
   const [refreshToken, setRefreshToken] = useState(0);
   const [activeSpeakerSid, setActiveSpeakerSid] = useState<string | null>(null);
   const [overlayPosition, setOverlayPosition] = useState({ x: 0, y: 0 });
@@ -36,7 +37,7 @@ export const VoiceMediaStage = ({
   const floatingOverlayRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!activeRoom) return;
+    if (!room) return;
     const bump = () => setRefreshToken((v) => v + 1);
     const handleSpeakers = (speakers: any[]) => setActiveSpeakerSid(speakers?.[0]?.sid ?? null);
 
@@ -50,20 +51,20 @@ export const VoiceMediaStage = ({
       RoomEvent.ParticipantMetadataChanged
     ];
 
-    events.forEach(e => activeRoom.on(e, bump));
-    activeRoom.on(RoomEvent.ActiveSpeakersChanged, handleSpeakers);
-    handleSpeakers(activeRoom.activeSpeakers || []);
+    events.forEach(e => room.on(e, bump));
+    room.on(RoomEvent.ActiveSpeakersChanged, handleSpeakers);
+    handleSpeakers(room.activeSpeakers || []);
 
     return () => {
-      events.forEach(e => activeRoom.off(e, bump));
-      activeRoom.off(RoomEvent.ActiveSpeakersChanged, handleSpeakers);
+      events.forEach(e => room.off(e, bump));
+      room.off(RoomEvent.ActiveSpeakersChanged, handleSpeakers);
     };
-  }, [activeRoom]);
+  }, [room]);
 
   const participants = useMemo(() => {
-    if (!activeRoom) return [];
-    return [activeRoom.localParticipant, ...Array.from(activeRoom.remoteParticipants.values())];
-  }, [activeRoom, refreshToken]);
+    if (!room) return [];
+    return [room.localParticipant, ...Array.from(room.remoteParticipants.values())];
+  }, [room, refreshToken]);
 
   const participantsWithoutScreens = useMemo(() => participants.filter(p => !p.isScreenShareEnabled), [participants]);
   const screenParticipants = useMemo(() => participants.filter(p => p.isScreenShareEnabled), [participants]);
@@ -128,7 +129,7 @@ export const VoiceMediaStage = ({
     );
   };
 
-  if (!activeRoom || connectionState !== 'connected') return null;
+  if (!room || providerId !== 'livekit' || connectionState !== 'connected') return null;
 
   const gridCols = participantsWithoutScreens.length <= 1 ? 'grid-cols-1 max-w-3xl' : 
                    participantsWithoutScreens.length <= 4 ? 'grid-cols-2 max-w-6xl' : 'grid-cols-3';

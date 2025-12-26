@@ -2,13 +2,17 @@ import { renderHook } from '@testing-library/react';
 import { VoiceContext, type VoiceContextType, useVoice } from './VoiceContext';
 
 const createMockVoiceContext = (): VoiceContextType => ({
-  activeRoom: null,
+  providerId: 'livekit',
+  connectionHandle: null,
   activeChannelId: null,
   activeChannelName: null,
   connectionState: 'disconnected',
   error: null,
   cameraError: null,
   screenShareError: null,
+  participants: [],
+  activeSpeakerIds: [],
+  getNativeHandle: vi.fn(),
   connectToChannel: vi.fn(async () => {}),
   disconnect: vi.fn(async () => {}),
   token: null,
@@ -37,6 +41,7 @@ const createMockVoiceContext = (): VoiceContextType => ({
   toggleScreenShare: vi.fn(async () => {}),
   shareSystemAudio: false,
   setShareSystemAudio: vi.fn(),
+  setParticipantVolume: vi.fn(),
   selectedAudioInputId: null,
   selectedAudioOutputId: null,
   selectedVideoInputId: null,

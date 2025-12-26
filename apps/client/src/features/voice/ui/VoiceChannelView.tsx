@@ -68,11 +68,12 @@ const ContextMenu = ({ onClose, children }: { onClose: () => void, children: Rea
 
 export const VoiceChannelView = ({ channelName }: { channelName: string | null }) => {
   const {
-    activeRoom, connectionState, error, cameraError, screenShareError,
+    providerId, connectionState, error, cameraError, screenShareError,
     muted, micMuted, setMuted, setMicMuted,
     isCameraEnabled, isScreenSharing, isPublishingCamera, isPublishingScreen,
     shareSystemAudio, setShareSystemAudio,
     startCamera, stopCamera, startScreenShare, stopScreenShare, toggleCamera, disconnect,
+    getNativeHandle,
   } = useVoice();
   const { settings, updateDevices } = useSettings();
 
@@ -127,6 +128,9 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
   };
 
   const statusColor = connectionState === 'connected' ? 'bg-green-500' : connectionState === 'connecting' ? 'bg-yellow-500' : 'bg-red-500';
+  const nativeHandle = getNativeHandle?.();
+  const canRenderStage = providerId === 'livekit' && Boolean(nativeHandle);
+  const isConnecting = connectionState !== 'connected';
 
   return (
     <div className="flex-1 flex flex-col h-full bg-black relative select-none">
@@ -145,12 +149,12 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
 
         {/* Stage */}
         <div className="flex-1 overflow-hidden relative">
-            {activeRoom ? (
+            {canRenderStage && !isConnecting ? (
                 <VoiceMediaStage layout={layout} />
             ) : (
                 <div className="flex h-full items-center justify-center text-gray-500 gap-2">
                     <RefreshCw className="animate-spin" size={24}/>
-                    <span>Verbinde...</span>
+                    <span>{isConnecting ? 'Verbinde...' : 'Audioverbindung wird initialisiert'}</span>
                 </div>
             )}
             

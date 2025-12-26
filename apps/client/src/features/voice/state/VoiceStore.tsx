@@ -7,7 +7,8 @@ const VoiceStateContext = createContext<VoiceState | null>(null);
 const VoiceDispatchContext = createContext<React.Dispatch<any> | null>(null);
 
 const createInitialState = (settings: ReturnType<typeof useSettings>['settings']): VoiceState => ({
-  activeRoom: null,
+  providerId: null,
+  connectionHandle: null,
   activeChannelId: null,
   activeChannelName: null,
   connectionState: 'disconnected',
@@ -15,6 +16,8 @@ const createInitialState = (settings: ReturnType<typeof useSettings>['settings']
   cameraError: null,
   screenShareError: null,
   screenShareAudioError: null,
+  participants: [],
+  activeSpeakerIds: [],
   muted: settings.talk.muted,
   micMuted: settings.talk.micMuted,
   usePushToTalk: settings.talk.pushToTalkEnabled,

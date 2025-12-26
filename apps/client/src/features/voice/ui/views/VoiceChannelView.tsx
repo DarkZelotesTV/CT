@@ -31,10 +31,11 @@ const ContextMenu = ({ onClose, children }: { onClose: () => void, children: Rea
 
 export const VoiceChannelView = ({ channelName }: { channelName: string | null }) => {
   const {
-    activeRoom, connectionState, error, cameraError,
+    providerId, connectionState, error, cameraError,
     muted, micMuted, setMuted, setMicMuted,
     isCameraEnabled, isScreenSharing,
-    stopCamera, startCamera, stopScreenShare, toggleCamera, disconnect,
+    stopCamera, startCamera, stopScreenShare, toggleCamera, disconnect, toggleScreenShare,
+    getNativeHandle,
   } = useVoice();
   const { settings, updateDevices } = useSettings();
 
@@ -62,6 +63,8 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
   };
 
   const statusColor = connectionState === 'connected' ? 'bg-green-500 shadow-neon' : 'bg-yellow-500';
+  const nativeHandle = getNativeHandle?.();
+  const canRenderStage = providerId === 'livekit' && Boolean(nativeHandle) && connectionState === 'connected';
 
   return (
     <div className="flex-1 flex flex-col h-full bg-background relative select-none">
@@ -79,9 +82,9 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
 
         {/* Media Content Area */}
         <div className="flex-1 overflow-hidden relative">
-            {activeRoom ? <VoiceMediaStage layout={layout} /> : (
+            {canRenderStage ? <VoiceMediaStage layout={layout} /> : (
                 <div className="flex h-full items-center justify-center text-text-muted gap-2 font-semibold bg-background/50">
-                   Verbinde...
+                   {connectionState === 'connected' ? 'Voice-Provider wird initialisiert...' : 'Verbinde...'}
                 </div>
             )}
             
@@ -123,7 +126,7 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
                     {isCameraEnabled ? <Video size={22}/> : <VideoOff size={22}/>}
                 </ToggleIconButton>
                 <div className="w-px h-6 bg-border mx-1" />
-                <ToggleIconButton pressed={isScreenSharing} onClick={() => isScreenSharing ? stopScreenShare() : toggleCamera()}>
+                <ToggleIconButton pressed={isScreenSharing} onClick={() => isScreenSharing ? stopScreenShare() : toggleScreenShare()}>
                     <Monitor size={22}/>
                 </ToggleIconButton>
             </div>
