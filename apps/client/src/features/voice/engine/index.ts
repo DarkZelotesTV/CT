@@ -1,2 +1,2 @@
 export { useVoiceEngine } from './useVoiceEngine';
-export type { VoiceEngineDeps } from './useVoiceEngine';
+export type { VoiceConnectRequest, VoiceEngineDeps, VoiceFallbackRequest } from './useVoiceEngine';

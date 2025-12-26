@@ -11,7 +11,7 @@ import { useSettings } from '../../../../context/SettingsContext';
 import { useSocket } from '../../../../context/SocketContext';
 import { storage } from '../../../../shared/config/storage';
 import { getLiveKitConfig } from '../../../../utils/apiConfig';
-import { type VoiceEngineDeps } from '../../engine/useVoiceEngine';
+import { type VoiceConnectRequest, type VoiceEngineDeps } from '../../engine/useVoiceEngine';
 import { type VoiceContextType } from '../../state/VoiceContext';
 import { type VoiceParticipant, type VoiceProviderRenderers } from '../types';
 
@@ -84,7 +84,13 @@ const toParticipant = (peer: PeerProfile, localId: PeerId | null): VoiceParticip
   metadata: null,
 });
 
-export const useP2PProvider = ({ state, setState }: VoiceEngineDeps): VoiceContextType => {
+export const useP2PProvider = ({
+  state,
+  setState,
+  fallbackProviderId = 'mediasoup',
+  requestFallback,
+  initialConnectRequest,
+}: VoiceEngineDeps): VoiceContextType => {
   const { socket, optimisticLeave } = useSocket();
   const { settings, updateTalk } = useSettings();
 
@@ -97,11 +103,18 @@ export const useP2PProvider = ({ state, setState }: VoiceEngineDeps): VoiceConte
   const configRef = useRef<RTCConfiguration | null>(null);
   const activeChannelRef = useRef<number | null>(null);
   const connectingRef = useRef(false);
+  const initialConnectRef = useRef<VoiceConnectRequest | null>(initialConnectRequest ?? null);
+  const fallbackRequestedRef = useRef(false);
+  const fallbackTarget = fallbackProviderId ?? 'mediasoup';
   const [autoplayBlocked, setAutoplayBlocked] = useState(false);
   const [audioRenderRevision, setAudioRenderRevision] = useState(0);
 
   const localUser = useMemo(() => storage.get('cloverUser') as { id?: number | string; username?: string } | null, []);
   const localId = useMemo(() => (localUser?.id ? String(localUser.id) : null), [localUser?.id]);
+
+  useEffect(() => {
+    initialConnectRef.current = initialConnectRequest ?? null;
+  }, [initialConnectRequest]);
 
   const emitWithAck = useCallback(
     async <T extends { success: boolean; error?: string }>(event: keyof typeof socketEvents, payload?: any, timeoutMs = 5000) => {
@@ -367,20 +380,34 @@ export const useP2PProvider = ({ state, setState }: VoiceEngineDeps): VoiceConte
   );
 
   const handleConnectionState = useCallback(
-    (peerId: PeerId, state: RTCPeerConnectionState) => {
-      if (['failed', 'closed'].includes(state)) {
+    (peerId: PeerId, connectionState: RTCPeerConnectionState) => {
+      if (['failed', 'closed'].includes(connectionState)) {
         cleanupPeer(peerId);
         updateParticipants();
+        if (connectionState === 'failed' && !fallbackRequestedRef.current) {
+          const channelId = activeChannelRef.current ?? state.activeChannelId;
+          if (channelId) {
+            fallbackRequestedRef.current = true;
+            requestFallback?.({
+              providerId: 'p2p',
+              targetProviderId: fallbackTarget,
+              channelId,
+              channelName: state.activeChannelName || `Talk ${channelId}`,
+              reason: 'P2P Verbindung fehlgeschlagen, wechsle zu SFU',
+            });
+          }
+        }
       }
     },
-    [cleanupPeer, updateParticipants]
+    [cleanupPeer, fallbackTarget, requestFallback, state.activeChannelId, state.activeChannelName, updateParticipants]
   );
 
   const createPeerConnection = useCallback(
     (peerId: PeerId, initiator = false) => {
       if (peerConnectionsRef.current.has(peerId)) return peerConnectionsRef.current.get(peerId)!;
 
-      const rtcConfig = configRef.current || getLiveKitConfig().connectOptions?.rtcConfig || {};
+      const rtcConfig =
+        configRef.current || getLiveKitConfig({ iceServers: settings.talk.iceServers }).connectOptions?.rtcConfig || {};
       const connection = new RTCPeerConnection(rtcConfig);
 
       const localStream = localStreamRef.current;
@@ -534,6 +561,7 @@ export const useP2PProvider = ({ state, setState }: VoiceEngineDeps): VoiceConte
       if (connectingRef.current) return;
 
       connectingRef.current = true;
+      fallbackRequestedRef.current = false;
       activeChannelRef.current = channelId;
 
       setState({
@@ -547,7 +575,7 @@ export const useP2PProvider = ({ state, setState }: VoiceEngineDeps): VoiceConte
       try {
         socket.emit('join_channel', channelId);
 
-        const rtcConfig = getLiveKitConfig().connectOptions?.rtcConfig;
+        const rtcConfig = getLiveKitConfig({ iceServers: settings.talk.iceServers }).connectOptions?.rtcConfig;
         if (rtcConfig) configRef.current = rtcConfig;
 
         const constraints: MediaStreamConstraints = {
@@ -591,12 +619,32 @@ export const useP2PProvider = ({ state, setState }: VoiceEngineDeps): VoiceConte
       } catch (err: any) {
         console.warn('P2P Verbindung fehlgeschlagen', err);
         setState({ error: err?.message || 'Verbindung fehlgeschlagen', connectionState: 'disconnected', providerId: null });
+        fallbackRequestedRef.current = true;
+        requestFallback?.({
+          providerId: 'p2p',
+          targetProviderId: fallbackTarget,
+          channelId,
+          channelName,
+          reason: err?.message || 'P2P Verbindung fehlgeschlagen',
+        });
         await disconnect();
       } finally {
         connectingRef.current = false;
       }
     },
-    [createPeerConnection, disconnect, emitWithAck, setState, settings.devices.audioInputId, state.micMuted, state.usePushToTalk, updateParticipants, socket]
+    [
+      createPeerConnection,
+      disconnect,
+      emitWithAck,
+      fallbackTarget,
+      requestFallback,
+      setState,
+      settings.devices.audioInputId,
+      state.micMuted,
+      state.usePushToTalk,
+      updateParticipants,
+      socket,
+    ]
   );
 
   const disconnect = useCallback(async () => {
@@ -776,6 +824,14 @@ export const useP2PProvider = ({ state, setState }: VoiceEngineDeps): VoiceConte
       void disconnect();
     };
   }, [disconnect]);
+
+  useEffect(() => {
+    const pending = initialConnectRef.current;
+    if (!pending) return;
+    if (state.connectionState !== 'disconnected') return;
+    initialConnectRef.current = null;
+    void connectToChannel(pending.channelId, pending.channelName);
+  }, [connectToChannel, state.connectionState]);
 
   const providerRenderers = useMemo<VoiceProviderRenderers>(
     () => ({

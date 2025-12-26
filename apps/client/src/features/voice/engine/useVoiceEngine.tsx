@@ -39,13 +39,29 @@ const bitrateProfiles = {
   max: { maxBitrate: 15_000_000 },
 };
 
+export type VoiceConnectRequest = {
+  channelId: number;
+  channelName: string;
+};
+
+export type VoiceFallbackRequest = {
+  providerId: VoiceProviderId;
+  targetProviderId?: VoiceProviderId;
+  channelId?: number;
+  channelName?: string;
+  reason?: string;
+};
+
 export type VoiceEngineDeps = {
   state: VoiceState;
   setState: (patch: Partial<VoiceState> | ((prev: VoiceState) => Partial<VoiceState>)) => void;
   providerId?: VoiceProviderId;
+  fallbackProviderId?: VoiceProviderId;
+  requestFallback?: (request: VoiceFallbackRequest) => void;
+  initialConnectRequest?: VoiceConnectRequest | null;
 };
 
-export const useVoiceEngine = ({ state, setState, providerId: preferredProviderId = 'livekit' }: VoiceEngineDeps) => {
+export const useVoiceEngine = ({ state, setState, providerId: preferredProviderId = 'livekit', initialConnectRequest }: VoiceEngineDeps) => {
   const providerId = preferredProviderId ?? 'livekit';
   const { settings, updateTalk } = useSettings();
   const { socket, optimisticLeave } = useSocket();
@@ -211,6 +227,11 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
     audioOutputId: string | null;
     videoInputId: string | null;
   } | null>(null);
+  const pendingInitialConnectRef = useRef<VoiceConnectRequest | null>(initialConnectRequest ?? null);
+
+  useEffect(() => {
+    pendingInitialConnectRef.current = initialConnectRequest ?? null;
+  }, [initialConnectRequest]);
 
   useEffect(() => {
     if (typeof AudioContext === 'undefined' || typeof AudioWorkletNode === 'undefined') {
@@ -1273,7 +1294,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
       setError(null);
 
       try {
-        const lkConfig = getLiveKitConfig();
+        const lkConfig = getLiveKitConfig({ iceServers: settings.talk.iceServers });
         const roomName = `channel_${channelId}`;
 
         const res = await apiFetch<{ token: string }>(`/api/livekit/token?room=${roomName}`);
@@ -1568,6 +1589,14 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
   useEffect(() => {
     applyOutputVolume(roomRef.current, outputVolume);
   }, [applyOutputVolume, outputVolume, roomRevision]);
+
+  useEffect(() => {
+    const pending = pendingInitialConnectRef.current;
+    if (!pending) return;
+    if (connectionState !== 'disconnected') return;
+    pendingInitialConnectRef.current = null;
+    void connectToChannel(pending.channelId, pending.channelName);
+  }, [connectToChannel, connectionState]);
 
   useEffect(() => {
     const shouldMeasure =
