@@ -13,7 +13,6 @@ import { UPLOADS_DIR } from './utils/paths';
 import authRoutes from './routes/auth';
 import dataRoutes from './routes/data';
 import friendsRoutes from './routes/friends';
-import livekitRoutes from './routes/livekit'; // WICHTIG: Sicherstellen, dass diese Datei existiert!
 import {
   userChannelMemberships,
   registerUserSocket,
@@ -224,7 +223,6 @@ const io = new Server(httpServer, {
 app.use('/api/auth', authRoutes);       // Identity handshake
 app.use('/api', dataRoutes);            // Server, Channels, Members
 app.use('/api', friendsRoutes);
-app.use('/api/livekit', livekitRoutes); // Voice/Video Tokens
 
 // ==========================================
 // 4. ECHTZEIT LOGIK (Socket.io)
