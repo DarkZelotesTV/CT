@@ -18,6 +18,7 @@ import {
   registerUserSocket,
   removeUserFromAllChannels,
   removeUserFromChannel,
+  getUserChannelIds,
   unregisterUserSocket,
 } from './realtime/registry';
 
@@ -860,6 +861,11 @@ io.on('connection', async (socket) => {
 
         const channelId = Number(payload?.channelId);
         const channel = await ensureVoiceChannelAccess(channelId, numericUserId);
+        const channelMemberships = getUserChannelIds(numericUserId);
+        if (!channelMemberships.has(channelId)) {
+          return respond({ success: false, error: 'Fehlende Berechtigung für diesen Kanal' });
+        }
+
         const [router, user] = await Promise.all([getOrCreateRtcRouter(channelId), User.findByPk(numericUserId, { attributes: ['id', 'username', 'avatar_url'] })]);
 
         const roomName = rtcRoomNameForChannel(channelId);
