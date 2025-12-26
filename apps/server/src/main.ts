@@ -22,7 +22,7 @@ import {
 } from './realtime/registry';
 
 // Models Importe (für Socket Logik)
-import type { MediaKind, Router as MediasoupRouter, RtpCapabilities, RtpParameters, WebRtcTransport } from 'mediasoup/node/lib/types';
+import type { Consumer as MediasoupConsumer, MediaKind, Router as MediasoupRouter, RtpCapabilities, RtpParameters, WebRtcTransport } from 'mediasoup/node/lib/types';
 import { User, ServerMember, MemberRole, Role, Channel } from './models';
 import { resolveUserFromIdentity } from './utils/identityAuth';
 import { resolveWebRtcTransportDefaults, rtcRoomManager, rtcWorkerPool, type RtcTransportDirection, type WebRtcTransportDefaults } from './rtc';
@@ -311,6 +311,7 @@ io.on('connection', async (socket) => {
   (socket.data as any).rtcTransportDefaults = resolveWebRtcTransportDefaults();
   (socket.data as any).rtcRooms = new Set<string>();
   (socket.data as any).rtcTransports = new Map<string, WebRtcTransport>();
+  (socket.data as any).rtcConsumers = new Map<string, MediasoupConsumer>();
 
   if (numericUserId) {
      console.log(`User ${numericUserId} connected (Socket ID: ${socket.id})`);
@@ -664,12 +665,18 @@ io.on('connection', async (socket) => {
           appData: consumer.appData as Record<string, any>,
         });
 
+        const rtcConsumers: Map<string, MediasoupConsumer> = (socket.data as any).rtcConsumers || new Map();
+        rtcConsumers.set(consumer.id, consumer);
+        (socket.data as any).rtcConsumers = rtcConsumers;
+
         consumer.on('transportclose', () => {
           rtcRoomManager.removeConsumer(roomName, String(numericUserId), consumer.id);
+          rtcConsumers.delete(consumer.id);
         });
 
         consumer.on('producerclose', () => {
           rtcRoomManager.removeConsumer(roomName, String(numericUserId), consumer.id);
+          rtcConsumers.delete(consumer.id);
           try {
             consumer.close();
           } catch (err) {
@@ -689,6 +696,80 @@ io.on('connection', async (socket) => {
       } catch (err: any) {
         console.error('Fehler bei rtc:consume:', err);
         respond({ success: false, error: err?.message || 'Konnte Consumer nicht erstellen' });
+      }
+    }
+  );
+
+  socket.on(
+    'rtc:pauseConsumer',
+    async (payload: { consumerId?: string }, ack?: (payload: { success: boolean; error?: string; consumerId?: string; paused?: boolean }) => void) => {
+      const respond = (body: { success: boolean; error?: string; consumerId?: string; paused?: boolean }) => {
+        if (typeof ack === 'function') ack(body);
+      };
+
+      try {
+        if (!numericUserId) {
+          return respond({ success: false, error: 'unauthorized' });
+        }
+
+        const consumerId = payload?.consumerId;
+        if (!consumerId || typeof consumerId !== 'string') {
+          return respond({ success: false, error: 'Ungültige consumerId' });
+        }
+
+        const rtcConsumers: Map<string, MediasoupConsumer> = (socket.data as any).rtcConsumers || new Map();
+        const consumer = rtcConsumers.get(consumerId);
+
+        if (!consumer) {
+          return respond({ success: false, error: 'Consumer nicht gefunden' });
+        }
+
+        if (consumer.appData?.participantId && consumer.appData.participantId !== numericUserId) {
+          return respond({ success: false, error: 'Fehlende Berechtigung für diesen Consumer' });
+        }
+
+        await consumer.pause();
+        respond({ success: true, consumerId: consumer.id, paused: consumer.paused });
+      } catch (err: any) {
+        console.error('Fehler bei rtc:pauseConsumer:', err);
+        respond({ success: false, error: err?.message || 'Konnte Consumer nicht pausieren' });
+      }
+    }
+  );
+
+  socket.on(
+    'rtc:resumeConsumer',
+    async (payload: { consumerId?: string }, ack?: (payload: { success: boolean; error?: string; consumerId?: string; paused?: boolean }) => void) => {
+      const respond = (body: { success: boolean; error?: string; consumerId?: string; paused?: boolean }) => {
+        if (typeof ack === 'function') ack(body);
+      };
+
+      try {
+        if (!numericUserId) {
+          return respond({ success: false, error: 'unauthorized' });
+        }
+
+        const consumerId = payload?.consumerId;
+        if (!consumerId || typeof consumerId !== 'string') {
+          return respond({ success: false, error: 'Ungültige consumerId' });
+        }
+
+        const rtcConsumers: Map<string, MediasoupConsumer> = (socket.data as any).rtcConsumers || new Map();
+        const consumer = rtcConsumers.get(consumerId);
+
+        if (!consumer) {
+          return respond({ success: false, error: 'Consumer nicht gefunden' });
+        }
+
+        if (consumer.appData?.participantId && consumer.appData.participantId !== numericUserId) {
+          return respond({ success: false, error: 'Fehlende Berechtigung für diesen Consumer' });
+        }
+
+        await consumer.resume();
+        respond({ success: true, consumerId: consumer.id, paused: consumer.paused });
+      } catch (err: any) {
+        console.error('Fehler bei rtc:resumeConsumer:', err);
+        respond({ success: false, error: err?.message || 'Konnte Consumer nicht fortsetzen' });
       }
     }
   );
@@ -842,6 +923,16 @@ io.on('connection', async (socket) => {
        if ((socket.data as any).presenceSnapshotInterval) {
          clearInterval((socket.data as any).presenceSnapshotInterval);
        }
+
+       const rtcConsumers: Map<string, MediasoupConsumer> = (socket.data as any).rtcConsumers || new Map();
+       rtcConsumers.forEach((consumer) => {
+         try {
+           consumer?.close();
+         } catch (err) {
+           console.warn('Fehler beim Schließen eines RTC-Consumers:', err);
+         }
+       });
+       rtcConsumers.clear();
 
        const rtcTransports: Map<string, WebRtcTransport> = (socket.data as any).rtcTransports || new Map();
        rtcTransports.forEach((transport) => {
