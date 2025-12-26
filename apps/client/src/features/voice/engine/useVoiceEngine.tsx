@@ -1,4 +1,4 @@
-import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef } from 'react';
+import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef, useState } from 'react';
 import {
   Room,
   RoomEvent,
@@ -14,8 +14,9 @@ import { apiFetch } from '../../../api/http';
 import { useSettings } from '../../../context/SettingsContext';
 import { useSocket } from '../../../context/SocketContext';
 import { getLiveKitConfig } from '../../../utils/apiConfig';
-import { VoiceContextType } from '../state/VoiceContext';
-import { VoiceState } from '../state/voiceTypes';
+import { storage } from '../../../shared/config/storage';
+import { type VoiceConnectionHandle, type VoiceParticipant } from '../providers/types';
+import { type ConnectionState, VoiceState } from '../state/voiceTypes';
 
 type QualityPreset = {
   resolution?: { width: number; height: number } | null;
@@ -46,12 +47,15 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
   const { socket, optimisticLeave } = useSocket();
 
   const {
-    activeRoom,
+    providerId,
+    connectionHandle,
     activeChannelId,
     activeChannelName,
     token,
     connectionState,
     error,
+    participants,
+    activeSpeakerIds,
     muted,
     micMuted,
     usePushToTalk,
@@ -72,7 +76,8 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
     localAudioLevel,
   } = state;
 
-  const setActiveRoom = useCallback((room: Room | null) => setState({ activeRoom: room }), [setState]);
+  const roomRef = useRef<Room | null>(null);
+  const [roomRevision, setRoomRevision] = useState(0);
   const setActiveChannelId = useCallback(
     (channelId: number | null) => setState({ activeChannelId: channelId }),
     [setState]
@@ -82,10 +87,7 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
     [setState]
   );
   const setToken = useCallback((nextToken: string | null) => setState({ token: nextToken }), [setState]);
-  const setConnectionState = useCallback(
-    (next: VoiceContextType['connectionState']) => setState({ connectionState: next }),
-    [setState]
-  );
+  const setConnectionState = useCallback((next: ConnectionState) => setState({ connectionState: next }), [setState]);
   const setError = useCallback((next: string | null) => setState({ error: next }), [setState]);
   const setMutedState = useCallback((next: boolean) => setState({ muted: next }), [setState]);
   const setMicMutedState = useCallback((next: boolean) => setState({ micMuted: next }), [setState]);
@@ -125,6 +127,42 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
   );
   const setRnnoiseError = useCallback((next: string | null) => setState({ rnnoiseError: next }), [setState]);
   const setOutputVolumeState = useCallback((next: number) => setState({ outputVolume: next }), [setState]);
+  const snapshotParticipants = useCallback(
+    (room: Room | null): VoiceParticipant[] => {
+      if (!room) return [];
+      const list = [room.localParticipant, ...Array.from(room.remoteParticipants.values())].filter(Boolean);
+      return list.map((participant) => ({
+        id: String((participant as any)?.sid || (participant as any)?.identity || 'unknown'),
+        name: String((participant as any)?.name || (participant as any)?.identity || 'User'),
+        isLocal: Boolean((participant as any)?.isLocal),
+        isMicrophoneEnabled: Boolean((participant as any)?.isMicrophoneEnabled ?? true),
+        isCameraEnabled: Boolean((participant as any)?.isCameraEnabled),
+        isScreenShareEnabled: Boolean((participant as any)?.isScreenShareEnabled),
+        metadata: (participant as any)?.metadata ?? null,
+      }));
+    },
+    []
+  );
+  const setActiveRoom = useCallback(
+    (room: Room | null, handle?: VoiceConnectionHandle | null) => {
+      roomRef.current = room;
+      setRoomRevision((rev) => rev + 1);
+      setState({
+        connectionHandle: room ? handle ?? { provider: 'livekit', sessionId: room.name ?? room.sid ?? 'livekit' } : null,
+        providerId: room ? 'livekit' : null,
+        participants: snapshotParticipants(room),
+        activeSpeakerIds: [],
+      });
+    },
+    [setRoomRevision, setState, snapshotParticipants]
+  );
+  const syncParticipants = useCallback(
+    (room?: Room | null) => {
+      const targetRoom = room ?? roomRef.current;
+      setState({ participants: snapshotParticipants(targetRoom) });
+    },
+    [setState, snapshotParticipants]
+  );
 
   const publishedScreenTracksRef = useRef<MediaStreamTrack[]>([]);
   const rnnoiseResourcesRef = useRef<{
@@ -563,9 +601,10 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
       updateTalk({ muted: nextMuted });
       if (nextMuted) setIsTalking(false);
       desiredMediaStateRef.current = { ...desiredMediaStateRef.current, muted: nextMuted };
-      if (activeRoom) await applyMicrophoneState(activeRoom, { muted: nextMuted, talking: false });
+      const room = roomRef.current;
+      if (room) await applyMicrophoneState(room, { muted: nextMuted, talking: false });
     },
-    [activeRoom, applyMicrophoneState, updateTalk]
+    [applyMicrophoneState, updateTalk]
   );
 
   const setMicMuted = useCallback(
@@ -574,9 +613,10 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
       updateTalk({ micMuted: nextMuted });
       if (nextMuted) setIsTalking(false);
       desiredMediaStateRef.current = { ...desiredMediaStateRef.current, micMuted: nextMuted };
-      if (activeRoom) await applyMicrophoneState(activeRoom, { micMuted: nextMuted, talking: false });
+      const room = roomRef.current;
+      if (room) await applyMicrophoneState(room, { micMuted: nextMuted, talking: false });
     },
-    [activeRoom, applyMicrophoneState, updateTalk]
+    [applyMicrophoneState, updateTalk]
   );
 
   const setPushToTalk = useCallback(
@@ -585,9 +625,10 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
       updateTalk({ pushToTalkEnabled: enabled });
       if (!enabled) setIsTalking(false);
       desiredMediaStateRef.current = { ...desiredMediaStateRef.current, pushToTalk: enabled };
-      if (activeRoom) await applyMicrophoneState(activeRoom, { pushToTalk: enabled, talking: false });
+      const room = roomRef.current;
+      if (room) await applyMicrophoneState(room, { pushToTalk: enabled, talking: false });
     },
-    [activeRoom, applyMicrophoneState, updateTalk]
+    [applyMicrophoneState, updateTalk]
   );
 
   const setRnnoiseEnabled = useCallback(
@@ -597,21 +638,23 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
       if (!enabled) {
         setRnnoiseAvailable(true);
         setRnnoiseError(null);
-        await stopRnnoisePipeline(activeRoom);
-        if (activeRoom) {
+        const room = roomRef.current;
+        await stopRnnoisePipeline(room);
+        if (room) {
           const shouldEnable = !muted && !micMuted && (!usePushToTalk || isTalking);
-          await activeRoom.localParticipant.setMicrophoneEnabled(shouldEnable);
+          await room.localParticipant.setMicrophoneEnabled(shouldEnable);
         }
         return;
       }
 
       setRnnoiseAvailable(true);
       setRnnoiseError(null);
-      if (activeRoom) {
-        await applyMicrophoneState(activeRoom, { talking: isTalking });
+      const room = roomRef.current;
+      if (room) {
+        await applyMicrophoneState(room, { talking: isTalking });
       }
     },
-    [activeRoom, applyMicrophoneState, isTalking, micMuted, muted, stopRnnoisePipeline, updateTalk, usePushToTalk]
+    [applyMicrophoneState, isTalking, micMuted, muted, stopRnnoisePipeline, updateTalk, usePushToTalk]
   );
 
   const applyOutputVolume = useCallback(
@@ -634,9 +677,22 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
       const normalized = Math.max(0, Math.min(2, volume));
       setOutputVolumeState(normalized);
       updateTalk({ outputVolume: normalized });
-      applyOutputVolume(activeRoom, normalized);
+      applyOutputVolume(roomRef.current, normalized);
     },
-    [activeRoom, applyOutputVolume, updateTalk]
+    [applyOutputVolume, updateTalk]
+  );
+  const setParticipantVolume = useCallback(
+    (participantId: string, volume: number) => {
+      const room = roomRef.current;
+      if (!room) return;
+      const participant = room.remoteParticipants.get(participantId);
+      if (!participant) return;
+      const normalized = Math.max(0, Math.min(2, volume));
+      if (typeof participant.setVolume === 'function') {
+        participant.setVolume(normalized * (outputVolume ?? 1));
+      }
+    },
+    [outputVolume]
   );
 
   const applyOutputMuteState = useCallback(
@@ -656,9 +712,10 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
   );
 
   useEffect(() => {
-    if (!activeRoom) return;
+    const room = roomRef.current;
+    if (!room) return;
 
-    applyOutputMuteState(activeRoom, !muted);
+    applyOutputMuteState(room, !muted);
 
     const handleTrackSubscribed = (track: RemoteTrack, _publication: any, participant: any) => {
       if (track.kind === Track.Kind.Audio) {
@@ -673,25 +730,27 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
       }
     };
 
-    activeRoom.on(RoomEvent.TrackSubscribed, handleTrackSubscribed);
+    room.on(RoomEvent.TrackSubscribed, handleTrackSubscribed);
     return () => {
-      activeRoom.off(RoomEvent.TrackSubscribed, handleTrackSubscribed);
+      room.off(RoomEvent.TrackSubscribed, handleTrackSubscribed);
     };
-  }, [activeRoom, applyOutputMuteState, muted, outputVolume, settings.talk.participantVolumes]);
+  }, [applyOutputMuteState, muted, outputVolume, roomRevision, settings.talk.participantVolumes]);
 
   const startTalking = useCallback(async () => {
     setIsTalking(true);
-    if (activeRoom) await applyMicrophoneState(activeRoom, { talking: true });
-  }, [activeRoom, applyMicrophoneState]);
+    const room = roomRef.current;
+    if (room) await applyMicrophoneState(room, { talking: true });
+  }, [applyMicrophoneState]);
 
   const stopTalking = useCallback(async () => {
     setIsTalking(false);
-    if (activeRoom) await applyMicrophoneState(activeRoom, { talking: false });
-  }, [activeRoom, applyMicrophoneState]);
+    const room = roomRef.current;
+    if (room) await applyMicrophoneState(room, { talking: false });
+  }, [applyMicrophoneState]);
 
   const startCamera = useCallback(
     async (quality: 'low' | 'medium' | 'high' = 'medium', targetRoom?: Room | null) => {
-      const roomToUse = targetRoom ?? activeRoom;
+      const roomToUse = targetRoom ?? roomRef.current;
       if (!roomToUse) {
         setCameraError('Keine aktive Voice-Verbindung für Video verfügbar.');
         return;
@@ -724,27 +783,28 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
         setIsPublishingCamera(false);
       }
     },
-    [activeRoom, settings.devices.videoInputId, syncLocalMediaState]
+    [settings.devices.videoInputId, syncLocalMediaState]
   );
 
   const stopCamera = useCallback(async () => {
-    if (!activeRoom) {
+    const room = roomRef.current;
+    if (!room) {
       setIsCameraEnabled(false);
       return;
     }
 
     setIsPublishingCamera(true);
     try {
-      await activeRoom.localParticipant.setCameraEnabled(false);
+      await room.localParticipant.setCameraEnabled(false);
       desiredMediaStateRef.current = { ...desiredMediaStateRef.current, cameraEnabled: false };
-      syncLocalMediaState(activeRoom);
+      syncLocalMediaState(room);
     } catch (err: any) {
       console.error('Kamera konnte nicht gestoppt werden', err);
       setCameraError(err?.message || 'Kamera konnte nicht gestoppt werden.');
     } finally {
       setIsPublishingCamera(false);
     }
-  }, [activeRoom, syncLocalMediaState]);
+  }, [syncLocalMediaState]);
 
   const toggleCamera = useCallback(async () => {
     if (isCameraEnabled) {
@@ -763,10 +823,9 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
         track?: MediaStreamTrack;
         withAudio?: boolean;
         bitrateProfile?: 'low' | 'medium' | 'high' | 'max';
-      },
-      targetRoom?: Room | null
+      }
     ) => {
-      const roomToUse = targetRoom ?? activeRoom;
+      const roomToUse = roomRef.current;
       if (!roomToUse) {
         setScreenShareError('Keine aktive Voice-Verbindung für Screen-Sharing.');
         return;
@@ -997,19 +1056,20 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
 
         desiredMediaStateRef.current = { ...desiredMediaStateRef.current, screenSharing: true };
         syncLocalMediaState(roomToUse);
-      } catch (err: any) {
-        console.error('Screenshare konnte nicht gestartet werden', err);
-        setScreenShareError(err?.message || 'Screenshare konnte nicht gestartet werden.');
-        setIsScreenSharing(false);
-      } finally {
-        setIsPublishingScreen(false);
-      }
-    },
-    [activeRoom, settings.talk.screenBitrateProfile, shareSystemAudio, syncLocalMediaState]
+    } catch (err: any) {
+      console.error('Screenshare konnte nicht gestartet werden', err);
+      setScreenShareError(err?.message || 'Screenshare konnte nicht gestartet werden.');
+      setIsScreenSharing(false);
+    } finally {
+      setIsPublishingScreen(false);
+    }
+  },
+    [settings.talk.screenBitrateProfile, shareSystemAudio, syncLocalMediaState]
   );
 
   const stopScreenShare = useCallback(async () => {
-    if (!activeRoom) {
+    const room = roomRef.current;
+    if (!room) {
       setIsScreenSharing(false);
       setScreenShareAudioError(null);
       return;
@@ -1020,7 +1080,7 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
       if (publishedTracks.length) {
         for (const track of publishedTracks) {
           try {
-            activeRoom.localParticipant.unpublishTrack(track, true);
+            room.localParticipant.unpublishTrack(track, true);
           } catch (unpublishError) {
             console.warn('Track konnte nicht unpublisht werden', unpublishError);
           }
@@ -1033,11 +1093,11 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
         publishedScreenTracksRef.current = [];
         setScreenShareAudioError(null);
         desiredMediaStateRef.current = { ...desiredMediaStateRef.current, screenSharing: false };
-        syncLocalMediaState(activeRoom);
+        syncLocalMediaState(room);
       } else {
-        await activeRoom.localParticipant.setScreenShareEnabled(false);
+        await room.localParticipant.setScreenShareEnabled(false);
         desiredMediaStateRef.current = { ...desiredMediaStateRef.current, screenSharing: false };
-        syncLocalMediaState(activeRoom);
+        syncLocalMediaState(room);
       }
     } catch (err: any) {
       console.error('Screenshare konnte nicht gestoppt werden', err);
@@ -1045,7 +1105,7 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
     } finally {
       setIsPublishingScreen(false);
     }
-  }, [activeRoom, syncLocalMediaState]);
+  }, [syncLocalMediaState]);
 
   const toggleScreenShare = useCallback(async () => {
     if (isScreenSharing) {
@@ -1082,15 +1142,16 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
 
     // Versuche, Audio-Pipeline sauber zu stoppen
     try {
-      await stopRnnoisePipeline(activeRoom);
+      await stopRnnoisePipeline(roomRef.current);
     } catch (err) {
       console.warn('Fehler beim Stoppen von RNNoise:', err);
     }
 
     // Versuche, Raum sauber zu verlassen
     try {
-      if (activeRoom) {
-        await activeRoom.disconnect();
+      const room = roomRef.current;
+      if (room) {
+        await room.disconnect();
       }
     } catch (err) {
       console.warn('Fehler beim Disconnecten des Raumes (State wird trotzdem resettet):', err);
@@ -1119,8 +1180,9 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
       });
       publishedScreenTracksRef.current = [];
       setLocalParticipantId(null);
+      syncParticipants(null);
     }
-  }, [activeRoom, leavePresenceChannel, activeChannelId, optimisticLeave, stopRnnoisePipeline]);
+  }, [activeChannelId, leavePresenceChannel, optimisticLeave, stopRnnoisePipeline, syncParticipants]);
 
   const finalizeDisconnection = useCallback(
     (message: string | null) => {
@@ -1148,11 +1210,11 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
       });
 
       if (desired.cameraEnabled && !room.localParticipant.isCameraEnabled) {
-        await startCamera('medium', room);
+        await startCamera('medium');
       }
 
       if (desired.screenSharing && !room.localParticipant.isScreenShareEnabled) {
-        await startScreenShare(undefined, room);
+        await startScreenShare(undefined);
       }
     },
     [applyMicrophoneState, startCamera, startScreenShare]
@@ -1172,11 +1234,12 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
         reconnectTimeoutRef.current = null;
       }
 
-      if (activeRoom) {
-        await stopRnnoisePipeline(activeRoom);
+      const existingRoom = roomRef.current;
+      if (existingRoom) {
+        await stopRnnoisePipeline(existingRoom);
         // Auch hier ein try-catch, falls der alte Raum hängt
         try {
-          await activeRoom.disconnect();
+          await existingRoom.disconnect();
         } catch (e) {
           console.warn("Fehler beim Disconnect des alten Raums:", e);
         }
@@ -1334,9 +1397,10 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
         }
         await applyMicrophoneState(room);
 
-        setActiveRoom(room);
+        setActiveRoom(room, { provider: 'livekit', sessionId: roomName, meta: { channelId } });
         setActiveChannelId(channelId);
         setActiveChannelName(channelName);
+        syncParticipants(room);
 
       } catch (err: any) {
         console.error("Voice Connection Failed:", err);
@@ -1355,7 +1419,6 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
     },
     [
       activeChannelId,
-      activeRoom,
       applyMicrophoneState,
       connectionState,
       finalizeDisconnection,
@@ -1366,6 +1429,8 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
       restoreMediaState,
       joinPresenceChannel,
       leavePresenceChannel,
+      syncLocalMediaState,
+      syncParticipants,
     ]
   );
 
@@ -1405,10 +1470,44 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
   }, [socket, disconnect, finalizeDisconnection, connectToChannel, setMicMuted, setMuted]);
 
   useEffect(() => {
-    if (!activeRoom) return;
+    const room = roomRef.current;
+    if (!room) {
+      setState({ participants: [], activeSpeakerIds: [] });
+      return;
+    }
+
+    const handleParticipantsChanged = () => syncParticipants(room);
+    const handleActiveSpeakersChanged = (speakers: any[]) => {
+      setState({
+        activeSpeakerIds: (speakers || []).map((speaker) => String((speaker as any)?.sid || (speaker as any)?.identity || '')),
+      });
+    };
+
+    handleParticipantsChanged();
+    room.on(RoomEvent.ParticipantConnected, handleParticipantsChanged);
+    room.on(RoomEvent.ParticipantDisconnected, handleParticipantsChanged);
+    room.on(RoomEvent.TrackPublished, handleParticipantsChanged);
+    room.on(RoomEvent.TrackUnpublished, handleParticipantsChanged);
+    room.on(RoomEvent.TrackMuted, handleParticipantsChanged);
+    room.on(RoomEvent.TrackUnmuted, handleParticipantsChanged);
+    room.on(RoomEvent.ActiveSpeakersChanged, handleActiveSpeakersChanged);
+
+    return () => {
+      room.off(RoomEvent.ParticipantConnected, handleParticipantsChanged);
+      room.off(RoomEvent.ParticipantDisconnected, handleParticipantsChanged);
+      room.off(RoomEvent.TrackPublished, handleParticipantsChanged);
+      room.off(RoomEvent.TrackUnpublished, handleParticipantsChanged);
+      room.off(RoomEvent.TrackMuted, handleParticipantsChanged);
+      room.off(RoomEvent.TrackUnmuted, handleParticipantsChanged);
+      room.off(RoomEvent.ActiveSpeakersChanged, handleActiveSpeakersChanged);
+    };
+  }, [roomRevision, setState, syncParticipants]);
+
+  useEffect(() => {
+    const room = roomRef.current;
+    if (!room) return;
 
     let disposed = false;
-    const room = activeRoom;
 
     const next = {
       audioInputId: settings.devices.audioInputId ?? null,
@@ -1444,17 +1543,18 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
     return () => {
       disposed = true;
     };
-  }, [activeRoom, settings.devices.audioInputId, settings.devices.audioOutputId, settings.devices.videoInputId]);
+  }, [roomRevision, settings.devices.audioInputId, settings.devices.audioOutputId, settings.devices.videoInputId]);
 
   useEffect(() => {
-    applyOutputVolume(activeRoom, outputVolume);
-  }, [activeRoom, applyOutputVolume, outputVolume]);
+    applyOutputVolume(roomRef.current, outputVolume);
+  }, [applyOutputVolume, outputVolume, roomRevision]);
 
   useEffect(() => {
     const shouldMeasure =
       connectionState === 'connected' && !muted && !micMuted && (!usePushToTalk || isTalking);
 
-    if (!activeRoom || !shouldMeasure) {
+    const room = roomRef.current;
+    if (!room || !shouldMeasure) {
       setState({ localAudioLevel: 0 });
       stopAudioLevelMeter();
       return;
@@ -1462,35 +1562,40 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
 
     const rnnoiseTrack = rnnoiseResourcesRef.current?.processedTrack;
     // LiveKit v2 types no longer expose `audioTracks`; use a source-based lookup.
-    const publication = activeRoom.localParticipant.getTrackPublication(Track.Source.Microphone);
+    const publication = room.localParticipant.getTrackPublication(Track.Source.Microphone);
     const liveKitTrack =
       (publication as LocalTrackPublication | undefined)?.track?.mediaStreamTrack ?? null;
     const track = rnnoiseTrack?.readyState === 'live' ? rnnoiseTrack : liveKitTrack;
 
     startAudioLevelMeter(track);
-  }, [activeRoom, connectionState, isTalking, micMuted, muted, setState, startAudioLevelMeter, stopAudioLevelMeter, usePushToTalk]);
+  }, [connectionState, isTalking, micMuted, muted, roomRevision, setState, startAudioLevelMeter, stopAudioLevelMeter, usePushToTalk]);
 
   useEffect(() => () => stopAudioLevelMeter(), [stopAudioLevelMeter]);
 
   useEffect(() => {
-    if (!activeRoom) {
+    const room = roomRef.current;
+    if (!room) {
       syncLocalMediaState(null);
       return;
     }
 
-    syncLocalMediaState(activeRoom);
-  }, [activeRoom, syncLocalMediaState]);
+    syncLocalMediaState(room);
+  }, [roomRevision, syncLocalMediaState]);
 
   const contextValue: VoiceContextType = {
-    activeRoom,
+    providerId,
+    connectionHandle,
     activeChannelId,
     activeChannelName,
     connectionState,
     error,
     cameraError,
     screenShareError,
+    participants,
+    activeSpeakerIds,
     connectToChannel,
     disconnect,
+    getNativeHandle: () => roomRef.current,
     token,
     muted,
     micMuted,
@@ -1523,10 +1628,10 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
     localParticipantId,
     outputVolume,
     setOutputVolume,
+    setParticipantVolume,
     screenShareAudioError,
     localAudioLevel,
   };
 
   return contextValue;
 };
-import { storage } from '../../../shared/config/storage';

@@ -1,9 +1,10 @@
-import { Room } from 'livekit-client';
+import { type VoiceConnectionHandle, type VoiceParticipant, type VoiceProviderId } from '../providers/types';
 
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'reconnecting';
 
 export interface VoiceState {
-  activeRoom: Room | null;
+  providerId: VoiceProviderId | null;
+  connectionHandle: VoiceConnectionHandle | null;
   activeChannelId: number | null;
   activeChannelName: string | null;
   connectionState: ConnectionState;
@@ -11,6 +12,8 @@ export interface VoiceState {
   cameraError: string | null;
   screenShareError: string | null;
   screenShareAudioError: string | null;
+  participants: VoiceParticipant[];
+  activeSpeakerIds: string[];
   muted: boolean;
   micMuted: boolean;
   usePushToTalk: boolean;

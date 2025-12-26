@@ -112,7 +112,7 @@ export const ChannelSidebar = ({
 
   const { settings, updateDevices } = useSettings();
   const { t } = useTranslation();
-  const { activeRoom, activeChannelId: voiceChannelId, connectionState, activeChannelName, disconnect, isCameraEnabled, isScreenSharing, toggleCamera, toggleScreenShare, cameraError, screenShareError, isPublishingCamera, isPublishingScreen, selectedAudioInputId, selectedVideoInputId, localAudioLevel } = useVoice();
+  const { participants, activeChannelId: voiceChannelId, connectionState, activeChannelName, disconnect, isCameraEnabled, isScreenSharing, toggleCamera, toggleScreenShare, cameraError, screenShareError, isPublishingCamera, isPublishingScreen, selectedAudioInputId, selectedVideoInputId, localAudioLevel } = useVoice();
   const { channelPresence } = useSocket();
 
   const [audioInputs, setAudioInputs] = useState<MediaDeviceInfo[]>([]);
@@ -125,7 +125,7 @@ export const ChannelSidebar = ({
   );
 
   const voiceChannels = useMemo(() => [...uncategorized, ...categories.flatMap((cat) => cat.channels)].filter((ch) => ch.type === 'voice').sort((a, b) => a.name.localeCompare(b.name)), [categories, uncategorized]);
-  const participantCount = activeRoom ? activeRoom.numParticipants : 0;
+  const participantCount = participants.length;
   const shouldShowVoiceParticipants = connectionState === 'connected' && participantCount > 0;
   const accentColor = useMemo(() => (serverId ? settings.theme.serverAccents?.[serverId] ?? settings.theme.accentColor : settings.theme.accentColor), [serverId, settings.theme]);
 

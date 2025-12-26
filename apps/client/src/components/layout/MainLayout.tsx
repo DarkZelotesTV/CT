@@ -188,13 +188,15 @@ export const MainLayout = () => {
 
   // Voice Context
   const {
-    activeRoom,
+    providerId,
+    getNativeHandle,
     activeChannelId: connectedVoiceChannelId,
     activeChannelName: connectedVoiceChannelName,
     connectionState,
     muted,
     connectToChannel,
   } = useVoice();
+  const nativeRoom = providerId === 'livekit' ? ((getNativeHandle?.() as any) as import('livekit-client').Room | null) : null;
 
   const activeAccent = useMemo(
     () =>
@@ -959,11 +961,11 @@ export const MainLayout = () => {
         </div>
       )}
 
-      {activeRoom && !muted && <RoomAudioRenderer />}
+      {nativeRoom && !muted && <RoomAudioRenderer />}
     </div>
     </TopBarProvider>
   );
 
-  if (!activeRoom) return ui;
-  return <RoomContext.Provider value={activeRoom}>{ui}</RoomContext.Provider>;
+  if (!nativeRoom) return ui;
+  return <RoomContext.Provider value={nativeRoom}>{ui}</RoomContext.Provider>;
 };

@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { MicOff, Monitor, Video, Volume2 } from 'lucide-react';
-import { RoomEvent, Track } from 'livekit-client';
 import { useVoice } from '../..';
 import { useSettings } from '../../../../context/SettingsContext';
 
@@ -17,59 +16,10 @@ type VoicePerson = {
  * Shows who is currently in the voice call and highlights active speakers.
  */
 export const VoiceParticipantsPanel = () => {
-  const { activeRoom, connectionState, outputVolume } = useVoice();
+  const { participants, activeSpeakerIds, connectionState, outputVolume, setParticipantVolume } = useVoice();
   const { settings, updateTalk } = useSettings();
-  const [people, setPeople] = useState<VoicePerson[]>([]);
-  const [activeSpeakerSids, setActiveSpeakerSids] = useState<Set<string>>(new Set());
-
-  const roomAny = activeRoom as any;
-
-  const refresh = () => {
-    if (!roomAny || connectionState !== 'connected') {
-      setPeople([]);
-      return;
-    }
-
-    const local = roomAny.localParticipant;
-    const remoteMap: Map<string, any> = roomAny.participants ?? roomAny.remoteParticipants ?? new Map();
-    const remotes = Array.from(remoteMap.values());
-
-    const list: any[] = [local, ...remotes].filter(Boolean);
-
-    const next: VoicePerson[] = list.map((p: any) => {
-      const sid = String(p?.sid || (p?.identity ?? p?.name ?? 'local'));
-      const label = String(p?.name || p?.identity || p?.metadata || (p?.isLocal ? 'Du' : 'User'));
-      const micEnabled = typeof p?.isMicrophoneEnabled === 'boolean' ? p.isMicrophoneEnabled : true;
-      const isLocal = !!p?.isLocal || p === local;
-      const cameraEnabled = !!p?.isCameraEnabled;
-      const screenShareEnabled = !!p?.isScreenShareEnabled;
-      return { sid, label, isLocal, micEnabled, cameraEnabled, screenShareEnabled };
-    });
-
-    // Sort: local first, then alphabetically
-    next.sort((a, b) => {
-      if (a.isLocal && !b.isLocal) return -1;
-      if (!a.isLocal && b.isLocal) return 1;
-      return a.label.localeCompare(b.label);
-    });
-
-    setPeople(next);
-  };
 
   const savedVolumes = settings.talk.participantVolumes || {};
-
-  const applyVolumeToParticipant = useCallback(
-    (sid: string, volumeOverride?: number) => {
-      if (!activeRoom) return;
-      const participant = activeRoom.remoteParticipants.get(sid);
-      if (!participant) return;
-
-      const volume = (volumeOverride ?? savedVolumes[sid] ?? 1) * (outputVolume ?? 1);
-
-      participant.setVolume(volume);
-    },
-    [activeRoom, outputVolume, savedVolumes]
-  );
 
   const handleVolumeChange = useCallback(
     (sid: string, volumePercent: number) => {
@@ -80,78 +30,51 @@ export const VoiceParticipantsPanel = () => {
           [sid]: volume,
         },
       });
-      applyVolumeToParticipant(sid, volume);
+      setParticipantVolume?.(sid, volume);
     },
-    [applyVolumeToParticipant, savedVolumes, updateTalk]
+    [savedVolumes, setParticipantVolume, updateTalk]
   );
 
   useEffect(() => {
-    if (!activeRoom || connectionState !== 'connected') {
-      setPeople([]);
-      setActiveSpeakerSids(new Set());
-      return;
-    }
+    if (connectionState !== 'connected') return;
+    participants
+      .filter((p) => !p.isLocal)
+      .forEach((p) => {
+        const baseVolume = savedVolumes[p.id] ?? 1;
+        setParticipantVolume?.(p.id, baseVolume);
+      });
+  }, [connectionState, participants, savedVolumes, setParticipantVolume, outputVolume]);
 
-    refresh();
+  const displayPeople: VoicePerson[] = useMemo(() => {
+    const mapped = participants.map((p) => ({
+      sid: p.id,
+      label: p.name,
+      isLocal: p.isLocal,
+      micEnabled: p.isMicrophoneEnabled,
+      cameraEnabled: p.isCameraEnabled,
+      screenShareEnabled: p.isScreenShareEnabled,
+    }));
 
-    const handleSpeakers = (speakers: any[]) => {
-      setActiveSpeakerSids(new Set((speakers || []).map((s) => String(s?.sid))));
-    };
-
-    const handleTrackSubscribed = (track: any, publication: any, participant: any) => {
-      if (participant && !participant.isLocal && track.kind === Track.Kind.Audio) {
-        applyVolumeToParticipant(participant.sid);
-      }
-    };
-
-    activeRoom.on(RoomEvent.ParticipantConnected, refresh);
-    activeRoom.on(RoomEvent.ParticipantDisconnected, refresh);
-    activeRoom.on(RoomEvent.LocalTrackPublished, refresh);
-    activeRoom.on(RoomEvent.LocalTrackUnpublished, refresh);
-    activeRoom.on(RoomEvent.TrackPublished, refresh);
-    activeRoom.on(RoomEvent.TrackUnpublished, refresh);
-    activeRoom.on(RoomEvent.TrackMuted, refresh);
-    activeRoom.on(RoomEvent.TrackUnmuted, refresh);
-    activeRoom.on(RoomEvent.ActiveSpeakersChanged, handleSpeakers);
-    activeRoom.on(RoomEvent.TrackSubscribed, handleTrackSubscribed);
-
-    return () => {
-      activeRoom.off(RoomEvent.ParticipantConnected, refresh);
-      activeRoom.off(RoomEvent.ParticipantDisconnected, refresh);
-      activeRoom.off(RoomEvent.LocalTrackPublished, refresh);
-      activeRoom.off(RoomEvent.LocalTrackUnpublished, refresh);
-      activeRoom.off(RoomEvent.TrackPublished, refresh);
-      activeRoom.off(RoomEvent.TrackUnpublished, refresh);
-      activeRoom.off(RoomEvent.TrackMuted, refresh);
-      activeRoom.off(RoomEvent.TrackUnmuted, refresh);
-      activeRoom.off(RoomEvent.ActiveSpeakersChanged, handleSpeakers);
-      activeRoom.off(RoomEvent.TrackSubscribed, handleTrackSubscribed);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeRoom, applyVolumeToParticipant, connectionState]);
-
-  useEffect(() => {
-    if (!activeRoom || connectionState !== 'connected') return;
-    Array.from(activeRoom.remoteParticipants.values()).forEach((p) => {
-      applyVolumeToParticipant(p.sid);
+    mapped.sort((a, b) => {
+      if (a.isLocal && !b.isLocal) return -1;
+      if (!a.isLocal && b.isLocal) return 1;
+      return a.label.localeCompare(b.label);
     });
-  }, [activeRoom, applyVolumeToParticipant, connectionState, savedVolumes]);
+    return mapped;
+  }, [participants]);
 
-  const hasRemoteParticipants = useMemo(() => people.some((p) => !p.isLocal), [people]);
+  const hasRemoteParticipants = useMemo(() => displayPeople.some((p) => !p.isLocal), [displayPeople]);
   const isConnected = connectionState === 'connected';
+  const activeSpeakerSidSet = useMemo(() => new Set(activeSpeakerIds), [activeSpeakerIds]);
 
-  // --- FIX: Hook nach oben verschoben, VOR das return ---
   const countLabel = useMemo(() => {
-    if (!people.length) return '';
-    return `${people.length} im Talk`;
-  }, [people.length]);
+    if (!displayPeople.length) return '';
+    return `${displayPeople.length} im Talk`;
+  }, [displayPeople.length]);
 
   if (!isConnected || !hasRemoteParticipants) {
     return null;
   }
-
-  const displayPeople = people;
-  const displaySpeakerSids = activeSpeakerSids;
 
   return (
     <div className="bg-[#0b0c0f] border-t border-white/5 px-2 py-2">
@@ -165,7 +88,7 @@ export const VoiceParticipantsPanel = () => {
           <div className="px-2 py-1 text-[11px] text-gray-500">Niemand im Talk</div>
         )}
         {displayPeople.map((p) => {
-          const isSpeaking = displaySpeakerSids.has(p.sid);
+          const isSpeaking = activeSpeakerSidSet.has(p.sid);
           return (
             <div
               key={p.sid}
