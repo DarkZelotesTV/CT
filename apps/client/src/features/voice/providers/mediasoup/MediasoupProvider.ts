@@ -132,6 +132,7 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
   const consumerPeerRef = useRef<Map<string, string>>(new Map());
   const peerSnapshotRef = useRef<JoinRoomAck['peers']>([]);
   const connectingRef = useRef(false);
+  const lastJoinedChannelRef = useRef<{ id: number; name: string | null } | null>(null);
   const [autoplayBlocked, setAutoplayBlocked] = useState(false);
   const [audioRenderRevision, setAudioRenderRevision] = useState(0);
 
@@ -301,6 +302,14 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
   useEffect(() => {
     applyOutputVolume(state.outputVolume, state.muted);
   }, [applyOutputVolume, state.muted, state.outputVolume]);
+
+  useEffect(() => {
+    if (state.activeChannelId) {
+      lastJoinedChannelRef.current = { id: state.activeChannelId, name: state.activeChannelName };
+    } else {
+      lastJoinedChannelRef.current = null;
+    }
+  }, [state.activeChannelId, state.activeChannelName]);
 
   const requestAutoplay = useCallback(async () => {
     const elements = Array.from(audioElementsRef.current.values());
@@ -790,6 +799,32 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
     }),
     [audioRenderRevision, autoplayBlocked, getAudioElements, requestAutoplay]
   );
+
+  const rejoinActiveChannel = useCallback(async () => {
+    if (!socket) return;
+    const lastChannel = lastJoinedChannelRef.current;
+    if (!lastChannel || connectingRef.current) return;
+
+    setState({ connectionState: 'reconnecting', error: null, providerId: 'mediasoup' });
+    cleanupConsumers();
+    cleanupTransports();
+    peerSnapshotRef.current = [];
+
+    try {
+      await connectToChannel(lastChannel.id, lastChannel.name || `Talk ${lastChannel.id}`);
+    } catch (err: any) {
+      setState({ error: err?.message || 'Verbindung fehlgeschlagen', connectionState: 'disconnected' });
+    }
+  }, [cleanupConsumers, cleanupTransports, connectToChannel, setState, socket]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.io.on('reconnect', rejoinActiveChannel);
+    return () => {
+      socket.io.off('reconnect', rejoinActiveChannel);
+    };
+  }, [rejoinActiveChannel, socket]);
 
   return {
     providerId: 'mediasoup',
