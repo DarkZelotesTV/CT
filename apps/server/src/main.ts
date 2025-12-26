@@ -19,6 +19,7 @@ import {
   removeUserFromAllChannels,
   removeUserFromChannel,
   getUserChannelIds,
+  getSocketsForUser,
   unregisterUserSocket,
 } from './realtime/registry';
 
@@ -47,6 +48,8 @@ import {
   rtcProduceSchema,
   rtcResumeConsumerSchema,
   rtcTransportDefaultsSchema,
+  p2pJoinSchema,
+  p2pSignalSchema,
 } from './realtime/socketSchemas';
 import { createDefaultTokenBucket, TokenBucket } from './realtime/rateLimiter';
 import type { ZodTypeAny } from 'zod';
@@ -180,6 +183,13 @@ const sendPresenceSnapshot = async (socket: any) => {
 };
 
 const rtcRouters = new Map<number, MediasoupRouter>();
+const p2pVoiceRooms = new Map<number, Set<number>>();
+
+const buildP2pPeerSummary = (user: User) => ({
+  userId: user.id,
+  username: user.username,
+  avatarUrl: user.avatar_url,
+});
 const closeRtcRouterForChannel = (channelId: number) => {
   const router = rtcRouters.get(channelId);
   if (router) {
@@ -219,6 +229,37 @@ rtcRoomManager.setRoomEmptyHandler((roomName) => {
     closeRtcRouterForChannel(channelId);
   }
 });
+
+const listActiveP2pPeers = async (channelId: number) => {
+  const peers = Array.from(p2pVoiceRooms.get(channelId) || []);
+  if (!peers.length) return [];
+  const users = await User.findAll({ where: { id: peers }, attributes: ['id', 'username', 'avatar_url'] });
+  return users.map((user) => buildP2pPeerSummary(user));
+};
+
+const removeFromP2pRoom = (channelId: number, userId: number, originSocket?: any) => {
+  if (originSocket) {
+    const socketChannels: Set<number> = (originSocket.data as any).p2pChannels || new Set<number>();
+    socketChannels.delete(channelId);
+    (originSocket.data as any).p2pChannels = socketChannels;
+  }
+
+  const sockets = getSocketsForUser(userId);
+  const hasOtherSockets = Array.from(sockets).some((sock: any) => sock !== originSocket && (sock.data as any)?.p2pChannels?.has(channelId));
+  if (hasOtherSockets) return;
+
+  const participants = p2pVoiceRooms.get(channelId);
+  if (!participants) return;
+
+  const wasMember = participants.delete(userId);
+  if (!participants.size) {
+    p2pVoiceRooms.delete(channelId);
+  }
+
+  if (wasMember) {
+    io.to(`channel_${channelId}`).emit('p2p:peer-left', { channelId, peerId: userId });
+  }
+};
 
 const ensureVoiceChannelAccess = async (channelId: number, userId: number) => {
   if (!Number.isFinite(channelId) || channelId <= 0) {
@@ -357,6 +398,7 @@ io.on('connection', async (socket) => {
   const userId = (socket.data as any).userId;
   const numericUserId = userId ? Number(userId) : null;
   (socket.data as any).joinedChannels = new Set<number>();
+  (socket.data as any).p2pChannels = new Set<number>();
   (socket.data as any).heartbeatInterval = null;
   (socket.data as any).presenceSnapshotInterval = null;
   (socket.data as any).rtcTransportDefaults = resolveWebRtcTransportDefaults();
@@ -860,6 +902,97 @@ io.on('connection', async (socket) => {
     }
   );
 
+  socket.on(
+    'p2p:join',
+    async (payload: { channelId?: number }, ack?: (payload: { success: boolean; error?: string; peers?: any[] }) => void) => {
+      const respond = (body: { success: boolean; error?: string; peers?: any[] }) => {
+        if (typeof ack === 'function') ack(body);
+      };
+
+      try {
+        consumeTokenOrThrow(socket);
+        if (!numericUserId) return respond({ success: false, error: 'unauthorized' });
+
+        const { channelId } = parsePayload(p2pJoinSchema, payload);
+        await ensureVoiceChannelAccess(channelId, numericUserId);
+
+        const joinedChannels: Set<number> = (socket.data as any).joinedChannels;
+        if (!joinedChannels.has(channelId)) {
+          socket.join(`channel_${channelId}`);
+          joinedChannels.add(channelId);
+        }
+
+        const peers = await listActiveP2pPeers(channelId);
+
+        const participants = p2pVoiceRooms.get(channelId) || new Set<number>();
+        participants.add(numericUserId);
+        p2pVoiceRooms.set(channelId, participants);
+
+        const p2pChannels: Set<number> = (socket.data as any).p2pChannels || new Set<number>();
+        p2pChannels.add(channelId);
+        (socket.data as any).p2pChannels = p2pChannels;
+
+        const self = await User.findByPk(numericUserId, { attributes: ['id', 'username', 'avatar_url'] });
+        const peerSummary = self ? buildP2pPeerSummary(self) : { userId: numericUserId };
+
+        socket.to(`channel_${channelId}`).emit('p2p:peer-joined', { channelId, peer: peerSummary });
+
+        respond({ success: true, peers });
+      } catch (err: any) {
+        console.error('Fehler bei p2p:join:', err);
+        respond({ success: false, error: err?.message || 'Konnte P2P-Raum nicht öffnen' });
+      }
+    }
+  );
+
+  socket.on(
+    'p2p:signal',
+    async (
+      payload: { channelId?: number; targetUserId?: number; description?: Record<string, any>; candidate?: Record<string, any> },
+      ack?: (payload: { success: boolean; error?: string }) => void
+    ) => {
+      const respond = (body: { success: boolean; error?: string }) => {
+        if (typeof ack === 'function') ack(body);
+      };
+
+      try {
+        consumeTokenOrThrow(socket);
+        if (!numericUserId) return respond({ success: false, error: 'unauthorized' });
+
+        const { channelId, targetUserId, description, candidate } = parsePayload(p2pSignalSchema, payload);
+        if (!channelId) return respond({ success: false, error: 'Kanal fehlt' });
+
+        const participants = p2pVoiceRooms.get(channelId);
+        if (!participants || !participants.has(numericUserId)) {
+          return respond({ success: false, error: 'Nicht im P2P-Raum' });
+        }
+
+        if (!targetUserId || !participants.has(targetUserId)) {
+          return respond({ success: false, error: 'Ziel nicht im Raum' });
+        }
+
+        const targets = getSocketsForUser(targetUserId);
+        if (!targets.size) {
+          return respond({ success: false, error: 'Ziel nicht verbunden' });
+        }
+
+        targets.forEach((target) => {
+          target.emit('p2p:signal', {
+            channelId,
+            fromUserId: numericUserId,
+            description,
+            candidate,
+          });
+        });
+
+        respond({ success: true });
+      } catch (err: any) {
+        console.error('Fehler bei p2p:signal:', err);
+        respond({ success: false, error: err?.message || 'Konnte Signal nicht senden' });
+      }
+    }
+  );
+
   socket.on('join_channel', async (channelId: number) => {
     if (!numericUserId) return;
 
@@ -879,6 +1012,7 @@ io.on('connection', async (socket) => {
             rtcRooms.delete(prevRoomName);
           }
           removeUserFromChannel(prevChannel, numericUserId);
+          removeFromP2pRoom(prevChannel, numericUserId, socket);
           joinedChannels.delete(prevChannel);
           globalChannels.delete(prevChannel);
         }
@@ -950,6 +1084,7 @@ io.on('connection', async (socket) => {
       socket.leave(`channel_${validChannelId}`);
       joinedChannels.delete(validChannelId);
       removeUserFromChannel(validChannelId, numericUserId);
+      removeFromP2pRoom(validChannelId, numericUserId, socket);
 
       cleanupRtcResources(socket, { participantId: numericUserId, channelId: validChannelId });
     } catch (err: any) {
@@ -965,6 +1100,7 @@ io.on('connection', async (socket) => {
        for (const ch of Array.from(joinedChannels)) {
          socket.leave(`channel_${ch}`);
          removeUserFromChannel(ch, numericUserId);
+         removeFromP2pRoom(ch, numericUserId, socket);
          joinedChannels.delete(ch);
        }
 

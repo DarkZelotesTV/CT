@@ -53,3 +53,14 @@ export const requestServerMembersSchema = z.object({
 });
 
 export const channelIdSchema = z.number().int().positive();
+
+export const p2pJoinSchema = z.object({
+  channelId: z.number().int().positive(),
+});
+
+export const p2pSignalSchema = z.object({
+  channelId: z.number().int().positive(),
+  targetUserId: z.number().int().positive(),
+  description: z.record(z.any()).optional(),
+  candidate: z.record(z.any()).optional(),
+});
