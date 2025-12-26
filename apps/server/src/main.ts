@@ -22,10 +22,10 @@ import {
 } from './realtime/registry';
 
 // Models Importe (für Socket Logik)
-import type { Router as MediasoupRouter, RtpCapabilities } from 'mediasoup/node/lib/types';
+import type { Router as MediasoupRouter, RtpCapabilities, WebRtcTransport } from 'mediasoup/node/lib/types';
 import { User, ServerMember, MemberRole, Role, Channel } from './models';
 import { resolveUserFromIdentity } from './utils/identityAuth';
-import { resolveWebRtcTransportDefaults, rtcRoomManager, rtcWorkerPool, type WebRtcTransportDefaults } from './rtc';
+import { resolveWebRtcTransportDefaults, rtcRoomManager, rtcWorkerPool, type RtcTransportDirection, type WebRtcTransportDefaults } from './rtc';
 
 const PORT = Number(process.env.PORT || 3001);
 const TLS_CERT_PATH = process.env.TLS_CERT_PATH || process.env.HTTPS_CERT_PATH;
@@ -310,6 +310,7 @@ io.on('connection', async (socket) => {
   (socket.data as any).presenceSnapshotInterval = null;
   (socket.data as any).rtcTransportDefaults = resolveWebRtcTransportDefaults();
   (socket.data as any).rtcRooms = new Set<string>();
+  (socket.data as any).rtcTransports = new Map<string, WebRtcTransport>();
 
   if (numericUserId) {
      console.log(`User ${numericUserId} connected (Socket ID: ${socket.id})`);
@@ -349,6 +350,96 @@ io.on('connection', async (socket) => {
       } catch (err: any) {
         console.error('Fehler beim Auflösen der RTC-Transport-Defaults:', err);
         if (typeof ack === 'function') ack({ success: false, error: err?.message || 'Unbekannter Fehler' });
+      }
+    }
+  );
+
+  socket.on(
+    'rtc:createTransport',
+    async (
+      payload: { channelId?: number; direction?: RtcTransportDirection },
+      ack?: (payload: {
+        success: boolean;
+        error?: string;
+        transport?: {
+          id: string;
+          direction: RtcTransportDirection;
+          iceParameters: WebRtcTransport['iceParameters'];
+          iceCandidates: WebRtcTransport['iceCandidates'];
+          dtlsParameters: WebRtcTransport['dtlsParameters'];
+          sctpParameters?: WebRtcTransport['sctpParameters'];
+        };
+      }) => void
+    ) => {
+      const respond = (body: {
+        success: boolean;
+        error?: string;
+        transport?: {
+          id: string;
+          direction: RtcTransportDirection;
+          iceParameters: WebRtcTransport['iceParameters'];
+          iceCandidates: WebRtcTransport['iceCandidates'];
+          dtlsParameters: WebRtcTransport['dtlsParameters'];
+          sctpParameters?: WebRtcTransport['sctpParameters'];
+        };
+      }) => {
+        if (typeof ack === 'function') ack(body);
+      };
+
+      try {
+        if (!numericUserId) {
+          return respond({ success: false, error: 'unauthorized' });
+        }
+
+        const channelId = Number(payload?.channelId);
+        const direction = payload?.direction;
+
+        if (direction !== 'send' && direction !== 'recv') {
+          return respond({ success: false, error: 'Ungültige direction' });
+        }
+
+        await ensureVoiceChannelAccess(channelId, numericUserId);
+
+        const defaults = (socket.data as any).rtcTransportDefaults || resolveWebRtcTransportDefaults();
+        (socket.data as any).rtcTransportDefaults = defaults;
+        const router = await getOrCreateRtcRouter(channelId);
+        const transport = await router.createWebRtcTransport({
+          listenIps: defaults.listenIps,
+          enableUdp: defaults.enableUdp,
+          enableTcp: defaults.enableTcp,
+          initialAvailableOutgoingBitrate: defaults.initialAvailableOutgoingBitrate,
+          appData: {
+            channelId,
+            direction,
+            participantId: numericUserId,
+            socketId: socket.id,
+          },
+        });
+
+        const rtcTransports: Map<string, WebRtcTransport> = (socket.data as any).rtcTransports || new Map();
+        rtcTransports.set(transport.id, transport);
+        (socket.data as any).rtcTransports = rtcTransports;
+
+        transport.on('close', () => rtcTransports.delete(transport.id));
+        transport.on('routerclose', () => rtcTransports.delete(transport.id));
+
+        const roomName = rtcRoomNameForChannel(channelId);
+        rtcRoomManager.createTransport(roomName, String(numericUserId), direction, { transportId: transport.id }, transport.id);
+
+        respond({
+          success: true,
+          transport: {
+            id: transport.id,
+            direction,
+            iceParameters: transport.iceParameters,
+            iceCandidates: transport.iceCandidates,
+            dtlsParameters: transport.dtlsParameters,
+            sctpParameters: transport.sctpParameters,
+          },
+        });
+      } catch (err: any) {
+        console.error('Fehler bei rtc:createTransport:', err);
+        respond({ success: false, error: err?.message || 'Konnte RTC-Transport nicht erstellen' });
       }
     }
   );
@@ -502,6 +593,16 @@ io.on('connection', async (socket) => {
        if ((socket.data as any).presenceSnapshotInterval) {
          clearInterval((socket.data as any).presenceSnapshotInterval);
        }
+
+       const rtcTransports: Map<string, WebRtcTransport> = (socket.data as any).rtcTransports || new Map();
+       rtcTransports.forEach((transport) => {
+         try {
+           transport?.close();
+         } catch (err) {
+           console.warn('Fehler beim Schließen eines RTC-Transports:', err);
+         }
+       });
+       rtcTransports.clear();
 
        cleanupRtcRooms(socket, numericUserId);
        unregisterUserSocket(numericUserId, socket);
