@@ -25,15 +25,25 @@ docker compose up -d mysql redis livekit
 
 ## Server (apps/server)
 1. Build erstellen: `npm run build --workspace apps/server`
-2. Datenbankschema anwenden und Server starten: `npm run start --workspace apps/server`
-   - Der Start führt `sequelize.sync({ alter: true })` aus und legt Tabellen entsprechend der Modelle an.
-3. Für Produktion kann der kompilierte Output (`apps/server/dist`) mit `node dist/main.js` gestartet werden.
+2. Migrationen anwenden: `npm run db:migrate --workspace apps/server`
+   - `db:migrate:undo` bzw. `db:migrate:undo:all` machen Änderungen rückgängig, `db:migrate:status` zeigt den Stand.
+3. Server starten: `npm run start --workspace apps/server` (setzt ein migriertes Schema voraus)
+4. Für Produktion kann der kompilierte Output (`apps/server/dist`) mit `node dist/main.js` gestartet werden.
 
 ### Umgebungsvariablen
 - `DB_DIALECT` (optional, `sqlite` oder `mysql`, Standard: `sqlite`)
 - `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` für MySQL
-- `DB_STORAGE` (optional, Pfad für SQLite-File, Standard: `database.sqlite`)
+- `DB_STORAGE` (optional, Pfad für SQLite-File, Standard: `apps/server/data/clovertalk.db`)
 - ggf. weitere LiveKit- oder JWT-Variablen gemäß `.env` Beispiel
+
+### Sequelize-Migrationen
+- CLI-Konfiguration liegt unter `apps/server/sequelize.config.cjs`, die Pfade werden über `.sequelizerc` gesetzt.
+- Migrationen liegen in `apps/server/src/migrations`.
+- Ausführung (im Repo-Root oder im Server-Verzeichnis):
+  - Anwenden: `npm run db:migrate --workspace apps/server`
+  - Rückgängig: `npm run db:migrate:undo --workspace apps/server`
+  - Komplett zurücksetzen: `npm run db:migrate:undo:all --workspace apps/server`
+  - Status prüfen: `npm run db:migrate:status --workspace apps/server`
 
 ## Desktop-Client (apps/client)
 1. Build & Typprüfung (ohne Docker): `npm run build --workspace apps/client`

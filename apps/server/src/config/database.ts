@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 import { Dialect, Sequelize } from 'sequelize';
 import dotenv from 'dotenv';
 
@@ -6,6 +7,16 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const dialect = (process.env.DB_DIALECT || 'sqlite') as Dialect;
+
+const resolveSqliteStoragePath = () => {
+  const defaultStorage = path.resolve(__dirname, '../../data/clovertalk.db');
+  const storagePath = process.env.DB_STORAGE
+    ? path.resolve(process.env.DB_STORAGE)
+    : defaultStorage;
+
+  fs.mkdirSync(path.dirname(storagePath), { recursive: true });
+  return storagePath;
+};
 
 const createSequelizeInstance = () => {
   if (dialect === 'mysql') {
@@ -28,9 +39,7 @@ const createSequelizeInstance = () => {
   }
 
   if (dialect === 'sqlite') {
-    const dataDirectory = './data';
-    fs.mkdirSync(dataDirectory, { recursive: true });
-    const storagePath = `${dataDirectory}/clovertalk.db`;
+    const storagePath = resolveSqliteStoragePath();
 
     return new Sequelize({
       dialect,
