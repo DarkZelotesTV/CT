@@ -1,5 +1,5 @@
 import { AccessToken, RoomServiceClient, type ParticipantInfo } from 'livekit-server-sdk';
-import { getRtcModule } from '../realtime/rtc';
+import { getRoomManager } from '../rtc';
 
 export type VoiceProviderId = 'livekit' | 'mediasoup';
 
@@ -113,7 +113,7 @@ class LiveKitVoiceProvider implements VoiceProvider {
 
 class MediasoupVoiceProvider implements VoiceProvider {
   public readonly id: VoiceProviderId = 'mediasoup';
-  private readonly rtc = getRtcModule();
+  private readonly rtc = getRoomManager();
   public readonly capabilities: VoiceProviderCapabilities = {
     tokens: false,
     participantControls: true,
