@@ -585,6 +585,7 @@ io.on('connection', async (socket) => {
           typeof value === 'string' && ['voice', 'high', 'music'].includes(value);
         const requestedPreset: ProducerPresetName | null = isValidPreset(appData?.audioPreset) ? appData?.audioPreset : null;
         const preset = resolveProducerPreset(requestedPreset);
+        const participantIdentity = String(numericUserId);
 
         const producer = await transport.produce({
           kind: 'audio',
@@ -611,16 +612,25 @@ io.on('connection', async (socket) => {
           appData: producer.appData as Record<string, any>,
         });
 
-        const participant = rtcRoomManager.listParticipants(roomName).find((peer) => peer.identity === String(numericUserId));
+        const participant = rtcRoomManager.listParticipants(roomName).find((peer) => peer.identity === participantIdentity);
 
         if (participant) {
           io.to(roomName).emit('rtc:newProducer', { roomName, channelId, peer: participant });
         }
 
-        producer.on('transportclose', () => {
-          rtcRoomManager.removeProducer(roomName, String(numericUserId), producer.id);
+        let closedNotified = false;
+        const notifyProducerClosed = () => {
+          if (closedNotified) return;
+          closedNotified = true;
+
+          rtcRoomManager.removeProducer(roomName, participantIdentity, producer.id);
           rtcProducers.delete(producer.id);
-        });
+          const updatedPeer = rtcRoomManager.listParticipants(roomName).find((peer) => peer.identity === participantIdentity);
+          io.to(roomName).emit('producerClosed', { roomName, channelId, producerId: producer.id, peer: updatedPeer });
+        };
+
+        producer.on('transportclose', notifyProducerClosed);
+        producer.on('close', notifyProducerClosed);
 
         respond({ success: true, producerId: producer.id });
       } catch (err: any) {

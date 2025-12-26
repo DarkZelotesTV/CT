@@ -184,6 +184,50 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
     setAutoplayBlocked(false);
   }, []);
 
+  const detachConsumer = useCallback(
+    (consumerId: string) => {
+      const consumer = consumersRef.current.get(consumerId);
+      if (consumer) {
+        try {
+          consumer.close();
+        } catch {
+          /* noop */
+        }
+        consumersRef.current.delete(consumerId);
+      }
+
+      consumerPeerRef.current.delete(consumerId);
+
+      const audio = audioElementsRef.current.get(consumerId);
+      if (audio) {
+        try {
+          audio.pause();
+          (audio.srcObject as MediaStream | null)?.getTracks().forEach((t) => t.stop());
+        } catch {
+          /* noop */
+        }
+        audioElementsRef.current.delete(consumerId);
+      }
+
+      setAudioRenderRevision((v) => v + 1);
+      if (audioElementsRef.current.size === 0) setAutoplayBlocked(false);
+    },
+    [setAudioRenderRevision]
+  );
+
+  const cleanupPeerConsumers = useCallback(
+    (peerId: string, activeProducerIds: string[]) => {
+      consumersRef.current.forEach((consumer, consumerId) => {
+        const mappedPeer = consumerPeerRef.current.get(consumerId);
+        const producerId = (consumer as any)?.producerId as string | undefined;
+        if (mappedPeer === peerId && (!producerId || !activeProducerIds.includes(producerId))) {
+          detachConsumer(consumerId);
+        }
+      });
+    },
+    [detachConsumer]
+  );
+
   const cleanupTransports = useCallback(() => {
     const track = producerRef.current?.track as MediaStreamTrack | undefined;
     try {
@@ -303,6 +347,22 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
       });
     },
     [setState]
+  );
+
+  const syncPeerSnapshot = useCallback(
+    (peer: PeerInfo | undefined, removedProducerId?: string) => {
+      if (!peer?.identity) return;
+
+      const peers = peerSnapshotRef.current || [];
+      const filtered = peers.filter((p) => p.identity !== peer.identity);
+      const sanitizedTracks = (peer.tracks || []).filter((track) => !removedProducerId || track.sid !== removedProducerId);
+      const nextPeers = sanitizedTracks.length ? [...filtered, { ...peer, tracks: sanitizedTracks }] : filtered;
+
+      peerSnapshotRef.current = nextPeers;
+      updateParticipants(nextPeers, localUserId);
+      cleanupPeerConsumers(String(peer.identity), sanitizedTracks.map((track) => track.sid).filter(Boolean));
+    },
+    [cleanupPeerConsumers, localUserId, updateParticipants]
   );
 
   const attachConsumer = useCallback(
@@ -694,19 +754,22 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
 
     const handleNewProducer = (payload: { channelId?: number; peer?: PeerInfo }) => {
       if (!payload?.peer || payload.channelId !== state.activeChannelId) return;
-      const peer = payload.peer;
-      const peers = peerSnapshotRef.current || [];
-      const filtered = peers.filter((p) => p.identity !== peer.identity);
-      const nextPeers = [...filtered, peer];
-      updateParticipants(nextPeers, localUserId);
-      void consumePeerTracks(peer, payload.channelId ?? 0);
+      syncPeerSnapshot(payload.peer);
+      void consumePeerTracks(payload.peer, payload.channelId ?? 0);
+    };
+
+    const handleProducerClosed = (payload: { channelId?: number; peer?: PeerInfo; producerId?: string }) => {
+      if (!payload?.peer || payload.channelId !== state.activeChannelId) return;
+      syncPeerSnapshot(payload.peer, payload.producerId);
     };
 
     socket.on('rtc:newProducer', handleNewProducer);
+    socket.on('producerClosed', handleProducerClosed);
     return () => {
       socket.off('rtc:newProducer', handleNewProducer);
+      socket.off('producerClosed', handleProducerClosed);
     };
-  }, [consumePeerTracks, localUserId, socket, state.activeChannelId, updateParticipants]);
+  }, [consumePeerTracks, socket, state.activeChannelId, syncPeerSnapshot]);
 
   useEffect(() => {
     return () => {
