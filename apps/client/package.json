@@ -5,6 +5,7 @@
   "main": "dist-electron/main.cjs",
   "scripts": {
     "dev": "vite",
+    "prebuild": "npm -w @discord-clone/shared run build",
     "build": "tsc -p tsconfig.json && vite build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint \"src/**/*.{ts,tsx,js,jsx}\"",
@@ -77,7 +78,7 @@
     },
     "asar": true,
     "win": {
-      "artifactName": "clover_installer.exe",
+      "artifactName": "clover_installer.${ext}",
       "target": [
         "nsis",
         "zip"

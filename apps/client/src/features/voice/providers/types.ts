@@ -46,7 +46,8 @@ export type VoiceProviderRenderers = {
 };
 
 export interface VoiceProviderAdapter {
-  providerId: VoiceProviderId;
+  // Provider id can be null while no provider is connected.
+  providerId: VoiceProviderId | null;
   getNativeHandle?: () => unknown;
   connectToChannel: (channelId: number, channelName: string, options?: { isReconnect?: boolean }) => Promise<void>;
   disconnect: () => Promise<void>;

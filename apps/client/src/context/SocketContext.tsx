@@ -3,7 +3,12 @@ import { io } from 'socket.io-client';
 import { getServerPassword, getServerWebSocketUrl } from '../utils/apiConfig';
 import { computeFingerprint, signMessage } from '../auth/identity';
 import { storage } from '../shared/config/storage';
-import { socketEvents, type TypedSocket, type PresenceUserSnapshot, type ChannelPresenceUser } from '@clover/shared';
+// NOTE: `@discord-clone/shared` currently builds to CJS and re-exports via `__exportStar`.
+// Vite/Rollup can fail to detect `socketEvents` as a named export through that re-export.
+// Runtime constant from the TS source so Vite/Rollup doesn't have to guess CommonJS named exports.
+// (Types stay imported from the package root.)
+import type { TypedSocket, PresenceUserSnapshot, ChannelPresenceUser } from '@discord-clone/shared';
+import { socketEvents } from '../../../../packages/shared/src/socket-events';
 
 interface SocketContextType {
   socket: TypedSocket | null;
@@ -66,24 +71,24 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         timeout: 8000,
       });
 
-      const safeEmit = <E extends keyof TypedSocket>(event: E, ...args: Parameters<TypedSocket[E]>) => {
-        if (!socketInstance.connected) {
-          socketInstance.connect();
-        }
-        // @ts-expect-error intentional forwarding
-        socketInstance.emit(event as any, ...(args as any));
+      const safeEmit = (event: any, ...args: any[]) => {
+        if (!socketInstance.connected) socketInstance.connect();
+        socketInstance.emit(event, ...(args as any));
       };
 
       const registerCoreHandlers = () => {
-        socketInstance.on(socketEvents.presencePing, () => {
+        // Socket.IO's `.on()` is strongly typed by event name. In some TS resolution
+        // modes, `socketEvents.*` can get widened to `string`, which breaks overload
+        // selection. Using explicit literals keeps strict builds happy.
+        socketInstance.on('presence_ping', () => {
           safeEmit(socketEvents.presenceAck);
         });
 
-        socketInstance.on(socketEvents.channelPresenceSnapshot, ({ channelId, users }) => {
+        socketInstance.on('channel_presence_snapshot', ({ channelId, users }) => {
           setChannelPresence((prev) => ({ ...prev, [channelId]: users }));
         });
 
-        socketInstance.on(socketEvents.channelPresenceJoin, ({ channelId, user }) => {
+        socketInstance.on('channel_presence_join', ({ channelId, user }) => {
           setChannelPresence((prev) => {
             const existing = prev[channelId] || [];
             if (existing.some((u) => u.id === user.id)) return prev;
@@ -91,14 +96,14 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           });
         });
 
-        socketInstance.on(socketEvents.channelPresenceLeave, ({ channelId, userId }) => {
+        socketInstance.on('channel_presence_leave', ({ channelId, userId }) => {
           setChannelPresence((prev) => {
             const existing = prev[channelId] || [];
             return { ...prev, [channelId]: existing.filter((u) => u.id !== userId) };
           });
         });
 
-        socketInstance.on(socketEvents.userStatusChange, ({ userId, status }) => {
+        socketInstance.on('user_status_change', ({ userId, status }) => {
           setChannelPresence((prev) => {
             const next: Record<number, ChannelPresenceUser[]> = { ...prev };
             Object.entries(prev).forEach(([chId, users]) => {
@@ -114,7 +119,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           });
         });
 
-        socketInstance.on(socketEvents.presenceSnapshot, ({ users }) => {
+        socketInstance.on('presence_snapshot', ({ users }) => {
           const normalized: Record<number, PresenceUserSnapshot> = {};
           (users || []).forEach((user: PresenceUserSnapshot) => {
             normalized[user.id] = user;
@@ -126,7 +131,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           console.debug('[socket] reconnect attempt');
         });
 
-        socketInstance.io.on('reconnect_error', (err) => {
+        socketInstance.io.on('reconnect_error', (err: any) => {
           console.warn('[socket] reconnect error', err?.message || err);
         });
 
@@ -140,11 +145,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           safeEmit(socketEvents.presenceAck);
         });
 
-        socketInstance.on('connect_error', (err) => {
+        socketInstance.on('connect_error', (err: any) => {
           console.warn('[socket] connect error', err?.message || err);
         });
 
-        socketInstance.on('disconnect', (reason) => {
+        socketInstance.on('disconnect', (reason: string) => {
           console.log('Socket getrennt.', reason);
           setIsConnected(false);
           setChannelPresence({});

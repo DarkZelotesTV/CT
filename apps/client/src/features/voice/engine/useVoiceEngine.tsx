@@ -9,6 +9,7 @@ import { storage } from '../../../shared/config/storage';
 import { type VoiceConnectionHandle, type VoiceParticipant, type VoiceProviderId } from '../providers/types';
 import { liveKitRenderers } from '../providers/livekit/renderers';
 import { type ConnectionState, VoiceState } from '../state/voiceTypes';
+import type { VoiceContextType } from '../state/VoiceContext';
 import {
   LiveKitDisconnectReason,
   LiveKitLocalTrackPublication,
@@ -169,7 +170,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
       setRoomRevision((rev) => rev + 1);
       setState({
         connectionHandle: room
-          ? handle ?? { provider: providerId, sessionId: room.name ?? room.sid ?? providerId }
+          ? handle ?? { provider: providerId, sessionId: room.name ?? (room as any).sid ?? providerId }
           : null,
         providerId: room ? providerId : null,
         participants: snapshotParticipants(room),
@@ -299,13 +300,13 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
       }
 
       try {
-        processedLiveKitTrack.stop();
+        processedTrack.stop();
       } catch (err) {
         console.warn('Gefilterter Track konnte nicht gestoppt werden', err);
       }
 
       try {
-        rawLiveKitTrack.stop();
+        rawTrack.stop();
       } catch (err) {
         console.warn('Quelltrack konnte nicht gestoppt werden', err);
       }
@@ -440,7 +441,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
             /* noop */
           }
           try {
-            existing.processedLiveKitTrack.enabled = true;
+            existing.processedTrack.enabled = true;
           } catch {
             /* noop */
           }
@@ -581,7 +582,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
         const resources = rnnoiseResourcesRef.current;
         if (!resources) return;
         try {
-          resources.processedLiveKitTrack.enabled = false;
+          resources.processedTrack.enabled = false;
         } catch {
           /* noop */
         }
@@ -968,16 +969,16 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
             systemAudioTrack = shouldShareAudio ? stream.getAudioTracks()[0] ?? null : null;
 
             if (streamVideoTrack && selectedTrack !== streamVideoTrack) {
-              streamVideoLiveKitTrack.stop();
+              streamVideoTrack.stop();
             }
           }
 
-          if (!selectedTrack || selectedLiveKitTrack.readyState === 'ended') {
+          if (!selectedTrack || selectedTrack.readyState === 'ended') {
             throw new Error('Kein Videotrack für Screenshare gefunden.');
           }
 
           if ('contentHint' in selectedTrack) {
-            selectedLiveKitTrack.contentHint = 'motion';
+            selectedTrack.contentHint = 'motion';
           }
 
           const publication = await roomToUse.localParticipant.publishTrack(selectedTrack, {
@@ -993,7 +994,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
 
           if (shouldShareAudio) {
             const filteredAudioTrack = applySystemAudioFilter(systemAudioTrack);
-            if (filteredAudioTrack && filteredAudioLiveKitTrack.readyState !== 'ended') {
+            if (filteredAudioTrack && filteredAudioTrack.readyState !== 'ended') {
               await roomToUse.localParticipant.publishTrack(filteredAudioTrack, {
                 name: 'screen_share_audio',
                 source: LiveKitTrack.Source.ScreenShareAudio,
@@ -1055,16 +1056,16 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
           audioTrack = shouldShareAudio ? stream.getAudioTracks()[0] ?? null : null;
 
           if (streamVideoTrack && videoTrack !== streamVideoTrack) {
-            streamVideoLiveKitTrack.stop();
+            streamVideoTrack.stop();
           }
         }
 
-        if (!videoTrack || videoLiveKitTrack.readyState === 'ended') {
+        if (!videoTrack || videoTrack.readyState === 'ended') {
           throw new Error('Kein Videotrack für Screenshare gefunden.');
         }
 
         if ('contentHint' in videoTrack) {
-          videoLiveKitTrack.contentHint = 'motion';
+          videoTrack.contentHint = 'motion';
         }
 
         const publication = await roomToUse.localParticipant.publishTrack(videoTrack, {
@@ -1080,7 +1081,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
 
         if (shouldShareAudio) {
           const filteredAudioTrack = applySystemAudioFilter(audioTrack);
-          if (filteredAudioTrack && filteredAudioLiveKitTrack.readyState !== 'ended') {
+          if (filteredAudioTrack && filteredAudioTrack.readyState !== 'ended') {
             await roomToUse.localParticipant.publishTrack(filteredAudioTrack, {
               name: 'screen_share_audio',
               source: LiveKitTrack.Source.ScreenShareAudio,
@@ -1499,14 +1500,17 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
       setMuted(true);
     };
 
-    socket.on('voice:force-disconnect', handleForceDisconnect);
-    socket.on('voice:force-move', handleForceMove);
-    socket.on('voice:force-mute', handleForceMute);
+    // NOTE: Some TS setups may consume a narrower `ServerToClientEvents` type from the shared package
+    // (workspace linking / stale declaration output). These admin events are optional at runtime, so we
+    // intentionally loosen the typing here to avoid breaking builds.
+    socket.on('voice:force-disconnect' as any, handleForceDisconnect);
+    socket.on('voice:force-move' as any, handleForceMove);
+    socket.on('voice:force-mute' as any, handleForceMute);
 
     return () => {
-      socket.off('voice:force-disconnect', handleForceDisconnect);
-      socket.off('voice:force-move', handleForceMove);
-      socket.off('voice:force-mute', handleForceMute);
+      socket.off('voice:force-disconnect' as any, handleForceDisconnect);
+      socket.off('voice:force-move' as any, handleForceMove);
+      socket.off('voice:force-mute' as any, handleForceMute);
     };
   }, [socket, disconnect, finalizeDisconnection, connectToChannel, setMicMuted, setMuted]);
 

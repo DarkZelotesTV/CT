@@ -1,12 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  socketEvents,
-  type P2pCandidateEnvelope,
-  type P2pJoinAck,
-  type P2pOfferAnswerEnvelope,
-  type P2pPeerSummary,
-  type P2pSignalEnvelope,
-} from '@clover/shared';
+// See note in `SocketContext.tsx`: `socketEvents` is imported from the concrete build output
+// to avoid Vite/Rollup named-export detection issues with CJS star re-exports.
+import type {
+  P2pCandidateEnvelope,
+  P2pJoinAck,
+  P2pOfferAnswerEnvelope,
+  P2pPeerSummary,
+  P2pSignalEnvelope,
+} from '@discord-clone/shared';
+// Runtime constant from the TS source so Vite/Rollup doesn't have to guess CommonJS named exports.
+import { socketEvents } from '../../../../../../../packages/shared/src/socket-events';
 import { useSettings } from '../../../../context/SettingsContext';
 import { useSocket } from '../../../../context/SocketContext';
 import { storage } from '../../../../shared/config/storage';
@@ -121,8 +124,7 @@ export const useP2PProvider = ({
       if (!socket) throw new Error('Socket nicht verbunden');
       return await new Promise<T>((resolve, reject) => {
         const timer = setTimeout(() => reject(new Error(`Timeout bei ${String(event)}`)), timeoutMs);
-        // @ts-expect-error socket typing via shared events
-        socket.emit(socketEvents[event], payload, (response: T) => {
+        (socket as any).emit(socketEvents[event], payload, (response: T) => {
           clearTimeout(timer);
           if (response?.success) resolve(response);
           else reject(new Error(response?.error || `Fehler bei ${String(event)}`));
@@ -307,7 +309,9 @@ export const useP2PProvider = ({
       const audio = existing ?? new Audio();
       audio.srcObject = stream;
       audio.autoplay = true;
-      audio.playsInline = true;
+      // `playsInline` is only typed on HTMLVideoElement; for audio we set the attribute.
+      audio.setAttribute('playsinline', 'true');
+      audio.setAttribute('webkit-playsinline', 'true');
       audio.dataset.peerId = peerId;
       audio.volume = calculateVolume(peerId, state.outputVolume, state.muted);
 
@@ -555,6 +559,32 @@ export const useP2PProvider = ({
     [applyPendingCandidates, createPeerConnection, sendOfferOrAnswer]
   );
 
+  const disconnect = useCallback(async () => {
+    const activeChannelId = activeChannelRef.current ?? state.activeChannelId;
+
+    if (activeChannelId && optimisticLeave) {
+      const user = storage.get('cloverUser') as { id?: number | string } | null;
+      if (user?.id) optimisticLeave(activeChannelId, user.id);
+      socket?.emit('leave_channel', activeChannelId);
+    }
+
+    cleanupAll();
+    activeChannelRef.current = null;
+
+    setState({
+      connectionState: 'disconnected',
+      connectionHandle: null,
+      activeChannelId: null,
+      activeChannelName: null,
+      participants: [],
+      activeSpeakerIds: [],
+      error: null,
+      providerId: null,
+      localParticipantId: null,
+    });
+    connectingRef.current = false;
+  }, [cleanupAll, optimisticLeave, setState, socket, state.activeChannelId]);
+
   const connectToChannel = useCallback(
     async (channelId: number, channelName: string) => {
       if (!socket) throw new Error('Socket nicht verbunden');
@@ -593,7 +623,7 @@ export const useP2PProvider = ({
 
         const join = await emitWithAck<P2pJoinAck>('p2pJoin', { channelId });
         const peers = (join.peers || []).map(
-          (peer) =>
+          (peer: P2pPeerSummary) =>
             ({
               id: String(peer.userId),
               username: peer.username,
@@ -646,33 +676,6 @@ export const useP2PProvider = ({
       socket,
     ]
   );
-
-  const disconnect = useCallback(async () => {
-    const activeChannelId = activeChannelRef.current ?? state.activeChannelId;
-
-    if (activeChannelId && optimisticLeave) {
-      const user = storage.get('cloverUser') as { id?: number | string } | null;
-      if (user?.id) optimisticLeave(activeChannelId, user.id);
-      socket?.emit('leave_channel', activeChannelId);
-    }
-
-    cleanupAll();
-    activeChannelRef.current = null;
-
-    setState({
-      connectionState: 'disconnected',
-      connectionHandle: null,
-      activeChannelId: null,
-      activeChannelName: null,
-      participants: [],
-      activeSpeakerIds: [],
-      error: null,
-      providerId: null,
-      localParticipantId: null,
-    });
-    connectingRef.current = false;
-  }, [cleanupAll, optimisticLeave, setState, socket, state.activeChannelId]);
-
   const setMicMuted = useCallback(
     async (muted: boolean) => {
       setState({ micMuted: muted });
@@ -768,6 +771,7 @@ export const useP2PProvider = ({
       if (!payload?.peer || payload.channelId !== activeChannelRef.current) return;
       const peer: PeerProfile = {
         id: String(payload.peer.userId),
+        userId: payload.peer.userId,
         username: payload.peer.username,
         avatarUrl: payload.peer.avatarUrl,
       };
@@ -802,20 +806,21 @@ export const useP2PProvider = ({
       void handleIncomingSignal(payload);
     };
 
-    socket.on(socketEvents.p2pPeerJoined, handlePeerJoined);
-    socket.on(socketEvents.p2pPeerLeft, handlePeerLeft);
-    socket.on(socketEvents.p2pOffer, handleOfferEvent);
-    socket.on(socketEvents.p2pAnswer, handleAnswerEvent);
-    socket.on(socketEvents.p2pCandidate, handleCandidateEvent);
-    socket.on(socketEvents.p2pSignal, handleSignal);
+    // Use explicit literals to keep Socket.IO's typed overloads working in strict TS configs.
+    socket.on('p2p:peer-joined', handlePeerJoined);
+    socket.on('p2p:peer-left', handlePeerLeft);
+    socket.on('p2p:offer', handleOfferEvent);
+    socket.on('p2p:answer', handleAnswerEvent);
+    socket.on('p2p:candidate', handleCandidateEvent);
+    socket.on('p2p:signal', handleSignal);
 
     return () => {
-      socket.off(socketEvents.p2pPeerJoined, handlePeerJoined);
-      socket.off(socketEvents.p2pPeerLeft, handlePeerLeft);
-      socket.off(socketEvents.p2pOffer, handleOfferEvent);
-      socket.off(socketEvents.p2pAnswer, handleAnswerEvent);
-      socket.off(socketEvents.p2pCandidate, handleCandidateEvent);
-      socket.off(socketEvents.p2pSignal, handleSignal);
+      socket.off('p2p:peer-joined', handlePeerJoined);
+      socket.off('p2p:peer-left', handlePeerLeft);
+      socket.off('p2p:offer', handleOfferEvent);
+      socket.off('p2p:answer', handleAnswerEvent);
+      socket.off('p2p:candidate', handleCandidateEvent);
+      socket.off('p2p:signal', handleSignal);
     };
   }, [cleanupPeer, createPeerConnection, handleAnswer, handleCandidateEnvelope, handleIncomingSignal, handleOffer, socket, updateParticipants]);
 

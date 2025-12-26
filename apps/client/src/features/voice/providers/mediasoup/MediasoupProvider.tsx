@@ -10,6 +10,7 @@ import type {
   Transport,
   TransportOptions,
 } from 'mediasoup-client/types';
+import type { AckEventKey, AckPayload, AckResponse } from '@discord-clone/shared';
 import { MediasoupDebugOverlay, type MediasoupDebugStats } from './MediasoupDebugOverlay';
 import { useSettings } from '../../../../context/SettingsContext';
 import { useSocket } from '../../../../context/SocketContext';
@@ -150,18 +151,28 @@ export const useMediasoupProvider = ({ state, setState, initialConnectRequest }:
   }, [initialConnectRequest]);
 
   const emitWithAck = useCallback(
-    async <T extends { success: boolean; error?: string }>(event: string, payload?: any, timeoutMs = 5000): Promise<T> => {
+    async <K extends AckEventKey>(event: K, payload: AckPayload<K>, timeoutMs = 5000): Promise<AckResponse<K>> => {
       if (!socket) throw new Error('Socket nicht verbunden');
 
-      return await new Promise<T>((resolve, reject) => {
+      return await new Promise<AckResponse<K>>((resolve, reject) => {
         const timer = setTimeout(() => reject(new Error(`Timeout bei ${event}`)), timeoutMs);
 
-        socket.emit(event, payload, (response: T) => {
+        // Special-case: this ack event does not take a payload.
+        if (event === 'rtc:transport-defaults') {
+          (socket as any).emit(event, (response: AckResponse<K>) => {
+            clearTimeout(timer);
+            if (response?.success) resolve(response);
+            else reject(new Error((response as any)?.error || `Fehler bei ${event}`));
+          });
+          return;
+        }
+
+        socket.emit(event as any, payload as any, (response: AckResponse<K>) => {
           clearTimeout(timer);
           if (response?.success) {
             resolve(response);
           } else {
-            reject(new Error(response?.error || `Fehler bei ${event}`));
+            reject(new Error((response as any)?.error || `Fehler bei ${event}`));
           }
         });
       });
@@ -394,7 +405,7 @@ export const useMediasoupProvider = ({ state, setState, initialConnectRequest }:
       if (!device || !recvTransport) return;
 
       try {
-        const response = await emitWithAck<ConsumeAck>('rtc:consume', {
+        const response = await emitWithAck('rtc:consume', {
           channelId,
           transportId: recvTransport.id,
           producerId,
@@ -435,7 +446,9 @@ export const useMediasoupProvider = ({ state, setState, initialConnectRequest }:
           const audio = new Audio();
           audio.srcObject = new MediaStream([consumer.track]);
           audio.autoplay = true;
-          audio.playsInline = true;
+          // `playsInline` is only typed on HTMLVideoElement; for audio we set the attribute.
+          audio.setAttribute('playsinline', 'true');
+          audio.setAttribute('webkit-playsinline', 'true');
           audio.dataset.consumerId = consumer.id;
           audio.volume = calculateVolume(peerId, state.outputVolume, state.muted);
           const sinkId = settings.devices.audioOutputId;
@@ -490,7 +503,7 @@ export const useMediasoupProvider = ({ state, setState, initialConnectRequest }:
       transport.on(
         'connect',
         ({ dtlsParameters }: { dtlsParameters: DtlsParameters }, callback: () => void, errback: (error: Error) => void) => {
-        emitWithAck<ConnectAck>('rtc:connectTransport', { transportId, dtlsParameters })
+        emitWithAck('rtc:connectTransport', { transportId, dtlsParameters })
           .then(() => callback())
           .catch((err) => errback(err));
         }
@@ -504,7 +517,7 @@ export const useMediasoupProvider = ({ state, setState, initialConnectRequest }:
             callback: (params: { id: string }) => void,
             errback: (error: Error) => void
           ) => {
-          emitWithAck<ProduceAck>('rtc:produce', {
+          emitWithAck('rtc:produce', {
             channelId,
             transportId,
             rtpParameters,
@@ -528,7 +541,7 @@ export const useMediasoupProvider = ({ state, setState, initialConnectRequest }:
 
   const createSendTransport = useCallback(
     async (device: Device, channelId: number) => {
-      const send = await emitWithAck<TransportAck>('rtc:createTransport', { channelId, direction: 'send' });
+      const send = await emitWithAck('rtc:createTransport', { channelId, direction: 'send' });
       if (!send.transport) throw new Error('Transport-Daten fehlen');
 
       const sendTransport = device.createSendTransport({
@@ -549,7 +562,7 @@ export const useMediasoupProvider = ({ state, setState, initialConnectRequest }:
 
   const createRecvTransport = useCallback(
     async (device: Device, channelId: number) => {
-      const recv = await emitWithAck<TransportAck>('rtc:createTransport', { channelId, direction: 'recv' });
+      const recv = await emitWithAck('rtc:createTransport', { channelId, direction: 'recv' });
       if (!recv.transport) throw new Error('Transport-Daten fehlen');
 
       const recvTransport = device.createRecvTransport({
@@ -646,7 +659,7 @@ export const useMediasoupProvider = ({ state, setState, initialConnectRequest }:
       try {
         socket.emit('join_channel', channelId);
 
-        const join = await emitWithAck<JoinRoomAck>('rtc:joinRoom', { channelId });
+        const join = await emitWithAck('rtc:joinRoom', { channelId });
         if (!join.roomName || !join.rtpCapabilities) throw new Error(join.error || 'RTC-Raum konnte nicht betreten werden');
 
         const device = await loadDevice(join.rtpCapabilities);
@@ -808,7 +821,7 @@ export const useMediasoupProvider = ({ state, setState, initialConnectRequest }:
         if (!producer?.getStats) return null;
         try {
           const reports = await producer.getStats();
-          const outbound = Array.from(reports.values()).find((r: any) => r.type === 'outbound-rtp');
+          const outbound = (Array.from(reports.values()) as any[]).find((r) => r.type === 'outbound-rtp');
           if (!outbound) return null;
           const rttMs = typeof outbound.roundTripTime === 'number' ? outbound.roundTripTime * 1000 : outbound.rtt ?? null;
           const jitterMs = typeof outbound.jitter === 'number' ? outbound.jitter * 1000 : null;
