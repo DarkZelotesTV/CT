@@ -23,10 +23,11 @@ import {
 } from './realtime/registry';
 
 // Models Importe (für Socket Logik)
-import type { Consumer as MediasoupConsumer, MediaKind, Router as MediasoupRouter, RtpCapabilities, RtpParameters, WebRtcTransport } from 'mediasoup/node/lib/types';
+import type { Consumer as MediasoupConsumer, MediaKind, Producer as MediasoupProducer, Router as MediasoupRouter, RtpCapabilities, RtpParameters, WebRtcTransport } from 'mediasoup/node/lib/types';
 import { User, ServerMember, MemberRole, Role, Channel } from './models';
 import { resolveUserFromIdentity } from './utils/identityAuth';
 import { resolveWebRtcTransportDefaults, rtcRoomManager, rtcWorkerPool, type RtcTransportDirection, type WebRtcTransportDefaults } from './rtc';
+import { cleanupRtcResources, parseChannelIdFromRoomName, rtcRoomNameForChannel } from './realtime/rtcModeration';
 
 const PORT = Number(process.env.PORT || 3001);
 const TLS_CERT_PATH = process.env.TLS_CERT_PATH || process.env.HTTPS_CERT_PATH;
@@ -157,13 +158,6 @@ const sendPresenceSnapshot = async (socket: any) => {
 };
 
 const rtcRouters = new Map<number, MediasoupRouter>();
-const rtcRoomNameForChannel = (channelId: number) => `channel_${channelId}`;
-const parseChannelIdFromRoomName = (roomName: string) => {
-  const match = /^channel_(\d+)$/.exec(roomName);
-  const parsed = match ? Number(match[1]) : NaN;
-  return Number.isFinite(parsed) ? parsed : null;
-};
-
 const closeRtcRouterForChannel = (channelId: number) => {
   const router = rtcRouters.get(channelId);
   if (router) {
@@ -223,58 +217,6 @@ const ensureVoiceChannelAccess = async (channelId: number, userId: number) => {
   }
 
   return channel;
-};
-
-const cleanupRtcResources = (socket: any, options?: { participantId?: number | null; channelId?: number }) => {
-  const rtcConsumers: Map<string, MediasoupConsumer> = (socket.data as any).rtcConsumers || new Map();
-  const rtcTransports: Map<string, WebRtcTransport> = (socket.data as any).rtcTransports || new Map();
-  const rtcRooms: Set<string> = (socket.data as any).rtcRooms || new Set<string>();
-  const participantIdentity = options?.participantId ? String(options.participantId) : null;
-  const hasChannelFilter = typeof options?.channelId === 'number' && Number.isFinite(options.channelId);
-  const roomNamesToCleanup = hasChannelFilter ? [rtcRoomNameForChannel(Number(options?.channelId))] : Array.from(rtcRooms);
-  const matchesChannel = (candidate?: any) => (!hasChannelFilter ? true : Number(candidate) === Number(options?.channelId));
-
-  rtcConsumers.forEach((consumer, id) => {
-    if (!matchesChannel((consumer.appData as any)?.channelId)) return;
-    const consumerRoomName = Number.isFinite((consumer.appData as any)?.channelId)
-      ? rtcRoomNameForChannel(Number((consumer.appData as any)?.channelId))
-      : undefined;
-    if (participantIdentity && consumerRoomName) {
-      rtcRoomManager.removeConsumer(consumerRoomName, participantIdentity, id);
-    }
-    try {
-      consumer.close();
-    } catch (err) {
-      console.warn('Fehler beim Schließen eines RTC-Consumers:', err);
-    }
-    rtcConsumers.delete(id);
-  });
-
-  rtcTransports.forEach((transport, id) => {
-    if (!matchesChannel((transport.appData as any)?.channelId)) return;
-    const channelId = Number((transport.appData as any)?.channelId);
-    if (Number.isFinite(channelId)) {
-      const roomName = rtcRoomNameForChannel(channelId);
-      rtcRoomManager.closeTransport(roomName, id);
-    }
-    try {
-      transport.close();
-    } catch (err) {
-      console.warn('Fehler beim Schließen eines RTC-Transports:', err);
-    }
-    rtcTransports.delete(id);
-  });
-
-  roomNamesToCleanup.forEach((roomName) => {
-    if (participantIdentity) {
-      rtcRoomManager.removeParticipant(roomName, participantIdentity);
-    }
-    rtcRooms.delete(roomName);
-  });
-
-  (socket.data as any).rtcConsumers = rtcConsumers;
-  (socket.data as any).rtcTransports = rtcTransports;
-  (socket.data as any).rtcRooms = rtcRooms;
 };
 
 // ==========================================
@@ -382,6 +324,7 @@ io.on('connection', async (socket) => {
   (socket.data as any).rtcRooms = new Set<string>();
   (socket.data as any).rtcTransports = new Map<string, WebRtcTransport>();
   (socket.data as any).rtcConsumers = new Map<string, MediasoupConsumer>();
+  (socket.data as any).rtcProducers = new Map<string, MediasoupProducer>();
 
   if (numericUserId) {
      console.log(`User ${numericUserId} connected (Socket ID: ${socket.id})`);
@@ -632,6 +575,10 @@ io.on('connection', async (socket) => {
           },
         });
 
+        const rtcProducers: Map<string, MediasoupProducer> = (socket.data as any).rtcProducers || new Map();
+        rtcProducers.set(producer.id, producer);
+        (socket.data as any).rtcProducers = rtcProducers;
+
         rtcRoomManager.upsertProducer(roomName, String(numericUserId), producer.id, {
           transportId: transport.id,
           kind: 'audio',
@@ -646,6 +593,7 @@ io.on('connection', async (socket) => {
 
         producer.on('transportclose', () => {
           rtcRoomManager.removeProducer(roomName, String(numericUserId), producer.id);
+          rtcProducers.delete(producer.id);
         });
 
         respond({ success: true, producerId: producer.id });

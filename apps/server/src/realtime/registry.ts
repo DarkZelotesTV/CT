@@ -25,6 +25,11 @@ export const emitToUser = (userId: number, event: string, payload?: any) => {
   sockets.forEach((s) => s.emit(event, payload));
 };
 
+export const getSocketsForUser = (userId: number) => {
+  const sockets = userSockets.get(userId);
+  return sockets ? new Set(sockets) : new Set<Socket>();
+};
+
 export const removeUserFromChannel = (channelId: number, userId: number) => {
   const memberships = userChannelMemberships.get(userId);
 
