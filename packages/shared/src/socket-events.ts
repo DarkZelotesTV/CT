@@ -27,6 +27,10 @@ export const socketEvents = {
   rtcTransportDefaults: 'rtc:transport-defaults',
   rtcNewProducer: 'rtc:newProducer',
   producerClosed: 'producerClosed',
+  p2pJoin: 'p2p:join',
+  p2pSignal: 'p2p:signal',
+  p2pPeerJoined: 'p2p:peer-joined',
+  p2pPeerLeft: 'p2p:peer-left',
 };
 
 export type SocketEventKey = keyof typeof socketEvents;

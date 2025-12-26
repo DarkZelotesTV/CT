@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { useVoiceEngine, type VoiceEngineDeps } from './engine';
 import { useMediasoupProvider } from './providers/mediasoup/MediasoupProvider';
+import { useP2PProvider } from './providers/p2p/P2PProvider';
 import { type VoiceProviderId } from './providers/types';
 import { VoiceContext, type VoiceContextType } from './state/VoiceContext';
 import { VoiceStoreProvider, useVoiceStore } from './state';
@@ -10,7 +11,7 @@ type VoiceProviderRegistry = Partial<Record<VoiceProviderId, VoiceProviderFactor
 
 const livekitFactory: VoiceProviderFactory = (deps) => useVoiceEngine({ ...deps, providerId: 'livekit' });
 const mediasoupFactory: VoiceProviderFactory = (deps) => useMediasoupProvider({ ...deps, providerId: 'mediasoup' });
-const p2pFactory: VoiceProviderFactory = (deps) => useVoiceEngine({ ...deps, providerId: 'p2p' });
+const p2pFactory: VoiceProviderFactory = (deps) => useP2PProvider({ ...deps, providerId: 'p2p' });
 
 const defaultProviderFactories: Record<VoiceProviderId, VoiceProviderFactory> = {
   livekit: livekitFactory,

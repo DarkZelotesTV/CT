@@ -55,6 +55,32 @@ export type RtcProducerClosedPayload = {
   peer?: any;
 };
 
+export type P2pPeerSummary = {
+  userId: number;
+  username?: string;
+  avatarUrl?: string;
+};
+
+export type P2pSignalPayload = {
+  channelId?: number;
+  targetUserId?: number;
+  description?: Record<string, any>;
+  candidate?: Record<string, any>;
+};
+
+export type P2pSignalEnvelope = {
+  channelId?: number;
+  fromUserId?: number;
+  description?: Record<string, any>;
+  candidate?: Record<string, any>;
+};
+
+export type P2pJoinAck = {
+  success: boolean;
+  peers?: P2pPeerSummary[];
+  error?: string;
+};
+
 export type JoinRoomAck = {
   success: boolean;
   roomName?: string;
@@ -98,6 +124,9 @@ export type ServerToClientEvents = {
   server_invite: (payload: NotificationEventPayload) => void;
   'rtc:newProducer': (payload: RtcNewProducerPayload) => void;
   producerClosed: (payload: RtcProducerClosedPayload) => void;
+  'p2p:peer-joined': (payload: { channelId?: number; peer: P2pPeerSummary }) => void;
+  'p2p:peer-left': (payload: { channelId?: number; peerId: number }) => void;
+  'p2p:signal': (payload: P2pSignalEnvelope) => void;
 };
 
 export type ClientToServerEvents = {
@@ -122,6 +151,8 @@ export type ClientToServerEvents = {
   'rtc:pauseConsumer': (payload: { consumerId?: string }, ack: (res: PauseResumeAck) => void) => void;
   'rtc:resumeConsumer': (payload: { consumerId?: string }, ack: (res: PauseResumeAck) => void) => void;
   'rtc:transport-defaults': (ack: (res: TransportDefaultsAck) => void) => void;
+  'p2p:join': (payload: { channelId?: number }, ack: (res: P2pJoinAck) => void) => void;
+  'p2p:signal': (payload: P2pSignalPayload, ack: (res: { success: boolean; error?: string }) => void) => void;
 };
 
 export type AckEventMap = {
@@ -136,6 +167,8 @@ export type AckEventMap = {
   'rtc:pauseConsumer': { payload: { consumerId?: string }; response: PauseResumeAck };
   'rtc:resumeConsumer': { payload: { consumerId?: string }; response: PauseResumeAck };
   'rtc:transport-defaults': { payload?: undefined; response: TransportDefaultsAck };
+  'p2p:join': { payload: { channelId?: number }; response: P2pJoinAck };
+  'p2p:signal': { payload: P2pSignalPayload; response: { success: boolean; error?: string } };
 };
 
 export type TypedSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
