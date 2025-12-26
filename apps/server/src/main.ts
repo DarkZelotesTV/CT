@@ -28,6 +28,20 @@ import { User, ServerMember, MemberRole, Role, Channel } from './models';
 import { resolveUserFromIdentity } from './utils/identityAuth';
 import { resolveWebRtcTransportDefaults, rtcRoomManager, rtcWorkerPool, type RtcTransportDirection, type WebRtcTransportDefaults } from './rtc';
 import { cleanupRtcResources, parseChannelIdFromRoomName, rtcRoomNameForChannel } from './realtime/rtcModeration';
+import {
+  channelIdSchema,
+  requestServerMembersSchema,
+  rtcConnectTransportSchema,
+  rtcConsumeSchema,
+  rtcCreateTransportSchema,
+  rtcJoinRoomSchema,
+  rtcPauseConsumerSchema,
+  rtcProduceSchema,
+  rtcResumeConsumerSchema,
+  rtcTransportDefaultsSchema,
+} from './realtime/socketSchemas';
+import { createDefaultTokenBucket, TokenBucket } from './realtime/rateLimiter';
+import type { ZodTypeAny } from 'zod';
 
 const PORT = Number(process.env.PORT || 3001);
 const TLS_CERT_PATH = process.env.TLS_CERT_PATH || process.env.HTTPS_CERT_PATH;
@@ -183,7 +197,7 @@ const getOrCreateRtcRouter = async (channelId: number) => {
   const router = await rtcWorkerPool.createRouter();
   rtcRouters.set(channelId, router);
 
-  router.observer.on('close', () => {
+  (router.observer as any).on('close', () => {
     if (rtcRouters.get(channelId) === router) {
       rtcRouters.delete(channelId);
     }
@@ -217,6 +231,23 @@ const ensureVoiceChannelAccess = async (channelId: number, userId: number) => {
   }
 
   return channel;
+};
+
+const parsePayload = <S extends ZodTypeAny>(schema: S, payload: unknown) => {
+  const result = schema.safeParse(payload);
+  if (!result.success) {
+    const message = result.error.issues.map((issue) => issue.message).join('; ') || 'Ungültige Daten';
+    throw new Error(message);
+  }
+  return result.data;
+};
+
+const consumeTokenOrThrow = (socket: any) => {
+  const limiter: TokenBucket = (socket.data as any).rateLimiter || createDefaultTokenBucket();
+  (socket.data as any).rateLimiter = limiter;
+  if (!limiter.tryRemoveToken()) {
+    throw new Error('Rate limit exceeded');
+  }
 };
 
 // ==========================================
@@ -325,6 +356,7 @@ io.on('connection', async (socket) => {
   (socket.data as any).rtcTransports = new Map<string, WebRtcTransport>();
   (socket.data as any).rtcConsumers = new Map<string, MediasoupConsumer>();
   (socket.data as any).rtcProducers = new Map<string, MediasoupProducer>();
+  (socket.data as any).rateLimiter = createDefaultTokenBucket();
 
   if (numericUserId) {
      console.log(`User ${numericUserId} connected (Socket ID: ${socket.id})`);
@@ -358,6 +390,8 @@ io.on('connection', async (socket) => {
     'rtc:transport-defaults',
     (ack?: (payload: { success: boolean; defaults?: WebRtcTransportDefaults; error?: string }) => void) => {
       try {
+        consumeTokenOrThrow(socket);
+        parsePayload(rtcTransportDefaultsSchema, undefined);
         const defaults = (socket.data as any).rtcTransportDefaults || resolveWebRtcTransportDefaults();
         (socket.data as any).rtcTransportDefaults = defaults;
         if (typeof ack === 'function') ack({ success: true, defaults });
@@ -401,16 +435,12 @@ io.on('connection', async (socket) => {
       };
 
       try {
+        consumeTokenOrThrow(socket);
         if (!numericUserId) {
           return respond({ success: false, error: 'unauthorized' });
         }
 
-        const channelId = Number(payload?.channelId);
-        const direction = payload?.direction;
-
-        if (direction !== 'send' && direction !== 'recv') {
-          return respond({ success: false, error: 'Ungültige direction' });
-        }
+        const { channelId, direction } = parsePayload(rtcCreateTransportSchema, payload);
 
         await ensureVoiceChannelAccess(channelId, numericUserId);
 
@@ -434,7 +464,7 @@ io.on('connection', async (socket) => {
         rtcTransports.set(transport.id, transport);
         (socket.data as any).rtcTransports = rtcTransports;
 
-        transport.on('close', () => rtcTransports.delete(transport.id));
+        (transport as any).on('close', () => rtcTransports.delete(transport.id));
         transport.on('routerclose', () => rtcTransports.delete(transport.id));
 
         const roomName = rtcRoomNameForChannel(channelId);
@@ -469,20 +499,12 @@ io.on('connection', async (socket) => {
       };
 
       try {
+        consumeTokenOrThrow(socket);
         if (!numericUserId) {
           return respond({ success: false, error: 'unauthorized' });
         }
 
-        const transportId = payload?.transportId;
-        const dtlsParameters = payload?.dtlsParameters;
-
-        if (!transportId || typeof transportId !== 'string') {
-          return respond({ success: false, error: 'Ungültige transportId' });
-        }
-
-        if (!dtlsParameters || typeof dtlsParameters !== 'object' || !Array.isArray((dtlsParameters as any).fingerprints)) {
-          return respond({ success: false, error: 'Ungültige dtlsParameters' });
-        }
+        const { transportId, dtlsParameters } = parsePayload(rtcConnectTransportSchema, payload);
 
         const rtcTransports: Map<string, WebRtcTransport> = (socket.data as any).rtcTransports || new Map();
         const transport = rtcTransports.get(transportId);
@@ -522,26 +544,14 @@ io.on('connection', async (socket) => {
       };
 
       try {
+        consumeTokenOrThrow(socket);
         if (!numericUserId) {
           return respond({ success: false, error: 'unauthorized' });
         }
 
-        const channelId = Number(payload?.channelId ?? NaN);
-        if (!Number.isFinite(channelId)) {
-          return respond({ success: false, error: 'Ungültige channelId' });
-        }
+        const { channelId, transportId, rtpParameters, appData } = parsePayload(rtcProduceSchema, payload);
 
         await ensureVoiceChannelAccess(channelId, numericUserId);
-
-        const transportId = payload?.transportId;
-        if (!transportId || typeof transportId !== 'string') {
-          return respond({ success: false, error: 'Ungültige transportId' });
-        }
-
-        const rtpParameters = payload?.rtpParameters;
-        if (!rtpParameters || typeof rtpParameters !== 'object') {
-          return respond({ success: false, error: 'Ungültige rtpParameters' });
-        }
 
         const rtcTransports: Map<string, WebRtcTransport> = (socket.data as any).rtcTransports || new Map();
         const transport = rtcTransports.get(transportId);
@@ -567,7 +577,7 @@ io.on('connection', async (socket) => {
           kind: 'audio',
           rtpParameters,
           appData: {
-            ...(payload?.appData || {}),
+            ...(appData || {}),
             channelId,
             participantId: numericUserId,
             socketId: socket.id,
@@ -615,31 +625,14 @@ io.on('connection', async (socket) => {
       };
 
       try {
+        consumeTokenOrThrow(socket);
         if (!numericUserId) {
           return respond({ success: false, error: 'unauthorized' });
         }
 
-        const channelId = Number(payload?.channelId ?? NaN);
-        if (!Number.isFinite(channelId)) {
-          return respond({ success: false, error: 'Ungültige channelId' });
-        }
+        const { channelId, transportId, producerId, rtpCapabilities, appData } = parsePayload(rtcConsumeSchema, payload);
 
         await ensureVoiceChannelAccess(channelId, numericUserId);
-
-        const transportId = payload?.transportId;
-        if (!transportId || typeof transportId !== 'string') {
-          return respond({ success: false, error: 'Ungültige transportId' });
-        }
-
-        const producerId = payload?.producerId;
-        if (!producerId || typeof producerId !== 'string') {
-          return respond({ success: false, error: 'Ungültige producerId' });
-        }
-
-        const rtpCapabilities = payload?.rtpCapabilities;
-        if (!rtpCapabilities || typeof rtpCapabilities !== 'object') {
-          return respond({ success: false, error: 'Ungültige rtpCapabilities' });
-        }
 
         const rtcTransports: Map<string, WebRtcTransport> = (socket.data as any).rtcTransports || new Map();
         const transport = rtcTransports.get(transportId);
@@ -670,7 +663,7 @@ io.on('connection', async (socket) => {
           producerId,
           rtpCapabilities,
           appData: {
-            ...(payload?.appData || {}),
+            ...(appData || {}),
             channelId,
             participantId: numericUserId,
             socketId: socket.id,
@@ -726,14 +719,12 @@ io.on('connection', async (socket) => {
       };
 
       try {
+        consumeTokenOrThrow(socket);
         if (!numericUserId) {
           return respond({ success: false, error: 'unauthorized' });
         }
 
-        const consumerId = payload?.consumerId;
-        if (!consumerId || typeof consumerId !== 'string') {
-          return respond({ success: false, error: 'Ungültige consumerId' });
-        }
+        const { consumerId } = parsePayload(rtcPauseConsumerSchema, payload);
 
         const rtcConsumers: Map<string, MediasoupConsumer> = (socket.data as any).rtcConsumers || new Map();
         const consumer = rtcConsumers.get(consumerId);
@@ -763,14 +754,12 @@ io.on('connection', async (socket) => {
       };
 
       try {
+        consumeTokenOrThrow(socket);
         if (!numericUserId) {
           return respond({ success: false, error: 'unauthorized' });
         }
 
-        const consumerId = payload?.consumerId;
-        if (!consumerId || typeof consumerId !== 'string') {
-          return respond({ success: false, error: 'Ungültige consumerId' });
-        }
+        const { consumerId } = parsePayload(rtcResumeConsumerSchema, payload);
 
         const rtcConsumers: Map<string, MediasoupConsumer> = (socket.data as any).rtcConsumers || new Map();
         const consumer = rtcConsumers.get(consumerId);
@@ -803,11 +792,12 @@ io.on('connection', async (socket) => {
       };
 
       try {
+        consumeTokenOrThrow(socket);
         if (!numericUserId) {
           return respond({ success: false, error: 'unauthorized' });
         }
 
-        const channelId = Number(payload?.channelId);
+        const { channelId } = parsePayload(rtcJoinRoomSchema, payload);
         const channel = await ensureVoiceChannelAccess(channelId, numericUserId);
         const channelMemberships = getUserChannelIds(numericUserId);
         if (!channelMemberships.has(channelId)) {
@@ -847,38 +837,46 @@ io.on('connection', async (socket) => {
   socket.on('join_channel', async (channelId: number) => {
     if (!numericUserId) return;
 
-    const joinedChannels: Set<number> = (socket.data as any).joinedChannels;
-    const globalChannels = userChannelMemberships.get(numericUserId) || new Set<number>();
-    for (const prevChannel of Array.from(joinedChannels)) {
-      if (prevChannel !== channelId) {
-        socket.leave(`channel_${prevChannel}`);
-        const rtcRooms: Set<string> = (socket.data as any).rtcRooms || new Set<string>();
-        const prevRoomName = rtcRoomNameForChannel(prevChannel);
-        if (rtcRooms.has(prevRoomName)) {
-          rtcRoomManager.removeParticipant(prevRoomName, String(numericUserId));
-          rtcRooms.delete(prevRoomName);
+    try {
+      consumeTokenOrThrow(socket);
+      const validChannelId = parsePayload(channelIdSchema, channelId);
+
+      const joinedChannels: Set<number> = (socket.data as any).joinedChannels;
+      const globalChannels = userChannelMemberships.get(numericUserId) || new Set<number>();
+      for (const prevChannel of Array.from(joinedChannels)) {
+        if (prevChannel !== validChannelId) {
+          socket.leave(`channel_${prevChannel}`);
+          const rtcRooms: Set<string> = (socket.data as any).rtcRooms || new Set<string>();
+          const prevRoomName = rtcRoomNameForChannel(prevChannel);
+          if (rtcRooms.has(prevRoomName)) {
+            rtcRoomManager.removeParticipant(prevRoomName, String(numericUserId));
+            rtcRooms.delete(prevRoomName);
+          }
+          removeUserFromChannel(prevChannel, numericUserId);
+          joinedChannels.delete(prevChannel);
+          globalChannels.delete(prevChannel);
         }
-        removeUserFromChannel(prevChannel, numericUserId);
-        joinedChannels.delete(prevChannel);
-        globalChannels.delete(prevChannel);
       }
+
+      const room = `channel_${validChannelId}`;
+      socket.join(room);
+      joinedChannels.add(validChannelId);
+      globalChannels.add(validChannelId);
+      userChannelMemberships.set(numericUserId, globalChannels);
+
+      console.log(`Socket ${socket.id} joined channel_${validChannelId}`);
+    } catch (err: any) {
+      socket.emit('join_channel_error', { error: err?.message || 'Konnte Kanal nicht beitreten' });
     }
-
-    const room = `channel_${channelId}`;
-    socket.join(room);
-    joinedChannels.add(channelId);
-    globalChannels.add(channelId);
-    userChannelMemberships.set(numericUserId, globalChannels);
-
-    console.log(`Socket ${socket.id} joined channel_${channelId}`);
   });
 
   socket.on('request_server_members', async (payload: { serverId?: number }) => {
-    if (!payload?.serverId) return;
-
     try {
+      consumeTokenOrThrow(socket);
+      const { serverId } = parsePayload(requestServerMembersSchema, payload);
+
       const members = await ServerMember.findAll({
-        where: { server_id: payload.serverId },
+        where: { server_id: serverId },
         include: [{
           model: User,
           as: 'user',
@@ -887,7 +885,7 @@ io.on('connection', async (socket) => {
       });
 
       const assignments = await MemberRole.findAll({
-        where: { server_id: payload.serverId },
+        where: { server_id: serverId },
         include: [{ model: Role, as: 'role' }]
       });
 
@@ -906,23 +904,31 @@ io.on('connection', async (socket) => {
         roles: rolesByUser[m.user.id] || [],
       }));
 
-      socket.emit('server_members_snapshot', { serverId: payload.serverId, members: memberPayload });
-    } catch (err) {
+      socket.emit('server_members_snapshot', { serverId, members: memberPayload });
+    } catch (err: any) {
       console.error('Fehler beim Senden der Member Snapshot:', err);
+      socket.emit('server_members_error', { error: err?.message || 'Konnte Member nicht laden' });
     }
   });
 
   socket.on('leave_channel', (channelId: number) => {
     if (!numericUserId) return;
 
-    const joinedChannels: Set<number> = (socket.data as any).joinedChannels;
-    if (!joinedChannels.has(channelId)) return;
+    try {
+      consumeTokenOrThrow(socket);
+      const validChannelId = parsePayload(channelIdSchema, channelId);
 
-    socket.leave(`channel_${channelId}`);
-    joinedChannels.delete(channelId);
-    removeUserFromChannel(channelId, numericUserId);
+      const joinedChannels: Set<number> = (socket.data as any).joinedChannels;
+      if (!joinedChannels.has(validChannelId)) return;
 
-    cleanupRtcResources(socket, { participantId: numericUserId, channelId });
+      socket.leave(`channel_${validChannelId}`);
+      joinedChannels.delete(validChannelId);
+      removeUserFromChannel(validChannelId, numericUserId);
+
+      cleanupRtcResources(socket, { participantId: numericUserId, channelId: validChannelId });
+    } catch (err: any) {
+      socket.emit('leave_channel_error', { error: err?.message || 'Konnte Kanal nicht verlassen' });
+    }
   });
 
   socket.on('disconnect', async () => {
