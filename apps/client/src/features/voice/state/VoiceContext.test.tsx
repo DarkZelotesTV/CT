@@ -50,6 +50,7 @@ const createMockVoiceContext = (): VoiceContextType => ({
   setOutputVolume: vi.fn(),
   screenShareAudioError: null,
   localAudioLevel: 0,
+  providerRenderers: {},
 });
 
 describe('useVoice', () => {

@@ -1,6 +1,12 @@
 import { createContext, useContext } from 'react';
 import { ConnectionState } from './voiceTypes';
-import { type VoiceConnectionHandle, type VoiceParticipant, type VoiceProviderAdapter, type VoiceProviderId } from '../providers/types';
+import {
+  type VoiceConnectionHandle,
+  type VoiceParticipant,
+  type VoiceProviderAdapter,
+  type VoiceProviderId,
+  type VoiceProviderRenderers,
+} from '../providers/types';
 
 export interface VoiceContextType extends VoiceProviderAdapter {
   providerId: VoiceProviderId | null;
@@ -37,6 +43,7 @@ export interface VoiceContextType extends VoiceProviderAdapter {
   outputVolume: number;
   screenShareAudioError?: string | null;
   localAudioLevel: number;
+  providerRenderers: VoiceProviderRenderers;
 }
 
 export const VoiceContext = createContext<VoiceContextType | null>(null);

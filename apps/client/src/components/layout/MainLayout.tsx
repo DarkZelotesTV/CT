@@ -2,8 +2,6 @@ import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
 import { ChevronDown, ChevronLeft, ChevronRight, Users, Menu } from 'lucide-react';
-import { RoomAudioRenderer, RoomContext } from '@livekit/components-react';
-import '@livekit/components-styles';
 import { useTranslation } from 'react-i18next';
 
 import { ServerRail } from './ServerRail';
@@ -188,15 +186,14 @@ export const MainLayout = () => {
 
   // Voice Context
   const {
-    providerId,
-    getNativeHandle,
     activeChannelId: connectedVoiceChannelId,
     activeChannelName: connectedVoiceChannelName,
     connectionState,
     muted,
     connectToChannel,
+    providerRenderers,
   } = useVoice();
-  const nativeRoom = providerId === 'livekit' ? ((getNativeHandle?.() as any) as import('livekit-client').Room | null) : null;
+  const AudioRenderer = providerRenderers.AudioRenderer;
 
   const activeAccent = useMemo(
     () =>
@@ -960,12 +957,14 @@ export const MainLayout = () => {
           </div>
         </div>
       )}
-
-      {nativeRoom && !muted && <RoomAudioRenderer />}
     </div>
     </TopBarProvider>
   );
 
-  if (!nativeRoom) return ui;
-  return <RoomContext.Provider value={nativeRoom}>{ui}</RoomContext.Provider>;
+  return (
+    <>
+      {AudioRenderer && <AudioRenderer />}
+      {ui}
+    </>
+  );
 };
