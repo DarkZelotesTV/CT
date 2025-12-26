@@ -5,7 +5,7 @@ Dieses Repository enthält den Backend-Server (Express/Sequelize) und den Deskto
 ## Voraussetzungen
 - Node.js 20+
 - npm 10+
-- (Optional für Server-Infrastruktur) Docker & Docker Compose für MySQL/Redis/LiveKit
+- (Optional für Server-Infrastruktur) Docker & Docker Compose für MySQL/Redis
 
 ## Installation
 Alle Abhängigkeiten werden einmalig im Repo-Wurzelverzeichnis installiert:
@@ -15,10 +15,10 @@ npm install
 ```
 
 ## Infrastruktur (optional für den Server)
-Wenn MySQL/Redis/LiveKit nicht lokal vorhanden sind, können sie aus dem `docker-compose.yml` gestartet werden:
+Wenn MySQL/Redis nicht lokal vorhanden sind, können sie aus dem `docker-compose.yml` gestartet werden:
 
 ```bash
-docker compose up -d mysql redis livekit
+docker compose up -d mysql redis
 
 # (Optional) phpMyAdmin öffnen: http://localhost:8080
 ```
@@ -70,5 +70,5 @@ npm run dev:client   # Vite-Entwicklungssserver
 Die Root-Skripte nutzen die npm-Workspaces, um die entsprechenden Befehle in `apps/client` und `apps/server` automatisch auszuführen.
 
 ## Fehlerbehebung
-- Prüfe, ob `docker compose ps` zeigt, dass MySQL/Redis/LiveKit laufen.
+- Prüfe, ob `docker compose ps` zeigt, dass MySQL/Redis laufen.
 - Stelle sicher, dass `apps/server/.env` mit den MySQL-Zugangsdaten aus `docker-compose.yml` übereinstimmt.

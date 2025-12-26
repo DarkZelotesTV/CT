@@ -11,14 +11,13 @@ This project now uses a TeamSpeak-like identity login (local Ed25519 keypair + c
 - Server issues an app JWT (`clover_token`) used for:
   - HTTP API requests (`Authorization: Bearer <token>`)
   - Socket.io authentication (`handshake.auth.token`)
-  - LiveKit token generation (`GET /api/livekit/token?room=...`)
 
 ## Run locally
 
-1) Start infrastructure (LiveKit + Redis + MySQL):
+1) Start infrastructure (Redis + MySQL):
 
 ```bash
-docker compose up -d
+docker compose up -d mysql redis
 ```
 
 2) Install dependencies (workspace):
