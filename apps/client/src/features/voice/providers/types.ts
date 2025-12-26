@@ -1,6 +1,6 @@
 import React from 'react';
 
-export type VoiceProviderId = 'livekit' | (string & {});
+export type VoiceProviderId = 'livekit' | 'mediasoup' | 'p2p' | (string & {});
 
 export type VoiceConnectionHandle = {
   provider: VoiceProviderId;
