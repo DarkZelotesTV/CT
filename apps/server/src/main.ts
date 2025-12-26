@@ -22,9 +22,10 @@ import {
 } from './realtime/registry';
 
 // Models Importe (für Socket Logik)
-import { User, ServerMember, MemberRole, Role } from './models';
+import type { Router as MediasoupRouter, RtpCapabilities } from 'mediasoup/node/lib/types';
+import { User, ServerMember, MemberRole, Role, Channel } from './models';
 import { resolveUserFromIdentity } from './utils/identityAuth';
-import { resolveWebRtcTransportDefaults, type WebRtcTransportDefaults } from './rtc';
+import { resolveWebRtcTransportDefaults, rtcRoomManager, rtcWorkerPool, type WebRtcTransportDefaults } from './rtc';
 
 const PORT = Number(process.env.PORT || 3001);
 const TLS_CERT_PATH = process.env.TLS_CERT_PATH || process.env.HTTPS_CERT_PATH;
@@ -154,6 +155,58 @@ const sendPresenceSnapshot = async (socket: any) => {
   }
 };
 
+const rtcRouters = new Map<number, MediasoupRouter>();
+const rtcRoomNameForChannel = (channelId: number) => `channel_${channelId}`;
+
+const getOrCreateRtcRouter = async (channelId: number) => {
+  const existing = rtcRouters.get(channelId);
+  if (existing && !existing.closed) return existing;
+
+  const router = await rtcWorkerPool.createRouter();
+  rtcRouters.set(channelId, router);
+
+  router.observer.on('close', () => {
+    if (rtcRouters.get(channelId) === router) {
+      rtcRouters.delete(channelId);
+    }
+  });
+
+  return router;
+};
+
+const ensureVoiceChannelAccess = async (channelId: number, userId: number) => {
+  if (!Number.isFinite(channelId) || channelId <= 0) {
+    throw new Error('Ungültige channelId');
+  }
+
+  const channel = await Channel.findByPk(channelId);
+  if (!channel) {
+    throw new Error('Kanal nicht gefunden');
+  }
+  if (channel.type !== 'voice') {
+    throw new Error('Kanal ist kein Voice-Channel');
+  }
+
+  const membership = await ServerMember.findOne({ where: { server_id: channel.server_id, user_id: userId } });
+  if (!membership) {
+    throw new Error('Fehlende Berechtigung');
+  }
+
+  return channel;
+};
+
+const cleanupRtcRooms = (socket: any, participantId?: number | null) => {
+  const rtcRooms: Set<string> = (socket.data as any).rtcRooms || new Set();
+  const participantIdentity = participantId ? String(participantId) : null;
+
+  rtcRooms.forEach((roomName) => {
+    if (participantIdentity) {
+      rtcRoomManager.removeParticipant(roomName, participantIdentity);
+    }
+  });
+  rtcRooms.clear();
+};
+
 // ==========================================
 // 1. CORS & MIDDLEWARE (Sicherheit lockern)
 // ==========================================
@@ -256,6 +309,7 @@ io.on('connection', async (socket) => {
   (socket.data as any).heartbeatInterval = null;
   (socket.data as any).presenceSnapshotInterval = null;
   (socket.data as any).rtcTransportDefaults = resolveWebRtcTransportDefaults();
+  (socket.data as any).rtcRooms = new Set<string>();
 
   if (numericUserId) {
      console.log(`User ${numericUserId} connected (Socket ID: ${socket.id})`);
@@ -299,6 +353,53 @@ io.on('connection', async (socket) => {
     }
   );
 
+  socket.on(
+    'rtc:joinRoom',
+    async (
+      payload: { channelId?: number },
+      ack?: (payload: { success: boolean; error?: string; roomName?: string; rtpCapabilities?: RtpCapabilities; peers?: any[] }) => void
+    ) => {
+      const respond = (body: { success: boolean; error?: string; roomName?: string; rtpCapabilities?: RtpCapabilities; peers?: any[] }) => {
+        if (typeof ack === 'function') ack(body);
+      };
+
+      try {
+        if (!numericUserId) {
+          return respond({ success: false, error: 'unauthorized' });
+        }
+
+        const channelId = Number(payload?.channelId);
+        const channel = await ensureVoiceChannelAccess(channelId, numericUserId);
+        const [router, user] = await Promise.all([getOrCreateRtcRouter(channelId), User.findByPk(numericUserId, { attributes: ['id', 'username', 'avatar_url'] })]);
+
+        const roomName = rtcRoomNameForChannel(channelId);
+        rtcRoomManager.registerParticipant(roomName, String(numericUserId), {
+          userId: numericUserId,
+          username: user?.username,
+          avatarUrl: user?.avatar_url,
+          serverId: channel.server_id,
+          channelId,
+        });
+
+        const rtcRooms: Set<string> = (socket.data as any).rtcRooms || new Set<string>();
+        rtcRooms.add(roomName);
+        (socket.data as any).rtcRooms = rtcRooms;
+
+        const peers = rtcRoomManager.listParticipants(roomName);
+
+        respond({
+          success: true,
+          roomName,
+          rtpCapabilities: router.rtpCapabilities,
+          peers,
+        });
+      } catch (err: any) {
+        console.error('Fehler bei rtc:joinRoom:', err);
+        respond({ success: false, error: err?.message || 'Konnte RTC-Raum nicht öffnen' });
+      }
+    }
+  );
+
   socket.on('join_channel', async (channelId: number) => {
     if (!numericUserId) return;
 
@@ -307,6 +408,12 @@ io.on('connection', async (socket) => {
     for (const prevChannel of Array.from(joinedChannels)) {
       if (prevChannel !== channelId) {
         socket.leave(`channel_${prevChannel}`);
+        const rtcRooms: Set<string> = (socket.data as any).rtcRooms || new Set<string>();
+        const prevRoomName = rtcRoomNameForChannel(prevChannel);
+        if (rtcRooms.has(prevRoomName)) {
+          rtcRoomManager.removeParticipant(prevRoomName, String(numericUserId));
+          rtcRooms.delete(prevRoomName);
+        }
         removeUserFromChannel(prevChannel, numericUserId);
         joinedChannels.delete(prevChannel);
         globalChannels.delete(prevChannel);
@@ -370,6 +477,13 @@ io.on('connection', async (socket) => {
     socket.leave(`channel_${channelId}`);
     joinedChannels.delete(channelId);
     removeUserFromChannel(channelId, numericUserId);
+
+    const rtcRooms: Set<string> = (socket.data as any).rtcRooms || new Set<string>();
+    const roomName = rtcRoomNameForChannel(channelId);
+    if (rtcRooms.has(roomName)) {
+      rtcRoomManager.removeParticipant(roomName, String(numericUserId));
+      rtcRooms.delete(roomName);
+    }
   });
 
   socket.on('disconnect', async () => {
@@ -389,6 +503,7 @@ io.on('connection', async (socket) => {
          clearInterval((socket.data as any).presenceSnapshotInterval);
        }
 
+       cleanupRtcRooms(socket, numericUserId);
        unregisterUserSocket(numericUserId, socket);
        scheduleOfflineCheck(numericUserId);
     }
