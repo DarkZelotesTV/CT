@@ -24,6 +24,7 @@ import {
 // Models Importe (für Socket Logik)
 import { User, ServerMember, MemberRole, Role } from './models';
 import { resolveUserFromIdentity } from './utils/identityAuth';
+import { resolveWebRtcTransportDefaults, type WebRtcTransportDefaults } from './rtc';
 
 const PORT = Number(process.env.PORT || 3001);
 const TLS_CERT_PATH = process.env.TLS_CERT_PATH || process.env.HTTPS_CERT_PATH;
@@ -254,6 +255,7 @@ io.on('connection', async (socket) => {
   (socket.data as any).joinedChannels = new Set<number>();
   (socket.data as any).heartbeatInterval = null;
   (socket.data as any).presenceSnapshotInterval = null;
+  (socket.data as any).rtcTransportDefaults = resolveWebRtcTransportDefaults();
 
   if (numericUserId) {
      console.log(`User ${numericUserId} connected (Socket ID: ${socket.id})`);
@@ -282,6 +284,20 @@ io.on('connection', async (socket) => {
     if (!numericUserId) return;
     scheduleOfflineCheck(numericUserId);
   });
+
+  socket.on(
+    'rtc:transport-defaults',
+    (ack?: (payload: { success: boolean; defaults?: WebRtcTransportDefaults; error?: string }) => void) => {
+      try {
+        const defaults = (socket.data as any).rtcTransportDefaults || resolveWebRtcTransportDefaults();
+        (socket.data as any).rtcTransportDefaults = defaults;
+        if (typeof ack === 'function') ack({ success: true, defaults });
+      } catch (err: any) {
+        console.error('Fehler beim Auflösen der RTC-Transport-Defaults:', err);
+        if (typeof ack === 'function') ack({ success: false, error: err?.message || 'Unbekannter Fehler' });
+      }
+    }
+  );
 
   socket.on('join_channel', async (channelId: number) => {
     if (!numericUserId) return;
