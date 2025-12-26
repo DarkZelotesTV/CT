@@ -18,7 +18,12 @@ const useVoiceComposer = (): VoiceContextType => {
 
 const VoiceComposer = ({ children }: { children: React.ReactNode }) => {
   const contextValue = useVoiceComposer();
-  return <VoiceContext.Provider value={contextValue}>{children}</VoiceContext.Provider>;
+  const ProviderWrapper = contextValue.providerRenderers.ProviderWrapper ?? React.Fragment;
+  return (
+    <VoiceContext.Provider value={contextValue}>
+      <ProviderWrapper>{children}</ProviderWrapper>
+    </VoiceContext.Provider>
+  );
 };
 
 export const VoiceProvider = ({ children }: { children: React.ReactNode }) => (

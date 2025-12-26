@@ -1,14 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { 
-  ChevronUp, Grid, Headphones, LayoutList, Mic, MicOff, 
-  Monitor, MonitorOff, PhoneOff, Video, VideoOff, 
-  XCircle, Check, Settings
+import {
+  ChevronUp,
+  Grid,
+  Headphones,
+  LayoutList,
+  Mic,
+  MicOff,
+  Monitor,
+  PhoneOff,
+  Video,
+  VideoOff,
+  XCircle,
+  Check,
 } from 'lucide-react';
 
-// --- KORRIGIERTE IMPORTE ---
-// 1. VoiceMediaStage liegt in ../tabs/
-import { VoiceMediaStage } from '../tabs/VoiceMediaStage'; 
-// 2. useVoice liegt in src/features/voice/index.ts (zwei Ebenen hoch)
 import { useVoice } from '../..'; 
 // 3. Settings und Modals (vier Ebenen hoch bis src/)
 import { useSettings } from '../../../../context/SettingsContext';
@@ -31,13 +36,18 @@ const ContextMenu = ({ onClose, children }: { onClose: () => void, children: Rea
 
 export const VoiceChannelView = ({ channelName }: { channelName: string | null }) => {
   const {
-    providerId, connectionState, error, cameraError,
+    connectionState, error,
     muted, micMuted, setMuted, setMicMuted,
     isCameraEnabled, isScreenSharing,
     stopCamera, startCamera, stopScreenShare, toggleCamera, disconnect, toggleScreenShare,
     getNativeHandle,
+    participants,
+    activeSpeakerIds,
+    providerRenderers,
   } = useVoice();
   const { settings, updateDevices } = useSettings();
+  const MediaStage = providerRenderers.MediaStage;
+  const nativeHandle = getNativeHandle?.();
 
   const [layout, setLayout] = useState<'grid' | 'speaker'>('grid');
   const [showSettings, setShowSettings] = useState(false);
@@ -63,8 +73,7 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
   };
 
   const statusColor = connectionState === 'connected' ? 'bg-green-500 shadow-neon' : 'bg-yellow-500';
-  const nativeHandle = getNativeHandle?.();
-  const canRenderStage = providerId === 'livekit' && Boolean(nativeHandle) && connectionState === 'connected';
+  const canRenderStage = Boolean(MediaStage) && connectionState === 'connected';
 
   return (
     <div className="flex-1 flex flex-col h-full bg-background relative select-none">
@@ -82,7 +91,15 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
 
         {/* Media Content Area */}
         <div className="flex-1 overflow-hidden relative">
-            {canRenderStage ? <VoiceMediaStage layout={layout} /> : (
+            {canRenderStage && MediaStage ? (
+              <MediaStage
+                layout={layout}
+                participants={participants}
+                activeSpeakerIds={activeSpeakerIds}
+                connectionState={connectionState}
+                nativeHandle={nativeHandle}
+              />
+            ) : (
                 <div className="flex h-full items-center justify-center text-text-muted gap-2 font-semibold bg-background/50">
                    {connectionState === 'connected' ? 'Voice-Provider wird initialisiert...' : 'Verbinde...'}
                 </div>

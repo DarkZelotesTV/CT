@@ -16,6 +16,7 @@ import { useSocket } from '../../../context/SocketContext';
 import { getLiveKitConfig } from '../../../utils/apiConfig';
 import { storage } from '../../../shared/config/storage';
 import { type VoiceConnectionHandle, type VoiceParticipant } from '../providers/types';
+import { liveKitRenderers } from '../providers/livekit/renderers';
 import { type ConnectionState, VoiceState } from '../state/voiceTypes';
 
 type QualityPreset = {
@@ -1631,6 +1632,7 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
     setParticipantVolume,
     screenShareAudioError,
     localAudioLevel,
+    providerRenderers: liveKitRenderers,
   };
 
   return contextValue;

@@ -28,6 +28,22 @@ export type VoiceStats = {
   localAudioLevel: number;
 };
 
+export type VoiceMediaStageProps = {
+  layout: 'grid' | 'speaker';
+  floatingScreenShare?: boolean;
+  onRequestAnchor?: () => void;
+  participants: VoiceParticipant[];
+  activeSpeakerIds: string[];
+  connectionState: 'disconnected' | 'connecting' | 'connected' | 'reconnecting';
+  nativeHandle?: unknown;
+};
+
+export type VoiceProviderRenderers = {
+  MediaStage?: React.ComponentType<VoiceMediaStageProps>;
+  AudioRenderer?: React.ComponentType;
+  ProviderWrapper?: React.ComponentType<{ children: React.ReactNode }>;
+};
+
 export interface VoiceProviderAdapter {
   providerId: VoiceProviderId;
   getNativeHandle?: () => unknown;
