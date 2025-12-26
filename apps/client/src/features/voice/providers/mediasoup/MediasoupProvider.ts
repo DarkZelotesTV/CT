@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Device } from 'mediasoup-client';
 import type {
   Consumer,
@@ -55,7 +55,69 @@ const toParticipant = (peer: PeerInfo, localId: string | null): VoiceParticipant
   };
 };
 
-const emptyRenderers: VoiceProviderRenderers = {};
+type MediasoupAudioRendererProps = {
+  getAudioElements: () => Map<string, HTMLAudioElement>;
+  renderRevision: number;
+  autoplayBlocked: boolean;
+  requestAutoplay: () => Promise<void>;
+};
+
+const MediasoupAudioRenderer: React.FC<MediasoupAudioRendererProps> = ({
+  getAudioElements,
+  renderRevision,
+  autoplayBlocked,
+  requestAutoplay,
+}) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const elements = getAudioElements();
+
+    elements.forEach((audio) => {
+      audio.style.display = 'none';
+      if (audio.parentElement !== container) {
+        container.appendChild(audio);
+      }
+    });
+
+    Array.from(container.children).forEach((child) => {
+      const el = child as HTMLAudioElement;
+      const consumerId = el.dataset?.consumerId;
+      if (consumerId && !elements.has(consumerId)) {
+        el.remove();
+      }
+    });
+  }, [getAudioElements, renderRevision]);
+
+  const hasAudio = getAudioElements().size > 0;
+
+  if (!autoplayBlocked && !hasAudio) return null;
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-[60]">
+      <div ref={containerRef} className="sr-only" aria-hidden="true" />
+      {autoplayBlocked && (
+        <div className="pointer-events-auto fixed bottom-4 right-4">
+          <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-lg px-3 py-2 flex items-center gap-2 text-[var(--color-text)]">
+            <span className="text-sm font-medium">Audio-Wiedergabe erforderlich</span>
+            <button
+              type="button"
+              onClick={() => {
+                void requestAutoplay();
+              }}
+              className="px-3 py-1.5 rounded-lg bg-[var(--color-accent)] text-white text-xs font-semibold hover:brightness-110 transition"
+            >
+              Jetzt abspielen
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): VoiceContextType => {
   const { settings, updateTalk } = useSettings();
@@ -70,6 +132,8 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
   const consumerPeerRef = useRef<Map<string, string>>(new Map());
   const peerSnapshotRef = useRef<JoinRoomAck['peers']>([]);
   const connectingRef = useRef(false);
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
+  const [audioRenderRevision, setAudioRenderRevision] = useState(0);
 
   const localUserId = useMemo(() => {
     const user = storage.get('cloverUser') as { id?: number | string } | null;
@@ -116,6 +180,8 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
       }
     });
     audioElementsRef.current.clear();
+    setAudioRenderRevision((v) => v + 1);
+    setAutoplayBlocked(false);
   }, []);
 
   const cleanupTransports = useCallback(() => {
@@ -147,13 +213,26 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
     deviceRef.current = null;
   }, []);
 
+  const calculateVolume = useCallback(
+    (peerId: string | undefined, globalVolume: number, muted: boolean) => {
+      if (muted) return 0;
+      const participantVolumes = settings.talk.participantVolumes || {};
+      const baseVolume = peerId ? participantVolumes[peerId] ?? 1 : 1;
+      const normalizedBase = Math.max(0, Math.min(2, baseVolume));
+      const normalizedGlobal = Math.max(0, Math.min(2, globalVolume));
+      return Math.max(0, Math.min(1, normalizedBase * normalizedGlobal));
+    },
+    [settings.talk.participantVolumes]
+  );
+
   const applyOutputVolume = useCallback(
     (volume: number, muted: boolean) => {
-      audioElementsRef.current.forEach((el) => {
-        el.volume = muted ? 0 : Math.max(0, Math.min(1, volume));
+      audioElementsRef.current.forEach((el, consumerId) => {
+        const peerId = consumerPeerRef.current.get(consumerId);
+        el.volume = calculateVolume(peerId, volume, muted);
       });
     },
-    []
+    [calculateVolume]
   );
 
   const setMuted = useCallback(
@@ -167,12 +246,51 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
 
   const setOutputVolume = useCallback(
     async (volume: number) => {
-      setState({ outputVolume: volume });
-      applyOutputVolume(volume, state.muted);
-      updateTalk({ outputVolume: volume });
+      const normalized = Math.max(0, Math.min(2, volume));
+      setState({ outputVolume: normalized });
+      applyOutputVolume(normalized, state.muted);
+      updateTalk({ outputVolume: normalized });
     },
     [applyOutputVolume, setState, state.muted, updateTalk]
   );
+
+  useEffect(() => {
+    applyOutputVolume(state.outputVolume, state.muted);
+  }, [applyOutputVolume, state.muted, state.outputVolume]);
+
+  const requestAutoplay = useCallback(async () => {
+    const elements = Array.from(audioElementsRef.current.values());
+    if (!elements.length) {
+      setAutoplayBlocked(false);
+      return;
+    }
+
+    let blocked = false;
+    await Promise.all(
+      elements.map(async (el) => {
+        try {
+          await el.play();
+        } catch {
+          blocked = true;
+        }
+      })
+    );
+
+    setAutoplayBlocked(blocked);
+  }, []);
+
+  const getAudioElements = useCallback(() => audioElementsRef.current, []);
+
+  useEffect(() => {
+    const sinkId = settings.devices.audioOutputId;
+    if (!sinkId) return;
+    audioElementsRef.current.forEach((audio) => {
+      const audioWithSink = audio as HTMLAudioElement & { setSinkId?: (id: string) => Promise<void> };
+      if (typeof audioWithSink.setSinkId === 'function') {
+        audioWithSink.setSinkId(sinkId).catch((err: any) => console.warn('Ausgabegerät konnte nicht gesetzt werden', err));
+      }
+    });
+  }, [settings.devices.audioOutputId]);
 
   const updateParticipants = useCallback(
     (peers: PeerInfo[] | undefined, localId: string | null) => {
@@ -217,21 +335,47 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
         consumer.on('transportclose', () => {
           consumersRef.current.delete(consumer.id);
           consumerPeerRef.current.delete(consumer.id);
+          const audio = audioElementsRef.current.get(consumer.id);
+          if (audio) {
+            try {
+              audio.pause();
+              (audio.srcObject as MediaStream | null)?.getTracks().forEach((t) => t.stop());
+            } catch {
+              /* noop */
+            }
+            audioElementsRef.current.delete(consumer.id);
+          }
+          setAudioRenderRevision((v) => v + 1);
+          if (audioElementsRef.current.size === 0) setAutoplayBlocked(false);
         });
 
         if (consumer.kind === 'audio') {
           const audio = new Audio();
           audio.srcObject = new MediaStream([consumer.track]);
           audio.autoplay = true;
-          audio.volume = state.muted ? 0 : state.outputVolume;
+          audio.playsInline = true;
+          audio.dataset.consumerId = consumer.id;
+          audio.volume = calculateVolume(peerId, state.outputVolume, state.muted);
+          const sinkId = settings.devices.audioOutputId;
+          const audioWithSink = audio as HTMLAudioElement & { setSinkId?: (id: string) => Promise<void> };
+          if (sinkId && typeof audioWithSink.setSinkId === 'function') {
+            audioWithSink.setSinkId(sinkId).catch((err: any) => console.warn('Ausgabegerät konnte nicht gesetzt werden', err));
+          }
           audioElementsRef.current.set(consumer.id, audio);
-          void audio.play().catch(() => {});
+          setAudioRenderRevision((v) => v + 1);
+          void audio
+            .play()
+            .then(() => setAutoplayBlocked(false))
+            .catch((err) => {
+              console.warn('Audio-Wiedergabe blockiert', err);
+              setAutoplayBlocked(true);
+            });
         }
       } catch (err) {
         console.warn('Consumer konnte nicht erstellt werden', err);
       }
     },
-    [emitWithAck, state.muted, state.outputVolume]
+    [calculateVolume, emitWithAck, settings.devices.audioOutputId, state.muted, state.outputVolume]
   );
 
   const consumePeerTracks = useCallback(
@@ -527,7 +671,7 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
 
   const setParticipantVolume = useCallback(
     (participantId: string, volume: number) => {
-      const normalized = Math.max(0, Math.min(1, volume));
+      const normalized = Math.max(0, Math.min(2, volume));
       updateTalk({
         participantVolumes: {
           ...(settings.talk.participantVolumes || {}),
@@ -538,11 +682,11 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
       consumerPeerRef.current.forEach((peerId, consumerId) => {
         if (peerId === participantId) {
           const el = audioElementsRef.current.get(consumerId);
-          if (el) el.volume = state.muted ? 0 : normalized;
+          if (el) el.volume = calculateVolume(participantId, state.outputVolume, state.muted);
         }
       });
     },
-    [settings.talk.participantVolumes, state.muted, updateTalk]
+    [calculateVolume, settings.talk.participantVolumes, state.muted, state.outputVolume, updateTalk]
   );
 
   useEffect(() => {
@@ -569,6 +713,20 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
       void disconnect();
     };
   }, [disconnect]);
+
+  const providerRenderers = useMemo<VoiceProviderRenderers>(
+    () => ({
+      AudioRenderer: () => (
+        <MediasoupAudioRenderer
+          getAudioElements={getAudioElements}
+          renderRevision={audioRenderRevision}
+          autoplayBlocked={autoplayBlocked}
+          requestAutoplay={requestAutoplay}
+        />
+      ),
+    }),
+    [audioRenderRevision, autoplayBlocked, getAudioElements, requestAutoplay]
+  );
 
   return {
     providerId: 'mediasoup',
@@ -623,6 +781,6 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
     setParticipantVolume,
     screenShareAudioError: state.screenShareAudioError,
     localAudioLevel: state.localAudioLevel,
-    providerRenderers: emptyRenderers,
+    providerRenderers,
   };
 };
