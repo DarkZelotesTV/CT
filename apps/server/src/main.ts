@@ -22,7 +22,7 @@ import {
 } from './realtime/registry';
 
 // Models Importe (für Socket Logik)
-import type { Router as MediasoupRouter, RtpCapabilities, WebRtcTransport } from 'mediasoup/node/lib/types';
+import type { Router as MediasoupRouter, RtpCapabilities, RtpParameters, WebRtcTransport } from 'mediasoup/node/lib/types';
 import { User, ServerMember, MemberRole, Role, Channel } from './models';
 import { resolveUserFromIdentity } from './utils/identityAuth';
 import { resolveWebRtcTransportDefaults, rtcRoomManager, rtcWorkerPool, type RtcTransportDirection, type WebRtcTransportDefaults } from './rtc';
@@ -493,6 +493,94 @@ io.on('connection', async (socket) => {
       } catch (err: any) {
         console.error('Fehler bei rtc:connectTransport:', err);
         respond({ success: false, error: err?.message || 'Konnte RTC-Transport nicht verbinden' });
+      }
+    }
+  );
+
+  socket.on(
+    'rtc:produce',
+    async (
+      payload: { channelId?: number; transportId?: string; rtpParameters?: RtpParameters; appData?: Record<string, any> },
+      ack?: (payload: { success: boolean; error?: string; producerId?: string }) => void
+    ) => {
+      const respond = (body: { success: boolean; error?: string; producerId?: string }) => {
+        if (typeof ack === 'function') ack(body);
+      };
+
+      try {
+        if (!numericUserId) {
+          return respond({ success: false, error: 'unauthorized' });
+        }
+
+        const channelId = Number(payload?.channelId ?? NaN);
+        if (!Number.isFinite(channelId)) {
+          return respond({ success: false, error: 'Ungültige channelId' });
+        }
+
+        await ensureVoiceChannelAccess(channelId, numericUserId);
+
+        const transportId = payload?.transportId;
+        if (!transportId || typeof transportId !== 'string') {
+          return respond({ success: false, error: 'Ungültige transportId' });
+        }
+
+        const rtpParameters = payload?.rtpParameters;
+        if (!rtpParameters || typeof rtpParameters !== 'object') {
+          return respond({ success: false, error: 'Ungültige rtpParameters' });
+        }
+
+        const rtcTransports: Map<string, WebRtcTransport> = (socket.data as any).rtcTransports || new Map();
+        const transport = rtcTransports.get(transportId);
+        if (!transport) {
+          return respond({ success: false, error: 'Transport nicht gefunden' });
+        }
+
+        if (transport.appData?.participantId && transport.appData.participantId !== numericUserId) {
+          return respond({ success: false, error: 'Fehlende Berechtigung für diesen Transport' });
+        }
+
+        if (transport.appData?.direction && transport.appData.direction !== 'send') {
+          return respond({ success: false, error: 'Transport ist nicht zum Senden vorgesehen' });
+        }
+
+        const roomName = rtcRoomNameForChannel(channelId);
+        const rtcRooms: Set<string> = (socket.data as any).rtcRooms || new Set<string>();
+        if (!rtcRooms.has(roomName)) {
+          return respond({ success: false, error: 'Nicht im RTC-Raum' });
+        }
+
+        const producer = await transport.produce({
+          kind: 'audio',
+          rtpParameters,
+          appData: {
+            ...(payload?.appData || {}),
+            channelId,
+            participantId: numericUserId,
+            socketId: socket.id,
+            kind: 'audio',
+          },
+        });
+
+        rtcRoomManager.upsertProducer(roomName, String(numericUserId), producer.id, {
+          transportId: transport.id,
+          kind: 'audio',
+          appData: producer.appData as Record<string, any>,
+        });
+
+        const participant = rtcRoomManager.listParticipants(roomName).find((peer) => peer.identity === String(numericUserId));
+
+        if (participant) {
+          io.to(roomName).emit('rtc:newProducer', { roomName, channelId, peer: participant });
+        }
+
+        producer.on('transportclose', () => {
+          rtcRoomManager.removeProducer(roomName, String(numericUserId), producer.id);
+        });
+
+        respond({ success: true, producerId: producer.id });
+      } catch (err: any) {
+        console.error('Fehler bei rtc:produce:', err);
+        respond({ success: false, error: err?.message || 'Konnte Producer nicht erstellen' });
       }
     }
   );
