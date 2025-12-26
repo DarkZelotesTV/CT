@@ -1,6 +1,7 @@
 import { cpus } from 'os';
 import { createWorker } from 'mediasoup';
 import type { Router, RouterOptions, Worker } from 'mediasoup/node/lib/types';
+import { defaultRouterOptions } from './config';
 
 type WorkerEntry = {
   worker: Worker;
@@ -82,7 +83,8 @@ export class WorkerPool {
   async createRouter(options?: RouterOptions): Promise<Router> {
     await this.ensureStarted();
     const worker = this.pickWorker();
-    const router = await worker.worker.createRouter(options);
+    const routerOptions: RouterOptions = options ? { ...defaultRouterOptions, ...options } : defaultRouterOptions;
+    const router = await worker.worker.createRouter(routerOptions);
 
     worker.routers.add(router);
     router.observer.on('close', () => worker.routers.delete(router));
