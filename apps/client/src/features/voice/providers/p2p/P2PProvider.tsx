@@ -1,5 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { socketEvents, type P2pJoinAck, type P2pPeerSummary, type P2pSignalEnvelope } from '@clover/shared';
+import {
+  socketEvents,
+  type P2pCandidateEnvelope,
+  type P2pJoinAck,
+  type P2pOfferAnswerEnvelope,
+  type P2pPeerSummary,
+  type P2pSignalEnvelope,
+} from '@clover/shared';
 import { useSettings } from '../../../../context/SettingsContext';
 import { useSocket } from '../../../../context/SocketContext';
 import { storage } from '../../../../shared/config/storage';
@@ -324,19 +331,36 @@ export const useP2PProvider = ({ state, setState }: VoiceEngineDeps): VoiceConte
     pendingCandidatesRef.current.delete(peerId);
   }, []);
 
-  const sendSignal = useCallback(
-    async (peerId: PeerId, payload: { description?: RTCSessionDescriptionInit | null; candidate?: RTCIceCandidateInit | null }) => {
+  const sendOfferOrAnswer = useCallback(
+    async (peerId: PeerId, description: RTCSessionDescriptionInit, kind: 'offer' | 'answer') => {
+      if (!socket || !activeChannelRef.current) return;
+      const targetUserId = Number(peerId);
+      const event = kind === 'offer' ? 'p2pOffer' : 'p2pAnswer';
+      try {
+        await emitWithAck<{ success: boolean; error?: string }>(event, {
+          channelId: activeChannelRef.current,
+          targetUserId,
+          description,
+        });
+      } catch (err) {
+        console.warn(`${kind} konnte nicht gesendet werden`, err);
+      }
+    },
+    [emitWithAck, socket]
+  );
+
+  const sendCandidate = useCallback(
+    async (peerId: PeerId, candidate: RTCIceCandidateInit) => {
       if (!socket || !activeChannelRef.current) return;
       const targetUserId = Number(peerId);
       try {
-        await emitWithAck<{ success: boolean; error?: string }>('p2pSignal', {
+        await emitWithAck<{ success: boolean; error?: string }>('p2pCandidate', {
           channelId: activeChannelRef.current,
           targetUserId,
-          description: payload.description ?? undefined,
-          candidate: payload.candidate ?? undefined,
+          candidate,
         });
       } catch (err) {
-        console.warn('Signal konnte nicht gesendet werden', err);
+        console.warn('Candidate konnte nicht gesendet werden', err);
       }
     },
     [emitWithAck, socket]
@@ -368,7 +392,7 @@ export const useP2PProvider = ({ state, setState }: VoiceEngineDeps): VoiceConte
 
       connection.onicecandidate = (event) => {
         if (event.candidate) {
-          void sendSignal(peerId, { candidate: event.candidate.toJSON() });
+          void sendCandidate(peerId, event.candidate.toJSON());
         }
       };
 
@@ -391,7 +415,9 @@ export const useP2PProvider = ({ state, setState }: VoiceEngineDeps): VoiceConte
           try {
             const offer = await connection.createOffer();
             await connection.setLocalDescription(offer);
-            await sendSignal(peerId, { description: connection.localDescription });
+            if (connection.localDescription) {
+              await sendOfferOrAnswer(peerId, connection.localDescription, 'offer');
+            }
           } catch (err) {
             console.warn('Offer konnte nicht erstellt werden', err);
           }
@@ -400,7 +426,65 @@ export const useP2PProvider = ({ state, setState }: VoiceEngineDeps): VoiceConte
 
       return connection;
     },
-    [attachRemoteStream, handleConnectionState, sendSignal, updateParticipants]
+    [attachRemoteStream, handleConnectionState, sendOfferOrAnswer, sendCandidate, updateParticipants]
+  );
+
+  const handleOffer = useCallback(
+    async (payload: P2pOfferAnswerEnvelope) => {
+      if (!payload.fromUserId || !payload.description) return;
+      const peerId = String(payload.fromUserId);
+      const connection = createPeerConnection(peerId, false);
+      try {
+        const description = payload.description as RTCSessionDescriptionInit;
+        await connection.setRemoteDescription(description);
+        await applyPendingCandidates(peerId, connection);
+        const answer = await connection.createAnswer();
+        await connection.setLocalDescription(answer);
+        if (connection.localDescription) {
+          await sendOfferOrAnswer(peerId, connection.localDescription, 'answer');
+        }
+      } catch (err) {
+        console.warn('Offer konnte nicht verarbeitet werden', err);
+      }
+    },
+    [applyPendingCandidates, createPeerConnection, sendOfferOrAnswer]
+  );
+
+  const handleAnswer = useCallback(
+    async (payload: P2pOfferAnswerEnvelope) => {
+      if (!payload.fromUserId || !payload.description) return;
+      const peerId = String(payload.fromUserId);
+      const connection = createPeerConnection(peerId, false);
+      try {
+        const description = payload.description as RTCSessionDescriptionInit;
+        await connection.setRemoteDescription(description);
+        await applyPendingCandidates(peerId, connection);
+      } catch (err) {
+        console.warn('Answer konnte nicht verarbeitet werden', err);
+      }
+    },
+    [applyPendingCandidates, createPeerConnection]
+  );
+
+  const handleCandidateEnvelope = useCallback(
+    async (payload: P2pCandidateEnvelope) => {
+      if (!payload.fromUserId || !payload.candidate) return;
+      const peerId = String(payload.fromUserId);
+      const connection = createPeerConnection(peerId, false);
+      const candidate = payload.candidate as RTCIceCandidateInit;
+      if (connection.remoteDescription) {
+        try {
+          await connection.addIceCandidate(candidate);
+        } catch (err) {
+          console.warn('Candidate konnte nicht hinzugefügt werden', err);
+        }
+      } else {
+        const list = pendingCandidatesRef.current.get(peerId) || [];
+        list.push(candidate);
+        pendingCandidatesRef.current.set(peerId, list);
+      }
+    },
+    [createPeerConnection]
   );
 
   const handleIncomingSignal = useCallback(
@@ -417,7 +501,9 @@ export const useP2PProvider = ({ state, setState }: VoiceEngineDeps): VoiceConte
           if (description.type === 'offer') {
             const answer = await connection.createAnswer();
             await connection.setLocalDescription(answer);
-            await sendSignal(peerId, { description: connection.localDescription });
+            if (connection.localDescription) {
+              await sendOfferOrAnswer(peerId, connection.localDescription, 'answer');
+            }
           }
         } catch (err) {
           console.warn('Remote Description konnte nicht gesetzt werden', err);
@@ -439,7 +525,7 @@ export const useP2PProvider = ({ state, setState }: VoiceEngineDeps): VoiceConte
         }
       }
     },
-    [applyPendingCandidates, createPeerConnection, sendSignal]
+    [applyPendingCandidates, createPeerConnection, sendOfferOrAnswer]
   );
 
   const connectToChannel = useCallback(
@@ -648,6 +734,21 @@ export const useP2PProvider = ({ state, setState }: VoiceEngineDeps): VoiceConte
       updateParticipants();
     };
 
+    const handleOfferEvent = (payload: P2pOfferAnswerEnvelope) => {
+      if (payload.channelId !== activeChannelRef.current) return;
+      void handleOffer(payload);
+    };
+
+    const handleAnswerEvent = (payload: P2pOfferAnswerEnvelope) => {
+      if (payload.channelId !== activeChannelRef.current) return;
+      void handleAnswer(payload);
+    };
+
+    const handleCandidateEvent = (payload: P2pCandidateEnvelope) => {
+      if (payload.channelId !== activeChannelRef.current) return;
+      void handleCandidateEnvelope(payload);
+    };
+
     const handleSignal = (payload: P2pSignalEnvelope) => {
       if (payload.channelId !== activeChannelRef.current) return;
       void handleIncomingSignal(payload);
@@ -655,14 +756,20 @@ export const useP2PProvider = ({ state, setState }: VoiceEngineDeps): VoiceConte
 
     socket.on(socketEvents.p2pPeerJoined, handlePeerJoined);
     socket.on(socketEvents.p2pPeerLeft, handlePeerLeft);
+    socket.on(socketEvents.p2pOffer, handleOfferEvent);
+    socket.on(socketEvents.p2pAnswer, handleAnswerEvent);
+    socket.on(socketEvents.p2pCandidate, handleCandidateEvent);
     socket.on(socketEvents.p2pSignal, handleSignal);
 
     return () => {
       socket.off(socketEvents.p2pPeerJoined, handlePeerJoined);
       socket.off(socketEvents.p2pPeerLeft, handlePeerLeft);
+      socket.off(socketEvents.p2pOffer, handleOfferEvent);
+      socket.off(socketEvents.p2pAnswer, handleAnswerEvent);
+      socket.off(socketEvents.p2pCandidate, handleCandidateEvent);
       socket.off(socketEvents.p2pSignal, handleSignal);
     };
-  }, [cleanupPeer, createPeerConnection, handleIncomingSignal, socket, updateParticipants]);
+  }, [cleanupPeer, createPeerConnection, handleAnswer, handleCandidateEnvelope, handleIncomingSignal, handleOffer, socket, updateParticipants]);
 
   useEffect(() => {
     return () => {

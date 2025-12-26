@@ -64,3 +64,15 @@ export const p2pSignalSchema = z.object({
   description: z.record(z.any()).optional(),
   candidate: z.record(z.any()).optional(),
 });
+
+export const p2pOfferAnswerSchema = z.object({
+  channelId: z.number().int().positive(),
+  targetUserId: z.number().int().positive(),
+  description: z.record(z.any()),
+});
+
+export const p2pCandidateSchema = z.object({
+  channelId: z.number().int().positive(),
+  targetUserId: z.number().int().positive(),
+  candidate: z.record(z.any()),
+});

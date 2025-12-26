@@ -50,6 +50,8 @@ import {
   rtcTransportDefaultsSchema,
   p2pJoinSchema,
   p2pSignalSchema,
+  p2pOfferAnswerSchema,
+  p2pCandidateSchema,
 } from './realtime/socketSchemas';
 import { createDefaultTokenBucket, TokenBucket } from './realtime/rateLimiter';
 import type { ZodTypeAny } from 'zod';
@@ -941,6 +943,120 @@ io.on('connection', async (socket) => {
       } catch (err: any) {
         console.error('Fehler bei p2p:join:', err);
         respond({ success: false, error: err?.message || 'Konnte P2P-Raum nicht öffnen' });
+      }
+    }
+  );
+
+  socket.on(
+    'p2p:offer',
+    async (payload: { channelId?: number; targetUserId?: number; description?: Record<string, any> }, ack?: (payload: { success: boolean; error?: string }) => void) => {
+      const respond = (body: { success: boolean; error?: string }) => {
+        if (typeof ack === 'function') ack(body);
+      };
+
+      try {
+        consumeTokenOrThrow(socket);
+        if (!numericUserId) return respond({ success: false, error: 'unauthorized' });
+
+        const { channelId, targetUserId, description } = parsePayload(p2pOfferAnswerSchema, payload);
+        const participants = p2pVoiceRooms.get(channelId);
+        if (!participants || !participants.has(numericUserId)) {
+          return respond({ success: false, error: 'Nicht im P2P-Raum' });
+        }
+
+        if (!targetUserId || !participants.has(targetUserId)) {
+          return respond({ success: false, error: 'Ziel nicht im Raum' });
+        }
+
+        const targets = getSocketsForUser(targetUserId);
+        if (!targets.size) {
+          return respond({ success: false, error: 'Ziel nicht verbunden' });
+        }
+
+        targets.forEach((target) => {
+          target.emit('p2p:offer', { channelId, fromUserId: numericUserId, description });
+        });
+
+        respond({ success: true });
+      } catch (err: any) {
+        console.error('Fehler bei p2p:offer:', err);
+        respond({ success: false, error: err?.message || 'Konnte Offer nicht senden' });
+      }
+    }
+  );
+
+  socket.on(
+    'p2p:answer',
+    async (payload: { channelId?: number; targetUserId?: number; description?: Record<string, any> }, ack?: (payload: { success: boolean; error?: string }) => void) => {
+      const respond = (body: { success: boolean; error?: string }) => {
+        if (typeof ack === 'function') ack(body);
+      };
+
+      try {
+        consumeTokenOrThrow(socket);
+        if (!numericUserId) return respond({ success: false, error: 'unauthorized' });
+
+        const { channelId, targetUserId, description } = parsePayload(p2pOfferAnswerSchema, payload);
+        const participants = p2pVoiceRooms.get(channelId);
+        if (!participants || !participants.has(numericUserId)) {
+          return respond({ success: false, error: 'Nicht im P2P-Raum' });
+        }
+
+        if (!targetUserId || !participants.has(targetUserId)) {
+          return respond({ success: false, error: 'Ziel nicht im Raum' });
+        }
+
+        const targets = getSocketsForUser(targetUserId);
+        if (!targets.size) {
+          return respond({ success: false, error: 'Ziel nicht verbunden' });
+        }
+
+        targets.forEach((target) => {
+          target.emit('p2p:answer', { channelId, fromUserId: numericUserId, description });
+        });
+
+        respond({ success: true });
+      } catch (err: any) {
+        console.error('Fehler bei p2p:answer:', err);
+        respond({ success: false, error: err?.message || 'Konnte Answer nicht senden' });
+      }
+    }
+  );
+
+  socket.on(
+    'p2p:candidate',
+    async (payload: { channelId?: number; targetUserId?: number; candidate?: Record<string, any> }, ack?: (payload: { success: boolean; error?: string }) => void) => {
+      const respond = (body: { success: boolean; error?: string }) => {
+        if (typeof ack === 'function') ack(body);
+      };
+
+      try {
+        consumeTokenOrThrow(socket);
+        if (!numericUserId) return respond({ success: false, error: 'unauthorized' });
+
+        const { channelId, targetUserId, candidate } = parsePayload(p2pCandidateSchema, payload);
+        const participants = p2pVoiceRooms.get(channelId);
+        if (!participants || !participants.has(numericUserId)) {
+          return respond({ success: false, error: 'Nicht im P2P-Raum' });
+        }
+
+        if (!targetUserId || !participants.has(targetUserId)) {
+          return respond({ success: false, error: 'Ziel nicht im Raum' });
+        }
+
+        const targets = getSocketsForUser(targetUserId);
+        if (!targets.size) {
+          return respond({ success: false, error: 'Ziel nicht verbunden' });
+        }
+
+        targets.forEach((target) => {
+          target.emit('p2p:candidate', { channelId, fromUserId: numericUserId, candidate });
+        });
+
+        respond({ success: true });
+      } catch (err: any) {
+        console.error('Fehler bei p2p:candidate:', err);
+        respond({ success: false, error: err?.message || 'Konnte Candidate nicht senden' });
       }
     }
   );

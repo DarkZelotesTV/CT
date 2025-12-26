@@ -75,6 +75,30 @@ export type P2pSignalEnvelope = {
   candidate?: Record<string, any>;
 };
 
+export type P2pOfferAnswerPayload = {
+  channelId?: number;
+  targetUserId?: number;
+  description: Record<string, any>;
+};
+
+export type P2pCandidatePayload = {
+  channelId?: number;
+  targetUserId?: number;
+  candidate: Record<string, any>;
+};
+
+export type P2pOfferAnswerEnvelope = {
+  channelId?: number;
+  fromUserId?: number;
+  description: Record<string, any>;
+};
+
+export type P2pCandidateEnvelope = {
+  channelId?: number;
+  fromUserId?: number;
+  candidate: Record<string, any>;
+};
+
 export type P2pJoinAck = {
   success: boolean;
   peers?: P2pPeerSummary[];
@@ -126,6 +150,9 @@ export type ServerToClientEvents = {
   producerClosed: (payload: RtcProducerClosedPayload) => void;
   'p2p:peer-joined': (payload: { channelId?: number; peer: P2pPeerSummary }) => void;
   'p2p:peer-left': (payload: { channelId?: number; peerId: number }) => void;
+  'p2p:offer': (payload: P2pOfferAnswerEnvelope) => void;
+  'p2p:answer': (payload: P2pOfferAnswerEnvelope) => void;
+  'p2p:candidate': (payload: P2pCandidateEnvelope) => void;
   'p2p:signal': (payload: P2pSignalEnvelope) => void;
 };
 
@@ -152,6 +179,9 @@ export type ClientToServerEvents = {
   'rtc:resumeConsumer': (payload: { consumerId?: string }, ack: (res: PauseResumeAck) => void) => void;
   'rtc:transport-defaults': (ack: (res: TransportDefaultsAck) => void) => void;
   'p2p:join': (payload: { channelId?: number }, ack: (res: P2pJoinAck) => void) => void;
+  'p2p:offer': (payload: P2pOfferAnswerPayload, ack: (res: { success: boolean; error?: string }) => void) => void;
+  'p2p:answer': (payload: P2pOfferAnswerPayload, ack: (res: { success: boolean; error?: string }) => void) => void;
+  'p2p:candidate': (payload: P2pCandidatePayload, ack: (res: { success: boolean; error?: string }) => void) => void;
   'p2p:signal': (payload: P2pSignalPayload, ack: (res: { success: boolean; error?: string }) => void) => void;
 };
 
@@ -168,6 +198,9 @@ export type AckEventMap = {
   'rtc:resumeConsumer': { payload: { consumerId?: string }; response: PauseResumeAck };
   'rtc:transport-defaults': { payload?: undefined; response: TransportDefaultsAck };
   'p2p:join': { payload: { channelId?: number }; response: P2pJoinAck };
+  'p2p:offer': { payload: P2pOfferAnswerPayload; response: { success: boolean; error?: string } };
+  'p2p:answer': { payload: P2pOfferAnswerPayload; response: { success: boolean; error?: string } };
+  'p2p:candidate': { payload: P2pCandidatePayload; response: { success: boolean; error?: string } };
   'p2p:signal': { payload: P2pSignalPayload; response: { success: boolean; error?: string } };
 };
 
