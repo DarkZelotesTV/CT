@@ -186,6 +186,7 @@ export const UserSettingsModal = ({
   const [isTestingOutput, setIsTestingOutput] = useState(false);
   const [outputError, setOutputError] = useState<string | null>(null);
   const [useRnnoise, setUseRnnoise] = useState(rnnoiseEnabled);
+  const [audioPreset, setAudioPreset] = useState<'voice' | 'high' | 'music'>(settings.talk.audioPreset || 'voice');
   const [cameraQuality, setCameraQuality] = useState(settings.talk.cameraQuality || 'medium');
   const [screenQuality, setScreenQuality] = useState<'low' | 'medium' | 'high' | 'native'>(
     settings.talk.screenQuality || 'high'
@@ -221,6 +222,12 @@ export const UserSettingsModal = ({
     ],
     []
   );
+
+  const audioPresetOptions = [
+    { value: 'voice' as const, label: 'Voice', description: 'Sprache optimiert: DTX & FEC, Mono' },
+    { value: 'high' as const, label: 'High', description: 'Höhere Qualität: DTX & FEC, Stereo' },
+    { value: 'music' as const, label: 'Music', description: 'Musik/Streaming: FEC, Stereo, ohne DTX' },
+  ];
 
   const screenResolutionOptions = [
     { value: 'low', label: 'Niedrig', description: '480p' },
@@ -489,6 +496,7 @@ export const UserSettingsModal = ({
     setLocallyMuted(muted);
     setLocallyMicMuted(micMuted);
     setUseRnnoise(rnnoiseEnabled);
+    setAudioPreset(settings.talk.audioPreset || 'voice');
     setCameraQuality(settings.talk.cameraQuality || 'medium');
     setScreenQuality(settings.talk.screenQuality || 'high');
     setScreenFrameRate(settings.talk.screenFrameRate ?? 30);
@@ -687,6 +695,7 @@ export const UserSettingsModal = ({
     });
     updateTalk({
       showVoicePreJoin,
+      audioPreset,
       cameraQuality,
       screenQuality,
       screenFrameRate,
@@ -1237,15 +1246,47 @@ export const UserSettingsModal = ({
                                 </div>
                               </div>
                               <div className={`w-4 h-4 rounded-full border ${pushToTalkEnabled ? 'border-[var(--color-accent)] bg-[var(--color-accent)]' : 'border-[var(--color-border-strong)]'}`} />
-                            </div>
-                          </button>
-                        </div>
                       </div>
+                      </button>
+                    </div>
+                  </div>
 
-                      {/* Audio-Steuerung */}
-                      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-3">
-                        <div className="text-sm font-semibold">Audio-Steuerung</div>
-                        <div className="flex flex-col sm:flex-row gap-2">
+                  {/* Audio-Preset */}
+                  <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-3">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <div className="text-sm font-semibold">Audio-Preset</div>
+                        <p className="text-sm text-[color:var(--color-text-muted)]">
+                          Bestimmt Bitrate und Opus-Codec-Optionen für deinen Upload (voice/high/music).
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {audioPresetOptions.map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => setAudioPreset(option.value)}
+                          className={`p-4 rounded-xl border text-left transition ${
+                            audioPreset === option.value
+                              ? 'bg-white/5 border-[var(--color-accent)]'
+                              : 'bg-transparent border-[var(--color-border)] hover:bg-white/5'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm font-semibold">{option.label}</div>
+                            {audioPreset === option.value && <Check size={16} />}
+                          </div>
+                          <div className="text-xs text-[color:var(--color-text-muted)]">{option.description}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Audio-Steuerung */}
+                  <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-3">
+                    <div className="text-sm font-semibold">Audio-Steuerung</div>
+                    <div className="flex flex-col sm:flex-row gap-2">
                           <button
                             onClick={() => setLocallyMuted((v) => !v)}
                             className={`flex-1 px-4 py-3 rounded-xl border transition flex items-center justify-center gap-2 ${
