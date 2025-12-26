@@ -246,37 +246,6 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
     [attachConsumer]
   );
 
-  const startMicrophone = useCallback(
-    async (channelId: number) => {
-      const sendTransport = sendTransportRef.current;
-      if (!sendTransport) return;
-
-      const constraints: MediaTrackConstraints | boolean = settings.devices.audioInputId
-        ? { deviceId: settings.devices.audioInputId }
-        : true;
-
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: constraints, video: false });
-      const track = stream.getAudioTracks()[0];
-      if (!track) throw new Error('Kein Audiotrack gefunden');
-
-      const producer = await sendTransport.produce({
-        track,
-        appData: { kind: 'audio', channelId },
-      });
-
-      producerRef.current = producer;
-
-      if (state.micMuted || state.usePushToTalk) {
-        try {
-          producer.pause();
-        } catch {
-          /* noop */
-        }
-      }
-    },
-    [settings.devices.audioInputId, state.micMuted, state.usePushToTalk]
-  );
-
   const loadDevice = useCallback(async (rtpCapabilities: RtpCapabilities) => {
     const device = new Device();
     await device.load({ routerRtpCapabilities: rtpCapabilities });
@@ -331,11 +300,10 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
     [emitWithAck]
   );
 
-  const createTransports = useCallback(
+  const createSendTransport = useCallback(
     async (device: Device, channelId: number) => {
       const send = await emitWithAck<TransportAck>('rtc:createTransport', { channelId, direction: 'send' });
-      const recv = await emitWithAck<TransportAck>('rtc:createTransport', { channelId, direction: 'recv' });
-      if (!send.transport || !recv.transport) throw new Error('Transport-Daten fehlen');
+      if (!send.transport) throw new Error('Transport-Daten fehlen');
 
       const sendTransport = device.createSendTransport({
         id: send.transport.id,
@@ -345,6 +313,19 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
         sctpParameters: send.transport.sctpParameters,
       });
 
+      sendTransportRef.current = sendTransport;
+      connectTransport(sendTransport, send.transport.id, 'send', channelId);
+
+      return { sendTransport, sendInfo: send.transport };
+    },
+    [connectTransport, emitWithAck]
+  );
+
+  const createRecvTransport = useCallback(
+    async (device: Device, channelId: number) => {
+      const recv = await emitWithAck<TransportAck>('rtc:createTransport', { channelId, direction: 'recv' });
+      if (!recv.transport) throw new Error('Transport-Daten fehlen');
+
       const recvTransport = device.createRecvTransport({
         id: recv.transport.id,
         iceParameters: recv.transport.iceParameters,
@@ -353,12 +334,50 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
         sctpParameters: recv.transport.sctpParameters,
       });
 
-      sendTransportRef.current = sendTransport;
       recvTransportRef.current = recvTransport;
 
-      return { sendTransport, recvTransport, sendInfo: send.transport, recvInfo: recv.transport };
+      return { recvTransport, recvInfo: recv.transport };
     },
     [emitWithAck]
+  );
+
+  const startMicrophone = useCallback(
+    async (channelId: number) => {
+      const device = deviceRef.current;
+      if (!device) throw new Error('Kein RTC-Gerät initialisiert');
+
+      let sendTransport = sendTransportRef.current;
+      if (!sendTransport) {
+        const created = await createSendTransport(device, channelId);
+        sendTransport = created.sendTransport;
+      }
+
+      if (!sendTransport) return;
+
+      const constraints: MediaTrackConstraints | boolean = settings.devices.audioInputId
+        ? { deviceId: settings.devices.audioInputId }
+        : true;
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: constraints, video: false });
+      const track = stream.getAudioTracks()[0];
+      if (!track) throw new Error('Kein Audiotrack gefunden');
+
+      const producer = await sendTransport.produce({
+        track,
+        appData: { kind: 'audio', channelId },
+      });
+
+      producerRef.current = producer;
+
+      if (state.micMuted || state.usePushToTalk) {
+        try {
+          producer.pause();
+        } catch {
+          /* noop */
+        }
+      }
+    },
+    [createSendTransport, settings.devices.audioInputId, state.micMuted, state.usePushToTalk]
   );
 
   const disconnect = useCallback(async () => {
@@ -408,9 +427,8 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
 
         updateParticipants(join.peers || [], localUserId);
 
-        const { sendTransport, recvTransport, sendInfo, recvInfo } = await createTransports(device, channelId);
+        const { recvTransport, recvInfo } = await createRecvTransport(device, channelId);
 
-        connectTransport(sendTransport, sendInfo.id, 'send', channelId);
         connectTransport(recvTransport, recvInfo.id, 'recv', channelId, () => {
           setState({ connectionState: 'connected', error: null });
         });
@@ -438,7 +456,7 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
         connectingRef.current = false;
       }
     },
-    [connectTransport, consumePeerTracks, createTransports, disconnect, emitWithAck, loadDevice, localUserId, setState, socket, startMicrophone, updateParticipants]
+    [connectTransport, consumePeerTracks, createRecvTransport, disconnect, emitWithAck, loadDevice, localUserId, setState, socket, startMicrophone, updateParticipants]
   );
 
   const setMicMuted = useCallback(
