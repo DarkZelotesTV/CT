@@ -1,43 +1,48 @@
 # CloverTalk Monorepo
 
-Dieses Repository enthält den Backend-Server (Express/Sequelize) und den Desktop-Client (Vite + Electron). Die folgenden Schritte richten sowohl lokale Entwicklung als auch produktionsreife Builds ein.
+Dieses Repository enthält den Backend-Server (Express/Sequelize) und den Desktop-Client (Vite + Electron). Der Client/Consumer kann ohne Docker betrieben werden; der Server kann wahlweise gegen lokal verfügbare Dienste laufen oder diese per Docker starten.
 
 ## Voraussetzungen
 - Node.js 20+
 - npm 10+
-- Docker & Docker Compose (für MySQL/Redis/LiveKit)
+- (Optional für Server-Infrastruktur) Docker & Docker Compose für MySQL/Redis/LiveKit
 
-## Infrastruktur starten
-Die benötigten Datenbank- und Realtime-Dienste stehen im `docker-compose.yml` beschrieben.
+## Installation
+Alle Abhängigkeiten werden einmalig im Repo-Wurzelverzeichnis installiert:
 
 ```bash
-# Abhängigkeiten hochfahren
+npm install
+```
+
+## Infrastruktur (optional für den Server)
+Wenn MySQL/Redis/LiveKit nicht lokal vorhanden sind, können sie aus dem `docker-compose.yml` gestartet werden:
+
+```bash
 docker compose up -d mysql redis livekit
 
 # (Optional) phpMyAdmin öffnen: http://localhost:8080
 ```
 
 ## Server (apps/server)
-1. Abhängigkeiten installieren: `npm install` (im Repo-Wurzelverzeichnis).
-2. Build erstellen: `npm run build --workspace apps/server`
-3. Datenbankschema anwenden: `npm run start --workspace apps/server`
+1. Build erstellen: `npm run build --workspace apps/server`
+2. Datenbankschema anwenden und Server starten: `npm run start --workspace apps/server`
    - Der Start führt `sequelize.sync({ alter: true })` aus und legt Tabellen entsprechend der Modelle an.
-4. Für Produktion kann der kompilierten Output (`apps/server/dist`) mit `node dist/main.js` gestartet werden.
+3. Für Produktion kann der kompilierte Output (`apps/server/dist`) mit `node dist/main.js` gestartet werden.
 
 ### Umgebungsvariablen
 - `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` für MySQL
 - ggf. weitere LiveKit- oder JWT-Variablen gemäß `.env` Beispiel
 
 ## Desktop-Client (apps/client)
-1. Build & Typprüfung: `npm run build --workspace apps/client`
+1. Build & Typprüfung (ohne Docker): `npm run build --workspace apps/client`
    - Renderer-Bundle landet unter `apps/client/dist`, Electron-Hauptprozess unter `apps/client/dist-electron`.
 2. Installer/ZIP erzeugen: `npm run package --workspace apps/client`
    - Electron-Builder legt die Artefakte unter `apps/client/release` ab (NSIS/ZIP auf Windows, DMG/ZIP auf macOS, AppImage/ZIP auf Linux).
-3. Während der Entwicklung: `npm run dev --workspace apps/client`
+3. Während der Entwicklung (ohne Docker): `npm run dev --workspace apps/client`
    - Der Electron-Mainprozess lädt automatisch das Vite-Dev-Server-Bundle.
 
 ## Full-Stack-Start (dev)
-Optionaler paralleler Start von Client & Server:
+Optionaler paralleler Start von Client & Server (Server ggf. mit den oben gestarteten Docker-Diensten):
 ```bash
 npm run dev:server   # Backend mit ts-node-dev
 npm run dev:client   # Vite-Entwicklungssserver
