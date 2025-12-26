@@ -10,6 +10,7 @@ import type {
   Transport,
   TransportOptions,
 } from 'mediasoup-client/types';
+import { MediasoupDebugOverlay, type MediasoupDebugStats } from './MediasoupDebugOverlay';
 import { useSettings } from '../../../../context/SettingsContext';
 import { useSocket } from '../../../../context/SocketContext';
 import { storage } from '../../../../shared/config/storage';
@@ -135,6 +136,8 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
   const lastJoinedChannelRef = useRef<{ id: number; name: string | null } | null>(null);
   const [autoplayBlocked, setAutoplayBlocked] = useState(false);
   const [audioRenderRevision, setAudioRenderRevision] = useState(0);
+  const [debugStats, setDebugStats] = useState<MediasoupDebugStats>({ inbound: null, outbound: null, updatedAt: null, consumerCount: 0 });
+  const statsIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const localUserId = useMemo(() => {
     const user = storage.get('cloverUser') as { id?: number | string } | null;
@@ -183,6 +186,11 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
     audioElementsRef.current.clear();
     setAudioRenderRevision((v) => v + 1);
     setAutoplayBlocked(false);
+    if (statsIntervalRef.current) {
+      clearInterval(statsIntervalRef.current);
+      statsIntervalRef.current = null;
+    }
+    setDebugStats({ inbound: null, outbound: null, updatedAt: null, consumerCount: 0 });
   }, []);
 
   const detachConsumer = useCallback(
@@ -786,6 +794,92 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
     };
   }, [disconnect]);
 
+  useEffect(() => {
+    const collectStats = async () => {
+      const producer = producerRef.current;
+      const consumers = Array.from(consumersRef.current.values());
+
+      const outboundStats = await (async () => {
+        if (!producer?.getStats) return null;
+        try {
+          const reports = await producer.getStats();
+          const outbound = Array.from(reports.values()).find((r: any) => r.type === 'outbound-rtp');
+          if (!outbound) return null;
+          const rttMs = typeof outbound.roundTripTime === 'number' ? outbound.roundTripTime * 1000 : outbound.rtt ?? null;
+          const jitterMs = typeof outbound.jitter === 'number' ? outbound.jitter * 1000 : null;
+          const bitrateKbps = typeof outbound.bitrate === 'number' ? outbound.bitrate / 1000 : outbound.bitrateMean ?? null;
+          const loss = typeof outbound.packetsLost === 'number' && typeof outbound.packetsSent === 'number'
+            ? (outbound.packetsLost / Math.max(1, outbound.packetsSent + outbound.packetsLost)) * 100
+            : null;
+
+          return {
+            bitrateKbps,
+            packetLossPercent: loss,
+            jitterMs,
+            rttMs,
+          };
+        } catch (err) {
+          console.warn('Producer stats failed', err);
+          return null;
+        }
+      })();
+
+      const inboundStats = await (async () => {
+        if (!consumers.length) return null;
+
+        const reports = await Promise.all(
+          consumers.map(async (consumer) => {
+            if (!consumer.getStats) return null;
+            try {
+              const stats = await consumer.getStats();
+              const inbound = Array.from(stats.values()).find((r: any) => r.type === 'inbound-rtp');
+              return inbound ?? null;
+            } catch (err) {
+              console.warn('Consumer stats failed', err);
+              return null;
+            }
+          })
+        );
+
+        const inboundReports = reports.filter(Boolean) as any[];
+        if (!inboundReports.length) return null;
+
+        const packetLoss = inboundReports.reduce((sum, r) => sum + (r.packetsLost ?? 0), 0);
+        const packets = inboundReports.reduce((sum, r) => sum + (r.packetsReceived ?? 0) + (r.packetsLost ?? 0), 0);
+        const jitterMs = inboundReports.reduce((sum, r) => sum + (r.jitter ?? 0), 0) / inboundReports.length;
+        const bitrateKbps = inboundReports.reduce((sum, r) => sum + (r.bitrate ?? 0), 0) / inboundReports.length / 1000;
+        const rttMs = inboundReports.reduce((sum, r) => sum + (r.roundTripTime ?? 0), 0) / inboundReports.length;
+
+        return {
+          bitrateKbps: Number.isFinite(bitrateKbps) ? bitrateKbps : null,
+          packetLossPercent: packets > 0 ? (packetLoss / packets) * 100 : null,
+          jitterMs: Number.isFinite(jitterMs) ? jitterMs * 1000 : null,
+          rttMs: Number.isFinite(rttMs) ? rttMs * 1000 : null,
+        };
+      })();
+
+      setDebugStats({
+        outbound: outboundStats,
+        inbound: inboundStats,
+        updatedAt: Date.now(),
+        consumerCount: consumers.length,
+      });
+    };
+
+    if (state.connectionState === 'connected') {
+      if (statsIntervalRef.current) clearInterval(statsIntervalRef.current);
+      statsIntervalRef.current = setInterval(collectStats, 2000);
+      void collectStats();
+    }
+
+    return () => {
+      if (statsIntervalRef.current) {
+        clearInterval(statsIntervalRef.current);
+        statsIntervalRef.current = null;
+      }
+    };
+  }, [state.connectionState]);
+
   const providerRenderers = useMemo<VoiceProviderRenderers>(
     () => ({
       AudioRenderer: () => (
@@ -796,8 +890,9 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
           requestAutoplay={requestAutoplay}
         />
       ),
+      DebugOverlay: () => <MediasoupDebugOverlay stats={debugStats} connectionState={state.connectionState} />,
     }),
-    [audioRenderRevision, autoplayBlocked, getAudioElements, requestAutoplay]
+    [audioRenderRevision, autoplayBlocked, debugStats, getAudioElements, requestAutoplay, state.connectionState]
   );
 
   const rejoinActiveChannel = useCallback(async () => {

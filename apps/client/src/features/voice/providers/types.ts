@@ -41,6 +41,7 @@ export type VoiceMediaStageProps = {
 export type VoiceProviderRenderers = {
   MediaStage?: React.ComponentType<VoiceMediaStageProps>;
   AudioRenderer?: React.ComponentType;
+  DebugOverlay?: React.ComponentType;
   ProviderWrapper?: React.ComponentType<{ children: React.ReactNode }>;
 };
 
