@@ -11,11 +11,15 @@ export type ParticipantTrack = {
 export class RoomManager {
   private initialized = false;
   private readonly rooms = new Map<string, Room>();
+  private readonly roomSweepIntervalMs = 30_000;
+  private roomSweepTimer?: NodeJS.Timeout;
+  private onRoomEmpty?: (roomName: string) => void;
 
   private ensureInitialized() {
     if (this.initialized) return;
     this.initialized = true;
     console.log('[RTC] RoomManager initialisiert (stateful mediasoup helper)');
+    this.startRoomSweep();
   }
 
   private touchRoom(roomName: string) {
@@ -30,11 +34,32 @@ export class RoomManager {
 
   private cleanupRoomIfEmpty(roomName: string) {
     const room = this.rooms.get(roomName);
-    if (room && room.isEmpty()) this.rooms.delete(roomName);
+    if (!room || !room.isEmpty()) return;
+
+    this.rooms.delete(roomName);
+    if (typeof this.onRoomEmpty === 'function') {
+      this.onRoomEmpty(roomName);
+    }
+  }
+
+  private startRoomSweep() {
+    if (this.roomSweepTimer) return;
+
+    this.roomSweepTimer = setInterval(() => {
+      this.rooms.forEach((room, roomName) => {
+        if (room.isEmpty()) {
+          this.cleanupRoomIfEmpty(roomName);
+        }
+      });
+    }, this.roomSweepIntervalMs);
   }
 
   getRoom(roomName: string) {
     return this.rooms.get(roomName);
+  }
+
+  setRoomEmptyHandler(handler: (roomName: string) => void) {
+    this.onRoomEmpty = handler;
   }
 
   registerPeer(roomName: string, peerId: string, metadata?: RtcMetadata) {
