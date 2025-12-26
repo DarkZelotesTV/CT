@@ -26,7 +26,15 @@ import {
 import type { Consumer as MediasoupConsumer, MediaKind, Producer as MediasoupProducer, Router as MediasoupRouter, RtpCapabilities, RtpParameters, WebRtcTransport } from 'mediasoup/node/lib/types';
 import { User, ServerMember, MemberRole, Role, Channel } from './models';
 import { resolveUserFromIdentity } from './utils/identityAuth';
-import { resolveWebRtcTransportDefaults, rtcRoomManager, rtcWorkerPool, type RtcTransportDirection, type WebRtcTransportDefaults } from './rtc';
+import {
+  resolveProducerPreset,
+  resolveWebRtcTransportDefaults,
+  rtcRoomManager,
+  rtcWorkerPool,
+  type ProducerPresetName,
+  type RtcTransportDirection,
+  type WebRtcTransportDefaults,
+} from './rtc';
 import { cleanupRtcResources, parseChannelIdFromRoomName, rtcRoomNameForChannel } from './realtime/rtcModeration';
 import {
   channelIdSchema,
@@ -573,11 +581,19 @@ io.on('connection', async (socket) => {
           return respond({ success: false, error: 'Nicht im RTC-Raum' });
         }
 
+        const isValidPreset = (value: unknown): value is ProducerPresetName =>
+          typeof value === 'string' && ['voice', 'high', 'music'].includes(value);
+        const requestedPreset: ProducerPresetName | null = isValidPreset(appData?.audioPreset) ? appData?.audioPreset : null;
+        const preset = resolveProducerPreset(requestedPreset);
+
         const producer = await transport.produce({
           kind: 'audio',
           rtpParameters,
+          maxBitrate: preset.maxBitrate,
+          codecOptions: preset.codecOptions,
           appData: {
             ...(appData || {}),
+            audioPreset: requestedPreset ?? 'voice',
             channelId,
             participantId: numericUserId,
             socketId: socket.id,

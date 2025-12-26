@@ -43,6 +43,7 @@ export type TalkSettings = {
   pushToTalkEnabled: boolean;
   outputVolume?: number;
   showVoicePreJoin?: boolean;
+  audioPreset?: 'voice' | 'high' | 'music';
   cameraQuality?: 'low' | 'medium' | 'high';
   screenQuality?: 'low' | 'medium' | 'high' | 'native';
   screenFrameRate?: number | 'native';
@@ -95,6 +96,7 @@ const defaultSettings: SettingsState = {
     micMuted: false,
     pushToTalkEnabled: false,
     showVoicePreJoin: true,
+    audioPreset: 'voice',
     outputVolume: 1,
     cameraQuality: 'medium',
     screenQuality: 'high',

@@ -364,7 +364,7 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
 
       const producer = await sendTransport.produce({
         track,
-        appData: { kind: 'audio', channelId },
+        appData: { kind: 'audio', channelId, audioPreset: settings.talk.audioPreset ?? 'voice' },
       });
 
       producerRef.current = producer;
@@ -377,7 +377,7 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
         }
       }
     },
-    [createSendTransport, settings.devices.audioInputId, state.micMuted, state.usePushToTalk]
+    [createSendTransport, settings.devices.audioInputId, settings.talk.audioPreset, state.micMuted, state.usePushToTalk]
   );
 
   const disconnect = useCallback(async () => {
