@@ -76,6 +76,7 @@
     },
     "asar": true,
     "win": {
+      "artifactName": "clover_installer.exe",
       "target": [
         "nsis",
         "zip"
