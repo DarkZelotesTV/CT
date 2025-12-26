@@ -1,10 +1,13 @@
-import type { ProducerCodecOptions, RouterOptions, RtpCodecCapability } from 'mediasoup/node/lib/types';
+import type { RouterOptions, RtpCodecCapability } from 'mediasoup/node/lib/types';
+
+type ProducerCodecOptions = Record<string, unknown>;
 
 export const opus48kCodec: RtpCodecCapability = {
   kind: 'audio',
   mimeType: 'audio/opus',
   clockRate: 48000,
   channels: 2,
+  preferredPayloadType: 111,
   parameters: {
     useinbandfec: 1,
     stereo: 1,
