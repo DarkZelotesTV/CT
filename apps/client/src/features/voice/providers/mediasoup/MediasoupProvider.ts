@@ -277,6 +277,13 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
     [settings.devices.audioInputId, state.micMuted, state.usePushToTalk]
   );
 
+  const loadDevice = useCallback(async (rtpCapabilities: RtpCapabilities) => {
+    const device = new Device();
+    await device.load({ routerRtpCapabilities: rtpCapabilities });
+    deviceRef.current = device;
+    return device;
+  }, []);
+
   const connectTransport = useCallback(
     (
       transport: Transport,
@@ -324,6 +331,36 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
     [emitWithAck]
   );
 
+  const createTransports = useCallback(
+    async (device: Device, channelId: number) => {
+      const send = await emitWithAck<TransportAck>('rtc:createTransport', { channelId, direction: 'send' });
+      const recv = await emitWithAck<TransportAck>('rtc:createTransport', { channelId, direction: 'recv' });
+      if (!send.transport || !recv.transport) throw new Error('Transport-Daten fehlen');
+
+      const sendTransport = device.createSendTransport({
+        id: send.transport.id,
+        iceParameters: send.transport.iceParameters,
+        iceCandidates: send.transport.iceCandidates,
+        dtlsParameters: send.transport.dtlsParameters,
+        sctpParameters: send.transport.sctpParameters,
+      });
+
+      const recvTransport = device.createRecvTransport({
+        id: recv.transport.id,
+        iceParameters: recv.transport.iceParameters,
+        iceCandidates: recv.transport.iceCandidates,
+        dtlsParameters: recv.transport.dtlsParameters,
+        sctpParameters: recv.transport.sctpParameters,
+      });
+
+      sendTransportRef.current = sendTransport;
+      recvTransportRef.current = recvTransport;
+
+      return { sendTransport, recvTransport, sendInfo: send.transport, recvInfo: recv.transport };
+    },
+    [emitWithAck]
+  );
+
   const disconnect = useCallback(async () => {
     const activeChannelId = state.activeChannelId;
     if (activeChannelId && optimisticLeave) {
@@ -367,37 +404,14 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
         const join = await emitWithAck<JoinRoomAck>('rtc:joinRoom', { channelId });
         if (!join.roomName || !join.rtpCapabilities) throw new Error(join.error || 'RTC-Raum konnte nicht betreten werden');
 
-        const device = new Device();
-        await device.load({ routerRtpCapabilities: join.rtpCapabilities });
-        deviceRef.current = device;
+        const device = await loadDevice(join.rtpCapabilities);
 
         updateParticipants(join.peers || [], localUserId);
 
-        const send = await emitWithAck<TransportAck>('rtc:createTransport', { channelId, direction: 'send' });
-        const recv = await emitWithAck<TransportAck>('rtc:createTransport', { channelId, direction: 'recv' });
-        if (!send.transport || !recv.transport) throw new Error('Transport-Daten fehlen');
+        const { sendTransport, recvTransport, sendInfo, recvInfo } = await createTransports(device, channelId);
 
-        const sendTransport = device.createSendTransport({
-          id: send.transport.id,
-          iceParameters: send.transport.iceParameters,
-          iceCandidates: send.transport.iceCandidates,
-          dtlsParameters: send.transport.dtlsParameters,
-          sctpParameters: send.transport.sctpParameters,
-        });
-
-        const recvTransport = device.createRecvTransport({
-          id: recv.transport.id,
-          iceParameters: recv.transport.iceParameters,
-          iceCandidates: recv.transport.iceCandidates,
-          dtlsParameters: recv.transport.dtlsParameters,
-          sctpParameters: recv.transport.sctpParameters,
-        });
-
-        sendTransportRef.current = sendTransport;
-        recvTransportRef.current = recvTransport;
-
-        connectTransport(sendTransport, send.transport.id, 'send', channelId);
-        connectTransport(recvTransport, recv.transport.id, 'recv', channelId, () => {
+        connectTransport(sendTransport, sendInfo.id, 'send', channelId);
+        connectTransport(recvTransport, recvInfo.id, 'recv', channelId, () => {
           setState({ connectionState: 'connected', error: null });
         });
 
@@ -424,7 +438,7 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
         connectingRef.current = false;
       }
     },
-    [connectTransport, consumePeerTracks, disconnect, emitWithAck, localUserId, setState, socket, startMicrophone, updateParticipants]
+    [connectTransport, consumePeerTracks, createTransports, disconnect, emitWithAck, loadDevice, localUserId, setState, socket, startMicrophone, updateParticipants]
   );
 
   const setMicMuted = useCallback(
