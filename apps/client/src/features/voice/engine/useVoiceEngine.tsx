@@ -1,13 +1,4 @@
 import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef, useState } from 'react';
-import {
-  Room,
-  RoomEvent,
-  Track,
-  DisconnectReason,
-  LocalTrackPublication,
-  RemoteAudioTrack,
-  RemoteTrack,
-} from 'livekit-client';
 import rnnoiseWasmScriptUrl from '@jitsi/rnnoise-wasm/dist/rnnoise-sync.js?url';
 import rnnoiseWorkletUrl from '../../../audio/rnnoise-worklet.js?url';
 import { apiFetch } from '../../../api/http';
@@ -18,6 +9,16 @@ import { storage } from '../../../shared/config/storage';
 import { type VoiceConnectionHandle, type VoiceParticipant, type VoiceProviderId } from '../providers/types';
 import { liveKitRenderers } from '../providers/livekit/renderers';
 import { type ConnectionState, VoiceState } from '../state/voiceTypes';
+import {
+  LiveKitDisconnectReason,
+  LiveKitLocalTrackPublication,
+  LiveKitRemoteAudioTrack,
+  LiveKitRemoteTrack,
+  LiveKitRoom,
+  LiveKitRoomEvent,
+  LiveKitTrack,
+  createLiveKitRoom,
+} from '../providers/livekit/client';
 
 type QualityPreset = {
   resolution?: { width: number; height: number } | null;
@@ -79,7 +80,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
     localAudioLevel,
   } = state;
 
-  const roomRef = useRef<Room | null>(null);
+  const roomRef = useRef<LiveKitRoom | null>(null);
   const [roomRevision, setRoomRevision] = useState(0);
   const setActiveChannelId = useCallback(
     (channelId: number | null) => setState({ activeChannelId: channelId }),
@@ -131,7 +132,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
   const setRnnoiseError = useCallback((next: string | null) => setState({ rnnoiseError: next }), [setState]);
   const setOutputVolumeState = useCallback((next: number) => setState({ outputVolume: next }), [setState]);
   const snapshotParticipants = useCallback(
-    (room: Room | null): VoiceParticipant[] => {
+    (room: LiveKitRoom | null): VoiceParticipant[] => {
       if (!room) return [];
       const list = [room.localParticipant, ...Array.from(room.remoteParticipants.values())].filter(Boolean);
       return list.map((participant) => ({
@@ -147,7 +148,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
     []
   );
   const setActiveRoom = useCallback(
-    (room: Room | null, handle?: VoiceConnectionHandle | null) => {
+    (room: LiveKitRoom | null, handle?: VoiceConnectionHandle | null) => {
       roomRef.current = room;
       setRoomRevision((rev) => rev + 1);
       setState({
@@ -162,7 +163,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
     [setRoomRevision, setState, snapshotParticipants, providerId]
   );
   const syncParticipants = useCallback(
-    (room?: Room | null) => {
+    (room?: LiveKitRoom | null) => {
       const targetRoom = room ?? roomRef.current;
       setState({ participants: snapshotParticipants(targetRoom) });
     },
@@ -178,7 +179,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
     processedTrack: MediaStreamTrack;
     rawTrack: MediaStreamTrack;
     rawStream: MediaStream;
-    publication: LocalTrackPublication | null;
+    publication: LiveKitLocalTrackPublication | null;
   } | null>(null);
   const audioLevelMeterRef = useRef<{
     context: AudioContext;
@@ -244,7 +245,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
   );
 
   const stopRnnoisePipeline = useCallback(
-    async (room?: Room | null) => {
+    async (room?: LiveKitRoom | null) => {
       const resources = rnnoiseResourcesRef.current;
       if (!resources) return;
 
@@ -261,13 +262,13 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
       }
 
       try {
-        processedTrack.stop();
+        processedLiveKitTrack.stop();
       } catch (err) {
         console.warn('Gefilterter Track konnte nicht gestoppt werden', err);
       }
 
       try {
-        rawTrack.stop();
+        rawLiveKitTrack.stop();
       } catch (err) {
         console.warn('Quelltrack konnte nicht gestoppt werden', err);
       }
@@ -372,7 +373,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
   );
 
   const enableMicrophoneWithRnnoise = useCallback(
-    async (room: Room) => {
+    async (room: LiveKitRoom) => {
       if (!rnnoiseEnabled) return false;
 
       if (typeof AudioContext === 'undefined' || typeof AudioWorkletNode === 'undefined') {
@@ -402,7 +403,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
             /* noop */
           }
           try {
-            existing.processedTrack.enabled = true;
+            existing.processedLiveKitTrack.enabled = true;
           } catch {
             /* noop */
           }
@@ -460,7 +461,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
 
         const publication = await room.localParticipant.publishTrack(processedTrack, {
           name: 'microphone_rnnoise',
-          source: Track.Source.Microphone,
+          source: LiveKitTrack.Source.Microphone,
         });
 
         rnnoiseResourcesRef.current = {
@@ -503,7 +504,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
     };
   }, [settings.talk.micMuted, settings.talk.muted, settings.talk.pushToTalkEnabled, settings.talk.rnnoiseEnabled]);
 
-  const syncLocalMediaState = useCallback((room: Room | null) => {
+  const syncLocalMediaState = useCallback((room: LiveKitRoom | null) => {
     if (!room) {
       setIsCameraEnabled(false);
       setIsScreenSharing(false);
@@ -525,7 +526,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
 
   const applyMicrophoneState = useCallback(
     async (
-      room: Room | null,
+      room: LiveKitRoom | null,
       options?: { muted?: boolean; micMuted?: boolean; talking?: boolean; pushToTalk?: boolean }
     ) => {
       const isMuted = options?.muted ?? muted;
@@ -547,7 +548,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
         const resources = rnnoiseResourcesRef.current;
         if (!resources) return;
         try {
-          resources.processedTrack.enabled = false;
+          resources.processedLiveKitTrack.enabled = false;
         } catch {
           /* noop */
         }
@@ -663,7 +664,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
   );
 
   const applyOutputVolume = useCallback(
-    (room: Room | null, volume: number) => {
+    (room: LiveKitRoom | null, volume: number) => {
       if (!room) return;
       const savedVolumes = settings.talk.participantVolumes || {};
 
@@ -701,7 +702,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
   );
 
   const applyOutputMuteState = useCallback(
-    (room: Room | null, shouldEnable: boolean) => {
+    (room: LiveKitRoom | null, shouldEnable: boolean) => {
       if (!room) return;
 
       room.remoteParticipants.forEach((participant) => {
@@ -722,9 +723,9 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
 
     applyOutputMuteState(room, !muted);
 
-    const handleTrackSubscribed = (track: RemoteTrack, _publication: any, participant: any) => {
-      if (track.kind === Track.Kind.Audio) {
-        const audioTrack = track as RemoteAudioTrack;
+    const handleTrackSubscribed = (track: LiveKitRemoteTrack, _publication: any, participant: any) => {
+      if (track.kind === LiveKitTrack.Kind.Audio) {
+        const audioTrack = track as LiveKitRemoteAudioTrack;
         if (audioTrack.mediaStreamTrack) {
           audioTrack.mediaStreamTrack.enabled = !muted;
         }
@@ -735,9 +736,9 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
       }
     };
 
-    room.on(RoomEvent.TrackSubscribed, handleTrackSubscribed);
+    room.on(LiveKitRoomEvent.TrackSubscribed, handleTrackSubscribed);
     return () => {
-      room.off(RoomEvent.TrackSubscribed, handleTrackSubscribed);
+      room.off(LiveKitRoomEvent.TrackSubscribed, handleTrackSubscribed);
     };
   }, [applyOutputMuteState, muted, outputVolume, roomRevision, settings.talk.participantVolumes]);
 
@@ -754,7 +755,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
   }, [applyMicrophoneState]);
 
   const startCamera = useCallback(
-    async (quality: 'low' | 'medium' | 'high' = 'medium', targetRoom?: Room | null) => {
+    async (quality: 'low' | 'medium' | 'high' = 'medium', targetRoom?: LiveKitRoom | null) => {
       const roomToUse = targetRoom ?? roomRef.current;
       if (!roomToUse) {
         setCameraError('Keine aktive Voice-Verbindung für Video verfügbar.');
@@ -933,21 +934,21 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
             systemAudioTrack = shouldShareAudio ? stream.getAudioTracks()[0] ?? null : null;
 
             if (streamVideoTrack && selectedTrack !== streamVideoTrack) {
-              streamVideoTrack.stop();
+              streamVideoLiveKitTrack.stop();
             }
           }
 
-          if (!selectedTrack || selectedTrack.readyState === 'ended') {
+          if (!selectedTrack || selectedLiveKitTrack.readyState === 'ended') {
             throw new Error('Kein Videotrack für Screenshare gefunden.');
           }
 
           if ('contentHint' in selectedTrack) {
-            selectedTrack.contentHint = 'motion';
+            selectedLiveKitTrack.contentHint = 'motion';
           }
 
           const publication = await roomToUse.localParticipant.publishTrack(selectedTrack, {
             name: 'screen_share',
-            source: Track.Source.ScreenShare,
+            source: LiveKitTrack.Source.ScreenShare,
             simulcast: false,
             videoEncoding: {
               maxBitrate: selectedBitrate.maxBitrate,
@@ -958,10 +959,10 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
 
           if (shouldShareAudio) {
             const filteredAudioTrack = applySystemAudioFilter(systemAudioTrack);
-            if (filteredAudioTrack && filteredAudioTrack.readyState !== 'ended') {
+            if (filteredAudioTrack && filteredAudioLiveKitTrack.readyState !== 'ended') {
               await roomToUse.localParticipant.publishTrack(filteredAudioTrack, {
                 name: 'screen_share_audio',
-                source: Track.Source.ScreenShareAudio,
+                source: LiveKitTrack.Source.ScreenShareAudio,
               });
               publishedScreenTracksRef.current.push(filteredAudioTrack);
               setScreenShareAudioError(null);
@@ -1020,21 +1021,21 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
           audioTrack = shouldShareAudio ? stream.getAudioTracks()[0] ?? null : null;
 
           if (streamVideoTrack && videoTrack !== streamVideoTrack) {
-            streamVideoTrack.stop();
+            streamVideoLiveKitTrack.stop();
           }
         }
 
-        if (!videoTrack || videoTrack.readyState === 'ended') {
+        if (!videoTrack || videoLiveKitTrack.readyState === 'ended') {
           throw new Error('Kein Videotrack für Screenshare gefunden.');
         }
 
         if ('contentHint' in videoTrack) {
-          videoTrack.contentHint = 'motion';
+          videoLiveKitTrack.contentHint = 'motion';
         }
 
         const publication = await roomToUse.localParticipant.publishTrack(videoTrack, {
           name: 'screen_share',
-          source: Track.Source.ScreenShare,
+          source: LiveKitTrack.Source.ScreenShare,
           simulcast: false,
           videoEncoding: {
             maxBitrate: selectedBitrate.maxBitrate,
@@ -1045,10 +1046,10 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
 
         if (shouldShareAudio) {
           const filteredAudioTrack = applySystemAudioFilter(audioTrack);
-          if (filteredAudioTrack && filteredAudioTrack.readyState !== 'ended') {
+          if (filteredAudioTrack && filteredAudioLiveKitTrack.readyState !== 'ended') {
             await roomToUse.localParticipant.publishTrack(filteredAudioTrack, {
               name: 'screen_share_audio',
-              source: Track.Source.ScreenShareAudio,
+              source: LiveKitTrack.Source.ScreenShareAudio,
             });
             publishedScreenTracksRef.current.push(filteredAudioTrack);
             setScreenShareAudioError(null);
@@ -1205,7 +1206,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
   );
 
   const restoreMediaState = useCallback(
-    async (room: Room) => {
+    async (room: LiveKitRoom) => {
       const desired = desiredMediaStateRef.current;
       await applyMicrophoneState(room, {
         muted: desired.muted,
@@ -1268,7 +1269,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
 
         joinPresenceChannel(channelId);
 
-        const room = new Room({
+        const room = createLiveKitRoom({
           adaptiveStream: true,
           dynacast: true,
           publishDefaults: { simulcast: true },
@@ -1276,8 +1277,8 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
 
         room.setMaxListeners(100);
 
-        room.on(RoomEvent.Disconnected, (reason) => {
-          if (reason === DisconnectReason.DUPLICATE_IDENTITY) {
+        room.on(LiveKitRoomEvent.Disconnected, (reason) => {
+          if (reason === LiveKitDisconnectReason.DUPLICATE_IDENTITY) {
             console.warn('[voice] Disconnected due to DUPLICATE_IDENTITY. Stopping reconnect loop.');
             finalizeDisconnection('Verbindung beendet: Sie haben sich von einem anderen Gerät angemeldet.');
             return;
@@ -1339,7 +1340,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
           attemptReconnect();
         });
 
-        room.on(RoomEvent.Connected, () => {
+        room.on(LiveKitRoomEvent.Connected, () => {
           setConnectionState('connected');
           setError(null);
           reconnectAttemptsRef.current = 0;
@@ -1360,12 +1361,12 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
           safeRestoreMediaState();
         });
 
-        room.on(RoomEvent.Reconnecting, () => {
+        room.on(LiveKitRoomEvent.Reconnecting, () => {
           setConnectionState('reconnecting');
           console.warn('[voice] Reconnecting');
         });
 
-        room.on(RoomEvent.Reconnected, () => {
+        room.on(LiveKitRoomEvent.Reconnected, () => {
           setConnectionState('connected');
           setError(null);
           reconnectAttemptsRef.current = 0;
@@ -1381,10 +1382,10 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
         });
 
         const handleTrackChange = () => syncLocalMediaState(room);
-        room.on(RoomEvent.LocalTrackPublished, handleTrackChange);
-        room.on(RoomEvent.LocalTrackUnpublished, handleTrackChange);
-        room.on(RoomEvent.TrackMuted, handleTrackChange);
-        room.on(RoomEvent.TrackUnmuted, handleTrackChange);
+        room.on(LiveKitRoomEvent.LocalTrackPublished, handleTrackChange);
+        room.on(LiveKitRoomEvent.LocalTrackUnpublished, handleTrackChange);
+        room.on(LiveKitRoomEvent.TrackMuted, handleTrackChange);
+        room.on(LiveKitRoomEvent.TrackUnmuted, handleTrackChange);
 
         await room.connect(lkConfig.serverUrl, newToken, lkConfig.connectOptions);
         if (settings.devices.audioInputId) {
@@ -1489,22 +1490,22 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
     };
 
     handleParticipantsChanged();
-    room.on(RoomEvent.ParticipantConnected, handleParticipantsChanged);
-    room.on(RoomEvent.ParticipantDisconnected, handleParticipantsChanged);
-    room.on(RoomEvent.TrackPublished, handleParticipantsChanged);
-    room.on(RoomEvent.TrackUnpublished, handleParticipantsChanged);
-    room.on(RoomEvent.TrackMuted, handleParticipantsChanged);
-    room.on(RoomEvent.TrackUnmuted, handleParticipantsChanged);
-    room.on(RoomEvent.ActiveSpeakersChanged, handleActiveSpeakersChanged);
+    room.on(LiveKitRoomEvent.ParticipantConnected, handleParticipantsChanged);
+    room.on(LiveKitRoomEvent.ParticipantDisconnected, handleParticipantsChanged);
+    room.on(LiveKitRoomEvent.TrackPublished, handleParticipantsChanged);
+    room.on(LiveKitRoomEvent.TrackUnpublished, handleParticipantsChanged);
+    room.on(LiveKitRoomEvent.TrackMuted, handleParticipantsChanged);
+    room.on(LiveKitRoomEvent.TrackUnmuted, handleParticipantsChanged);
+    room.on(LiveKitRoomEvent.ActiveSpeakersChanged, handleActiveSpeakersChanged);
 
     return () => {
-      room.off(RoomEvent.ParticipantConnected, handleParticipantsChanged);
-      room.off(RoomEvent.ParticipantDisconnected, handleParticipantsChanged);
-      room.off(RoomEvent.TrackPublished, handleParticipantsChanged);
-      room.off(RoomEvent.TrackUnpublished, handleParticipantsChanged);
-      room.off(RoomEvent.TrackMuted, handleParticipantsChanged);
-      room.off(RoomEvent.TrackUnmuted, handleParticipantsChanged);
-      room.off(RoomEvent.ActiveSpeakersChanged, handleActiveSpeakersChanged);
+      room.off(LiveKitRoomEvent.ParticipantConnected, handleParticipantsChanged);
+      room.off(LiveKitRoomEvent.ParticipantDisconnected, handleParticipantsChanged);
+      room.off(LiveKitRoomEvent.TrackPublished, handleParticipantsChanged);
+      room.off(LiveKitRoomEvent.TrackUnpublished, handleParticipantsChanged);
+      room.off(LiveKitRoomEvent.TrackMuted, handleParticipantsChanged);
+      room.off(LiveKitRoomEvent.TrackUnmuted, handleParticipantsChanged);
+      room.off(LiveKitRoomEvent.ActiveSpeakersChanged, handleActiveSpeakersChanged);
     };
   }, [roomRevision, setState, syncParticipants]);
 
@@ -1567,9 +1568,9 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
 
     const rnnoiseTrack = rnnoiseResourcesRef.current?.processedTrack;
     // LiveKit v2 types no longer expose `audioTracks`; use a source-based lookup.
-    const publication = room.localParticipant.getTrackPublication(Track.Source.Microphone);
+    const publication = room.localParticipant.getTrackPublication(LiveKitTrack.Source.Microphone);
     const liveKitTrack =
-      (publication as LocalTrackPublication | undefined)?.track?.mediaStreamTrack ?? null;
+      (publication as LiveKitLocalTrackPublication | undefined)?.track?.mediaStreamTrack ?? null;
     const track = rnnoiseTrack?.readyState === 'live' ? rnnoiseTrack : liveKitTrack;
 
     startAudioLevelMeter(track);
