@@ -1,4 +1,5 @@
 import { AccessToken, RoomServiceClient, type ParticipantInfo } from 'livekit-server-sdk';
+import { getRtcModule } from '../realtime/rtc';
 
 export type VoiceProviderId = 'livekit' | 'mediasoup';
 
@@ -112,29 +113,28 @@ class LiveKitVoiceProvider implements VoiceProvider {
 
 class MediasoupVoiceProvider implements VoiceProvider {
   public readonly id: VoiceProviderId = 'mediasoup';
+  private readonly rtc = getRtcModule();
   public readonly capabilities: VoiceProviderCapabilities = {
     tokens: false,
-    participantControls: false,
+    participantControls: true,
   };
 
-  async issueAccessToken() {
-    console.warn('[Voice][mediasoup] Token issuance requested but mediasoup uses signaling instead. TODO: remove token route once mediasoup is wired.');
-    throw new Error('Token issuance ist für Mediasoup nicht erforderlich');
+  async issueAccessToken({ roomName, userId, displayName, avatar }: { roomName: string; userId: string; displayName: string; avatar?: string | null }) {
+    // Mediasoup nutzt Signaling statt klassischer Tokens, wir halten aber stateful Metadaten für spätere Moderation bereit.
+    this.rtc.registerParticipant(roomName, userId, { displayName, avatar });
+    return `mediasoup:${roomName}:${userId}`;
   }
 
-  async listParticipants() {
-    console.warn('[Voice][mediasoup] listParticipants requested. TODO: implement mediasoup participant lookup once signaling is available.');
-    throw new Error('Teilnehmerverwaltung für Mediasoup noch nicht implementiert');
+  async listParticipants(roomName: string) {
+    return this.rtc.listParticipants(roomName);
   }
 
-  async muteParticipant() {
-    console.warn('[Voice][mediasoup] muteParticipant requested. TODO: implement mediasoup mute once signaling is available.');
-    throw new Error('Stummschaltung für Mediasoup noch nicht implementiert');
+  async muteParticipant(roomName: string, participantIdentity: string) {
+    return this.rtc.muteParticipant(roomName, participantIdentity);
   }
 
-  async removeParticipant() {
-    console.warn('[Voice][mediasoup] removeParticipant requested. TODO: implement mediasoup removal once signaling is available.');
-    throw new Error('Entfernen von Teilnehmern für Mediasoup noch nicht implementiert');
+  async removeParticipant(roomName: string, participantIdentity: string) {
+    this.rtc.removeParticipant(roomName, participantIdentity);
   }
 }
 
