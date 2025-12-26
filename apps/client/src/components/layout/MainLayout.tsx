@@ -194,6 +194,7 @@ export const MainLayout = () => {
     providerRenderers,
   } = useVoice();
   const AudioRenderer = providerRenderers.AudioRenderer;
+  const DebugOverlay = providerRenderers.DebugOverlay;
 
   const activeAccent = useMemo(
     () =>
@@ -964,6 +965,7 @@ export const MainLayout = () => {
   return (
     <>
       {AudioRenderer && <AudioRenderer />}
+      {DebugOverlay && <DebugOverlay />}
       {ui}
     </>
   );
