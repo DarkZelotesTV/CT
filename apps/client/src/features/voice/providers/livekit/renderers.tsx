@@ -1,13 +1,18 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { RoomAudioRenderer, RoomContext, ParticipantTile } from '@livekit/components-react';
-import { RoomEvent, Track, type Participant, type Room } from 'livekit-client';
 import { Monitor, MicOff } from 'lucide-react';
 import { type VoiceMediaStageProps, type VoiceProviderRenderers } from '../types';
 import { useVoice } from '../../state/VoiceContext';
+import {
+  LiveKitRoomEvent,
+  LiveKitTrack,
+  type LiveKitParticipant,
+  type LiveKitRoom,
+} from './client';
 
 const LiveKitProviderWrapper = ({ children }: { children: React.ReactNode }) => {
   const { getNativeHandle } = useVoice();
-  const room = getNativeHandle?.() as Room | null;
+  const room = getNativeHandle?.() as LiveKitRoom | null;
 
   if (!room) return <>{children}</>;
   return <RoomContext.Provider value={room}>{children}</RoomContext.Provider>;
@@ -15,7 +20,7 @@ const LiveKitProviderWrapper = ({ children }: { children: React.ReactNode }) => 
 
 const LiveKitAudioRenderer = () => {
   const { muted, getNativeHandle } = useVoice();
-  const room = getNativeHandle?.() as Room | null;
+  const room = getNativeHandle?.() as LiveKitRoom | null;
 
   if (!room || muted) return null;
   return <RoomAudioRenderer />;
@@ -27,7 +32,7 @@ const LiveKitMediaStage = ({
   connectionState,
   nativeHandle,
 }: VoiceMediaStageProps) => {
-  const room = nativeHandle as Room | null;
+  const room = nativeHandle as LiveKitRoom | null;
   const [refreshToken, setRefreshToken] = useState(0);
   const [activeSpeakerSid, setActiveSpeakerSid] = useState<string | null>(null);
 
@@ -37,27 +42,27 @@ const LiveKitMediaStage = ({
     const handleSpeakers = (speakers: any[]) => setActiveSpeakerSid(speakers?.[0]?.sid ?? null);
 
     const events = [
-      RoomEvent.ParticipantConnected,
-      RoomEvent.ParticipantDisconnected,
-      RoomEvent.TrackPublished,
-      RoomEvent.TrackUnpublished,
-      RoomEvent.LocalTrackPublished,
-      RoomEvent.LocalTrackUnpublished,
-      RoomEvent.TrackMuted,
-      RoomEvent.TrackUnmuted,
-      RoomEvent.ConnectionStateChanged,
-      RoomEvent.TrackSubscribed,
-      RoomEvent.TrackUnsubscribed,
-      RoomEvent.ParticipantMetadataChanged,
+      LiveKitRoomEvent.ParticipantConnected,
+      LiveKitRoomEvent.ParticipantDisconnected,
+      LiveKitRoomEvent.TrackPublished,
+      LiveKitRoomEvent.TrackUnpublished,
+      LiveKitRoomEvent.LocalTrackPublished,
+      LiveKitRoomEvent.LocalTrackUnpublished,
+      LiveKitRoomEvent.TrackMuted,
+      LiveKitRoomEvent.TrackUnmuted,
+      LiveKitRoomEvent.ConnectionStateChanged,
+      LiveKitRoomEvent.TrackSubscribed,
+      LiveKitRoomEvent.TrackUnsubscribed,
+      LiveKitRoomEvent.ParticipantMetadataChanged,
     ];
 
     events.forEach((e) => room.on(e, bump));
-    room.on(RoomEvent.ActiveSpeakersChanged, handleSpeakers);
+    room.on(LiveKitRoomEvent.ActiveSpeakersChanged, handleSpeakers);
     handleSpeakers(room.activeSpeakers || []);
 
     return () => {
       events.forEach((e) => room.off(e, bump));
-      room.off(RoomEvent.ActiveSpeakersChanged, handleSpeakers);
+      room.off(LiveKitRoomEvent.ActiveSpeakersChanged, handleSpeakers);
     };
   }, [room]);
 
@@ -72,7 +77,7 @@ const LiveKitMediaStage = ({
   );
   const screenParticipants = useMemo(() => participants.filter((p) => p.isScreenShareEnabled), [participants]);
 
-  const renderTile = (participant: Participant, isScreenShare = false) => {
+  const renderTile = (participant: LiveKitParticipant, isScreenShare = false) => {
     const activeSid = activeSpeakerIds[0] ?? activeSpeakerSid;
     const isSpeaking = activeSid === (participant.sid || participant.identity);
 
@@ -84,8 +89,8 @@ const LiveKitMediaStage = ({
     }
 
     const publication = isScreenShare
-      ? participant.getTrackPublication(Track.Source.ScreenShare)
-      : participant.getTrackPublication(Track.Source.Camera);
+      ? participant.getTrackPublication(LiveKitTrack.Source.ScreenShare)
+      : participant.getTrackPublication(LiveKitTrack.Source.Camera);
 
     const isTrackEnabled = !!publication && !publication.isMuted && (participant.isLocal || publication.isSubscribed);
 
@@ -100,7 +105,7 @@ const LiveKitMediaStage = ({
           <ParticipantTile
             trackRef={{
               participant,
-              source: isScreenShare ? Track.Source.ScreenShare : Track.Source.Camera,
+              source: isScreenShare ? LiveKitTrack.Source.ScreenShare : LiveKitTrack.Source.Camera,
               publication,
             }}
             className="w-full h-full object-cover"
