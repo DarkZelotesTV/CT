@@ -219,6 +219,22 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
     }
   }, []);
 
+  const buildAudioConstraints = useCallback(
+    (overrides?: Partial<MediaTrackConstraints>): MediaTrackConstraints => {
+      const disableNativeNoiseFilters = rnnoiseEnabled && rnnoiseAvailable;
+      const constraints: MediaTrackConstraints = {
+        echoCancellation: !disableNativeNoiseFilters,
+        noiseSuppression: !disableNativeNoiseFilters,
+        autoGainControl: !disableNativeNoiseFilters,
+        ...(settings.devices.audioInputId ? { deviceId: settings.devices.audioInputId } : {}),
+        ...(overrides || {}),
+      };
+
+      return constraints;
+    },
+    [rnnoiseAvailable, rnnoiseEnabled, settings.devices.audioInputId]
+  );
+
   const leavePresenceChannel = useCallback(
     (channelId?: number | null) => {
       if (!socket) return;
@@ -417,12 +433,8 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
 
         await stopRnnoisePipeline(room);
 
-        const audioConstraints: MediaTrackConstraints | boolean = settings.devices.audioInputId
-          ? { deviceId: settings.devices.audioInputId }
-          : true;
-
         const stream = await navigator.mediaDevices.getUserMedia({
-          audio: audioConstraints,
+          audio: buildAudioConstraints(),
           video: false,
         });
 
@@ -485,7 +497,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
         return false;
       }
     },
-    [rnnoiseEnabled, settings.devices.audioInputId, stopRnnoisePipeline]
+    [buildAudioConstraints, rnnoiseEnabled, stopRnnoisePipeline]
   );
 
   const MAX_RECONNECT_ATTEMPTS = 3;
@@ -566,7 +578,8 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
 
       const safeSetMicrophoneEnabled = async (enabled: boolean) => {
         try {
-          await room.localParticipant.setMicrophoneEnabled(enabled);
+          const captureOptions = enabled ? buildAudioConstraints() : undefined;
+          await room.localParticipant.setMicrophoneEnabled(enabled, captureOptions);
         } catch (err: any) {
           console.warn(`[voice] setMicrophoneEnabled(${enabled}) failed`, err);
           // Do not crash the renderer on mic init failures (common with stale device IDs / permissions).
@@ -592,7 +605,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
       await safeStopRnnoise();
       await safeSetMicrophoneEnabled(true);
     },
-    [enableMicrophoneWithRnnoise, isTalking, micMuted, muted, rnnoiseEnabled, stopRnnoisePipeline, usePushToTalk, setError]
+    [buildAudioConstraints, enableMicrophoneWithRnnoise, isTalking, micMuted, muted, rnnoiseEnabled, stopRnnoisePipeline, usePushToTalk, setError]
   );
 
   const applyMicrophoneStateRef = useRef(applyMicrophoneState);
@@ -1273,6 +1286,7 @@ export const useVoiceEngine = ({ state, setState, providerId: preferredProviderI
           adaptiveStream: true,
           dynacast: true,
           publishDefaults: { simulcast: true },
+          audioCaptureDefaults: buildAudioConstraints(),
         });
 
         room.setMaxListeners(100);
