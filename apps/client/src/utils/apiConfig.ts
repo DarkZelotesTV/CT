@@ -125,29 +125,69 @@ export const getServerWebSocketUrl = () => {
   return serverUrl.toString().replace(/\/$/, "");
 };
 
-// --- LiveKit Configuration ---
+// --- LiveKit Configuration & ICE ---
 
-// Standard STUN-Server
-const DEFAULT_ICE_SERVERS = [
-  { urls: "stun:stun.l.google.com:19302" },
-  { urls: "stun:stun1.l.google.com:19302" },
+type IceServer = {
+  urls: string | string[];
+  username?: string;
+  credential?: string;
+};
+
+const DEFAULT_ICE_SERVERS: IceServer[] = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
 ];
 
-export const getLiveKitConfig = () => {
-  // ICE Server Konfiguration laden (gilt für beide Varianten)
-  let iceServers = DEFAULT_ICE_SERVERS;
-  const envIceServers = import.meta.env.VITE_ICE_SERVERS;
+type IceServerOptions = {
+  iceServers?: IceServer[] | null;
+};
 
-  if (envIceServers) {
+const splitUrls = (raw?: string | null) =>
+  (raw || '')
+    .split(/[,\\s]+/)
+    .map((url) => url.trim())
+    .filter(Boolean);
+
+const parseIceServersFromEnv = (): IceServer[] | null => {
+  const explicitIceServers = import.meta.env.VITE_ICE_SERVERS;
+  if (explicitIceServers) {
     try {
-      const parsed = JSON.parse(envIceServers);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        iceServers = parsed;
-      }
+      const parsed = JSON.parse(explicitIceServers);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed as IceServer[];
     } catch (e) {
-      console.error("Failed to parse VITE_ICE_SERVERS from .env", e);
+      console.error('Failed to parse VITE_ICE_SERVERS from .env', e);
     }
   }
+
+  const stunUrls = splitUrls(import.meta.env.VITE_STUN_URLS);
+  const turnUrls = splitUrls(import.meta.env.VITE_TURN_URLS);
+  const turnUsername = import.meta.env.VITE_TURN_USERNAME;
+  const turnCredential = import.meta.env.VITE_TURN_PASSWORD || import.meta.env.VITE_TURN_CREDENTIAL;
+
+  const derived: IceServer[] = [];
+  if (stunUrls.length) derived.push({ urls: stunUrls });
+  if (turnUrls.length) {
+    derived.push({
+      urls: turnUrls,
+      username: turnUsername,
+      credential: turnCredential,
+    });
+  }
+
+  return derived.length ? derived : null;
+};
+
+export const resolveIceServers = (options?: IceServerOptions) => {
+  if (options?.iceServers && options.iceServers.length) return options.iceServers;
+
+  const envServers = parseIceServersFromEnv();
+  if (envServers?.length) return envServers;
+
+  return DEFAULT_ICE_SERVERS;
+};
+
+export const getLiveKitConfig = (options?: IceServerOptions) => {
+  const iceServers = resolveIceServers(options);
 
   const serverUrl = getServerUrlObject();
   const isSecure = serverUrl.protocol === 'https:' || serverUrl.protocol === 'wss:';

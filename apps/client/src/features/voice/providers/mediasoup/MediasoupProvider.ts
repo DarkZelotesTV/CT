@@ -14,7 +14,7 @@ import { MediasoupDebugOverlay, type MediasoupDebugStats } from './MediasoupDebu
 import { useSettings } from '../../../../context/SettingsContext';
 import { useSocket } from '../../../../context/SocketContext';
 import { storage } from '../../../../shared/config/storage';
-import { type VoiceEngineDeps } from '../../engine/useVoiceEngine';
+import { type VoiceConnectRequest, type VoiceEngineDeps } from '../../engine/useVoiceEngine';
 import { type VoiceContextType } from '../../state/VoiceContext';
 import { type VoiceParticipant, type VoiceProviderRenderers } from '../types';
 
@@ -120,7 +120,7 @@ const MediasoupAudioRenderer: React.FC<MediasoupAudioRendererProps> = ({
   );
 };
 
-export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): VoiceContextType => {
+export const useMediasoupProvider = ({ state, setState, initialConnectRequest }: VoiceEngineDeps): VoiceContextType => {
   const { settings, updateTalk } = useSettings();
   const { socket, optimisticLeave } = useSocket();
 
@@ -134,6 +134,7 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
   const peerSnapshotRef = useRef<JoinRoomAck['peers']>([]);
   const connectingRef = useRef(false);
   const lastJoinedChannelRef = useRef<{ id: number; name: string | null } | null>(null);
+  const initialConnectRef = useRef<VoiceConnectRequest | null>(initialConnectRequest ?? null);
   const [autoplayBlocked, setAutoplayBlocked] = useState(false);
   const [audioRenderRevision, setAudioRenderRevision] = useState(0);
   const [debugStats, setDebugStats] = useState<MediasoupDebugStats>({ inbound: null, outbound: null, updatedAt: null, consumerCount: 0 });
@@ -143,6 +144,10 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
     const user = storage.get('cloverUser') as { id?: number | string } | null;
     return user?.id ? String(user.id) : null;
   }, []);
+
+  useEffect(() => {
+    initialConnectRef.current = initialConnectRequest ?? null;
+  }, [initialConnectRequest]);
 
   const emitWithAck = useCallback(
     async <T extends { success: boolean; error?: string }>(event: string, payload?: any, timeoutMs = 5000): Promise<T> => {
@@ -879,6 +884,14 @@ export const useMediasoupProvider = ({ state, setState }: VoiceEngineDeps): Voic
       }
     };
   }, [state.connectionState]);
+
+  useEffect(() => {
+    const pending = initialConnectRef.current;
+    if (!pending) return;
+    if (state.connectionState !== 'disconnected') return;
+    initialConnectRef.current = null;
+    void connectToChannel(pending.channelId, pending.channelName || `Talk ${pending.channelId}`);
+  }, [connectToChannel, state.connectionState]);
 
   const providerRenderers = useMemo<VoiceProviderRenderers>(
     () => ({

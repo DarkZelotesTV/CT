@@ -42,6 +42,7 @@ export type TalkSettings = {
   micMuted: boolean;
   pushToTalkEnabled: boolean;
   outputVolume?: number;
+  iceServers?: RTCIceServer[];
   showVoicePreJoin?: boolean;
   audioPreset?: 'voice' | 'high' | 'music';
   cameraQuality?: 'low' | 'medium' | 'high';
@@ -98,6 +99,7 @@ const defaultSettings: SettingsState = {
     showVoicePreJoin: true,
     audioPreset: 'voice',
     outputVolume: 1,
+    iceServers: undefined,
     cameraQuality: 'medium',
     screenQuality: 'high',
     screenFrameRate: 30,
