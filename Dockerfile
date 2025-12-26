@@ -1,5 +1,6 @@
 # Wir nutzen ein leichtes Node.js Image als Basis
-FROM node:18-alpine
+# Node 20+ wird von mehreren Abhängigkeiten vorausgesetzt
+FROM node:22-alpine
 
 # Arbeitsverzeichnis im Container erstellen
 WORKDIR /app
@@ -13,6 +14,8 @@ COPY packages/shared/package.json ./packages/shared/
 
 # 2. Abhängigkeiten installieren
 # 'npm ci' ist schneller und sauberer für CI/CD/Docker als 'npm install'
+RUN apk add --no-cache python3 py3-pip make g++ \
+    && ln -sf python3 /usr/bin/python
 RUN npm ci
 
 # 3. Den gesamten Quellcode kopieren
