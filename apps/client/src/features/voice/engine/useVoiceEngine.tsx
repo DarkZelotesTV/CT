@@ -15,7 +15,7 @@ import { useSettings } from '../../../context/SettingsContext';
 import { useSocket } from '../../../context/SocketContext';
 import { getLiveKitConfig } from '../../../utils/apiConfig';
 import { storage } from '../../../shared/config/storage';
-import { type VoiceConnectionHandle, type VoiceParticipant } from '../providers/types';
+import { type VoiceConnectionHandle, type VoiceParticipant, type VoiceProviderId } from '../providers/types';
 import { liveKitRenderers } from '../providers/livekit/renderers';
 import { type ConnectionState, VoiceState } from '../state/voiceTypes';
 
@@ -38,17 +38,19 @@ const bitrateProfiles = {
   max: { maxBitrate: 15_000_000 },
 };
 
-type VoiceEngineDeps = {
+export type VoiceEngineDeps = {
   state: VoiceState;
   setState: (patch: Partial<VoiceState> | ((prev: VoiceState) => Partial<VoiceState>)) => void;
+  providerId?: VoiceProviderId;
 };
 
-export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
+export const useVoiceEngine = ({ state, setState, providerId: preferredProviderId = 'livekit' }: VoiceEngineDeps) => {
+  const providerId = preferredProviderId ?? 'livekit';
   const { settings, updateTalk } = useSettings();
   const { socket, optimisticLeave } = useSocket();
 
   const {
-    providerId,
+    providerId: stateProviderId,
     connectionHandle,
     activeChannelId,
     activeChannelName,
@@ -149,13 +151,15 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
       roomRef.current = room;
       setRoomRevision((rev) => rev + 1);
       setState({
-        connectionHandle: room ? handle ?? { provider: 'livekit', sessionId: room.name ?? room.sid ?? 'livekit' } : null,
-        providerId: room ? 'livekit' : null,
+        connectionHandle: room
+          ? handle ?? { provider: providerId, sessionId: room.name ?? room.sid ?? providerId }
+          : null,
+        providerId: room ? providerId : null,
         participants: snapshotParticipants(room),
         activeSpeakerIds: [],
       });
     },
-    [setRoomRevision, setState, snapshotParticipants]
+    [setRoomRevision, setState, snapshotParticipants, providerId]
   );
   const syncParticipants = useCallback(
     (room?: Room | null) => {
@@ -1584,7 +1588,7 @@ export const useVoiceEngine = ({ state, setState }: VoiceEngineDeps) => {
   }, [roomRevision, syncLocalMediaState]);
 
   const contextValue: VoiceContextType = {
-    providerId,
+    providerId: stateProviderId,
     connectionHandle,
     activeChannelId,
     activeChannelName,
