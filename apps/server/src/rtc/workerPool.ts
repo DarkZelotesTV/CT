@@ -96,17 +96,22 @@ export class WorkerPool {
     if (this.closing) return;
     this.closing = true;
 
-    await Promise.all(
-      this.workers.map(async (entry) => {
-        entry.routers.forEach((router) => {
-          if (!router.closed) router.close();
-        });
-        entry.routers.clear();
-        entry.worker.close();
-      })
-    );
-
-    this.workers.length = 0;
+    try {
+      await Promise.all(
+        this.workers.map(async (entry) => {
+          entry.routers.forEach((router) => {
+            if (!router.closed) router.close();
+          });
+          entry.routers.clear();
+          entry.worker.close();
+        })
+      );
+    } finally {
+      this.workers.length = 0;
+      this.started = false;
+      this.closing = false;
+      this.nextWorkerIndex = 0;
+    }
   }
 }
 

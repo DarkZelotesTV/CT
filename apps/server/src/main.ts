@@ -157,6 +157,29 @@ const sendPresenceSnapshot = async (socket: any) => {
 
 const rtcRouters = new Map<number, MediasoupRouter>();
 const rtcRoomNameForChannel = (channelId: number) => `channel_${channelId}`;
+const parseChannelIdFromRoomName = (roomName: string) => {
+  const match = /^channel_(\d+)$/.exec(roomName);
+  const parsed = match ? Number(match[1]) : NaN;
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const closeRtcRouterForChannel = (channelId: number) => {
+  const router = rtcRouters.get(channelId);
+  if (router) {
+    rtcRouters.delete(channelId);
+    if (!router.closed) {
+      try {
+        router.close();
+      } catch (err) {
+        console.warn(`[RTC] Fehler beim Schließen des Routers für channel_${channelId}:`, err);
+      }
+    }
+  }
+
+  if (rtcRouters.size === 0) {
+    void rtcWorkerPool.close();
+  }
+};
 
 const getOrCreateRtcRouter = async (channelId: number) => {
   const existing = rtcRouters.get(channelId);
@@ -173,6 +196,12 @@ const getOrCreateRtcRouter = async (channelId: number) => {
 
   return router;
 };
+rtcRoomManager.setRoomEmptyHandler((roomName) => {
+  const channelId = parseChannelIdFromRoomName(roomName);
+  if (channelId !== null) {
+    closeRtcRouterForChannel(channelId);
+  }
+});
 
 const ensureVoiceChannelAccess = async (channelId: number, userId: number) => {
   if (!Number.isFinite(channelId) || channelId <= 0) {
