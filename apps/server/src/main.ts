@@ -445,6 +445,59 @@ io.on('connection', async (socket) => {
   );
 
   socket.on(
+    'rtc:connectTransport',
+    async (
+      payload: { transportId?: string; dtlsParameters?: WebRtcTransport['dtlsParameters'] },
+      ack?: (payload: { success: boolean; error?: string }) => void
+    ) => {
+      const respond = (body: { success: boolean; error?: string }) => {
+        if (typeof ack === 'function') ack(body);
+      };
+
+      try {
+        if (!numericUserId) {
+          return respond({ success: false, error: 'unauthorized' });
+        }
+
+        const transportId = payload?.transportId;
+        const dtlsParameters = payload?.dtlsParameters;
+
+        if (!transportId || typeof transportId !== 'string') {
+          return respond({ success: false, error: 'Ungültige transportId' });
+        }
+
+        if (!dtlsParameters || typeof dtlsParameters !== 'object' || !Array.isArray((dtlsParameters as any).fingerprints)) {
+          return respond({ success: false, error: 'Ungültige dtlsParameters' });
+        }
+
+        const rtcTransports: Map<string, WebRtcTransport> = (socket.data as any).rtcTransports || new Map();
+        const transport = rtcTransports.get(transportId);
+
+        if (!transport) {
+          return respond({ success: false, error: 'Transport nicht gefunden' });
+        }
+
+        if (transport.appData?.participantId && transport.appData.participantId !== numericUserId) {
+          return respond({ success: false, error: 'Fehlende Berechtigung für diesen Transport' });
+        }
+
+        await transport.connect({ dtlsParameters });
+
+        const channelId = transport.appData?.channelId;
+        if (Number.isFinite(channelId)) {
+          const roomName = rtcRoomNameForChannel(Number(channelId));
+          rtcRoomManager.markTransportConnected(roomName, String(numericUserId), transport.id);
+        }
+
+        respond({ success: true });
+      } catch (err: any) {
+        console.error('Fehler bei rtc:connectTransport:', err);
+        respond({ success: false, error: err?.message || 'Konnte RTC-Transport nicht verbinden' });
+      }
+    }
+  );
+
+  socket.on(
     'rtc:joinRoom',
     async (
       payload: { channelId?: number },
