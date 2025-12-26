@@ -1,5 +1,5 @@
 import { IdentityFile, computeFingerprint, signMessage } from "./identity";
-import { getServerUrl, getServerPassword, setLiveKitUrl } from "../utils/apiConfig";
+import { getServerUrl, getServerPassword } from "../utils/apiConfig";
 import { storage } from "../shared/config/storage";
 
 async function postJson<T>(baseUrl: string, path: string, body: any): Promise<T> {
@@ -37,10 +37,7 @@ export async function performHandshake(id: IdentityFile, serverPassword?: string
       status?: string | null;
     };
     access: { passwordRequired: boolean };
-    config?: { livekitUrl?: string };
   }>(serverUrl, "/api/auth/handshake", payload);
-
-  setLiveKitUrl(response.config?.livekitUrl);
 
   return response;
 }

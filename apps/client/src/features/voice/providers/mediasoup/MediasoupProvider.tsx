@@ -15,7 +15,7 @@ import { MediasoupDebugOverlay, type MediasoupDebugStats } from './MediasoupDebu
 import { useSettings } from '../../../../context/SettingsContext';
 import { useSocket } from '../../../../context/SocketContext';
 import { storage } from '../../../../shared/config/storage';
-import { type VoiceConnectRequest, type VoiceEngineDeps } from '../../engine/useVoiceEngine';
+import { type VoiceConnectRequest, type VoiceEngineDeps } from '../types';
 import { type VoiceContextType } from '../../state/VoiceContext';
 import { type VoiceParticipant, type VoiceProviderRenderers } from '../types';
 

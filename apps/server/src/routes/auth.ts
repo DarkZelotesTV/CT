@@ -16,10 +16,6 @@ router.post("/handshake", async (req, res) => {
       timestamp: req.body?.timestamp ? Number(req.body.timestamp) : null,
     });
 
-    // NEU: LiveKit URL aus der Server-Konfiguration lesen
-    // Wir schauen nach LIVEKIT_PUBLIC_URL oder Fallback VITE_LIVEKIT_URL
-    const livekitUrl = process.env.LIVEKIT_PUBLIC_URL || process.env.VITE_LIVEKIT_URL || "";
-
     res.json({
       user: {
         id: user.id,
@@ -33,10 +29,6 @@ router.post("/handshake", async (req, res) => {
       access: {
         passwordRequired: Boolean(process.env.SERVER_PASSWORD),
       },
-      // NEU: Config-Objekt an den Client senden
-      config: {
-        livekitUrl: livekitUrl
-      }
     });
   } catch (err: any) {
     const status = err?.status || 401;

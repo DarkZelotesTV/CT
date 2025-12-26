@@ -99,49 +99,6 @@ video {
   background-color: #000 !important;
 }
 
-.lk-participant-tile video {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  background-color: #000 !important;
-}
-
-/* FIX FÜR 21:9 SCREENSHARES & LETTERBOXING 
-   -------------------------------------------------------
-   LiveKit ändert die Hintergrundfarbe der Kachel basierend auf der 
-   Verbindungsqualität (data-lk-quality="excellent" -> GRÜN).
-   Das scheint bei Ultrawide-Inhalten durch die schwarzen Balken durch.
-*/
-
-/* 1. Hintergrundfarbe für ALLE Qualitätsstufen auf Schwarz zwingen */
-.lk-participant-tile.screenshare-tile,
-.lk-participant-tile.screenshare-tile[data-lk-quality],
-.lk-participant-tile.screenshare-tile[data-lk-quality="excellent"],
-.lk-participant-tile.screenshare-tile[data-lk-quality="good"],
-.lk-participant-tile.screenshare-tile[data-lk-quality="poor"] {
-    background-color: #000 !important;
-    background: #000 !important;
-    border-color: transparent !important;
-}
-
-/* 2. Speaking Indicator und Glow entfernen */
-.lk-participant-tile.screenshare-tile[data-lk-speaking="true"],
-.lk-participant-tile.screenshare-tile:focus {
-    box-shadow: none !important;
-    border: none !important;
-    outline: none !important;
-}
-
-/* 3. Pseudo-Elemente entfernen (oft für Glow genutzt) */
-.lk-participant-tile.screenshare-tile::before,
-.lk-participant-tile.screenshare-tile::after,
-.lk-participant-tile.screenshare-tile[data-lk-speaking="true"]::before,
-.lk-participant-tile.screenshare-tile[data-lk-speaking="true"]::after {
-    display: none !important;
-    content: none !important;
-}
-
 @layer utilities {
   .drag {
     -webkit-app-region: drag;

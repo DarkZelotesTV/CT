@@ -1,20 +1,22 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { useVoiceEngine, type VoiceConnectRequest, type VoiceEngineDeps, type VoiceFallbackRequest } from './engine';
 import { useMediasoupProvider } from './providers/mediasoup/MediasoupProvider';
 import { useP2PProvider } from './providers/p2p/P2PProvider';
-import { type VoiceProviderId } from './providers/types';
+import {
+  type VoiceConnectRequest,
+  type VoiceEngineDeps,
+  type VoiceFallbackRequest,
+  type VoiceProviderId,
+} from './providers/types';
 import { VoiceContext, type VoiceContextType } from './state/VoiceContext';
 import { VoiceStoreProvider, useVoiceStore } from './state';
 
 type VoiceProviderFactory = (deps: VoiceEngineDeps) => VoiceContextType;
 type VoiceProviderRegistry = Partial<Record<VoiceProviderId, VoiceProviderFactory>>;
 
-const livekitFactory: VoiceProviderFactory = (deps) => useVoiceEngine({ ...deps, providerId: 'livekit' });
 const mediasoupFactory: VoiceProviderFactory = (deps) => useMediasoupProvider({ ...deps, providerId: 'mediasoup' });
 const p2pFactory: VoiceProviderFactory = (deps) => useP2PProvider({ ...deps, providerId: 'p2p' });
 
 const defaultProviderFactories: Record<VoiceProviderId, VoiceProviderFactory> = {
-  livekit: livekitFactory,
   mediasoup: mediasoupFactory,
   p2p: p2pFactory,
 };
@@ -27,7 +29,7 @@ type VoiceProviderConfig = {
 
 const resolveProviderId = (config: VoiceProviderConfig): VoiceProviderId => {
   const envProvider = (import.meta as any)?.env?.VITE_VOICE_PROVIDER as VoiceProviderId | undefined;
-  return config.providerId ?? envProvider ?? config.fallbackProviderId ?? 'livekit';
+  return config.providerId ?? envProvider ?? config.fallbackProviderId ?? 'mediasoup';
 };
 
 type VoiceRuntimeConfig = VoiceProviderConfig & {
@@ -39,7 +41,7 @@ const useVoiceComposer = (config: VoiceRuntimeConfig): VoiceContextType => {
   const { state, setState } = useVoiceStore();
 
   const providerKey = resolveProviderId(config);
-  const fallbackKey = config.fallbackProviderId ?? (providerKey === 'p2p' ? 'mediasoup' : 'livekit');
+  const fallbackKey = config.fallbackProviderId ?? (providerKey === 'p2p' ? 'mediasoup' : 'p2p');
 
   const registry = useMemo(
     () => ({
@@ -49,11 +51,12 @@ const useVoiceComposer = (config: VoiceRuntimeConfig): VoiceContextType => {
     [config.providerFactories]
   );
 
-  const selectedFactory = registry[providerKey] ?? registry[fallbackKey] ?? livekitFactory;
+  const selectedKey = registry[providerKey] ? providerKey : registry[fallbackKey] ? fallbackKey : 'mediasoup';
+  const selectedFactory = registry[selectedKey] ?? mediasoupFactory;
   const engineContext = selectedFactory({
     state,
     setState,
-    providerId: providerKey,
+    providerId: selectedKey,
     fallbackProviderId: fallbackKey,
     initialConnectRequest: config.initialConnectRequest ?? null,
     requestFallback: config.onFallbackRequest,
@@ -76,7 +79,7 @@ const VoiceComposer = ({ children, ...config }: VoiceComposerProps) => {
 
 export const VoiceProvider = ({ children, ...config }: VoiceComposerProps) => {
   const resolvedProvider = resolveProviderId(config);
-  const fallbackProviderId = config.fallbackProviderId ?? (resolvedProvider === 'p2p' ? 'mediasoup' : 'livekit');
+  const fallbackProviderId = config.fallbackProviderId ?? (resolvedProvider === 'p2p' ? 'mediasoup' : 'p2p');
   const [activeProviderId, setActiveProviderId] = useState<VoiceProviderId>(resolvedProvider);
   const [pendingConnect, setPendingConnect] = useState<VoiceConnectRequest | null>(null);
 

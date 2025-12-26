@@ -2,7 +2,7 @@ import { renderHook } from '@testing-library/react';
 import { VoiceContext, type VoiceContextType, useVoice } from './VoiceContext';
 
 const createMockVoiceContext = (): VoiceContextType => ({
-  providerId: 'livekit',
+  providerId: 'mediasoup',
   connectionHandle: null,
   activeChannelId: null,
   activeChannelName: null,

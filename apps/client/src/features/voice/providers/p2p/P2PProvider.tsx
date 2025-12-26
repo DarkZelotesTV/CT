@@ -13,8 +13,8 @@ import { socketEvents } from '../../../../../../../packages/shared/src/socket-ev
 import { useSettings } from '../../../../context/SettingsContext';
 import { useSocket } from '../../../../context/SocketContext';
 import { storage } from '../../../../shared/config/storage';
-import { getLiveKitConfig } from '../../../../utils/apiConfig';
-import { type VoiceConnectRequest, type VoiceEngineDeps } from '../../engine/useVoiceEngine';
+import { getRtcConfig } from '../../../../utils/apiConfig';
+import { type VoiceConnectRequest, type VoiceEngineDeps } from '../types';
 import { type VoiceContextType } from '../../state/VoiceContext';
 import { type VoiceParticipant, type VoiceProviderRenderers } from '../types';
 
@@ -411,7 +411,7 @@ export const useP2PProvider = ({
       if (peerConnectionsRef.current.has(peerId)) return peerConnectionsRef.current.get(peerId)!;
 
       const rtcConfig =
-        configRef.current || getLiveKitConfig({ iceServers: settings.talk.iceServers }).connectOptions?.rtcConfig || {};
+        configRef.current || getRtcConfig({ iceServers: settings.talk.iceServers });
       const connection = new RTCPeerConnection(rtcConfig);
 
       const localStream = localStreamRef.current;
@@ -605,7 +605,7 @@ export const useP2PProvider = ({
       try {
         socket.emit('join_channel', channelId);
 
-        const rtcConfig = getLiveKitConfig({ iceServers: settings.talk.iceServers }).connectOptions?.rtcConfig;
+        const rtcConfig = getRtcConfig({ iceServers: settings.talk.iceServers });
         if (rtcConfig) configRef.current = rtcConfig;
 
         const constraints: MediaStreamConstraints = {
