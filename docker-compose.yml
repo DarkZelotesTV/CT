@@ -8,10 +8,12 @@ services:
       - "3001:3001"
     environment:
       # Datenbank-Verbindung (nutzt die Service-Namen als Host)
-      MYSQL_HOST: mysql
-      MYSQL_USER: clover_user
-      MYSQL_PASSWORD: clover_password
-      MYSQL_DATABASE: clover_talk
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: clover_user
+      DB_PASSWORD: clover_password
+      DB_NAME: clover_talk
+      DB_DIALECT: mysql
       
       # Redis-Verbindung
       REDIS_HOST: redis
@@ -24,9 +26,9 @@ services:
       LIVEKIT_PUBLIC_URL: ${LIVEKIT_PUBLIC_URL}
       
     depends_on:
-      - mysql
       - redis
       - livekit
+      # - mysql   # Optional: aktivieren, wenn MySQL statt SQLite genutzt wird
 
   # --- LiveKit (Voice Server) ---
   livekit:
@@ -52,7 +54,7 @@ services:
       - redis_data:/data
     restart: unless-stopped
 
-  # --- MySQL (Datenbank) ---
+  # --- MySQL (Datenbank, optional - bei SQLite auskommentieren) ---
   mysql:
     image: mysql:8.0
     command: --default-authentication-plugin=mysql_native_password
