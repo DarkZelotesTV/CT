@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Clovertalk Final Polish</title>
+    <!-- FONT AWESOME EINBINDUNG -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* --- PALETTE --- */
+            --bg-body: #050505;
+            --bg-rail: rgba(10, 10, 12, 0.9);
+            --bg-tree: rgba(22, 22, 25, 0.85); 
+            --bg-main: rgba(10, 10, 12, 0.3); 
+            --bg-info: rgba(22, 22, 25, 0.85);
+            --bg-log: rgba(8, 8, 10, 0.9);
+            
+            --accent: #10b981;
+            --accent-dim: rgba(16, 185, 129, 0.15);
+            --accent-glow: 0 0 15px rgba(16, 185, 129, 0.4);
+            
+            --status-online: #22c55e;
+            --status-idle: #eab308;
+            --status-dnd: #ef4444;
+            
+            /* ROLES - Admin jetzt Rot */
+            --role-admin: #ef4444; 
+            --role-mod: #60a5fa;
+            --role-bot: #a78bfa;
+
+            --border-glass: 1px solid rgba(255, 255, 255, 0.08);
+            --border-shine: 1px solid rgba(255, 255, 255, 0.15);
+            
+            --font-ui: "Segoe UI Variable", "Inter", sans-serif;
+            --font-mono: "JetBrains Mono", "Consolas", monospace;
+
+            /* --- LAYOUT --- */
+            --w-rail: 72px;
+            --w-tree: 280px;
+            --w-info: 300px;
+            --h-header: 64px;
+            --h-log: 160px;
+
+            --curr-tree: var(--w-tree);
+            --curr-info: var(--w-info);
+            
+            --anim: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        body.fold-left { --curr-tree: 0px; }
+        body.fold-right { --curr-info: 0px; }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background-color: var(--bg-body);
+            color: #eee;
+            font-family: var(--font-ui);
+            height: 100vh; width: 100vw; overflow: hidden;
+            
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+            
+            display: grid;
+            grid-template-columns: var(--w-rail) var(--curr-tree) 1fr var(--curr-info);
+            grid-template-rows: var(--h-header) 1fr var(--h-log);
+            grid-template-areas: 
+                "rail header header header"
+                "rail tree   main   info"
+                "rail log    log    log";
+            
+            transition: grid-template-columns var(--anim);
+        }
+
+        /* --- ORBS --- */
+        .glow-orb {
+            position: fixed; border-radius: 50%; filter: blur(120px);
+            z-index: -1; pointer-events: none; opacity: 0.5;
+            animation: float 25s infinite ease-in-out alternate;
+        }
+        .orb-1 { width: 800px; height: 800px; background: radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, transparent 70%); top: -300px; left: -200px; }
+        .orb-2 { width: 600px; height: 600px; background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%); bottom: -200px; right: -200px; }
+        @keyframes float { 0% { transform: translate(0, 0); } 100% { transform: translate(30px, 20px); } }
+
+        /* --- UTILS --- */
+        .glass { backdrop-filter: blur(30px); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03); }
+        .scroll-y { overflow-y: auto; scrollbar-width: thin; scrollbar-color: #444 transparent; }
+        .flex-center { display: flex; align-items: center; justify-content: center; }
+
+        /* --- PREFIXES --- */
+        .tag { 
+            font-size: 0.6rem; font-weight: 800; padding: 3px 6px; border-radius: 4px;
+            margin-right: 8px; text-transform: uppercase; letter-spacing: 0.5px;
+            display: inline-flex; align-items: center; gap: 6px;
+            border: 1px solid transparent; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .tag.adm { 
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05)); 
+            color: var(--role-admin); border-color: rgba(239, 68, 68, 0.2); 
+        }
+        .tag.mod { 
+            background: linear-gradient(135deg, rgba(96, 165, 250, 0.15), rgba(96, 165, 250, 0.05));
+            color: var(--role-mod); border-color: rgba(96, 165, 250, 0.2); 
+        }
+        .tag.bot { 
+            background: linear-gradient(135deg, rgba(167, 139, 250, 0.15), rgba(167, 139, 250, 0.05));
+            color: var(--role-bot); border-color: rgba(167, 139, 250, 0.2); 
+        }
+        /* Font Awesome Adjustments inside Tags */
+        .tag i { font-size: 0.65rem; }
+
+        /* --- 1. RAIL --- */
+        .rail {
+            grid-area: rail; background: var(--bg-rail); border-right: var(--border-glass);
+            display: flex; flex-direction: column; align-items: center;
+            padding: 16px 0; gap: 14px; z-index: 50; @extend .glass;
+        }
+        .blob {
+            width: 48px; height: 48px; border-radius: 50%;
+            background: rgba(255,255,255,0.03); cursor: pointer; position: relative;
+            transition: 0.3s; display: flex; align-items: center; justify-content: center;
+            color: var(--accent); border: 1px solid rgba(255,255,255,0.05); font-size: 1.2rem;
+        }
+        .blob img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; transition:0.3s; }
+        .blob:hover, .blob.active { border-radius: 14px; background: var(--accent); color: #fff; box-shadow: var(--accent-glow); }
+        .blob:hover img, .blob.active img { border-radius: 14px; }
+        .sep { width: 32px; height: 1px; background: rgba(255,255,255,0.1); }
+
+        /* --- 2. HEADER --- */
+        .header {
+            grid-area: header; background: rgba(20, 20, 25, 0.5);
+            border-bottom: var(--border-glass); display: flex; align-items: center; justify-content: space-between;
+            padding: 0 24px; z-index: 40; backdrop-filter: blur(20px);
+        }
+        .h-path { font-size: 1.1rem; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 10px; }
+        
+        /* Updated Header Icon to Image */
+        .h-server-icon {
+            width: 24px; height: 24px; border-radius: 6px; object-fit: cover;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+        }
+
+        .telemetry-bar {
+            display: flex; gap: 12px; background: rgba(0,0,0,0.3); border: var(--border-glass); 
+            border-radius: 99px; padding: 4px 6px;
+        }
+        .t-item { display: flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 99px; background: rgba(255,255,255,0.03); }
+        .t-label { font-size: 0.65rem; font-weight: 700; color: #888; letter-spacing: 1px; }
+        .t-val { font-family: var(--font-mono); font-size: 0.8rem; color: #fff; font-weight: 600; }
+
+        /* --- 3. TREE VIEW --- */
+        .tree-wrap {
+            grid-area: tree; background: var(--bg-tree); border-right: var(--border-glass);
+            display: flex; flex-direction: column; overflow: hidden; min-width: 0; backdrop-filter: blur(30px);
+        }
+        .tree-content { flex: 1; padding: 10px; }
+        
+        .t-cat {
+            font-size: 0.7rem; font-weight: 800; color: #777; text-transform: uppercase;
+            margin: 16px 8px 6px; display: flex; align-items: center; gap: 8px; letter-spacing:1px;
+        }
+        .t-chan {
+            display: flex; align-items: center; gap: 10px; padding: 6px 10px; margin-bottom: 2px; 
+            border-radius: 6px; color: #bbb; cursor: pointer; transition: 0.1s; border: 1px solid transparent;
+        }
+        .t-chan i { font-size: 0.9rem; width: 20px; text-align: center; }
+        .t-chan:hover { background: rgba(255,255,255,0.06); color: #fff; }
+        .t-chan.active { background: linear-gradient(90deg, rgba(16, 185, 129, 0.1), transparent); border-left: 2px solid var(--accent); color: #fff; }
+        
+        .t-user {
+            position: relative; padding: 4px 10px 4px 38px; display: flex; align-items: center; gap: 8px;
+            cursor: pointer; border-radius: 6px; margin-bottom: 1px;
+        }
+        .t-user:hover { background: rgba(255,255,255,0.04); }
+        .t-user::before {
+            content: ''; position: absolute; left: 22px; top: -12px; bottom: 50%; width: 10px;
+            border-left: 1px solid rgba(255,255,255,0.15); border-bottom: 1px solid rgba(255,255,255,0.15);
+            border-bottom-left-radius: 6px; pointer-events: none;
+        }
+        .u-av-sm { width: 20px; height: 20px; border-radius: 50%; }
+        .u-name { font-size: 0.85rem; color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* --- ACTIVE CALL CONTROLS (Above Deck) --- */
+        .call-ctrl {
+            margin: 0 10px 10px 10px; padding: 8px; background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px;
+            display: flex; gap: 8px; justify-content: space-between;
+        }
+        .cc-btn {
+            flex: 1; height: 32px; border-radius: 6px; border: none;
+            background: rgba(255,255,255,0.05); color: #fff; cursor: pointer; 
+            display: flex; align-items: center; justify-content: center; transition:0.2s; font-size: 0.9rem;
+        }
+        .cc-btn:hover { background: rgba(255,255,255,0.15); }
+        .cc-btn.danger { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+        .cc-btn.danger:hover { background: rgba(239, 68, 68, 0.4); color: #fff; }
+        .cc-btn.active { background: var(--accent); color: #fff; box-shadow: var(--accent-glow); }
+
+        /* --- USER DECK (FIXED) --- */
+        .u-deck {
+            padding: 12px 14px; background: rgba(0,0,0,0.3);
+            border-top: var(--border-glass);
+            display: flex; align-items: center; gap: 10px;
+            flex-shrink: 0;
+        }
+        .ud-pic-wrap { position: relative; width: 38px; height: 38px; flex-shrink: 0; }
+        .ud-pic { width: 100%; height: 100%; border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); object-fit:cover; }
+        .ud-status {
+            position: absolute; bottom: -2px; right: -2px; width: 10px; height: 10px;
+            border-radius: 50%; background: var(--status-online); border: 2px solid #222;
+        }
+        .ud-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+        .ud-h1 { font-weight: 700; font-size: 0.9rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
+        .ud-h2 { font-size: 0.75rem; color: #888; font-family: var(--font-mono); line-height: 1.2; }
+        
+        .ud-ctrls { display: flex; gap: 4px; flex-shrink: 0; }
+        .ud-btn { 
+            width: 32px; height: 32px; border-radius: 6px; 
+            display: flex; align-items: center; justify-content: center;
+            color: #aaa; transition: 0.2s; cursor: pointer; font-size: 0.9rem;
+        }
+        .ud-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+        /* --- 4. MAIN STAGE --- */
+        .main {
+            grid-area: main; background: var(--bg-main); padding: 0; 
+            display: flex; flex-direction: column; position: relative; overflow: hidden;
+        }
+        .edge-toggle {
+            position: absolute; top: 50%; transform: translateY(-50%); width: 20px; height: 60px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.6); border: var(--border-glass);
+            color: #888; cursor: pointer; z-index: 60; border-radius: 4px; backdrop-filter: blur(5px);
+        }
+        .edge-toggle:hover { background: var(--accent); color: #fff; }
+        .edge-left { left: 4px; } .edge-right { right: 4px; }
+
+        /* STREAM */
+        .stream-stage { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 12px; }
+        .stream-view {
+            flex: 1; background: radial-gradient(circle at center, #1a1a1d 0%, #000 100%);
+            border-radius: 12px; border: var(--border-shine);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6); position: relative;
+            overflow: hidden; display: flex; align-items: center; justify-content: center;
+        }
+        .stream-content { width: 100%; height: 100%; object-fit: cover; opacity: 0.95; }
+        
+        .live-tag {
+            position: absolute; top: 16px; left: 16px;
+            background: rgba(239, 68, 68, 0.9); color: #fff; padding: 4px 10px;
+            border-radius: 4px; font-weight: 800; font-size: 0.75rem; letter-spacing: 1px;
+            box-shadow: 0 0 15px rgba(239,68,68,0.5); display: flex; align-items: center; gap: 6px;
+        }
+        .live-tag::before { content:''; width: 6px; height: 6px; background:#fff; border-radius: 50%; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%{opacity:1} 50%{opacity:0.3} 100%{opacity:1} }
+
+        .streamer-pill {
+            position: absolute; top: 16px; right: 16px;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(10px);
+            padding: 6px 12px; border-radius: 99px; border: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; gap: 8px; color: #fff;
+        }
+        .streamer-av { width: 24px; height: 24px; border-radius: 50%; }
+
+        /* STREAM GALLERY (Kira removed) */
+        .stream-gallery { height: 100px; display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; }
+        .stream-thumb {
+            width: 160px; height: 100%; 
+            background: linear-gradient(145deg, rgba(30,30,35,0.7), rgba(15,15,18,0.8));
+            border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+            position: relative; cursor: pointer; flex-shrink: 0; overflow: hidden; transition: 0.2s;
+        }
+        .stream-thumb:hover { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); }
+        .stream-thumb.active { border-color: var(--accent); box-shadow: 0 0 15px var(--accent-glow); }
+        .thumb-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; }
+        .stream-thumb:hover .thumb-img { opacity: 1; }
+        
+        .thumb-info {
+            position: absolute; bottom: 0; left: 0; right: 0; padding: 4px 8px;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .thumb-name { font-size: 0.75rem; font-weight: 600; color: #fff; text-shadow: 0 1px 2px #000; }
+        .thumb-live-dot { width: 6px; height: 6px; background: #ef4444; border-radius: 50%; box-shadow: 0 0 5px #ef4444; }
+
+        /* Stream Panel with Fixed Visual Studio Code Format */
+        .stream-panel {
+            height: 60px; background: rgba(30, 30, 35, 0.6);
+            border: var(--border-glass); border-radius: 12px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; backdrop-filter: blur(20px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        .sp-left, .sp-right { display: flex; align-items: center; gap: 12px; }
+        
+        /* FIX: Better layout for info text */
+        .sp-info { 
+            margin-right: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            line-height: 1.3;
+        }
+        .sp-title { font-weight: 700; color: #fff; font-size: 0.9rem; white-space: nowrap; }
+        .sp-sub { font-size: 0.75rem; color: var(--accent); font-family: var(--font-mono); }
+        
+        .sp-btn {
+            width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.05); color: #ccc; cursor: pointer; transition: 0.2s; margin-left: 8px; font-size: 1rem;
+        }
+        .sp-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .sp-btn.active { background: var(--accent); color: #fff; box-shadow: var(--accent-glow); }
+        .sp-btn.danger { color: #ef4444; border: 1px solid rgba(239,68,68,0.2); }
+        .sp-btn.danger:hover { background: rgba(239,68,68,0.1); }
+
+        /* --- 5. INFO PANEL --- */
+        .info-wrap {
+            grid-area: info; background: var(--bg-info); border-left: var(--border-glass);
+            overflow: hidden; min-width: 0; display: flex; flex-direction: column; @extend .glass;
+        }
+        .info-content { padding: 20px; overflow-y: auto; height: 100%; }
+
+        .grp-head { 
+            font-size: 0.7rem; font-weight: 800; color: #666; 
+            text-transform: uppercase; letter-spacing: 1px;
+            margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px;
+        }
+        .m-row {
+            display: flex; align-items: center; gap: 10px; padding: 8px;
+            border-radius: 8px; cursor: pointer; transition: 0.2s; border: 1px solid transparent;
+        }
+        .m-row:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.05); }
+        .m-av-lg { width: 40px; height: 40px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.05); object-fit: cover; }
+        .m-av-lg.on { border-color: var(--status-online); box-shadow: 0 0 10px rgba(34,197,94,0.2); }
+        .m-av-lg.idle { border-color: var(--status-idle); box-shadow: 0 0 10px rgba(234, 179, 8, 0.2); }
+        .m-nick { font-weight: 600; font-size: 0.9rem; color: #eee; }
+        .m-stat { font-size: 0.75rem; color: #888; }
+
+        /* --- 6. LOG --- */
+        .log {
+            grid-area: log; background: var(--bg-log); border-top: var(--border-glass);
+            display: flex; flex-direction: column; box-shadow: 0 -10px 40px rgba(0,0,0,0.5); z-index: 100;
+            backdrop-filter: blur(40px);
+        }
+        .log-head {
+            height: 36px; background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex; align-items: center; padding: 0 10px; gap: 8px;
+        }
+        .pill { font-size: 0.8rem; padding: 4px 16px; border-radius: 99px; color: #888; cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
+        .pill:hover { color: #fff; background: rgba(255,255,255,0.05); }
+        .pill.active { color: #fff; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.1); }
+        .log-body {
+            flex: 1; padding: 10px 16px; overflow-y: auto;
+            font-family: var(--font-mono); font-size: 12px; color: #ccc; line-height: 1.5;
+        }
+        .ln { margin-bottom: 2px; }
+        .ts { color: #555; margin-right: 8px; }
+        .sys { color: var(--accent); }
+        .cmd {
+            padding: 8px 16px; background: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.05);
+            display: flex; gap: 8px; align-items: center;
+        }
+        .cmd input { background: transparent; border: none; color: #fff; width: 100%; font-family: inherit; font-size: 13px; }
+
+        /* Scroll */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+    </style>
+</head>
+<body>
+
+    <!-- ORBS -->
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+
+    <!-- RAIL -->
+    <nav class="rail">
+        <div class="blob active"><i class="fa-solid fa-house"></i></div>
+        <div class="sep"></div>
+        <div class="blob"><img src="https://picsum.photos/seed/clover/64/64"></div>
+        <div class="blob"><img src="https://picsum.photos/seed/tech/64/64"></div>
+        <div class="blob" style="color:var(--accent); background:rgba(16,185,129,0.1);"><i class="fa-solid fa-plus"></i></div>
+    </nav>
+
+    <!-- LEFT TREE -->
+    <aside class="tree-wrap" id="leftPanel">
+        <div class="tree-content scroll-y">
+            <div class="t-cat"><i class="fa-solid fa-folder-open"></i> Dashboard</div>
+            <div class="t-chan"><i class="fa-solid fa-hashtag"></i> news-feed</div>
+            
+            <div class="t-cat" style="margin-top:20px;"><i class="fa-solid fa-folder-open"></i> Voice Rooms</div>
+            
+            <div class="t-chan active">
+                <i class="fa-solid fa-volume-high"></i> Gaming Lounge
+            </div>
+            
+            <div class="t-user">
+                <img src="https://picsum.photos/seed/darkztv/32/32" class="u-av-sm speak">
+                <span class="tag adm"><i class="fa-solid fa-shield-halved"></i> ADMIN</span>
+                <span class="u-name">DarkZTV</span>
+            </div>
+            <div class="t-user">
+                <img src="https://picsum.photos/seed/bot/32/32" class="u-av-sm">
+                <span class="tag bot"><i class="fa-solid fa-robot"></i> BOT</span>
+                <span class="u-name" style="color:#8ea1e1;">Exenon</span>
+            </div>
+
+            <div class="t-chan" style="margin-top:8px;"><i class="fa-solid fa-bed"></i> AFK Channel</div>
+            <div class="t-user">
+                <img src="https://picsum.photos/seed/kira/32/32" class="u-av-sm">
+                <span class="tag mod"><i class="fa-solid fa-gavel"></i> MOD</span>
+                <span class="u-name" style="color:#999; text-decoration:line-through;">Kira</span>
+            </div>
+        </div>
+
+        <!-- NEW CALL CONTROLS -->
+        <div class="call-ctrl">
+            <button class="cc-btn danger" title="Auflegen"><i class="fa-solid fa-phone-slash"></i></button>
+            <button class="cc-btn active" title="Video"><i class="fa-solid fa-video"></i></button>
+            <button class="cc-btn" title="Screen"><i class="fa-solid fa-desktop"></i></button>
+        </div>
+
+        <div class="u-deck">
+            <div class="ud-pic-wrap">
+                <img src="https://picsum.photos/seed/darkztv/48/48" class="ud-pic">
+                <div class="ud-status"></div>
+            </div>
+            <div class="ud-meta">
+                <div class="ud-h1">DarkZTV</div>
+                <div class="ud-h2">#0001</div>
+            </div>
+            <div class="ud-ctrls">
+                <div class="ud-btn"><i class="fa-solid fa-microphone"></i></div>
+                <div class="ud-btn"><i class="fa-solid fa-headphones"></i></div>
+                <div class="ud-btn"><i class="fa-solid fa-gear"></i></div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="flex-center" style="gap:12px;">
+            <div class="h-path">
+                <img src="https://picsum.photos/seed/clover/64/64" class="h-server-icon">
+                ZIMPLY
+            </div>
+        </div>
+        
+        <div class="telemetry-bar">
+            <div class="t-item"><span class="t-label">PING</span><span class="t-val" style="color:var(--accent)">24ms</span></div>
+            <div class="t-item"><span class="t-label">LOSS</span><span class="t-val">0%</span></div>
+            <div class="t-item"><span class="t-label">UPTIME</span><span class="t-val" id="time">01:42</span></div>
+        </div>
+
+        <!-- Icons removed as requested in previous turn, keeping empty div for spacing or removing it entirely -->
+        <div></div> 
+    </header>
+
+    <!-- MAIN STAGE -->
+    <main class="main">
+        <div class="edge-toggle edge-left" onclick="toggleLeft()"><i class="fa-solid fa-chevron-left"></i></div>
+        <div class="edge-toggle edge-right" onclick="toggleRight()"><i class="fa-solid fa-chevron-right"></i></div>
+
+        <div class="stream-stage">
+            <div class="stream-view">
+                <img src="https://picsum.photos/seed/code/1280/720" class="stream-content">
+                <div class="stream-overlay-top">
+                    <div class="live-tag">LIVE</div>
+                    <div class="streamer-pill">
+                        <img src="https://picsum.photos/seed/darkztv/32/32" class="streamer-av">
+                        <span style="font-size:0.8rem; font-weight:600;">DarkZTV</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STREAM GALLERY (Kira removed) -->
+            <div class="stream-gallery">
+                <div class="stream-thumb active">
+                    <img src="https://picsum.photos/seed/code/200/120" class="thumb-img">
+                    <div class="thumb-info">
+                        <span class="thumb-name">DarkZTV</span>
+                        <div class="thumb-live-dot"></div>
+                    </div>
+                </div>
+                <div class="stream-thumb" style="opacity:0.6; cursor:default;">
+                    <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#222;">
+                        <i class="fa-solid fa-music" style="color:#555; font-size:1.5rem;"></i>
+                    </div>
+                    <div class="thumb-info">
+                        <span class="thumb-name">Exenon</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stream-panel">
+                <div class="sp-left">
+                    <div class="sp-info">
+                        <div class="sp-title">Visual Studio Code</div>
+                        <div class="sp-sub">1080p • 60 FPS</div>
+                    </div>
+                    <div class="sp-btn active"><i class="fa-solid fa-stop"></i></div>
+                    <div class="sp-btn"><i class="fa-solid fa-pause"></i></div>
+                </div>
+                <div class="sp-right">
+                    <div class="sp-btn"><i class="fa-solid fa-up-right-from-square"></i></div>
+                    <div class="sp-btn danger"><i class="fa-solid fa-power-off"></i></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- RIGHT INFO -->
+    <aside class="info-wrap" id="rightPanel">
+        <div class="info-content scroll-y">
+            <!-- GROUP: CONNECTED -->
+            <div class="grp-head" style="color:var(--accent);">Verbunden: Gaming Lounge — 2</div>
+            <div class="m-row" style="background:rgba(16,185,129,0.05); border-color:rgba(16,185,129,0.1);">
+                <img src="https://picsum.photos/seed/darkztv/48/48" class="m-av-lg on">
+                <div>
+                    <div style="display:flex; align-items:center;">
+                        <span class="tag adm"><i class="fa-solid fa-shield-halved"></i> ADMIN</span>
+                        <span class="m-nick">DarkZTV</span>
+                    </div>
+                    <div class="m-stat">Streaming...</div>
+                </div>
+            </div>
+            <div class="m-row" style="background:rgba(16,185,129,0.05); border-color:rgba(16,185,129,0.1);">
+                <img src="https://picsum.photos/seed/bot/48/48" class="m-av-lg">
+                <div>
+                    <div style="display:flex; align-items:center;">
+                        <span class="tag bot"><i class="fa-solid fa-robot"></i> BOT</span>
+                        <span class="m-nick">Exenon</span>
+                    </div>
+                    <div class="m-stat">Playing Music</div>
+                </div>
+            </div>
+
+            <!-- GROUP: AFK (Kira) -->
+            <div class="grp-head" style="margin-top:24px; color:var(--status-idle);">Abwesend / AFK — 1</div>
+            <div class="m-row" style="opacity:0.8;">
+                <img src="https://picsum.photos/seed/kira/48/48" class="m-av-lg idle">
+                <div>
+                    <div style="display:flex; align-items:center;">
+                        <span class="tag mod"><i class="fa-solid fa-gavel"></i> MOD</span>
+                        <span class="m-nick" style="color:#ddd;">Kira</span>
+                    </div>
+                    <div class="m-stat">AFK Channel</div>
+                </div>
+            </div>
+
+            <!-- GROUP: OFFLINE -->
+            <div class="grp-head" style="margin-top:24px;">Offline — 1</div>
+            <div class="m-row" style="opacity:0.5;">
+                <img src="https://picsum.photos/seed/lark/48/48" class="m-av-lg">
+                <div><span class="m-nick">Larcek</span></div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- LOG -->
+    <footer class="log">
+        <div class="log-head">
+            <div class="pill active">System Log</div>
+            <div class="pill">Chat</div>
+            <div style="flex:1;"></div>
+            <div class="pill">Clear</div>
+        </div>
+        <div class="log-body" id="logOut">
+            <div class="ln"><span class="ts">[16:30]</span> <span class="sys">Verbunden mit Server.</span></div>
+            <div class="ln"><span class="ts">[16:35]</span> <span class="tag adm" style="font-size:0.55rem; padding:1px 4px;">ADMIN</span> <span style="font-weight:700; color:#eee;">DarkZTV</span> joined channel.</div>
+            <div class="ln"><span class="ts">[16:45]</span> <span class="sys">Stream gestartet:</span> "Visual Studio Code" (1080p60)</div>
+        </div>
+        <div class="cmd">
+            <span style="color:var(--accent); font-weight:700;">&gt;</span>
+            <input type="text" placeholder="Befehl eingeben...">
+        </div>
+    </footer>
+
+    <script>
+        const body = document.body;
+        const btnL = document.querySelector('.edge-left i');
+        const btnR = document.querySelector('.edge-right i');
+
+        function toggleLeft() {
+            body.classList.toggle('fold-left');
+            if(body.classList.contains('fold-left')) {
+                btnL.classList.remove('fa-chevron-left');
+                btnL.classList.add('fa-chevron-right');
+            } else {
+                btnL.classList.remove('fa-chevron-right');
+                btnL.classList.add('fa-chevron-left');
+            }
+        }
+        function toggleRight() {
+            body.classList.toggle('fold-right');
+            if(body.classList.contains('fold-right')) {
+                btnR.classList.remove('fa-chevron-right');
+                btnR.classList.add('fa-chevron-left');
+            } else {
+                btnR.classList.remove('fa-chevron-left');
+                btnR.classList.add('fa-chevron-right');
+            }
+        }
+
+        setInterval(() => {
+            const t = document.getElementById('time');
+            let [m, s] = t.innerText.split(':').map(Number);
+            s++; if(s>59){s=0;m++;}
+            t.innerText = (m<10?'0'+m:m)+':'+(s<10?'0'+s:s);
+        }, 1000);
+    </script>
+</body>
+</html>
