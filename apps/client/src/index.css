@@ -13,8 +13,8 @@
   --color-border-strong: #303a4e;
   --color-text: #e5e7eb;
   --color-text-muted: #cbd5e1;
-  --color-accent: #6366f1;
-  --color-accent-hover: #4f46e5;
+  --color-accent: var(--accent);
+  --color-accent-hover: #059669;
   --color-overlay: rgba(6, 8, 16, 0.78);
 
   /* Layout tokens mapped to the existing theme colors */
@@ -24,7 +24,7 @@
   --layout-bg-main: color-mix(in srgb, var(--color-surface-alt) 92%, transparent);
   --layout-bg-info: color-mix(in srgb, var(--color-surface) 96%, transparent);
   --layout-bg-log: color-mix(in srgb, var(--color-surface) 85%, var(--color-background) 15%);
-  --layout-accent: var(--color-accent);
+  --layout-accent: var(--accent);
   --layout-accent-dim: color-mix(in srgb, var(--color-accent) 16%, transparent);
   --layout-accent-glow: 0 0 32px color-mix(in srgb, var(--color-accent) 40%, transparent);
   --layout-border: 1px solid color-mix(in srgb, var(--color-border-strong) 65%, transparent);
@@ -51,6 +51,26 @@
   --role-admin: #ef4444;
   --role-mod: #60a5fa;
   --role-bot: #a78bfa;
+
+  /* TEMPNEW aliases (src/TEMPNEW/index.html) */
+  --bg-body: var(--layout-bg-body);
+  --bg-rail: var(--layout-bg-rail);
+  --bg-tree: var(--layout-bg-tree);
+  --bg-main: var(--layout-bg-main);
+  --bg-info: var(--layout-bg-info);
+  --bg-log: var(--layout-bg-log);
+  --accent: #10b981;
+  --accent-dim: rgba(16, 185, 129, 0.15);
+  --accent-glow: 0 0 32px rgba(16, 185, 129, 0.35);
+  --border-glass: 1px solid rgba(255, 255, 255, 0.08);
+  --border-shine: 1px solid rgba(255, 255, 255, 0.15);
+  --w-rail: var(--layout-rail-width);
+  --w-tree: var(--layout-tree-width);
+  --w-info: var(--layout-info-width);
+  --h-header: var(--layout-header-height);
+  --h-log: var(--layout-log-height);
+  --anim: var(--layout-transition);
+
 }
 
 :root[data-theme-mode='light'] {

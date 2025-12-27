@@ -840,12 +840,19 @@ export const MainLayout = () => {
     'fold-info': !showRightSidebar && !isMobileLayout,
     'fold-log': !showLogPanel && !isMobileLayout,
     'mobile-nav-open': showMobileNav,
+      // TEMPNEW compatibility aliases
+    'fold-left': !showLeftSidebar && !isMobileLayout,
+    'fold-right': !showRightSidebar && !isMobileLayout,
   });
 
   const gridStyle = {
     '--layout-tree-current': isMobileLayout ? '0px' : showLeftSidebar ? `${effectiveLeftSidebarWidth}px` : '0px',
     '--layout-info-current': isMobileLayout ? '0px' : showRightSidebar ? `${effectiveRightSidebarWidth}px` : '0px',
     '--layout-log-current': showLogPanel ? 'var(--layout-log-height)' : '0px',
+    // TEMPNEW compatibility (see theme/tempnew.css)
+    '--curr-tree': isMobileLayout ? '0px' : showLeftSidebar ? `${effectiveLeftSidebarWidth}px` : '0px',
+    '--curr-info': isMobileLayout ? '0px' : showRightSidebar ? `${effectiveRightSidebarWidth}px` : '0px',
+
   } as React.CSSProperties;
 
   const ui = (
@@ -954,7 +961,7 @@ export const MainLayout = () => {
 
           <aside
             ref={railRef}
-            className="rail-panel glass-panel"
+            className="rail-panel glass-panel rail"
             role={isMobileLayout ? 'dialog' : 'complementary'}
             aria-modal={isMobileLayout}
             aria-hidden={!showMobileNav && isMobileLayout}
@@ -967,7 +974,7 @@ export const MainLayout = () => {
             />
           </aside>
 
-          <header className="header-panel glass-panel">
+          <header className="header-panel glass-panel header">
             <div className="header-left">
               {isMobileLayout && (
                 <button
@@ -1030,7 +1037,7 @@ export const MainLayout = () => {
           {selectedServerId && (
             <section
               ref={leftSidebarRef}
-              className="tree-panel glass-panel tree-wrapper"
+              className="tree-panel glass-panel tree-wrapper tree"
               aria-hidden={!showLeftSidebar && !isMobileLayout}
             >
               <div className="tree-content">
@@ -1054,7 +1061,7 @@ export const MainLayout = () => {
             </section>
           )}
 
-          <main ref={mainContentRef} id="main-content" tabIndex={-1} className="main-panel glass-panel">
+          <main ref={mainContentRef} id="main-content" tabIndex={-1} className="main-panel glass-panel main">
             {isMobileLayout && (
               <div className="mobile-toggle-row">
                 <button
@@ -1100,7 +1107,7 @@ export const MainLayout = () => {
           {selectedServerId && (
             <aside
               ref={rightSidebarRef}
-              className="info-panel glass-panel info-wrapper"
+              className="info-panel glass-panel info-wrapper info-wrap"
               style={{ display: isMobileLayout && !showRightSidebar ? 'none' : undefined }}
               aria-hidden={!showRightSidebar && !isMobileLayout}
             >
@@ -1113,7 +1120,7 @@ export const MainLayout = () => {
 
           {selectedServerId && (
             <section
-              className="log-panel glass-panel"
+              className="log-panel glass-panel log"
               style={{ display: isMobileLayout && !showLogPanel ? 'none' : undefined }}
               aria-hidden={!showLogPanel && !isMobileLayout}
             >

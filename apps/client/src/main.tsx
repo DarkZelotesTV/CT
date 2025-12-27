@@ -1,6 +1,7 @@
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
+import './theme/tempnew.css';
 
 import { IdentityGate } from './auth/IdentityGate';
 import { SocketProvider } from './context/SocketContext.tsx';

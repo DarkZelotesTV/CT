@@ -51,26 +51,26 @@ export const ModalLayout = ({
 
   if (!target) return null;
 
-  const bodyClasses = bodyClassName ? bodyClassName : 'p-4';
+  const bodyClasses = bodyClassName ?? '';
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+      className="ct-modal-overlay"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onOverlayClick?.();
       }}
     >
-      <div className="w-[92vw] max-w-[720px] h-[86vh] max-h-[860px] rounded-2xl bg-dark-200 border border-white/10 shadow-2xl overflow-hidden flex flex-col">
+      <div className="ct-modal glass">
         {/* Header */}
-        <div className="flex items-start justify-between p-4 border-b border-white/10 bg-white/[0.02] flex-shrink-0">
+        <div className="ct-modal-header">
           <div className="min-w-0">
-            <h2 className="text-lg font-bold text-gray-100 truncate">{title}</h2>
-            {description && <p className="text-gray-400 mt-2 text-sm">{description}</p>}
+            <h2 className="ct-modal-title">{title}</h2>
+            {description && <p className="ct-modal-desc">{description}</p>}
           </div>
 
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition no-drag"
+            className="ct-modal-close no-drag"
             aria-label="Close modal"
           >
             <X size={18} />
@@ -78,11 +78,11 @@ export const ModalLayout = ({
         </div>
 
         {/* Scrollable Body */}
-        <div className={`${bodyClasses} overflow-y-auto custom-scrollbar min-h-0 flex-1`}>{children}</div>
+        <div className={`ct-modal-body ${bodyClasses} custom-scrollbar`}>{children}</div>
 
         {/* Footer */}
         {footer && (
-          <div className="bg-white/[0.02] p-3 text-center border-t border-white/5 flex-shrink-0">{footer}</div>
+          <div className="ct-modal-footer">{footer}</div>
         )}
       </div>
     </div>,

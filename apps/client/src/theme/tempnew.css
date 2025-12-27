@@ -1,0 +1,134 @@
+/**
+ * TEMPNEW polish layer
+ * Source: src/TEMPNEW/index.html (extracted + adapted for the React app)
+ *
+ * Goals:
+ * - Provide palette + layout aliases (so the TEMPNEW token names work in-app)
+ * - Provide shared "glass" utilities
+ * - Provide a single, consistent modal shell (used by ModalLayout)
+ */
+
+:root {
+  /* --- TEMPNEW token aliases (do not remove existing tokens) --- */
+  --bg-body: var(--layout-bg-body);
+  --bg-rail: var(--layout-bg-rail);
+  --bg-tree: var(--layout-bg-tree);
+  --bg-main: var(--layout-bg-main);
+  --bg-info: var(--layout-bg-info);
+  --bg-log: var(--layout-bg-log);
+  /* Accent tokens are defined in src/index.css */
+  --accent-dim: var(--layout-accent-dim);
+  --accent-glow: var(--layout-accent-glow);
+
+  /* Layout sizing aliases */
+  --w-rail: var(--layout-rail-width);
+  --w-tree: var(--layout-tree-width);
+  --w-info: var(--layout-info-width);
+  --h-header: var(--layout-header-height);
+  --h-log: var(--layout-log-height);
+
+  /* Runtime collapse values (MainLayout.tsx sets these inline) */
+  --curr-tree: var(--layout-tree-current, var(--w-tree));
+  --curr-info: var(--layout-info-current, var(--w-info));
+
+  --border-glass: var(--layout-border);
+  --border-shine: 1px solid rgba(255, 255, 255, 0.15);
+  --anim: var(--layout-transition);
+}
+
+/* --- TEMPNEW fold aliases (MainLayout already uses fold-tree/fold-info) --- */
+.main-layout.fold-left { --curr-tree: 0px; }
+.main-layout.fold-right { --curr-info: 0px; }
+
+/* --- Utilities --- */
+.glass {
+  backdrop-filter: blur(30px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.scroll-y {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #444 transparent;
+}
+
+/* --- Modal shell (ModalLayout) --- */
+.ct-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Desktop: respect the titlebar height var if present */
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(18px);
+}
+
+.ct-modal {
+  width: min(720px, 92vw);
+  height: min(860px, 86vh);
+
+  background: color-mix(in srgb, var(--bg-tree) 92%, transparent);
+  border: var(--border-glass);
+  border-radius: var(--layout-radius);
+  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.ct-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.ct-modal-title {
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 800;
+  color: #fff;
+  margin: 0;
+}
+
+.ct-modal-desc {
+  margin-top: 8px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.ct-modal-close {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 8px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.ct-modal-close:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.ct-modal-body {
+  padding: 16px;
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1;
+}
+
+.ct-modal-footer {
+  padding: 12px;
+  text-align: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  flex-shrink: 0;
+}
