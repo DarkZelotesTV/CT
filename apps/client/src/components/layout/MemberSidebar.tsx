@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { Shield, Crown } from 'lucide-react';
+import { Shield, Crown, UserCheck, UserX } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../../api/http';
 import { useSocket } from '../../context/SocketContext';
@@ -7,13 +7,23 @@ import { ErrorCard, Skeleton, Spinner } from '../ui';
 import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
 
+type PresenceStatus = 'online' | 'idle' | 'offline' | 'dnd' | 'away';
+
 export interface Member {
   userId: number;
   username: string;
   avatarUrl?: string;
-  status: 'online' | 'offline';
+  status: PresenceStatus;
   roles?: any[];
 }
+
+const normalizeStatus = (rawStatus: any): PresenceStatus => {
+  const normalized = String(rawStatus ?? '').toLowerCase();
+  if (['online', 'active'].includes(normalized)) return 'online';
+  if (['idle', 'away'].includes(normalized)) return 'idle';
+  if (['dnd', 'busy'].includes(normalized)) return 'dnd';
+  return 'offline';
+};
 
 export const MemberAvatar = ({
   member,
@@ -30,26 +40,25 @@ export const MemberAvatar = ({
   const finalAvatarAlt = avatarAlt ?? `${member.username} avatar`;
   const finalStatusLabel = statusLabel?.(member.status) ?? `Status: ${member.status}`;
 
+  const statusClass = (() => {
+    if (member.status === 'online') return 'online';
+    if (member.status === 'idle' || member.status === 'away') return 'idle';
+    if (member.status === 'dnd') return 'dnd';
+    return 'offline';
+  })();
+
   return (
-    // WRAPPER: Relativ positioniert, aber KEIN overflow-hidden, damit der Punkt sichtbar bleibt
     <div className="relative mr-3 flex-shrink-0">
-      {/* AVATAR CONTAINER: Rund und overflow-hidden für das Bild */}
-      <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-white/10">
+      <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-white/5 shadow-inner">
         {member.avatarUrl ? (
           <img src={resolveServerAssetUrl(member.avatarUrl)} alt={finalAvatarAlt} className="h-full w-full object-cover" />
         ) : (
-          <span className="select-none text-xs font-bold text-gray-400" aria-label={initialsLabel}>
+          <span className="select-none text-sm font-bold text-gray-300" aria-label={initialsLabel}>
             {avatarInitial}
           </span>
         )}
+        <div className={`status-dot badge ${statusClass}`} aria-label={finalStatusLabel} />
       </div>
-      {/* STATUS INDICATOR: Liegt nun außerhalb des beschnittenen Bereichs */}
-      <span
-        className={`pointer-events-none absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#111214] ${
-          member.status === 'online' ? 'bg-green-500' : 'bg-gray-500'
-        }`}
-        aria-label={finalStatusLabel}
-      />
     </div>
   );
 };
@@ -113,7 +122,7 @@ export const normalizeMemberData = (payload: any, unknownUserLabel: string): Mem
     userId: payload.userId ?? payload.user_id ?? payload.User?.id ?? payload.user?.id,
     username: payload.username ?? payload.User?.username ?? payload.user?.username ?? unknownUserLabel,
     ...(avatarUrl ? { avatarUrl } : {}),
-    status: payload.status ?? payload.User?.status ?? payload.user?.status ?? 'offline',
+    status: normalizeStatus(payload.status ?? payload.User?.status ?? payload.user?.status ?? 'offline'),
     roles: payload.roles ?? (payload.role ? [payload.role] : []),
   };
 };
@@ -314,8 +323,9 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
   useEffect(() => {
     if (!socket) return;
 
-    const handleStatusChange = ({ userId, status }: { userId: number; status: 'online' | 'offline' }) => {
-      setMembers(prev => prev.map((member) => member.userId === userId ? { ...member, status } : member));
+    const handleStatusChange = ({ userId, status }: { userId: number; status: PresenceStatus }) => {
+      const normalizedStatus = normalizeStatus(status);
+      setMembers((prev) => prev.map((member) => (member.userId === userId ? { ...member, status: normalizedStatus } : member)));
     };
 
     const handleMemberSnapshot = ({ serverId: incomingServerId, members: incomingMembers }: { serverId: number; members: any[] }) => {
@@ -335,18 +345,20 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
   }, [socket, serverId]);
 
   useEffect(() => {
-    setMembers((prev) => prev.map((member) => {
-      const snapshot = presenceSnapshot[member.userId];
-      if (!snapshot) return member;
-      const snapshotAvatar =
-        getAvatarUrl(snapshot.avatar) || getAvatarUrl(snapshot.avatar_url) || getAvatarUrl(snapshot.avatarUrl) || member.avatarUrl;
-      return {
-        ...member,
-        username: snapshot.username ?? member.username,
-        ...(snapshotAvatar ? { avatarUrl: snapshotAvatar } : {}),
-        status: snapshot.status ?? member.status,
-      };
-    }));
+    setMembers((prev) =>
+      prev.map((member) => {
+        const snapshot = presenceSnapshot[member.userId];
+        if (!snapshot) return member;
+        const snapshotAvatar =
+          getAvatarUrl(snapshot.avatar) || getAvatarUrl(snapshot.avatar_url) || getAvatarUrl(snapshot.avatarUrl) || member.avatarUrl;
+        return {
+          ...member,
+          username: snapshot.username ?? member.username,
+          ...(snapshotAvatar ? { avatarUrl: snapshotAvatar } : {}),
+          status: normalizeStatus(snapshot.status ?? member.status),
+        };
+      })
+    );
   }, [presenceSnapshot]);
 
   useEffect(() => {
@@ -385,8 +397,8 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
     : members;
 
   // Gruppenlogik (Online / Offline)
-  const onlineMembers = filteredMembers.filter((m) => m.status === 'online');
-  const offlineMembers = filteredMembers.filter((m) => m.status !== 'online');
+  const onlineMembers = filteredMembers.filter((m) => m.status === 'online' || m.status === 'idle' || m.status === 'away');
+  const offlineMembers = filteredMembers.filter((m) => !(m.status === 'online' || m.status === 'idle' || m.status === 'away'));
 
   type MemberRow =
     | { type: 'section'; key: string; label: string; count: number }
@@ -406,47 +418,92 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
   const memberVirtualizer = useVirtualizer({
     count: memberRows.length,
     getScrollElement: () => listParentRef.current,
-    estimateSize: (index: number) => (memberRows[index]?.type === 'section' ? 32 : 72),
+    estimateSize: (index: number) => (memberRows[index]?.type === 'section' ? 32 : 92),
     overscan: 8,
   });
 
-  const renderMember = (m: Member, style?: CSSProperties) => (
-    <div
-      key={m.userId}
-      style={style}
-      className="flex items-center p-2 mb-1 rounded-lg hover:bg-white/5 cursor-pointer group transition-all"
-      onContextMenu={(e) => {
-        e.preventDefault();
-        openUserMenu({ x: e.clientX, y: e.clientY, target: e.currentTarget as HTMLElement }, m);
-      }}
-      onTouchStart={(e) => {
-        const touch = e.touches?.[0];
-        startLongPress(() =>
-          openUserMenu({ x: touch?.clientX || 0, y: touch?.clientY || 0, target: e.currentTarget as HTMLElement }, m)
-        );
-      }}
-      onTouchEnd={cancelLongPress}
-      onTouchMove={cancelLongPress}
-    >
-      <MemberAvatar
-        member={m}
-        avatarAlt={t('memberSidebar.avatarAlt', { username: m.username }) ?? `${m.username} avatar`}
-        initialsLabel={t('memberSidebar.initialsAvatar') ?? undefined}
-        statusLabel={(status) => t('memberSidebar.statusLabel', { status }) ?? `Status: ${status}`}
-      />
+  const renderMember = (m: Member, style?: CSSProperties) => {
+    const statusTone =
+      m.status === 'online'
+        ? { border: 'border-emerald-500/40', glow: 'shadow-[0_8px_32px_rgba(16,185,129,0.18)]', chip: 'status-pill online' }
+        : m.status === 'idle' || m.status === 'away'
+          ? { border: 'border-amber-400/40', glow: 'shadow-[0_8px_32px_rgba(234,179,8,0.12)]', chip: 'status-pill idle' }
+          : m.status === 'dnd'
+            ? { border: 'border-rose-400/40', glow: 'shadow-[0_8px_32px_rgba(244,63,94,0.12)]', chip: 'status-pill dnd' }
+            : { border: 'border-white/10', glow: 'shadow-[0_10px_34px_rgba(0,0,0,0.32)]', chip: 'status-pill offline' };
 
-      <div className="overflow-hidden">
-        <div className="text-sm font-medium text-gray-300 group-hover:text-white truncate flex items-center gap-1">
-          {m.username}
-          {m.roles?.some((r: any) => r.name === 'owner') && <Crown size={12} className="text-yellow-500 fill-yellow-500/20" />}
-          {m.roles?.some((r: any) => r.name === 'admin') && <Shield size={12} className="text-primary fill-primary/20" />}
-        </div>
-        <div className={`text-[10px] truncate ${m.status === 'online' ? 'text-green-400' : 'text-gray-500'} group-hover:text-gray-300`}>
-          {m.status === 'online' ? t('memberSidebar.onlineStatus') : t('memberSidebar.offlineStatus')}
+    const roleTags = (m.roles || [])
+      .map((role: any) => (typeof role === 'string' ? role : role?.name))
+      .filter(Boolean)
+      .map((role: string) => role.toLowerCase());
+
+    const roleBadges = [
+      roleTags.includes('owner') ? { label: 'Owner', icon: Crown, className: 'role-tag admin' } : null,
+      roleTags.includes('admin') ? { label: 'Admin', icon: Shield, className: 'role-tag admin' } : null,
+      roleTags.some((r) => r.includes('mod')) ? { label: 'Mod', icon: Shield, className: 'role-tag mod' } : null,
+      roleTags.some((r) => r.includes('bot')) ? { label: 'Bot', icon: UserCheck, className: 'role-tag bot' } : null,
+    ].filter(Boolean) as { label: string; icon: typeof Shield; className: string }[];
+
+    const statusText =
+      m.status === 'online'
+        ? t('memberSidebar.onlineStatus')
+        : m.status === 'idle' || m.status === 'away'
+          ? t('memberSidebar.idleStatus', { defaultValue: 'Abwesend' })
+          : m.status === 'dnd'
+            ? t('memberSidebar.busyStatus', { defaultValue: 'Beschäftigt' })
+            : t('memberSidebar.offlineStatus');
+
+    return (
+      <div
+        key={m.userId}
+        style={style}
+        className={`group relative mb-2 cursor-pointer overflow-hidden rounded-2xl border bg-white/5 px-3 py-2 transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/10 ${statusTone.border} ${statusTone.glow}`}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          openUserMenu({ x: e.clientX, y: e.clientY, target: e.currentTarget as HTMLElement }, m);
+        }}
+        onTouchStart={(e) => {
+          const touch = e.touches?.[0];
+          startLongPress(() =>
+            openUserMenu({ x: touch?.clientX || 0, y: touch?.clientY || 0, target: e.currentTarget as HTMLElement }, m)
+          );
+        }}
+        onTouchEnd={cancelLongPress}
+        onTouchMove={cancelLongPress}
+      >
+        <div className="flex items-center gap-3">
+          <MemberAvatar
+            member={m}
+            avatarAlt={t('memberSidebar.avatarAlt', { username: m.username }) ?? `${m.username} avatar`}
+            initialsLabel={t('memberSidebar.initialsAvatar') ?? undefined}
+            statusLabel={(status) => t('memberSidebar.statusLabel', { status }) ?? `Status: ${status}`}
+          />
+
+          <div className="flex-1 overflow-hidden">
+            <div className="flex items-center gap-2 truncate text-sm font-semibold text-white/90 group-hover:text-white">
+              <span className="truncate">{m.username}</span>
+            </div>
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-gray-400">
+              <span className={statusTone.chip}>{statusText}</span>
+              {roleBadges.length === 0 && (
+                <span className="role-tag flex items-center gap-1 text-xs text-gray-400 border-white/10 bg-white/5">
+                  <UserX size={12} /> {t('memberSidebar.noRoles', { defaultValue: 'Keine Rollen' })}
+                </span>
+              )}
+              {roleBadges.map((badge) => {
+                const Icon = badge.icon;
+                return (
+                  <span key={`${m.userId}-${badge.label}`} className={`${badge.className} !text-[10px]`}>
+                    <Icon size={11} /> {badge.label}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="flex flex-col h-full bg-transparent overflow-hidden">

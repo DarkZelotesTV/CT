@@ -30,6 +30,8 @@ import { storage } from '../../shared/config/storage';
 import { defaultHotkeySettings, useSettings } from '../../context/SettingsContext';
 import { applyAppTheme, buildAppTheme } from '../../theme/appTheme';
 import { useDesktopNotifications } from '../../hooks/useDesktopNotifications';
+import { useLogStore } from '../../store/useLogStore';
+import { useSocket } from '../../context/SocketContext';
 
 const defaultChannelWidth = 256;
 const defaultMemberWidth = 256;
@@ -142,6 +144,7 @@ export const MainLayout = () => {
   const [isDraggingRight, setIsDraggingRight] = useState(false);
   const [showLeftSidebar, setShowLeftSidebar] = useState(true);
   const [showLogPanel, setShowLogPanel] = useState(true);
+  const [logInput, setLogInput] = useState('');
   
   // Logic Refs
   const railRef = useRef<HTMLDivElement>(null);
@@ -150,9 +153,12 @@ export const MainLayout = () => {
   const layoutRef = useRef<HTMLDivElement>(null);
   const mobileNavButtonRef = useRef<HTMLButtonElement>(null);
   const mainContentRef = useRef<HTMLDivElement>(null);
+  const logBodyRef = useRef<HTMLDivElement>(null);
   const dragState = useRef<{ startX: number; startWidth: number }>({ startX: 0, startWidth: 0 });
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const lastConnectionStateRef = useRef(connectionState);
+  const lastSocketConnectedRef = useRef<boolean | null>(null);
 
   const isDesktop = typeof window !== 'undefined' && !!window.ct?.windowControls;
   
@@ -184,6 +190,7 @@ export const MainLayout = () => {
   const [lastNonVoiceChannel, setLastNonVoiceChannel] = useState<Channel | null>(null);
   const [pendingVoiceChannelId, setPendingVoiceChannelId] = useState<number | null>(null);
   const [serverRefreshKey, setServerRefreshKey] = useState(0);
+  const { entries: logEntries, filteredEntries: filteredLogEntries, addEntry: addLogEntry, clear: clearLogEntries, filter: logFilter, setFilter: setLogFilter } = useLogStore();
 
   // Voice Context
   const {
@@ -196,6 +203,14 @@ export const MainLayout = () => {
   } = useVoice();
   const AudioRenderer = providerRenderers.AudioRenderer;
   const DebugOverlay = providerRenderers.DebugOverlay;
+  const { isConnected: socketConnected } = useSocket();
+
+  useEffect(() => {
+    addLogEntry({
+      category: 'system',
+      message: t('layout.log.sessionStart', { defaultValue: 'Client bereit' }),
+    });
+  }, [addLogEntry, t]);
 
   const activeAccent = useMemo(
     () =>
@@ -479,18 +494,32 @@ export const MainLayout = () => {
     setFallbackChannel(null);
     setShowServerSettings(false);
     setServerIcon(null); // Reset Icon
-  }, []);
+    if (id) {
+      addLogEntry({
+        category: 'system',
+        message: t('layout.log.serverSelected', { defaultValue: 'Server gewechselt', server: id }) || `Server #${id} ausgewählt`,
+      });
+    }
+  }, [addLogEntry, t]);
 
   const handleChannelSelect = useCallback((channel: Channel) => {
     setActiveChannel(channel);
     if (channel.type === 'voice') {
       setPendingVoiceChannelId(channel.id);
+      addLogEntry({
+        category: 'voice',
+        message: t('layout.log.voiceTarget', { defaultValue: 'Voice-Kanal anvisiert', channel: channel.name }) ?? `Voice: ${channel.name}`,
+      });
     } else {
       setPendingVoiceChannelId(null);
       setLastNonVoiceChannel(channel);
+      addLogEntry({
+        category: 'chat',
+        message: t('layout.log.channelSelected', { defaultValue: 'Kanal geöffnet', channel: channel.name }) ?? `Kanal: ${channel.name}`,
+      });
     }
     setShowMobileNav(false); 
-  }, []);
+  }, [addLogEntry, t]);
 
   const handleResolveFallback = useCallback((channel: Channel | null) => {
     setFallbackChannel((prev) => (prev?.id === channel?.id ? prev : channel));
@@ -538,6 +567,44 @@ export const MainLayout = () => {
     }
     setActiveChannel(null);
   }, [connectedVoiceChannelId, connectedVoiceChannelName, fallbackChannel, lastNonVoiceChannel]);
+
+  useEffect(() => {
+    if (lastConnectionStateRef.current === connectionState) return;
+    lastConnectionStateRef.current = connectionState;
+    if (connectionState === 'connected') {
+      addLogEntry({
+        category: 'voice',
+        message: t('layout.log.voiceConnected', { defaultValue: 'Voice verbunden' }),
+      });
+      return;
+    }
+    if (connectionState === 'connecting' || connectionState === 'reconnecting') {
+      addLogEntry({
+        category: 'voice',
+        message: t('layout.log.voiceConnecting', { defaultValue: 'Verbindungsaufbau…' }),
+      });
+      return;
+    }
+    addLogEntry({
+      category: 'voice',
+      message: t('layout.log.voiceDisconnected', { defaultValue: 'Voice getrennt' }),
+    });
+  }, [addLogEntry, connectionState, t]);
+
+  useEffect(() => {
+    if (lastSocketConnectedRef.current === null) {
+      lastSocketConnectedRef.current = socketConnected;
+      return;
+    }
+    if (lastSocketConnectedRef.current === socketConnected) return;
+    lastSocketConnectedRef.current = socketConnected;
+    addLogEntry({
+      category: 'system',
+      message: socketConnected
+        ? t('layout.log.socketConnected', { defaultValue: 'Echtzeit verbunden' })
+        : t('layout.log.socketDisconnected', { defaultValue: 'Echtzeit getrennt' }),
+    });
+  }, [addLogEntry, socketConnected, t]);
 
   const handleOnboardingStepAction = useCallback(
     (step: OnboardingReplayKey) => {
@@ -719,29 +786,54 @@ export const MainLayout = () => {
   };
 
 
-  const logEntries = useMemo(
-    () => [
-      {
-        id: 'connection',
-        label: t('layout.log.connection', { defaultValue: 'Verbindung' }),
-        text: 'RTCP keepalive ok',
-      },
-      {
-        id: 'events',
-        label: t('layout.log.events', { defaultValue: 'Events' }),
-        text: t('layout.log.joined', { defaultValue: 'Serverliste aktualisiert' }),
-      },
-      {
-        id: 'voice',
-        label: t('layout.log.voice', { defaultValue: 'Voice' }),
-        text:
-          pendingVoiceChannelId !== null
-            ? t('layout.log.joining', { defaultValue: 'Verbinde mit Sprachkanal …' })
-            : t('layout.log.ready', { defaultValue: 'Bereit' }),
-      },
-    ],
-    [pendingVoiceChannelId, t]
+  const logTabs: { id: 'all' | 'system' | 'voice' | 'chat'; label: string; count: number }[] = useMemo(() => {
+    const counts = logEntries.reduce<Record<string, number>>((acc, entry) => {
+      acc[entry.category] = (acc[entry.category] ?? 0) + 1;
+      return acc;
+    }, {});
+
+    return [
+      { id: 'all', label: t('layout.log.tabs.all', { defaultValue: 'Alle' }), count: logEntries.length },
+      { id: 'system', label: t('layout.log.tabs.system', { defaultValue: 'System' }), count: counts.system ?? 0 },
+      { id: 'voice', label: t('layout.log.tabs.voice', { defaultValue: 'Voice' }), count: counts.voice ?? 0 },
+      { id: 'chat', label: t('layout.log.tabs.chat', { defaultValue: 'Chat' }), count: counts.chat ?? 0 },
+    ];
+  }, [logEntries, t]);
+
+  const formatLogTime = useCallback(
+    (timestamp: number) =>
+      new Date(timestamp).toLocaleTimeString('de-DE', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+    []
   );
+
+  const handleLogCommand = useCallback(
+    (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      const value = logInput.trim();
+      if (!value) return;
+
+      const [prefix, ...rest] = value.split(' ');
+      let category: 'system' | 'voice' | 'chat' = 'system';
+      let message = value;
+
+      if (prefix === '/voice') {
+        category = 'voice';
+        message = rest.join(' ') || t('layout.log.cmd.voice', { defaultValue: 'Voice-Kommando' });
+      } else if (prefix === '/chat') {
+        category = 'chat';
+        message = rest.join(' ') || t('layout.log.cmd.chat', { defaultValue: 'Chat-Kommando' });
+      }
+
+      addLogEntry({ category, message });
+      setLogInput('');
+    },
+    [addLogEntry, logInput, t]
+  );
+
+  useEffect(() => {
+    if (!logBodyRef.current) return;
+    logBodyRef.current.scrollTop = logBodyRef.current.scrollHeight;
+  }, [filteredLogEntries]);
 
   const layoutClassName = classNames('main-layout', {
     'fold-tree': !showLeftSidebar && !isMobileLayout,
@@ -1030,28 +1122,66 @@ export const MainLayout = () => {
                   <ChevronDown size={16} />
                   {t('layout.log.title', { defaultValue: 'Log' })}
                 </div>
-                <button
-                  className="icon-button ghost"
-                  onClick={() => setShowLogPanel((value) => !value)}
-                  aria-pressed={showLogPanel}
-                >
-                  {showLogPanel
-                    ? t('layout.hideLog', { defaultValue: 'Einklappen' })
-                    : t('layout.showLog', { defaultValue: 'Log' })}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    className="icon-button ghost"
+                    onClick={() => clearLogEntries()}
+                    disabled={!logEntries.length}
+                  >
+                    {t('layout.log.clear', { defaultValue: 'Leeren' })}
+                  </button>
+                  <button
+                    className="icon-button ghost"
+                    onClick={() => setShowLogPanel((value) => !value)}
+                    aria-pressed={showLogPanel}
+                  >
+                    {showLogPanel
+                      ? t('layout.hideLog', { defaultValue: 'Einklappen' })
+                      : t('layout.showLog', { defaultValue: 'Log' })}
+                  </button>
+                </div>
               </div>
               {showLogPanel && (
-                <div className="log-feed">
-                  {logEntries.map((entry) => (
-                    <div key={entry.id} className="log-item">
-                      <div className="log-meta">
-                        <span className="status-dot" aria-hidden />
-                        <span>{entry.label}</span>
+                <>
+                  <div className="log-tabs">
+                    {logTabs.map((tab) => (
+                      <button
+                        key={tab.id}
+                        className={`log-tab ${logFilter === tab.id ? 'active' : ''}`}
+                        onClick={() => setLogFilter(tab.id)}
+                        type="button"
+                      >
+                        {tab.label}
+                        <span className="log-tab-count">{tab.count}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <div ref={logBodyRef} className="log-body custom-scrollbar">
+                    {filteredLogEntries.length === 0 && (
+                      <div className="log-empty">
+                        {t('layout.log.empty', { defaultValue: 'Keine Einträge' })}
                       </div>
-                      <div className="log-text">{entry.text}</div>
-                    </div>
-                  ))}
-                </div>
+                    )}
+                    {filteredLogEntries.map((entry) => (
+                      <div key={entry.id} className="log-line">
+                        <span className="log-time">{formatLogTime(entry.createdAt)}</span>
+                        <span className={`log-tag log-${entry.category}`}>{entry.category}</span>
+                        <span className="log-text-mono">{entry.message}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <form className="log-command" onSubmit={handleLogCommand}>
+                    <span className="log-prompt">›</span>
+                    <input
+                      value={logInput}
+                      onChange={(event) => setLogInput(event.target.value)}
+                      placeholder={t('layout.log.commandPlaceholder', { defaultValue: '/voice <cmd> oder /chat <cmd>' }) ?? ''}
+                    />
+                    <button type="submit" className="icon-button">
+                      {t('layout.log.send', { defaultValue: 'Senden' })}
+                    </button>
+                  </form>
+                </>
               )}
             </section>
           )}
