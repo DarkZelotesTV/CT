@@ -9,6 +9,7 @@ import { MemberSidebar } from './MemberSidebar';
 import { ChannelSidebar } from './ChannelSidebar';
 import { TitleBar } from '../window/TitleBar';
 import { TopBarProvider } from '../window/TopBarContext';
+import './MainLayout.css';
 
 // Web & Voice Views
 import { WebChannelView } from '../server/WebChannelView';
@@ -121,7 +122,8 @@ export const MainLayout = () => {
     const active = document.activeElement;
     if (!(active instanceof HTMLElement)) return;
 
-    if (mobileNavRef.current && mobileNavRef.current.contains(active)) {
+    const navContainers = [leftSidebarRef.current, railRef.current];
+    if (navContainers.some((node) => node && node.contains(active))) {
       active.blur();
       // Fokus zurück auf den Trigger-Button, damit Screenreader/Keyboard nicht im Offcanvas hängen.
       mobileNavButtonRef.current?.focus({ preventScroll: true });
@@ -139,14 +141,14 @@ export const MainLayout = () => {
   const [isDraggingLeft, setIsDraggingLeft] = useState(false);
   const [isDraggingRight, setIsDraggingRight] = useState(false);
   const [showLeftSidebar, setShowLeftSidebar] = useState(true);
+  const [showLogPanel, setShowLogPanel] = useState(true);
   
   // Logic Refs
+  const railRef = useRef<HTMLDivElement>(null);
   const leftSidebarRef = useRef<HTMLDivElement>(null);
   const rightSidebarRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef<HTMLDivElement>(null);
-  const mobileNavRef = useRef<HTMLDivElement>(null);
   const mobileNavButtonRef = useRef<HTMLButtonElement>(null);
-  const memberSheetRef = useRef<HTMLDivElement>(null);
   const mainContentRef = useRef<HTMLDivElement>(null);
   const dragState = useRef<{ startX: number; startWidth: number }>({ startX: 0, startWidth: 0 });
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -164,7 +166,6 @@ export const MainLayout = () => {
   const [fallbackChannel, setFallbackChannel] = useState<Channel | null>(null);
   
   // Modals & Popups
-  const [showMemberSheet, setShowMemberSheet] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showServerSettings, setShowServerSettings] = useState(false);
   const [showCreateServer, setShowCreateServer] = useState(false);
@@ -322,16 +323,16 @@ export const MainLayout = () => {
         }
       } else if (isVerticalSwipe && selectedServerId) {
         const viewportHeight = window.innerHeight;
-        if (deltaY < 0 && !showMemberSheet && touchStartRef.current.y > viewportHeight - 160) {
-          setShowMemberSheet(true);
-        } else if (deltaY > 0 && showMemberSheet) {
-          setShowMemberSheet(false);
+        if (deltaY < 0 && !showRightSidebar && touchStartRef.current.y > viewportHeight - 160) {
+          setShowRightSidebar(true);
+        } else if (deltaY > 0 && showRightSidebar) {
+          setShowRightSidebar(false);
         }
       }
 
       touchStartRef.current = null;
     },
-    [selectedServerId, showMemberSheet, showMobileNav]
+    [selectedServerId, showMobileNav, showRightSidebar]
   );
 
   // --- Width Calculation Logic ---
@@ -349,6 +350,11 @@ export const MainLayout = () => {
   const effectiveLeftSidebarWidth = useMemo(
     () => clampSidebarWidth(leftSidebarWidth ?? defaultChannelWidth),
     [clampSidebarWidth, leftSidebarWidth]
+  );
+
+  const effectiveRightSidebarWidth = useMemo(
+    () => clampSidebarWidth(rightSidebarWidth ?? defaultMemberWidth),
+    [clampSidebarWidth, rightSidebarWidth]
   );
 
   // --- LocalStorage für Sidebar Breite ---
@@ -381,9 +387,17 @@ export const MainLayout = () => {
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    if (isMobileLayout) {
+      setShowRightSidebar(false);
+      setShowLogPanel(false);
+    } else {
+      setShowLogPanel(true);
+    }
+  }, [isMobileLayout]);
+
   // --- Auto-Close Mobile Nav on Selection ---
   useEffect(() => {
-    setShowMemberSheet(false);
     if (window.innerWidth < MOBILE_BREAKPOINT) {
         setShowMobileNav(false);
     }
@@ -583,7 +597,7 @@ export const MainLayout = () => {
   const handleShowMembers = useCallback(() => {
     if (!selectedServerId) return;
     if (typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT) {
-      setShowMemberSheet(true);
+      setShowRightSidebar(true);
       return;
     }
     setShowRightSidebar(true);
@@ -704,261 +718,372 @@ export const MainLayout = () => {
     );
   };
 
+
+  const logEntries = useMemo(
+    () => [
+      {
+        id: 'connection',
+        label: t('layout.log.connection', { defaultValue: 'Verbindung' }),
+        text: 'RTCP keepalive ok',
+      },
+      {
+        id: 'events',
+        label: t('layout.log.events', { defaultValue: 'Events' }),
+        text: t('layout.log.joined', { defaultValue: 'Serverliste aktualisiert' }),
+      },
+      {
+        id: 'voice',
+        label: t('layout.log.voice', { defaultValue: 'Voice' }),
+        text:
+          pendingVoiceChannelId !== null
+            ? t('layout.log.joining', { defaultValue: 'Verbinde mit Sprachkanal …' })
+            : t('layout.log.ready', { defaultValue: 'Bereit' }),
+      },
+    ],
+    [pendingVoiceChannelId, t]
+  );
+
+  const layoutClassName = classNames('main-layout', {
+    'fold-tree': !showLeftSidebar && !isMobileLayout,
+    'fold-info': !showRightSidebar && !isMobileLayout,
+    'fold-log': !showLogPanel && !isMobileLayout,
+    'mobile-nav-open': showMobileNav,
+  });
+
+  const gridStyle = {
+    '--layout-tree-current': isMobileLayout ? '0px' : showLeftSidebar ? `${effectiveLeftSidebarWidth}px` : '0px',
+    '--layout-info-current': isMobileLayout ? '0px' : showRightSidebar ? `${effectiveRightSidebarWidth}px` : '0px',
+    '--layout-log-current': showLogPanel ? 'var(--layout-log-height)' : '0px',
+  } as React.CSSProperties;
+
   const ui = (
     <TopBarProvider>
-    <div
-      ref={layoutRef}
-      style={isDesktop ? { paddingTop: titlebarHeight } : undefined}
-      className={classNames(
-        "flex h-screen w-screen overflow-visible relative bg-[var(--color-background)] text-[color:var(--color-text)] font-sans box-border"
-      )}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    >
-      <a
-        href="#main-content"
-        onClick={(event) => {
-          event.preventDefault();
-          focusMainContent();
-        }}
-        className="sr-only focus:not-sr-only focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400 absolute top-2 left-2 z-[70] bg-[var(--color-surface)] text-[color:var(--color-text)] px-3 py-2 rounded-md border border-[var(--color-border-strong)] shadow-lg"
-      >
-        {t('layout.skipToContent', { defaultValue: 'Skip to content' })}
-      </a>
-      
-      {/* TitleBar mit Server Icon und Settings Handler */}
-      {isDesktop && (
-        <TitleBar 
-            serverName={serverName} 
-            serverIcon={serverIcon} // Props übergeben
-            channel={activeChannel}  
-            onOpenServerSettings={handleOpenServerSettings} 
-            onOpenUserSettings={() => setShowUserSettings(true)} // Handler übergeben
-        />
-      )}
+      <div className={layoutClassName} style={isDesktop ? { paddingTop: titlebarHeight } : undefined}>
+        <a
+          href="#main-content"
+          onClick={(event) => {
+            event.preventDefault();
+            focusMainContent();
+          }}
+          className="skip-link"
+        >
+          {t('layout.skipToContent', { defaultValue: 'Skip to content' })}
+        </a>
 
-      {/* --- GLOBAL MODALS --- */}
-      {showOnboarding && (
-        <OnboardingModal
-          onClose={resolveOnboarding}
-          initialStep={onboardingConfig?.initialStep ?? 0}
-          onStepAction={handleOnboardingStepAction}
-        />
-      )}
-      {showCreateServer && <CreateServerModal onClose={() => setShowCreateServer(false)} onCreated={() => { announceServerChange(); setShowCreateServer(false); }} />}
-      {showJoinServer && <JoinServerModal onClose={() => setShowJoinServer(false)} onJoined={() => { announceServerChange(); setShowJoinServer(false); }} />}
-      {showUserSettings && <UserSettingsModal onClose={() => setShowUserSettings(false)} />}
-      
-      {selectedServerId && showServerSettings && (
-        <ServerSettingsModal serverId={selectedServerId} onClose={() => setShowServerSettings(false)} onUpdated={handleServerUpdated} onDeleted={handleServerDeleted} />
-      )}
-      <CommandPalette
-        open={showCommandPalette}
-        serverId={selectedServerId}
-        serverName={serverName}
-        onClose={() => setShowCommandPalette(false)}
-        onSelectServer={(id) => {
-          handleServerSelect(id);
-          setShowCommandPalette(false);
-        }}
-        onSelectChannel={(channel) => {
-          handleChannelSelect(channel);
-          setShowCommandPalette(false);
-        }}
-        onShowMembers={() => {
-          handleShowMembers();
-          setShowCommandPalette(false);
-        }}
-        onCreateServer={() => {
-          handleCreateServer();
-          setShowCommandPalette(false);
-        }}
-        onJoinServer={() => {
-          handleJoinServer();
-          setShowCommandPalette(false);
-        }}
-        onOpenServerSettings={() => {
-          handleOpenServerSettings();
-          setShowCommandPalette(false);
-        }}
-      />
-
-      <div
-        className={classNames(
-          "fixed left-0 right-0 bottom-0 top-[var(--ct-titlebar-height)] bg-[var(--color-overlay)] z-40 lg:hidden transition-opacity duration-300",
-          showMobileNav ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        {isDesktop && (
+          <TitleBar
+            serverName={serverName}
+            serverIcon={serverIcon}
+            channel={activeChannel}
+            onOpenServerSettings={handleOpenServerSettings}
+            onOpenUserSettings={() => setShowUserSettings(true)}
+          />
         )}
-        onClick={() => setShowMobileNav(false)}
-      />
 
-	      <div className={classNames(
-        "flex h-full z-50 transition-transform duration-300 ease-in-out",
-        "relative lg:translate-x-0",
-	        "max-lg:fixed max-lg:left-0 max-lg:bottom-0 max-lg:top-[var(--ct-titlebar-height)] max-lg:w-[85vw] max-lg:max-w-[320px]",
-        showMobileNav ? "max-lg:translate-x-0" : "max-lg:-translate-x-full"
-      )}
-        ref={mobileNavRef}
-        role="dialog"
-        aria-modal="true"
-        aria-hidden={!showMobileNav}
-        tabIndex={-1}
-      >
-        <div className="w-[80px] flex-shrink-0 flex flex-col items-center py-4 h-full relative z-[80]">
-           <div className="w-full h-full bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border-strong)] ml-3 shadow-xl overflow-visible relative z-[80]">
-             <ServerRail
-                selectedServerId={selectedServerId}
-                onSelectServer={handleServerSelect}
-                onCreateServer={handleCreateServer}
-                onJoinServer={handleJoinServer}
-             />
-           </div>
-        </div>
-
-        {selectedServerId && (
-            <div
-                ref={leftSidebarRef}
-                className={classNames(
-                  "h-full flex-shrink-0 transition-all duration-500 relative z-[60]",
-                  isMobileLayout || showLeftSidebar ? "py-4 pl-4 opacity-100 translate-x-0" : "py-4 pl-0 opacity-0 -translate-x-6"
-                )}
-                style={{
-                  width:
-                    isMobileLayout
-                      ? 'calc(100% - 80px)'
-                      : showLeftSidebar
-                        ? effectiveLeftSidebarWidth
-                        : 0,
-                }}
-                aria-hidden={!showLeftSidebar && !isMobileLayout}
-            >
-                <div className="w-full h-full bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border-strong)] overflow-hidden flex flex-col relative shadow-lg">
-                    <ChannelSidebar 
-                        serverId={selectedServerId}
-                        activeChannelId={activeChannel?.id || null}
-                        onSelectChannel={handleChannelSelect}
-                        onServerNameChange={(name) => setServerName(name)}
-                        onServerIconChange={(icon) => setServerIcon(icon)} // NEU: Icon hochreichen
-                        onOpenServerSettings={() => {
-                          handleOpenServerSettings();
-                          setShowMobileNav(false);
-                        }}
-                        onOpenUserSettings={() => setShowUserSettings(true)} // NEU: User Settings Handler
-                        onCloseMobileNav={() => setShowMobileNav(false)}
-                        onResolveFallback={handleResolveFallback}
-                        refreshKey={serverRefreshKey}
-                    />
-                </div>
-                {!isMobileLayout && showLeftSidebar && (
-                  <div className="hidden lg:block absolute top-0 right-0 h-full w-2 cursor-ew-resize hover:bg-white/5" onMouseDown={startDragLeft} />
-                )}
-            </div>
+        {/* --- GLOBAL MODALS --- */}
+        {showOnboarding && (
+          <OnboardingModal
+            onClose={resolveOnboarding}
+            initialStep={onboardingConfig?.initialStep ?? 0}
+            onStepAction={handleOnboardingStepAction}
+          />
         )}
-      </div>
+        {showCreateServer && (
+          <CreateServerModal
+            onClose={() => setShowCreateServer(false)}
+            onCreated={() => {
+              announceServerChange();
+              setShowCreateServer(false);
+            }}
+          />
+        )}
+        {showJoinServer && (
+          <JoinServerModal
+            onClose={() => setShowJoinServer(false)}
+            onJoined={() => {
+              announceServerChange();
+              setShowJoinServer(false);
+            }}
+          />
+        )}
+        {showUserSettings && <UserSettingsModal onClose={() => setShowUserSettings(false)} />}
 
-      <div
-        ref={mainContentRef}
-        id="main-content"
-        tabIndex={-1}
-        className="flex-1 flex flex-col min-w-0 relative h-full py-4 px-4 overflow-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
-      >
-        {/* ... (Mobile header & content logic same) */}
-        <div className="lg:hidden flex items-center gap-3 mb-4 px-1 text-[color:var(--color-text)]">
-            <button
-                onClick={() => setShowMobileNav(true)}
-                ref={mobileNavButtonRef}
-                className="p-2 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] text-[color:var(--color-text)] shadow-md active:scale-95 transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
-            >
-                <Menu size={20} />
-            </button>
-            <span className="font-semibold truncate text-base">
-                {activeChannel?.name || "Chat"}
-            </span>
-            {selectedServerId && (
+        {selectedServerId && showServerSettings && (
+          <ServerSettingsModal
+            serverId={selectedServerId}
+            onClose={() => setShowServerSettings(false)}
+            onUpdated={handleServerUpdated}
+            onDeleted={handleServerDeleted}
+          />
+        )}
+        <CommandPalette
+          open={showCommandPalette}
+          serverId={selectedServerId}
+          serverName={serverName}
+          onClose={() => setShowCommandPalette(false)}
+          onSelectServer={(id) => {
+            handleServerSelect(id);
+            setShowCommandPalette(false);
+          }}
+          onSelectChannel={(channel) => {
+            handleChannelSelect(channel);
+            setShowCommandPalette(false);
+          }}
+          onShowMembers={() => {
+            handleShowMembers();
+            setShowCommandPalette(false);
+          }}
+          onCreateServer={() => {
+            handleCreateServer();
+            setShowCommandPalette(false);
+          }}
+          onJoinServer={() => {
+            handleJoinServer();
+            setShowCommandPalette(false);
+          }}
+          onOpenServerSettings={() => {
+            handleOpenServerSettings();
+            setShowCommandPalette(false);
+          }}
+        />
+
+        <div className="overlay-orb orb-a" aria-hidden />
+        <div className="overlay-orb orb-b" aria-hidden />
+        <div className="mobile-overlay" onClick={() => setShowMobileNav(false)} />
+
+        <div
+          ref={layoutRef}
+          className="layout-grid"
+          style={gridStyle}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div className="pattern" aria-hidden />
+
+          <aside
+            ref={railRef}
+            className="rail-panel glass-panel"
+            role={isMobileLayout ? 'dialog' : 'complementary'}
+            aria-modal={isMobileLayout}
+            aria-hidden={!showMobileNav && isMobileLayout}
+          >
+            <ServerRail
+              selectedServerId={selectedServerId}
+              onSelectServer={handleServerSelect}
+              onCreateServer={handleCreateServer}
+              onJoinServer={handleJoinServer}
+            />
+          </aside>
+
+          <header className="header-panel glass-panel">
+            <div className="header-left">
+              {isMobileLayout && (
                 <button
-                    onClick={() => setShowMemberSheet(true)}
-                    className="ml-auto p-2 bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] text-[color:var(--color-text)] shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                  className="icon-button"
+                  onClick={() => setShowMobileNav(true)}
+                  ref={mobileNavButtonRef}
+                  aria-label={t('layout.showNavigation', { defaultValue: 'Navigation öffnen' })}
                 >
-                    <Users size={20} />
+                  <Menu size={18} />
                 </button>
-            )}
-        </div>
-
-        <div className="flex-1 bg-[var(--color-surface-alt)] rounded-3xl border border-[var(--color-border-strong)] relative overflow-hidden shadow-2xl flex flex-col min-h-0">
-          {renderContent()}
-        </div>
-        
-        {/* ... (Desktop toggles same) */}
-         {selectedServerId && (
-          <button
-            onClick={() => setShowRightSidebar(!showRightSidebar)}
-            className="hidden lg:flex absolute right-3 top-1/2 -translate-y-1/2 z-30 w-7 h-14 bg-[var(--color-surface-hover)] hover:bg-[var(--color-accent)] rounded-l-xl items-center justify-center text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] transition-all cursor-pointer shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
-            style={{ right: showRightSidebar ? 12 : 12 }}
-          >
-            {showRightSidebar ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-          </button>
-        )}
-        {selectedServerId && (
-          <button
-            onClick={() => setShowLeftSidebar(!showLeftSidebar)}
-            className="hidden lg:flex absolute left-3 top-1/2 -translate-y-1/2 z-30 w-7 h-14 bg-[var(--color-surface-hover)] hover:bg-[var(--color-accent)] rounded-r-xl items-center justify-center text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] transition-all cursor-pointer shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
-            aria-label={showLeftSidebar ? t('layout.hideNavigation', { defaultValue: 'Hide navigation' }) : t('layout.showNavigation', { defaultValue: 'Show navigation' })}
-          >
-            {showLeftSidebar ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
-          </button>
-        )}
-      </div>
-
-       {/* ... (Member Sidebars same) */}
-      {selectedServerId && (
-        <div
-          ref={rightSidebarRef}
-          className={classNames(
-            'hidden lg:block transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] relative z-40 h-full py-3 pr-3',
-            showRightSidebar ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10 pr-0'
-          )}
-          style={{ width: showRightSidebar ? rightSidebarWidth : 0 }}
-        >
-          <div className="w-full h-full bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border-strong)] overflow-hidden shadow-lg">
-            <MemberSidebar serverId={selectedServerId} />
-          </div>
-          {showRightSidebar && (
-            <div className="absolute top-0 left-0 h-full w-2 cursor-ew-resize hover:bg-white/5" onMouseDown={startDragRight} />
-          )}
-        </div>
-      )}
-
-      {selectedServerId && (
-        <div
-          className={classNames(
-            'lg:hidden fixed inset-x-0 bottom-0 z-[60] transition-transform duration-500',
-            showMemberSheet ? 'translate-y-0' : 'translate-y-full'
-          )}
-        >
-          <div className="absolute inset-0 h-screen bg-[var(--color-overlay)] backdrop-blur-sm -top-[100vh]" onClick={() => setShowMemberSheet(false)} style={{ display: showMemberSheet ? 'block' : 'none' }} />
-          <div
-            ref={memberSheetRef}
-            role="dialog"
-            aria-modal="true"
-            aria-hidden={!showMemberSheet}
-            tabIndex={-1}
-            className="relative bg-[var(--color-surface)] border-t border-[var(--color-border-strong)] rounded-t-3xl overflow-hidden shadow-2xl h-[70vh] flex flex-col"
-          >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-surface-alt)]">
-              <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--color-text)]">
-                <Users size={16} />
-                Mitglieder
+              )}
+              <div className="path-chip">
+                {serverIcon ? (
+                  <img src={serverIcon} alt="" className="server-icon" />
+                ) : (
+                  <span className="status-dot" aria-hidden />
+                )}
+                <div className="path-labels">
+                  <span className="path-primary">
+                    {serverName || t('layout.serverFallback', { defaultValue: 'Server auswählen' })}
+                  </span>
+                  <span className="path-secondary">
+                    {activeChannel?.name || t('layout.noChannel', { defaultValue: 'Kein Kanal ausgewählt' })}
+                  </span>
+                </div>
               </div>
-              <button onClick={() => setShowMemberSheet(false)} className="p-2 rounded-full bg-[var(--color-surface-hover)] hover:bg-[var(--color-accent)] text-[color:var(--color-text)]">
-                <ChevronDown size={16} />
+            </div>
+            <div className="header-actions">
+              <div className="pill">
+                <span className="status-dot" aria-hidden />
+                {t('layout.statusOnline', { defaultValue: 'Live' })}
+              </div>
+              {selectedServerId && (
+                <>
+                  <button
+                    className="icon-button ghost"
+                    onClick={() => setShowLogPanel((value) => !value)}
+                    aria-pressed={showLogPanel}
+                  >
+                    <ChevronDown size={16} />
+                    {showLogPanel
+                      ? t('layout.hideLog', { defaultValue: 'Log einklappen' })
+                      : t('layout.showLog', { defaultValue: 'Log anzeigen' })}
+                  </button>
+                  <button
+                    className="icon-button"
+                    onClick={() => setShowRightSidebar((value) => !value)}
+                    aria-pressed={showRightSidebar}
+                  >
+                    <Users size={16} />
+                    {showRightSidebar
+                      ? t('layout.hideMembers', { defaultValue: 'Info ausblenden' })
+                      : t('layout.showMembers', { defaultValue: 'Info anzeigen' })}
+                  </button>
+                </>
+              )}
+            </div>
+          </header>
+
+          {selectedServerId && (
+            <section
+              ref={leftSidebarRef}
+              className="tree-panel glass-panel tree-wrapper"
+              aria-hidden={!showLeftSidebar && !isMobileLayout}
+            >
+              <div className="tree-content">
+                <ChannelSidebar
+                  serverId={selectedServerId}
+                  activeChannelId={activeChannel?.id || null}
+                  onSelectChannel={handleChannelSelect}
+                  onServerNameChange={(name) => setServerName(name)}
+                  onServerIconChange={(icon) => setServerIcon(icon)}
+                  onOpenServerSettings={() => {
+                    handleOpenServerSettings();
+                    setShowMobileNav(false);
+                  }}
+                  onOpenUserSettings={() => setShowUserSettings(true)}
+                  onCloseMobileNav={() => setShowMobileNav(false)}
+                  onResolveFallback={handleResolveFallback}
+                  refreshKey={serverRefreshKey}
+                />
+                {!isMobileLayout && showLeftSidebar && <div className="tree-resizer" onMouseDown={startDragLeft} />}
+              </div>
+            </section>
+          )}
+
+          <main ref={mainContentRef} id="main-content" tabIndex={-1} className="main-panel glass-panel">
+            {isMobileLayout && (
+              <div className="mobile-toggle-row">
+                <button
+                  className="icon-button"
+                  onClick={() => setShowMobileNav(true)}
+                  ref={mobileNavButtonRef}
+                  aria-label={t('layout.showNavigation', { defaultValue: 'Navigation öffnen' })}
+                >
+                  <Menu size={18} />
+                </button>
+                <span className="pill pill-muted">{activeChannel?.name || 'Chat'}</span>
+                {selectedServerId && (
+                  <>
+                    <button
+                      className="icon-button"
+                      onClick={() => setShowRightSidebar((value) => !value)}
+                      aria-pressed={showRightSidebar}
+                    >
+                      <Users size={18} />
+                      {t('layout.showMembers', { defaultValue: 'Info' })}
+                    </button>
+                    <button
+                      className="icon-button"
+                      onClick={() => setShowLogPanel((value) => !value)}
+                      aria-pressed={showLogPanel}
+                    >
+                      <ChevronDown size={16} />
+                      {t('layout.log.title', { defaultValue: 'Log' })}
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+
+            <div className="main-content">
+              <div className="main-frame">
+                <div className="pattern" aria-hidden />
+                {renderContent()}
+              </div>
+            </div>
+          </main>
+
+          {selectedServerId && (
+            <aside
+              ref={rightSidebarRef}
+              className="info-panel glass-panel info-wrapper"
+              style={{ display: isMobileLayout && !showRightSidebar ? 'none' : undefined }}
+              aria-hidden={!showRightSidebar && !isMobileLayout}
+            >
+              <div className="tree-content">
+                <MemberSidebar serverId={selectedServerId} />
+                {!isMobileLayout && showRightSidebar && <div className="info-resizer" onMouseDown={startDragRight} />}
+              </div>
+            </aside>
+          )}
+
+          {selectedServerId && (
+            <section
+              className="log-panel glass-panel"
+              style={{ display: isMobileLayout && !showLogPanel ? 'none' : undefined }}
+              aria-hidden={!showLogPanel && !isMobileLayout}
+            >
+              <div className="log-header">
+                <div className="log-title">
+                  <ChevronDown size={16} />
+                  {t('layout.log.title', { defaultValue: 'Log' })}
+                </div>
+                <button
+                  className="icon-button ghost"
+                  onClick={() => setShowLogPanel((value) => !value)}
+                  aria-pressed={showLogPanel}
+                >
+                  {showLogPanel
+                    ? t('layout.hideLog', { defaultValue: 'Einklappen' })
+                    : t('layout.showLog', { defaultValue: 'Log' })}
+                </button>
+              </div>
+              {showLogPanel && (
+                <div className="log-feed">
+                  {logEntries.map((entry) => (
+                    <div key={entry.id} className="log-item">
+                      <div className="log-meta">
+                        <span className="status-dot" aria-hidden />
+                        <span>{entry.label}</span>
+                      </div>
+                      <div className="log-text">{entry.text}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+
+          {selectedServerId && (
+            <>
+              <button
+                onClick={() => setShowLeftSidebar(!showLeftSidebar)}
+                className="sidebar-toggle toggle-left"
+                aria-label={
+                  showLeftSidebar
+                    ? t('layout.hideNavigation', { defaultValue: 'Navigation ausblenden' })
+                    : t('layout.showNavigation', { defaultValue: 'Navigation einblenden' })
+                }
+              >
+                {showLeftSidebar ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
               </button>
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              <MemberSidebar serverId={selectedServerId} />
-            </div>
-          </div>
+              <button
+                onClick={() => setShowRightSidebar(!showRightSidebar)}
+                className="sidebar-toggle toggle-right"
+                aria-label={
+                  showRightSidebar
+                    ? t('layout.hideMembers', { defaultValue: 'Info ausblenden' })
+                    : t('layout.showMembers', { defaultValue: 'Info einblenden' })
+                }
+              >
+                {showRightSidebar ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+              </button>
+            </>
+          )}
         </div>
-      )}
-    </div>
+      </div>
     </TopBarProvider>
   );
 

@@ -16,6 +16,32 @@
   --color-accent: #6366f1;
   --color-accent-hover: #4f46e5;
   --color-overlay: rgba(6, 8, 16, 0.78);
+
+  /* Layout tokens mapped to the existing theme colors */
+  --layout-bg-body: var(--color-background);
+  --layout-bg-rail: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  --layout-bg-tree: var(--color-surface);
+  --layout-bg-main: color-mix(in srgb, var(--color-surface-alt) 92%, transparent);
+  --layout-bg-info: color-mix(in srgb, var(--color-surface) 96%, transparent);
+  --layout-bg-log: color-mix(in srgb, var(--color-surface) 85%, var(--color-background) 15%);
+  --layout-accent: var(--color-accent);
+  --layout-accent-dim: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  --layout-accent-glow: 0 0 32px color-mix(in srgb, var(--color-accent) 40%, transparent);
+  --layout-border: 1px solid color-mix(in srgb, var(--color-border-strong) 65%, transparent);
+  --layout-border-strong: 1px solid color-mix(in srgb, var(--color-border-strong) 90%, transparent);
+  --layout-text: var(--color-text);
+  --layout-text-muted: var(--color-text-muted);
+  --layout-overlay-strong: color-mix(in srgb, var(--color-overlay) 85%, transparent);
+  --layout-shadow: 0 16px 42px rgba(0, 0, 0, 0.32);
+
+  --layout-rail-width: 72px;
+  --layout-tree-width: 280px;
+  --layout-info-width: 300px;
+  --layout-header-height: 64px;
+  --layout-log-height: 170px;
+  --layout-radius: 18px;
+  --layout-grid-gap: 12px;
+  --layout-transition: 0.35s cubic-bezier(0.22, 0.78, 0.26, 1);
 }
 
 :root[data-theme-mode='light'] {
