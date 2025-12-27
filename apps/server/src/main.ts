@@ -631,6 +631,14 @@ io.on('connection', async (socket) => {
         const preset = resolveProducerPreset(requestedPreset);
         const participantIdentity = String(numericUserId);
 
+        // mediasoup: maxBitrate gehört in rtpParameters.encodings, nicht in ProducerOptions
+        if (typeof preset.maxBitrate === 'number' && preset.maxBitrate > 0) {
+          const encodings = (rtpParameters as any).encodings?.length ? (rtpParameters as any).encodings : [{}];
+          (rtpParameters as any).encodings = encodings.map((encoding: any) => ({
+            ...encoding,
+}));
+        }
+
         const producer = await transport.produce({
           kind: 'audio',
           rtpParameters,
@@ -674,7 +682,7 @@ io.on('connection', async (socket) => {
         };
 
         producer.on('transportclose', notifyProducerClosed);
-        producer.on('close', notifyProducerClosed);
+        producer.observer.on('close', notifyProducerClosed);
 
         respond({ success: true, producerId: producer.id });
       } catch (err: any) {
