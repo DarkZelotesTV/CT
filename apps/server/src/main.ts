@@ -636,14 +636,13 @@ io.on('connection', async (socket) => {
           const encodings = (rtpParameters as any).encodings?.length ? (rtpParameters as any).encodings : [{}];
           (rtpParameters as any).encodings = encodings.map((encoding: any) => ({
             ...encoding,
-}));
+            maxBitrate: preset.maxBitrate,
+          }));
         }
 
-        const producer = await transport.produce({
+        const producerOptions: any = {
           kind: 'audio',
           rtpParameters,
-          maxBitrate: preset.maxBitrate,
-          codecOptions: preset.codecOptions,
           appData: {
             ...(appData || {}),
             audioPreset: requestedPreset ?? 'voice',
@@ -652,7 +651,14 @@ io.on('connection', async (socket) => {
             socketId: socket.id,
             kind: 'audio',
           },
-        });
+        };
+
+        // mediasoup typings in this version omit codecOptions, but the runtime supports it
+        if (preset.codecOptions) {
+          producerOptions.codecOptions = preset.codecOptions;
+        }
+
+        const producer = await transport.produce(producerOptions);
 
         const rtcProducers: Map<string, MediasoupProducer> = (socket.data as any).rtcProducers || new Map();
         rtcProducers.set(producer.id, producer);
