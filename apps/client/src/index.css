@@ -42,6 +42,15 @@
   --layout-radius: 18px;
   --layout-grid-gap: 12px;
   --layout-transition: 0.35s cubic-bezier(0.22, 0.78, 0.26, 1);
+
+  --status-online: #22c55e;
+  --status-idle: #eab308;
+  --status-dnd: #ef4444;
+  --status-offline: #6b7280;
+
+  --role-admin: #ef4444;
+  --role-mod: #60a5fa;
+  --role-bot: #a78bfa;
 }
 
 :root[data-theme-mode='light'] {
@@ -167,6 +176,118 @@ video {
   background-color: var(--color-accent);
 }
 
-.theme-accent-hover {
-  background-color: var(--color-accent-hover);
-}
+  .theme-accent-hover {
+    background-color: var(--color-accent-hover);
+  }
+
+  .role-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .role-tag.admin {
+    color: var(--role-admin);
+    border-color: color-mix(in srgb, var(--role-admin) 35%, transparent);
+    background: color-mix(in srgb, var(--role-admin) 12%, transparent);
+  }
+
+  .role-tag.mod {
+    color: var(--role-mod);
+    border-color: color-mix(in srgb, var(--role-mod) 35%, transparent);
+    background: color-mix(in srgb, var(--role-mod) 12%, transparent);
+  }
+
+  .role-tag.bot {
+    color: var(--role-bot);
+    border-color: color-mix(in srgb, var(--role-bot) 35%, transparent);
+    background: color-mix(in srgb, var(--role-bot) 12%, transparent);
+  }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--color-text-muted);
+  }
+
+  .status-pill.online {
+    color: var(--status-online);
+    border-color: color-mix(in srgb, var(--status-online) 35%, transparent);
+    background: color-mix(in srgb, var(--status-online) 10%, transparent);
+  }
+
+  .status-pill.idle,
+  .status-pill.away {
+    color: var(--status-idle);
+    border-color: color-mix(in srgb, var(--status-idle) 35%, transparent);
+    background: color-mix(in srgb, var(--status-idle) 10%, transparent);
+  }
+
+  .status-pill.dnd,
+  .status-pill.busy {
+    color: var(--status-dnd);
+    border-color: color-mix(in srgb, var(--status-dnd) 35%, transparent);
+    background: color-mix(in srgb, var(--status-dnd) 10%, transparent);
+  }
+
+  .status-pill.offline {
+    color: var(--status-offline);
+    border-color: color-mix(in srgb, var(--status-offline) 35%, transparent);
+    background: color-mix(in srgb, var(--status-offline) 10%, transparent);
+  }
+
+  .status-dot {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    border: 2px solid rgba(0, 0, 0, 0.4);
+    right: -3px;
+    bottom: -3px;
+  }
+
+  .status-dot.badge {
+    right: -2px;
+    bottom: -2px;
+    border-color: #0c0f14;
+  }
+
+  .status-dot.status-online,
+  .status-dot.online {
+    background-color: var(--status-online);
+  }
+
+  .status-dot.status-idle,
+  .status-dot.idle,
+  .status-dot.away,
+  .status-dot.status-away {
+    background-color: var(--status-idle);
+  }
+
+  .status-dot.status-dnd,
+  .status-dot.dnd,
+  .status-dot.busy {
+    background-color: var(--status-dnd);
+  }
+
+  .status-dot.status-offline,
+  .status-dot.offline {
+    background-color: var(--status-offline);
+  }

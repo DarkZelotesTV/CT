@@ -1,109 +1,108 @@
-import { useMemo, useState } from 'react';
-import { Headphones, MessageSquare, MicOff, Settings } from 'lucide-react';
+import { useMemo, useState, useCallback } from 'react';
+import { Headphones, HeadphonesOff, Mic, MicOff, Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context/SettingsContext';
 import { UserSettingsModal } from '../modals/UserSettingsModal';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
 import { useVoice } from '../../features/voice';
-import { useSocket } from '../../context/SocketContext';
 import { storage } from '../../shared/config/storage';
-import { FeedbackModal } from '../modals/FeedbackModal';
 
 export const UserBottomBar = ({ onOpenUserSettings }: { onOpenUserSettings?: () => void }) => {
-  const { settings, updateLocale } = useSettings();
+  const { settings } = useSettings();
   const user = useMemo(() => storage.get('cloverUser'), []);
   const [showSettings, setShowSettings] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
   const { t } = useTranslation();
 
-  const isDesktop = typeof window !== 'undefined' && !!window.ct?.windowControls;
+  const { micMuted, muted, setMicMuted, setMuted, connectionState } = useVoice();
 
-  const { micMuted, muted, setMicMuted, setMuted } = useVoice();
-  const { isConnected } = useSocket();
-  const handleLocaleChange = (locale: string) => updateLocale(locale);
+  const status = (settings.profile.status as string) ?? (user as any)?.status ?? (connectionState === 'connected' ? 'online' : 'offline');
+  const normalizedStatus = status?.toLowerCase?.();
+  const statusClass = status ? `status-pill ${normalizedStatus}` : 'status-pill';
+  const statusDotClass = normalizedStatus || 'offline';
+  const statusLabelMap: Record<string, string> = {
+    online: t('userBottomBar.online', { defaultValue: 'Online' }),
+    idle: t('userBottomBar.idle', { defaultValue: 'Idle' }),
+    away: t('userBottomBar.idle', { defaultValue: 'Idle' }),
+    dnd: t('userBottomBar.dnd', { defaultValue: 'Busy' }),
+    offline: t('userBottomBar.offline', { defaultValue: 'Offline' }),
+  };
+  const statusLabel = statusLabelMap[status?.toLowerCase()] ?? status ?? t('userBottomBar.offline', { defaultValue: 'Offline' });
 
   const displayName = settings.profile.displayName || user?.username || t('userBottomBar.fallbackDisplayName');
   const avatarSrc = resolveServerAssetUrl(settings.profile.avatarUrl || (user as any)?.avatar_url || '');
 
+  const toggleMic = useCallback(() => {
+    void setMicMuted(!micMuted);
+  }, [micMuted, setMicMuted]);
+
+  const toggleMuted = useCallback(() => {
+    void setMuted(!muted);
+  }, [muted, setMuted]);
+
+  const handleSettings = useCallback(() => {
+    if (onOpenUserSettings) onOpenUserSettings();
+    else setShowSettings(true);
+  }, [onOpenUserSettings]);
+
   return (
     <>
-      <div className="h-16 bg-dark-200 border-t border-dark-400 flex items-center justify-between px-3 gap-2">
-        <div className="min-w-0 flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full overflow-hidden bg-cyan-700 flex items-center justify-center text-white text-sm font-bold">
-  {avatarSrc ? (
-    <img src={avatarSrc} className="w-full h-full object-cover" alt={`${displayName} Avatar`} />
-  ) : (
-    (displayName?.[0] ?? 'U').toUpperCase()
-  )}
-</div>
-          <div className="min-w-0">
-            <div className="text-sm text-gray-200 font-semibold truncate">{displayName}</div>
-            <div className="text-xs text-gray-500 truncate">
-              {isConnected ? t('userBottomBar.online') : t('userBottomBar.offline')}
+      <div className="px-3 pb-4">
+        <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-gradient-to-r from-black/40 via-[#0c0f14]/70 to-black/30 shadow-[0_10px_30px_rgba(0,0,0,0.35)] p-3">
+          <div className="relative">
+            <div className="h-12 w-12 rounded-2xl overflow-hidden bg-white/10 flex items-center justify-center text-lg font-bold text-white">
+              {avatarSrc ? (
+                <img src={avatarSrc} className="w-full h-full object-cover" alt={`${displayName} Avatar`} />
+              ) : (
+                (displayName?.[0] ?? 'U').toUpperCase()
+              )}
             </div>
+            <span className={`status-dot badge ${statusDotClass}`} />
           </div>
-        </div>
 
-        <div className="flex items-center gap-2">
-          {/* Language + Feedback wurden in der Desktop-App in die Titlebar verschoben */}
-          {!isDesktop && (
-            <>
-              <label className="sr-only" htmlFor="language-select">
-                {t('userBottomBar.languageLabel')}
-              </label>
-              <select
-                id="language-select"
-                className="bg-dark-100 text-gray-200 text-xs px-2 py-1 rounded border border-dark-400"
-                value={settings.locale}
-                onChange={(e) => handleLocaleChange(e.target.value)}
-              >
-                <option value="en">English</option>
-                <option value="de">Deutsch</option>
-              </select>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm text-white font-semibold truncate">{displayName}</div>
+            <div className={statusClass}>{statusLabel}</div>
+          </div>
 
-              <button
-                className="px-2 py-1 rounded text-gray-100 bg-cyan-600/20 hover:bg-cyan-600/30 border border-cyan-600/30 text-[11px] font-semibold flex items-center gap-1"
-                onClick={() => setShowFeedback(true)}
-                title={t('userBottomBar.feedback')}
-              >
-                <MessageSquare size={14} aria-hidden="true" />
-                <span className="hidden sm:inline">{t('userBottomBar.feedback')}</span>
-              </button>
-            </>
-          )}
+          <div className="flex items-center gap-2">
+            <button
+              className={`h-10 w-10 rounded-xl border flex items-center justify-center transition-colors ${
+                micMuted
+                  ? 'bg-rose-500/15 border-rose-400/40 text-rose-100'
+                  : 'bg-white/5 border-white/10 text-gray-200 hover:border-white/20'
+              }`}
+              onClick={toggleMic}
+              aria-pressed={micMuted}
+              title={micMuted ? t('userBottomBar.unmuteMic') : t('userBottomBar.muteMic')}
+            >
+              {micMuted ? <MicOff size={16} /> : <Mic size={16} />}
+            </button>
 
-          <button
-            className={`p-1 rounded ${
-              micMuted ? 'text-red-400 hover:bg-red-900/30' : 'text-gray-500 hover:text-cyan-400 hover:bg-cyan-900/30'
-            }`}
-            onClick={() => setMicMuted(!micMuted)}
-            title={micMuted ? t('userBottomBar.unmuteMic') : t('userBottomBar.muteMic')}
-          >
-            <MicOff size={14} />
-          </button>
+            <button
+              className={`h-10 w-10 rounded-xl border flex items-center justify-center transition-colors ${
+                muted
+                  ? 'bg-rose-500/15 border-rose-400/40 text-rose-100'
+                  : 'bg-white/5 border-white/10 text-gray-200 hover:border-white/20'
+              }`}
+              onClick={toggleMuted}
+              aria-pressed={muted}
+              title={muted ? t('userBottomBar.unmuteAll') : t('userBottomBar.muteAll')}
+            >
+              {muted ? <HeadphonesOff size={16} /> : <Headphones size={16} />}
+            </button>
 
-          <button
-            className={`p-1 rounded ${
-              muted ? 'text-red-400 hover:bg-red-900/30' : 'text-gray-500 hover:text-cyan-400 hover:bg-cyan-900/30'
-            }`}
-            onClick={() => setMuted(!muted)}
-            title={muted ? t('userBottomBar.unmuteAll') : t('userBottomBar.muteAll')}
-          >
-            <Headphones size={14} />
-          </button>
-
-          <button
-            className="p-1 hover:bg-cyan-900/30 rounded text-gray-500 hover:text-cyan-400"
-            onClick={() => (onOpenUserSettings ? onOpenUserSettings() : setShowSettings(true))}
-            title={t('userBottomBar.settings')}
-          >
-            <Settings size={14} />
-          </button>
+            <button
+              className="h-10 w-10 rounded-xl border border-white/10 bg-white/5 text-gray-200 hover:border-white/20 transition-colors flex items-center justify-center"
+              onClick={handleSettings}
+              title={t('userBottomBar.settings')}
+            >
+              <Settings size={16} />
+            </button>
+          </div>
         </div>
       </div>
 
       {showSettings && <UserSettingsModal onClose={() => setShowSettings(false)} />}
-      {!isDesktop && showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} />}
     </>
   );
 };
