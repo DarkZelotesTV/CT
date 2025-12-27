@@ -157,7 +157,6 @@ export const MainLayout = () => {
   const dragState = useRef<{ startX: number; startWidth: number }>({ startX: 0, startWidth: 0 });
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
-  const lastConnectionStateRef = useRef(connectionState);
   const lastSocketConnectedRef = useRef<boolean | null>(null);
 
   const isDesktop = typeof window !== 'undefined' && !!window.ct?.windowControls;
@@ -201,6 +200,7 @@ export const MainLayout = () => {
     connectToChannel,
     providerRenderers,
   } = useVoice();
+  const lastConnectionStateRef = useRef(connectionState);
   const AudioRenderer = providerRenderers.AudioRenderer;
   const DebugOverlay = providerRenderers.DebugOverlay;
   const { isConnected: socketConnected } = useSocket();
@@ -840,19 +840,12 @@ export const MainLayout = () => {
     'fold-info': !showRightSidebar && !isMobileLayout,
     'fold-log': !showLogPanel && !isMobileLayout,
     'mobile-nav-open': showMobileNav,
-      // TEMPNEW compatibility aliases
-    'fold-left': !showLeftSidebar && !isMobileLayout,
-    'fold-right': !showRightSidebar && !isMobileLayout,
   });
 
   const gridStyle = {
     '--layout-tree-current': isMobileLayout ? '0px' : showLeftSidebar ? `${effectiveLeftSidebarWidth}px` : '0px',
     '--layout-info-current': isMobileLayout ? '0px' : showRightSidebar ? `${effectiveRightSidebarWidth}px` : '0px',
     '--layout-log-current': showLogPanel ? 'var(--layout-log-height)' : '0px',
-    // TEMPNEW compatibility (see theme/tempnew.css)
-    '--curr-tree': isMobileLayout ? '0px' : showLeftSidebar ? `${effectiveLeftSidebarWidth}px` : '0px',
-    '--curr-info': isMobileLayout ? '0px' : showRightSidebar ? `${effectiveRightSidebarWidth}px` : '0px',
-
   } as React.CSSProperties;
 
   const ui = (
@@ -961,7 +954,7 @@ export const MainLayout = () => {
 
           <aside
             ref={railRef}
-            className="rail-panel glass-panel rail"
+            className="rail-panel glass-panel"
             role={isMobileLayout ? 'dialog' : 'complementary'}
             aria-modal={isMobileLayout}
             aria-hidden={!showMobileNav && isMobileLayout}
@@ -974,7 +967,7 @@ export const MainLayout = () => {
             />
           </aside>
 
-          <header className="header-panel glass-panel header">
+          <header className="header-panel glass-panel">
             <div className="header-left">
               {isMobileLayout && (
                 <button
@@ -1037,7 +1030,7 @@ export const MainLayout = () => {
           {selectedServerId && (
             <section
               ref={leftSidebarRef}
-              className="tree-panel glass-panel tree-wrapper tree"
+              className="tree-panel glass-panel tree-wrapper"
               aria-hidden={!showLeftSidebar && !isMobileLayout}
             >
               <div className="tree-content">
@@ -1061,7 +1054,7 @@ export const MainLayout = () => {
             </section>
           )}
 
-          <main ref={mainContentRef} id="main-content" tabIndex={-1} className="main-panel glass-panel main">
+          <main ref={mainContentRef} id="main-content" tabIndex={-1} className="main-panel glass-panel">
             {isMobileLayout && (
               <div className="mobile-toggle-row">
                 <button
@@ -1107,7 +1100,7 @@ export const MainLayout = () => {
           {selectedServerId && (
             <aside
               ref={rightSidebarRef}
-              className="info-panel glass-panel info-wrapper info-wrap"
+              className="info-panel glass-panel info-wrapper"
               style={{ display: isMobileLayout && !showRightSidebar ? 'none' : undefined }}
               aria-hidden={!showRightSidebar && !isMobileLayout}
             >
@@ -1120,7 +1113,7 @@ export const MainLayout = () => {
 
           {selectedServerId && (
             <section
-              className="log-panel glass-panel log"
+              className="log-panel glass-panel"
               style={{ display: isMobileLayout && !showLogPanel ? 'none' : undefined }}
               aria-hidden={!showLogPanel && !isMobileLayout}
             >

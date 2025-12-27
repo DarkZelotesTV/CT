@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from 'react';
-import { Headphones, HeadphonesOff, Mic, MicOff, Settings } from 'lucide-react';
+import { Headphones, HeadphoneOff, Mic, MicOff, Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context/SettingsContext';
 import { UserSettingsModal } from '../modals/UserSettingsModal';
@@ -14,8 +14,7 @@ export const UserBottomBar = ({ onOpenUserSettings }: { onOpenUserSettings?: () 
   const { t } = useTranslation();
 
   const { micMuted, muted, setMicMuted, setMuted, connectionState } = useVoice();
-
-  const status = (settings.profile.status as string) ?? (user as any)?.status ?? (connectionState === 'connected' ? 'online' : 'offline');
+  const status = settings.profile.status ?? (user as any)?.status ?? (connectionState === 'connected' ? 'online' : 'offline');
   const normalizedStatus = status?.toLowerCase?.();
   const statusClass = status ? `status-pill ${normalizedStatus}` : 'status-pill';
   const statusDotClass = normalizedStatus || 'offline';
@@ -88,7 +87,7 @@ export const UserBottomBar = ({ onOpenUserSettings }: { onOpenUserSettings?: () 
               aria-pressed={muted}
               title={muted ? t('userBottomBar.unmuteAll') : t('userBottomBar.muteAll')}
             >
-              {muted ? <HeadphonesOff size={16} /> : <Headphones size={16} />}
+              {muted ? <HeadphoneOff size={16} /> : <Headphones size={16} />}
             </button>
 
             <button

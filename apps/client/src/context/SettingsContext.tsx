@@ -5,6 +5,7 @@ import { storage } from '../shared/config/storage';
 export type ProfileSettings = {
   displayName: string;
   avatarUrl: string;
+  status?: string;
 };
 
 export type DeviceSettings = {

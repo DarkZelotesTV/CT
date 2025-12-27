@@ -2,6 +2,11 @@
   --layout-tree-current: var(--layout-tree-width);
   --layout-info-current: var(--layout-info-width);
   --layout-log-current: var(--layout-log-height);
+
+  /* TEMPNEW compatibility aliases */
+  --curr-tree: var(--layout-tree-current);
+  --curr-info: var(--layout-info-current);
+  --curr-log: var(--layout-log-current);
 }
 
 .main-layout {
@@ -20,8 +25,8 @@
   position: relative;
   height: 100vh;
   display: grid;
-  grid-template-columns: var(--layout-rail-width) var(--layout-tree-current) 1fr var(--layout-info-current);
-  grid-template-rows: var(--layout-header-height) 1fr var(--layout-log-current);
+  grid-template-columns: var(--w-rail, var(--layout-rail-width)) var(--curr-tree, var(--layout-tree-current)) minmax(0, 1fr) var(--curr-info, var(--layout-info-current));
+  grid-template-rows: var(--h-header, var(--layout-header-height)) minmax(0, 1fr) var(--curr-log, var(--layout-log-current));
   grid-template-areas:
     'rail header header header'
     'rail tree main info'
@@ -44,7 +49,16 @@
   --layout-log-current: 0px;
 }
 
-.glass-panel {
+
+
+/* TEMPNEW fold aliases (left = tree, right = info) */
+.fold-left {
+  --layout-tree-current: 0px;
+}
+
+.fold-right {
+  --layout-info-current: 0px;
+}.glass-panel {
   border-radius: var(--layout-radius);
   border: var(--layout-border);
   backdrop-filter: blur(28px);
@@ -501,9 +515,9 @@
 .pattern {
   position: absolute;
   inset: 0;
-  opacity: 0.05;
-  background-image: radial-gradient(#ffffff 1px, transparent 1px);
-  background-size: 22px 22px;
+  opacity: var(--bg-dot-opacity, 0.04);
+  background-image: radial-gradient(var(--bg-dot-color, rgba(255, 255, 255, 1)) 1px, transparent 1px);
+  background-size: var(--bg-dot-size, 22px) var(--bg-dot-size, 22px);
   pointer-events: none;
   z-index: 1;
 }
