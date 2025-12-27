@@ -311,7 +311,8 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background var(--layout-transition), color var(--layout-transition), transform 0.2s ease;
+  transition: background var(--layout-transition), color var(--layout-transition), transform 0.2s ease,
+    left var(--layout-transition), right var(--layout-transition);
 }
 
 .sidebar-toggle:hover {
@@ -320,11 +321,11 @@
 }
 
 .toggle-left {
-  left: calc(var(--layout-grid-gap) / 2);
+  left: calc(var(--layout-rail-width) + var(--layout-tree-current) + (var(--layout-grid-gap) * 1.5));
 }
 
 .toggle-right {
-  right: calc(var(--layout-grid-gap) / 2);
+  right: calc(var(--layout-info-current) + (var(--layout-grid-gap) * 1.5));
 }
 
 .overlay-orb {
