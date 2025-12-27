@@ -374,20 +374,20 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
   return (
     <>
       {/* Container ohne overflow-hidden, damit das Menü sichtbar ist */}
-      <div className="w-full h-full flex flex-col relative no-drag">
+      <div className="w-full h-full flex flex-col relative no-drag bg-gradient-to-b from-black/20 via-[#0c0f15]/60 to-black/10">
         
         {/* 1. SCROLLABLE BEREICH: Server Liste */}
-        <div className="flex-1 w-full flex flex-col items-center gap-4 py-4 overflow-y-auto no-scrollbar">
+        <div className="flex-1 w-full flex flex-col items-center gap-3.5 py-5 px-2 overflow-y-auto no-scrollbar">
           {/* HOME BUTTON */}
           <button
             type="button"
             onClick={() => onSelectServer(null)}
             className={
               `
-              w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 group relative no-drag
+              w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 group relative no-drag border border-white/10
               ${selectedServerId === null
-                ? 'bg-indigo-500 rounded-[16px] shadow-lg shadow-indigo-500/20 text-white'
-                : 'bg-white/5 hover:bg-indigo-500 hover:text-white text-gray-400 rounded-[24px] hover:rounded-[16px]'}
+                ? 'bg-emerald-500 text-white rounded-[14px] shadow-[0_0_0_6px_rgba(16,185,129,0.16)] shadow-emerald-500/40'
+                : 'bg-white/5 hover:bg-white/10 text-gray-300 rounded-full hover:rounded-[14px] hover:shadow-[0_0_0_6px_rgba(255,255,255,0.06)]'}
             `
             }
             aria-label="Home"
@@ -395,7 +395,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
             <Home size={22} />
           </button>
 
-          <div className="w-8 h-[2px] bg-white/5 rounded-full flex-shrink-0" />
+          <div className="w-10 h-px bg-white/10 rounded-full flex-shrink-0" />
 
           {/* LOCAL SERVERS */}
           {loading && <Spinner label={t('serverRail.loading')} className="text-gray-400" />}
@@ -423,9 +423,9 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                 onClick={() => onSelectServer(server.id)}
                 className={
                   `
-                w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 relative group no-drag
-                ${selectedServerId === server.id ? 'rounded-[16px]' : 'rounded-[24px] hover:rounded-[16px]'}
-                bg-white/5 hover:bg-white/10
+                w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 relative group no-drag border border-white/10
+                ${selectedServerId === server.id ? 'rounded-[14px]' : 'rounded-full hover:rounded-[14px]'}
+                bg-white/5 hover:bg-white/10 hover:shadow-[0_0_0_6px_rgba(255,255,255,0.05)] ${selectedServerId === server.id ? 'shadow-[0_0_0_6px_rgba(16,185,129,0.16)] shadow-emerald-500/40' : ''}
               `
                 }
                 title={tooltip}
@@ -465,7 +465,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                   <img
                     src={resolveIconUrl(server.icon_url)}
                     alt={name}
-                    className={`w-full h-full object-cover transition-all ${selectedServerId === server.id ? 'rounded-[16px]' : 'rounded-[24px] group-hover:rounded-[16px]'}`}
+                    className={`w-full h-full object-cover transition-all ${selectedServerId === server.id ? 'rounded-[14px]' : 'rounded-full group-hover:rounded-[14px]'}`}
                   />
                 ) : (
                   <span className="text-gray-200 font-bold text-sm group-hover:text-white transition-colors">
@@ -493,7 +493,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                     }
                     handleKeyboardContext(e, p.serverId, 'remote', p.instanceUrl);
                   }}
-                  className="no-drag w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 relative group no-drag rounded-[24px] hover:rounded-[16px] bg-white/5 hover:bg-white/10 outline-none"
+                  className="no-drag w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 relative group no-drag rounded-full hover:rounded-[14px] bg-white/5 hover:bg-white/10 outline-none border border-white/10 hover:shadow-[0_0_0_6px_rgba(255,255,255,0.06)]"
                   title={`${p.name ?? `Server ${p.serverId}`} (${p.instanceUrl})`}
                   onContextMenu={(e) => handleContextMenu(e, p.serverId, 'remote', p.instanceUrl)}
                 >
@@ -519,7 +519,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                     <img
                       src={resolveIconUrl(p.iconUrl, p.instanceUrl)}
                       alt={p.name ?? 'Remote'}
-                      className="w-full h-full object-cover transition-all rounded-[24px] group-hover:rounded-[16px]"
+                      className="w-full h-full object-cover transition-all rounded-full group-hover:rounded-[14px]"
                     />
                   ) : (
                     <span className="text-gray-200 font-bold text-sm group-hover:text-white transition-colors">
@@ -539,11 +539,11 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
               type="button"
               onMouseDown={(e) => e.stopPropagation()}
               onClick={() => setShowAddMenu((v) => !v)}
-              className="no-drag w-12 h-12 flex-shrink-0 no-drag rounded-[24px] bg-white/5 hover:bg-green-500/20 flex items-center justify-center cursor-pointer text-green-500 transition-all duration-300 hover:rounded-[16px] group"
+              className="no-drag w-12 h-12 flex-shrink-0 no-drag rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center cursor-pointer text-emerald-300 transition-all duration-300 hover:rounded-[14px] hover:shadow-[0_0_0_6px_rgba(16,185,129,0.16)] group"
               title="Server hinzufügen"
               aria-label="Server hinzufügen"
             >
-              <Plus size={22} className="group-hover:text-green-400" />
+              <Plus size={22} className="group-hover:text-white" />
             </button>
 
             {showAddMenu && (

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef, type CSSProperties, type KeyboardEvent } from 'react';
-import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, Mic, PhoneOff, Camera, ScreenShare, Lock, ListChecks, X, GripVertical, LogOut } from 'lucide-react';
+import { Hash, Volume2, Settings, Plus, ChevronDown, ChevronRight, Globe, PhoneOff, Camera, ScreenShare, Lock, ListChecks, X, GripVertical, LogOut, Shield, Bot, Gavel, Users2 } from 'lucide-react';
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent, KeyboardSensor } from '@dnd-kit/core';
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -189,8 +189,6 @@ export const ChannelSidebar = ({
   const isServerAdmin = useMemo(() => Boolean((localUser?.id && serverOwnerId === localUser.id) || permissions.manage_channels || permissions.manage_roles), [localUser?.id, permissions.manage_channels, permissions.manage_roles, serverOwnerId]);
   const canDrag = dragAndDropEnabled && isServerAdmin;
   const dragDisabled = !canDrag;
-  const hasVisibleChannels = uncategorized.length > 0 || categories.some((cat) => cat.channels.length > 0);
-
   const persistStructure = useCallback(async (nextCategories: Category[], nextUncategorized: Channel[], previous: any) => {
       if (!serverId) return;
       setIsSavingStructure(true);
@@ -220,39 +218,138 @@ export const ChannelSidebar = ({
     onCloseMobileNav?.();
   }, [activeChannelName, onCloseMobileNav, onSelectChannel, t, voiceChannelId]);
 
+  const resolveStatusClass = useCallback(
+    (status?: string) => {
+      const normalized = (status || '').toLowerCase();
+      if (normalized === 'online') return 'status-online';
+      if (normalized === 'idle' || normalized === 'away') return 'status-idle';
+      if (normalized === 'dnd' || normalized === 'busy') return 'status-dnd';
+      return 'status-offline';
+    },
+    []
+  );
+
+  const resolveRoleTag = useCallback((user: any): { label: string; className: string; Icon: typeof Shield } | null => {
+    const roles: string[] = Array.isArray(user?.roles)
+      ? user.roles
+      : typeof user?.role === 'string'
+        ? [user.role]
+        : [];
+    const normalized = roles.map((r) => r.toLowerCase());
+    if (user?.isBot || normalized.some((r) => r.includes('bot'))) return { label: 'Bot', className: 'role-tag bot', Icon: Bot };
+    if (normalized.some((r) => r.includes('admin'))) return { label: 'Admin', className: 'role-tag admin', Icon: Shield };
+    if (normalized.some((r) => r.includes('mod') || r.includes('staff'))) return { label: 'Mod', className: 'role-tag mod', Icon: Gavel };
+    return null;
+  }, []);
+
   const renderChannel = (c: Channel, isInside: boolean, dragMeta?: any) => {
-    // Handling für Spacer
     if (c.type === 'spacer') {
-        return (
-          <div 
-            key={c.id} 
-            className={`relative py-2 px-1 group outline-none ${isInside ? 'ml-4' : 'mx-2'}`}
-            ref={dragMeta?.setNodeRef} 
-            style={dragMeta?.style}
-            {...dragMeta?.handleProps}
-          >
-              <div className="h-[1px] w-full bg-white/10 group-hover:bg-white/20 transition-colors rounded-full" />
-          </div>
-        );
+      return (
+        <div
+          key={c.id}
+          className={`relative py-2 px-1 group outline-none ${isInside ? 'ml-4' : 'mx-2'}`}
+          ref={dragMeta?.setNodeRef}
+          style={dragMeta?.style}
+          {...dragMeta?.handleProps}
+        >
+          <div className="h-px w-full bg-white/10 group-hover:bg-white/20 transition-colors rounded-full" />
+        </div>
+      );
     }
 
     const isActive = activeChannelId === c.id;
-    const isConnected = c.type === 'voice' && voiceChannelId === c.id && connectionState === 'connected';
-    
-    const Icon = c.type === 'web' ? Globe : c.type === 'voice' ? Volume2 : c.type === 'data-transfer' ? Lock : c.type === 'list' ? ListChecks : Hash;
+    const isVoice = c.type === 'voice';
+    const isVoiceActive = isVoice && voiceChannelId === c.id && connectionState === 'connected';
+    const voiceUsers = isVoice ? channelPresence?.[c.id] ?? [] : [];
+    const Icon = c.type === 'web' ? Globe : isVoice ? Volume2 : c.type === 'data-transfer' ? Lock : c.type === 'list' ? ListChecks : Hash;
+
+    const wrapperPadding = isInside ? 'ml-3' : 'mx-2';
+    const baseBorder = isVoiceActive
+      ? 'border-emerald-400/30 bg-emerald-500/5 shadow-[0_8px_24px_rgba(16,185,129,0.12)]'
+      : isActive
+        ? 'border-white/15 bg-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.35)]'
+        : 'border-white/5 bg-white/5 hover:border-white/15 hover:bg-white/10';
 
     return (
-        <div key={c.id} className="relative" ref={dragMeta?.setNodeRef} style={dragMeta?.style}>
-            <div 
-                {...dragMeta?.handleProps}
-                onClick={() => { if(c.type !== 'spacer') onSelectChannel(c); }} 
-                className={`flex items-center px-2 py-1.5 mb-0.5 cursor-pointer group select-none rounded-md transition-colors outline-none ${isInside ? 'ml-4' : 'mx-2'} ${isActive ? 'bg-white/10 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'}`}
-            >
-                 <Icon size={16} className={`mr-2 flex-shrink-0 ${isConnected ? 'text-green-500' : ''}`} />
-                 <span className="text-sm truncate flex-1 font-medium">{c.name}</span>
+      <div key={c.id} className="relative" ref={dragMeta?.setNodeRef} style={dragMeta?.style}>
+        <div
+          {...dragMeta?.handleProps}
+          onClick={() => {
+            if (c.type !== 'spacer') onSelectChannel(c);
+          }}
+          className={`flex items-center gap-3 px-3 py-2 mb-1 cursor-pointer group select-none rounded-2xl transition-all outline-none border ${wrapperPadding} ${baseBorder}`}
+        >
+          <div
+            className={`flex h-9 w-9 items-center justify-center rounded-xl border ${
+              isVoiceActive
+                ? 'border-emerald-300/60 bg-emerald-500/15 text-emerald-100'
+                : 'border-white/5 bg-black/30 text-gray-300 group-hover:text-white'
+            }`}
+          >
+            <Icon size={18} />
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <span className="text-[13px] font-semibold text-white truncate">{c.name}</span>
+              {isVoice && voiceUsers.length > 0 && (
+                <span className="flex items-center gap-1 text-[11px] text-emerald-200 bg-emerald-500/10 border border-emerald-400/30 rounded-full px-2 py-0.5">
+                  <Users2 size={12} /> {voiceUsers.length}
+                </span>
+              )}
             </div>
+            <div className="text-[11px] text-gray-500">
+              {isVoice
+                ? isVoiceActive
+                  ? t('channelSidebar.connected')
+                  : t('channelSidebar.voiceChannel', { defaultValue: 'Voice' })
+                : t('channelSidebar.textChannel', { defaultValue: 'Text' })}
+            </div>
+          </div>
+
+          {isVoiceActive && (
+            <span className="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-emerald-500/20 text-emerald-100 border border-emerald-400/30">
+              LIVE
+            </span>
+          )}
         </div>
-     );
+
+        {isVoice && voiceUsers.length > 0 && (
+          <div className={`space-y-1 ${isInside ? 'ml-11' : 'ml-4'} mb-1`}>
+            {voiceUsers.map((user) => {
+              const tag = resolveRoleTag(user);
+              const statusCls = resolveStatusClass(user.status);
+              const speaking = Boolean((user as any)?.isSpeaking);
+              const avatar = user.avatar_url ? resolveServerAssetUrl(user.avatar_url) : null;
+              const initials = user.username?.[0]?.toUpperCase() ?? '?';
+
+              return (
+                <div
+                  key={`${c.id}-${user.id}`}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border bg-white/5 ${
+                    speaking ? 'border-emerald-400/40 bg-emerald-500/10 shadow-[0_4px_16px_rgba(16,185,129,0.15)]' : 'border-white/5'
+                  }`}
+                >
+                  <div className="relative">
+                    <div className="h-7 w-7 rounded-full overflow-hidden bg-white/10 flex items-center justify-center text-[11px] font-semibold text-gray-200">
+                      {avatar ? <img src={avatar} alt={user.username} className="h-full w-full object-cover" /> : initials}
+                    </div>
+                    <span className={`status-dot ${statusCls}`} />
+                  </div>
+                  {tag && (
+                    <span className={tag.className}>
+                      <tag.Icon size={12} /> {tag.label.toUpperCase()}
+                    </span>
+                  )}
+                  <span className="flex-1 text-sm text-gray-100 truncate">{user.username}</span>
+                  {speaking && <div className="w-1.5 h-4 rounded-full bg-emerald-400 animate-pulse" />}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
   };
   
   const toggleCategory = (id: number) => setCollapsed(prev => ({ ...prev, [id]: !prev[id] }));
@@ -366,31 +463,57 @@ export const ChannelSidebar = ({
           </DndContext>
       </div>
 
-      {/* --- STATUS PANEL (Verbindung) --- */}
-      {connectionState === 'connected' && (
-          <div className="bg-[#111214] border-t border-b border-white/5 p-2.5 space-y-2 relative z-10">
-             <div className="flex items-center justify-between gap-2">
-                <button
-                  type="button"
-                  onClick={handleJumpToVoice}
-                  className="flex flex-col overflow-hidden mr-2 text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#111214] rounded"
-                  title={activeChannelName || t('channelSidebar.inChannel')}
-                >
-                    <div className="text-green-500 text-[10px] font-bold uppercase flex items-center gap-1.5 mb-0.5">
-                      <Mic size={10} className="animate-pulse" /> {t('channelSidebar.connected')}
-                    </div>
-                    <div className="text-white text-xs font-bold truncate group-hover:underline">{activeChannelName}</div>
-                </button>
-                <div className="flex items-center gap-2">
-                    <button onClick={() => toggleCamera()} className={`w-8 h-8 flex items-center justify-center rounded-lg border text-xs transition-colors ${isCameraEnabled ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-200' : 'bg-white/5 border-white/10 text-gray-300 hover:text-white'}`}><Camera size={14} /></button>
-                    <button onClick={() => toggleScreenShare()} className={`w-8 h-8 flex items-center justify-center rounded-lg border text-xs transition-colors ${isScreenSharing ? 'bg-indigo-500/10 border-indigo-500/40 text-indigo-200' : 'bg-white/5 border-white/10 text-gray-300 hover:text-white'}`}><ScreenShare size={14} /></button>
-                    <button onClick={() => disconnect()} className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white"><PhoneOff size={16} /></button>
-                </div>
-             </div>
-          </div>
-      )}
-
       {shouldShowVoiceParticipants && <div className="relative z-10"><VoiceParticipantsPanel /></div>}
+
+      {connectionState === 'connected' && (
+        <div className="px-3 pb-2 relative z-10 space-y-2">
+          <button
+            type="button"
+            onClick={handleJumpToVoice}
+            className="w-full text-left px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-400/20 text-emerald-100 hover:border-emerald-300/40 transition-colors"
+            title={activeChannelName || t('channelSidebar.inChannel')}
+          >
+            <div className="text-[10px] uppercase font-bold tracking-widest">{t('channelSidebar.connected')}</div>
+            <div className="text-sm font-semibold truncate">{activeChannelName}</div>
+          </button>
+          <div className="grid grid-cols-3 gap-2 rounded-xl border border-emerald-400/25 bg-emerald-500/5 p-2 shadow-[0_12px_30px_rgba(0,0,0,0.25)]">
+            <button
+              type="button"
+              onClick={() => disconnect()}
+              className="h-10 rounded-lg bg-rose-500/15 text-rose-200 border border-rose-400/30 hover:bg-rose-500/30 flex items-center justify-center transition-colors"
+              aria-label={t('channelSidebar.leaveVoice', { defaultValue: 'Voice verlassen' })}
+            >
+              <PhoneOff size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={() => toggleCamera()}
+              className={`h-10 rounded-lg border flex items-center justify-center transition-colors ${
+                isCameraEnabled
+                  ? 'bg-cyan-500/15 border-cyan-400/30 text-cyan-100'
+                  : 'bg-white/5 border-white/10 text-gray-200 hover:border-white/20'
+              }`}
+              aria-pressed={isCameraEnabled}
+              aria-label={t('channelSidebar.toggleCamera', { defaultValue: 'Kamera umschalten' })}
+            >
+              <Camera size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={() => toggleScreenShare()}
+              className={`h-10 rounded-lg border flex items-center justify-center transition-colors ${
+                isScreenSharing
+                  ? 'bg-indigo-500/15 border-indigo-400/30 text-indigo-100'
+                  : 'bg-white/5 border-white/10 text-gray-200 hover:border-white/20'
+              }`}
+              aria-pressed={isScreenSharing}
+              aria-label={t('channelSidebar.toggleScreenShare', { defaultValue: 'Bildschirm teilen' })}
+            >
+              <ScreenShare size={16} />
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="relative z-10">
         <UserBottomBar onOpenUserSettings={onOpenUserSettings} />
