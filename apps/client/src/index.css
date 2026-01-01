@@ -1,319 +1,77 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+/* apps/client/src/index.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Segoe+UI+Variable:wght@300;400;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --color-background: #0b1021;
-  --color-surface: #111827;
-  --color-surface-alt: #0f1625;
-  --color-surface-hover: #1f2937;
-  --color-border: #1f2a3a;
-  --color-border-strong: #303a4e;
-  --color-text: #e5e7eb;
-  --color-text-muted: #cbd5e1;
-  --color-accent: var(--accent);
-  --color-accent-hover: #059669;
-  --color-overlay: rgba(6, 8, 16, 0.78);
-
-  /* Layout tokens mapped to the existing theme colors */
-  --layout-bg-body: var(--color-background);
-  --layout-bg-rail: color-mix(in srgb, var(--color-surface) 92%, transparent);
-  --layout-bg-tree: var(--color-surface);
-  --layout-bg-main: color-mix(in srgb, var(--color-surface-alt) 92%, transparent);
-  --layout-bg-info: color-mix(in srgb, var(--color-surface) 96%, transparent);
-  --layout-bg-log: color-mix(in srgb, var(--color-surface) 85%, var(--color-background) 15%);
-  --layout-accent: var(--accent);
-  --layout-accent-dim: color-mix(in srgb, var(--color-accent) 16%, transparent);
-  --layout-accent-glow: 0 0 32px color-mix(in srgb, var(--color-accent) 40%, transparent);
-  --layout-border: 1px solid color-mix(in srgb, var(--color-border-strong) 65%, transparent);
-  --layout-border-strong: 1px solid color-mix(in srgb, var(--color-border-strong) 90%, transparent);
-  --layout-text: var(--color-text);
-  --layout-text-muted: var(--color-text-muted);
-  --layout-overlay-strong: color-mix(in srgb, var(--color-overlay) 85%, transparent);
-  --layout-shadow: 0 16px 42px rgba(0, 0, 0, 0.32);
-
-  --layout-rail-width: 72px;
-  --layout-tree-width: 280px;
-  --layout-info-width: 300px;
-  --layout-header-height: 64px;
-  --layout-log-height: 170px;
-  --layout-radius: 18px;
-  --layout-grid-gap: 14px;
-  --layout-transition: 0.35s cubic-bezier(0.22, 0.78, 0.26, 1);
-
+  /* --- PALETTE (aus index.html) --- */
+  --bg-body: #050505;
+  --bg-rail: rgba(10, 10, 12, 0.9);
+  --bg-tree: rgba(22, 22, 25, 0.85); 
+  --bg-main: rgba(10, 10, 12, 0.3); 
+  --bg-info: rgba(22, 22, 25, 0.85);
+  --bg-log: rgba(8, 8, 10, 0.9);
+  
+  --accent: #10b981;
+  --accent-dim: rgba(16, 185, 129, 0.15);
+  --accent-glow: 0 0 15px rgba(16, 185, 129, 0.4);
+  
   --status-online: #22c55e;
   --status-idle: #eab308;
   --status-dnd: #ef4444;
   --status-offline: #6b7280;
-
-  --role-admin: #ef4444;
+  
+  /* ROLES */
+  --role-admin: #ef4444; 
   --role-mod: #60a5fa;
   --role-bot: #a78bfa;
 
-  /* TEMPNEW aliases (src/TEMPNEW/index.html) */
-  --bg-body: var(--layout-bg-body);
-  --bg-rail: var(--layout-bg-rail);
-  --bg-tree: var(--layout-bg-tree);
-  --bg-main: var(--layout-bg-main);
-  --bg-info: var(--layout-bg-info);
-  --bg-log: var(--layout-bg-log);
-  --accent: #10b981;
-  --accent-dim: rgba(16, 185, 129, 0.15);
-  --accent-glow: 0 0 32px rgba(16, 185, 129, 0.35);
   --border-glass: 1px solid rgba(255, 255, 255, 0.08);
   --border-shine: 1px solid rgba(255, 255, 255, 0.15);
-  --w-rail: var(--layout-rail-width);
-  --w-tree: var(--layout-tree-width);
-  --w-info: var(--layout-info-width);
-  --h-header: var(--layout-header-height);
-  --h-log: var(--layout-log-height);
-  --anim: var(--layout-transition);
+  
+  --font-ui: "Segoe UI Variable", "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", "Consolas", monospace;
 
+  /* --- LAYOUT DIMENSIONS --- */
+  --w-rail: 72px;
+  --w-tree: 280px;
+  --w-info: 300px;
+  --h-header: 64px;
+  --h-log: 160px; /* Standard Log Höhe */
 
-/* TEMPNEW background tuning */
---bg-dot-opacity: 0.035;
---bg-dot-size: 24px;
---bg-dot-color: rgba(255, 255, 255, 1);
-
-}
-
-:root[data-theme-mode='light'] {
-  --color-background: #f5f7fb;
-  --color-surface: #ffffff;
-  --color-surface-alt: #eef2ff;
-  --color-surface-hover: #e2e8f0;
-  --color-border: #cbd5e1;
-  --color-border-strong: #94a3b8;
-  --color-text: #0f172a;
-  --color-text-muted: #475569;
-  --color-accent: #4f46e5;
-  --color-accent-hover: #4338ca;
-  --color-overlay: rgba(15, 23, 42, 0.4);
+  --layout-radius: 12px;
+  --layout-transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  
+  /* Helper for existing components relying on old vars */
+  --color-text: #eee;
+  --color-text-muted: #888;
+  --layout-border: var(--border-glass);
 }
 
 @layer base {
   body {
-    background-color: var(--color-background);
+    background-color: var(--bg-body);
     color: var(--color-text);
-    font-family: 'Inter', sans-serif;
-    line-height: 1.6;
+    font-family: var(--font-ui);
     overflow: hidden;
+    /* Noise Texture */
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
   }
 
-  ::-webkit-scrollbar {
-    width: 0px; 
-    height: 0px;
-    background: transparent;
-  }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 }
 
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: var(--color-border-strong);
-  border-radius: 4px;
+/* Glass Utility Class */
+.glass { 
+  backdrop-filter: blur(30px); 
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03); 
 }
 
-html,
-body,
-#root {
-  -webkit-app-region: no-drag;
-}
-
-:root {
-  /* Height of the custom Electron titlebar (used to keep overlays/modals from covering it) */
-  --ct-titlebar-height: 48px;
-}
-
-#modal-root {
-  position: relative;
-  z-index: 9999; 
-  isolation: isolate;
-}
-
-.drag-region {
-  -webkit-app-region: drag !important;
-}
-
-.no-drag,
-button,
-  a,
-  input,
-  textarea,
-  select,
-  label,
-[role='button'],
-[role='menuitem'],
-[data-no-drag],
-.cursor-pointer {
-  -webkit-app-region: no-drag !important;
-}
-
-/* Video-Elemente sicherheitshalber immer schwarz hinterlegen */
-video {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  background-color: #000 !important;
-}
-
-@layer utilities {
-  .drag {
-    -webkit-app-region: drag;
-  }
-
-  .no-drag {
-    -webkit-app-region: no-drag;
-  }
-}
-
-.theme-bg {
-  background-color: var(--color-background);
-}
-
-.theme-surface {
-  background-color: var(--color-surface);
-}
-
-.theme-surface-alt {
-  background-color: var(--color-surface-alt);
-}
-
-.theme-border {
-  border-color: var(--color-border);
-}
-
-.theme-border-strong {
-  border-color: var(--color-border-strong);
-}
-
-.theme-text {
-  color: var(--color-text);
-}
-
-.theme-text-muted {
-  color: var(--color-text-muted);
-}
-
-.theme-accent-bg {
-  background-color: var(--color-accent);
-}
-
-  .theme-accent-hover {
-    background-color: var(--color-accent-hover);
-  }
-
-  .role-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 8px;
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    border-radius: 999px;
-    border: 1px solid transparent;
-    background: rgba(255, 255, 255, 0.04);
-  }
-
-  .role-tag.admin {
-    color: var(--role-admin);
-    border-color: color-mix(in srgb, var(--role-admin) 35%, transparent);
-    background: color-mix(in srgb, var(--role-admin) 12%, transparent);
-  }
-
-  .role-tag.mod {
-    color: var(--role-mod);
-    border-color: color-mix(in srgb, var(--role-mod) 35%, transparent);
-    background: color-mix(in srgb, var(--role-mod) 12%, transparent);
-  }
-
-  .role-tag.bot {
-    color: var(--role-bot);
-    border-color: color-mix(in srgb, var(--role-bot) 35%, transparent);
-    background: color-mix(in srgb, var(--role-bot) 12%, transparent);
-  }
-
-  .status-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 8px;
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 0.6px;
-    text-transform: uppercase;
-    border-radius: 999px;
-    border: 1px solid transparent;
-    background: rgba(255, 255, 255, 0.03);
-    color: var(--color-text-muted);
-  }
-
-  .status-pill.online {
-    color: var(--status-online);
-    border-color: color-mix(in srgb, var(--status-online) 35%, transparent);
-    background: color-mix(in srgb, var(--status-online) 10%, transparent);
-  }
-
-  .status-pill.idle,
-  .status-pill.away {
-    color: var(--status-idle);
-    border-color: color-mix(in srgb, var(--status-idle) 35%, transparent);
-    background: color-mix(in srgb, var(--status-idle) 10%, transparent);
-  }
-
-  .status-pill.dnd,
-  .status-pill.busy {
-    color: var(--status-dnd);
-    border-color: color-mix(in srgb, var(--status-dnd) 35%, transparent);
-    background: color-mix(in srgb, var(--status-dnd) 10%, transparent);
-  }
-
-  .status-pill.offline {
-    color: var(--status-offline);
-    border-color: color-mix(in srgb, var(--status-offline) 35%, transparent);
-    background: color-mix(in srgb, var(--status-offline) 10%, transparent);
-  }
-
-  .status-dot {
-    position: absolute;
-    width: 10px;
-    height: 10px;
-    border-radius: 999px;
-    border: 2px solid rgba(0, 0, 0, 0.4);
-    right: -3px;
-    bottom: -3px;
-  }
-
-  .status-dot.badge {
-    right: -2px;
-    bottom: -2px;
-    border-color: #0c0f14;
-  }
-
-  .status-dot.status-online,
-  .status-dot.online {
-    background-color: var(--status-online);
-  }
-
-  .status-dot.status-idle,
-  .status-dot.idle,
-  .status-dot.away,
-  .status-dot.status-away {
-    background-color: var(--status-idle);
-  }
-
-  .status-dot.status-dnd,
-  .status-dot.dnd,
-  .status-dot.busy {
-    background-color: var(--status-dnd);
-  }
-
-  .status-dot.status-offline,
-  .status-dot.offline {
-    background-color: var(--status-offline);
-  }
+/* Utilities */
+.no-drag { -webkit-app-region: no-drag; }
+.drag { -webkit-app-region: drag; }

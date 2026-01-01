@@ -1,4 +1,5 @@
-import { ReactNode, useEffect, useMemo, useRef } from 'react';
+/* apps/client/src/components/modals/ModalLayout.tsx */
+import { ReactNode, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { getModalRoot } from './modalRoot';
@@ -26,63 +27,65 @@ export const ModalLayout = ({
   onOverlayClick,
 }: ModalLayoutProps) => {
   const target = useMemo(getModalRoot, []);
-  const { slots, setSlots } = useTopBar();
-  const baseSlotsRef = useRef(slots);
+  const { setSlots } = useTopBar();
 
-  // Wenn ein Modal offen ist: Titlebar-Center auf den Modal-Titel setzen (Desktop).
+  // Topbar Integration
   useEffect(() => {
-    const base = baseSlotsRef.current;
     setSlots({
-      ...base,
       center: (
-        <div className="flex items-center gap-2 text-[13px] text-gray-100 leading-tight min-w-0">
-          {topbarIcon ? <span className="text-gray-300">{topbarIcon}</span> : null}
-          <span className="truncate" title={title}>
-            {title}
-          </span>
+        <div className="flex items-center gap-2 text-[13px] text-gray-100">
+          {topbarIcon && <span className="text-gray-300">{topbarIcon}</span>}
+          <span className="font-bold">{title}</span>
         </div>
       ),
     });
-
-    return () => {
-      setSlots(base);
-    };
+    return () => setSlots({});
   }, [setSlots, title, topbarIcon]);
 
   if (!target) return null;
 
-  const bodyClasses = bodyClassName ?? '';
-
   return createPortal(
     <div
-      className="ct-modal-overlay"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onOverlayClick?.();
       }}
     >
-      <div className="ct-modal glass">
+      {/* Verwende die .glass Klasse aus index.css
+        Inline Styles für spezifisches Modal-Layout angelehnt an das Design
+      */}
+      <div 
+        className="glass flex flex-col max-h-[85vh] w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        style={{ 
+          borderRadius: '16px', 
+          border: 'var(--border-shine)',
+          background: 'rgba(22, 22, 25, 0.65)'
+        }}
+      >
         {/* Header */}
-        <div className="ct-modal-header">
-          <div className="min-w-0">
-            <h2 className="ct-modal-title">{title}</h2>
-            {description && <p className="ct-modal-desc">{description}</p>}
+        <div className="flex items-center justify-between p-5 border-b border-[rgba(255,255,255,0.08)]">
+          <div>
+            <h2 className="text-lg font-bold text-white tracking-wide">{title}</h2>
+            {description && <p className="text-sm text-gray-400 mt-1">{description}</p>}
           </div>
-
           <button
             onClick={onClose}
-            className="ct-modal-close no-drag"
-            aria-label="Close modal"
+            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors no-drag"
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 
-        {/* Scrollable Body */}
-        <div className={`ct-modal-body ${bodyClasses} custom-scrollbar`}>{children}</div>
+        {/* Body */}
+        <div className={`p-5 overflow-y-auto custom-scrollbar ${bodyClassName ?? ''}`}>
+          {children}
+        </div>
 
         {/* Footer */}
         {footer && (
-          <div className="ct-modal-footer">{footer}</div>
+          <div className="p-4 bg-[rgba(0,0,0,0.2)] border-t border-[rgba(255,255,255,0.08)] flex justify-end gap-3">
+            {footer}
+          </div>
         )}
       </div>
     </div>,
