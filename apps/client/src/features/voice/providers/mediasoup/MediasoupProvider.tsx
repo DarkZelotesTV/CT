@@ -638,6 +638,8 @@ export const useMediasoupProvider = ({ state, setState, initialConnectRequest }:
       error: null,
       providerId: null,
       localParticipantId: null,
+      networkStats: null,
+      connectedAt: null,
     });
     connectingRef.current = false;
   }, [cleanupConsumers, cleanupTransports, optimisticLeave, setState, state.activeChannelId]);
@@ -669,7 +671,7 @@ export const useMediasoupProvider = ({ state, setState, initialConnectRequest }:
         const { recvTransport, recvInfo } = await createRecvTransport(device, channelId);
 
         connectTransport(recvTransport, recvInfo.id, 'recv', channelId, () => {
-          setState({ connectionState: 'connected', error: null });
+          setState({ connectionState: 'connected', error: null, connectedAt: Date.now() });
         });
 
         await startMicrophone(channelId);
@@ -680,12 +682,15 @@ export const useMediasoupProvider = ({ state, setState, initialConnectRequest }:
           }
         }
 
+        const now = Date.now();
         setState({
           connectionState: 'connected',
           connectionHandle: { provider: 'mediasoup', sessionId: join.roomName },
           activeChannelId: channelId,
           activeChannelName: channelName,
           providerId: 'mediasoup',
+          connectedAt: now,
+          networkStats: null,
         });
       } catch (err: any) {
         console.warn('Mediasoup Verbindung fehlgeschlagen', err);
@@ -876,11 +881,23 @@ export const useMediasoupProvider = ({ state, setState, initialConnectRequest }:
         };
       })();
 
+      const updatedAt = Date.now();
       setDebugStats({
         outbound: outboundStats,
         inbound: inboundStats,
-        updatedAt: Date.now(),
+        updatedAt,
         consumerCount: consumers.length,
+      });
+      const preferredStats = inboundStats ?? outboundStats;
+      setState({
+        networkStats: preferredStats
+          ? {
+              packetLossPercent: preferredStats.packetLossPercent ?? null,
+              jitterMs: preferredStats.jitterMs ?? null,
+              rttMs: preferredStats.rttMs ?? null,
+              updatedAt,
+            }
+          : null,
       });
     };
 
@@ -1001,5 +1018,7 @@ export const useMediasoupProvider = ({ state, setState, initialConnectRequest }:
     screenShareAudioError: state.screenShareAudioError,
     localAudioLevel: state.localAudioLevel,
     providerRenderers,
+    networkStats: state.networkStats ?? null,
+    connectedAt: state.connectedAt,
   };
 };

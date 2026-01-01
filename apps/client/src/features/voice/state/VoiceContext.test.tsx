@@ -51,6 +51,8 @@ const createMockVoiceContext = (): VoiceContextType => ({
   screenShareAudioError: null,
   localAudioLevel: 0,
   providerRenderers: {},
+  networkStats: null,
+  connectedAt: null,
 });
 
 describe('useVoice', () => {

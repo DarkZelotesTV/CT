@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import { ConnectionState } from './voiceTypes';
+import { ConnectionState, type VoiceNetworkStats } from './voiceTypes';
 import {
   type VoiceConnectionHandle,
   type VoiceParticipant,
@@ -44,6 +44,8 @@ export interface VoiceContextType extends VoiceProviderAdapter {
   screenShareAudioError?: string | null;
   localAudioLevel: number;
   providerRenderers: VoiceProviderRenderers;
+  networkStats: VoiceNetworkStats | null;
+  connectedAt: number | null;
 }
 
 export const VoiceContext = createContext<VoiceContextType | null>(null);

@@ -2,6 +2,13 @@ import { type VoiceConnectionHandle, type VoiceParticipant, type VoiceProviderId
 
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'reconnecting';
 
+export interface VoiceNetworkStats {
+  packetLossPercent: number | null;
+  jitterMs: number | null;
+  rttMs: number | null;
+  updatedAt: number | null;
+}
+
 export interface VoiceState {
   providerId: VoiceProviderId | null;
   connectionHandle: VoiceConnectionHandle | null;
@@ -30,6 +37,8 @@ export interface VoiceState {
   shareSystemAudio: boolean;
   outputVolume: number;
   localAudioLevel: number;
+  networkStats: VoiceNetworkStats | null;
+  connectedAt: number | null;
 }
 
 // UPDATE: Payload erlaubt jetzt auch eine Funktion (Functional Update)
