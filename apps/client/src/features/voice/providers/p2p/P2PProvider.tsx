@@ -581,6 +581,8 @@ export const useP2PProvider = ({
       error: null,
       providerId: null,
       localParticipantId: null,
+      networkStats: null,
+      connectedAt: null,
     });
     connectingRef.current = false;
   }, [cleanupAll, optimisticLeave, setState, socket, state.activeChannelId]);
@@ -638,6 +640,7 @@ export const useP2PProvider = ({
           createPeerConnection(peer.id, true);
         });
 
+        const now = Date.now();
         setState({
           connectionState: 'connected',
           connectionHandle: { provider: 'p2p', sessionId: `channel_${channelId}` },
@@ -645,6 +648,8 @@ export const useP2PProvider = ({
           activeChannelName: channelName,
           providerId: 'p2p',
           error: null,
+          connectedAt: now,
+          networkStats: null,
         });
       } catch (err: any) {
         console.warn('P2P Verbindung fehlgeschlagen', err);
@@ -904,5 +909,7 @@ export const useP2PProvider = ({
     screenShareAudioError: state.screenShareAudioError,
     localAudioLevel: state.localAudioLevel,
     providerRenderers,
+    networkStats: state.networkStats ?? null,
+    connectedAt: state.connectedAt,
   };
 };

@@ -46,12 +46,25 @@
 /* 2. HEADER */
 .header-panel {
   grid-area: header; 
-  background: rgba(20, 20, 25, 0.5);
-  border-bottom: var(--border-glass); 
+  background: linear-gradient(120deg, rgba(16, 18, 26, 0.85), rgba(10, 12, 20, 0.9));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08); 
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 24px; z-index: 40; 
   backdrop-filter: blur(20px);
   -webkit-app-region: drag; /* Electron Drag */
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.02);
+}
+.header-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 12% 50%, rgba(16, 185, 129, 0.12), transparent 32%),
+    radial-gradient(circle at 82% 30%, rgba(59, 130, 246, 0.1), transparent 28%);
+  opacity: 0.8;
 }
 
 /* 3. TREE (Left Sidebar) */
@@ -103,12 +116,16 @@
 }
 
 .telemetry-bar {
-  display: flex; gap: 12px; background: rgba(0,0,0,0.3); border: var(--border-glass); 
-  border-radius: 99px; padding: 4px 6px;
+  display: flex; gap: 12px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255,255,255,0.08); 
+  border-radius: 999px; padding: 6px 8px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 12px 40px rgba(0,0,0,0.35);
+  backdrop-filter: blur(10px);
 }
-.t-item { display: flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 99px; background: rgba(255,255,255,0.03); }
-.t-label { font-size: 0.65rem; font-weight: 700; color: #888; letter-spacing: 1px; }
-.t-val { font-family: var(--font-mono); font-size: 0.8rem; color: #fff; font-weight: 600; }
+.t-item { display: flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 99px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.06); }
+.t-label { font-size: 0.65rem; font-weight: 800; color: #9aa4b5; letter-spacing: 1px; }
+.t-val { font-family: var(--font-mono); font-size: 0.9rem; color: #fff; font-weight: 700; text-shadow: 0 0 12px rgba(255,255,255,0.16); }
 
 /* Log Components */
 .log-head {

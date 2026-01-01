@@ -32,6 +32,7 @@ import { applyAppTheme, buildAppTheme } from '../../theme/appTheme';
 import { useDesktopNotifications } from '../../hooks/useDesktopNotifications';
 import { useLogStore } from '../../store/useLogStore';
 import { useSocket } from '../../context/SocketContext';
+import { resolveServerAssetUrl } from '../../utils/assetUrl';
 
 // Standardbreiten angepasst an das Design (Tree: 280px, Info: 300px)
 const defaultChannelWidth = 280;
@@ -197,24 +198,41 @@ export const MainLayout = () => {
     muted,
     connectToChannel,
     providerRenderers,
+    networkStats,
+    connectedAt: voiceConnectedAt,
   } = useVoice();
   const lastConnectionStateRef = useRef(connectionState);
   const AudioRenderer = providerRenderers.AudioRenderer;
   const DebugOverlay = providerRenderers.DebugOverlay;
   const { isConnected: socketConnected, ping } = useSocket();
 
-  // --- NEU: Uptime Counter für Telemetry Bar ---
-  const [uptime, setUptime] = useState("00:00");
+  const socketConnectedAtRef = useRef<number | null>(null);
+  const [uptimeSeconds, setUptimeSeconds] = useState<number | null>(null);
+
   useEffect(() => {
-    const start = Date.now();
-    const interval = setInterval(() => {
-      const diff = Math.floor((Date.now() - start) / 1000);
-      const m = Math.floor(diff / 60).toString().padStart(2, '0');
-      const s = (diff % 60).toString().padStart(2, '0');
-      setUptime(`${m}:${s}`);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
+    if (socketConnected) {
+      if (!socketConnectedAtRef.current) {
+        socketConnectedAtRef.current = Date.now();
+      }
+    } else {
+      socketConnectedAtRef.current = null;
+    }
+  }, [socketConnected]);
+
+  const refreshUptime = useCallback(() => {
+    const start = voiceConnectedAt ?? socketConnectedAtRef.current;
+    if (!start) {
+      setUptimeSeconds(null);
+      return;
+    }
+    setUptimeSeconds(Math.max(0, Math.floor((Date.now() - start) / 1000)));
+  }, [voiceConnectedAt]);
+
+  useEffect(() => {
+    refreshUptime();
+    const interval = window.setInterval(refreshUptime, 1000);
+    return () => window.clearInterval(interval);
+  }, [refreshUptime]);
 
   useEffect(() => {
     addLogEntry({
@@ -248,6 +266,46 @@ export const MainLayout = () => {
     const theme = buildAppTheme(settings.theme.mode, activeAccent);
     applyAppTheme(theme);
   }, [activeAccent, settings.theme.mode]);
+
+  const resolvedServerIcon = useMemo(
+    () => (serverIcon ? resolveServerAssetUrl(serverIcon) : null),
+    [serverIcon]
+  );
+
+  const uptimeDisplay = useMemo(() => {
+    if (uptimeSeconds === null) return '00:00';
+    const hours = Math.floor(uptimeSeconds / 3600);
+    const minutes = Math.floor((uptimeSeconds % 3600) / 60)
+      .toString()
+      .padStart(2, '0');
+    const seconds = (uptimeSeconds % 60).toString().padStart(2, '0');
+    if (hours > 0) return `${hours}:${minutes}:${seconds}`;
+    return `${minutes}:${seconds}`;
+  }, [uptimeSeconds]);
+
+  const lossValue = useMemo(() => {
+    if (typeof networkStats?.packetLossPercent === 'number') {
+      return Math.max(0, networkStats.packetLossPercent);
+    }
+    return null;
+  }, [networkStats?.packetLossPercent]);
+
+  const lossDisplay = useMemo(() => {
+    if (lossValue === null) return '0%';
+    return `${lossValue >= 10 ? Math.round(lossValue) : lossValue.toFixed(1)}%`;
+  }, [lossValue]);
+
+  const lossTone = useMemo(() => {
+    if (lossValue === null) return 'text-white';
+    if (lossValue < 1) return 'text-emerald-300';
+    if (lossValue < 3) return 'text-amber-200';
+    return 'text-rose-300';
+  }, [lossValue]);
+
+  const pingDisplay = useMemo(() => {
+    const derived = ping ?? (networkStats?.rttMs != null ? Math.round(networkStats.rttMs) : null);
+    return derived ?? 24;
+  }, [networkStats?.rttMs, ping]);
 
   const openOnboardingModal = useCallback(
     (config?: { initialStep?: number; replayKey?: OnboardingReplayKey | null; action?: (() => void) | null }) => {
@@ -970,29 +1028,37 @@ export const MainLayout = () => {
                   <Menu size={18} />
                 </button>
               )}
-            {serverIcon ? (
-                <img src={serverIcon} className="h-server-icon w-6 h-6 rounded-md object-cover shadow-emerald-500/30 shadow-lg border border-emerald-500/20" alt="" />
+            {resolvedServerIcon ? (
+              <img
+                src={resolvedServerIcon}
+                className="h-server-icon w-7 h-7 rounded-lg object-cover shadow-[0_0_20px_rgba(16,185,129,0.35)] border border-emerald-500/30"
+                alt={serverName || 'Server'}
+              />
             ) : (
-                <div className="h-server-icon w-6 h-6 rounded-md bg-gray-700/50 border border-white/10" />
+              <div className="h-server-icon w-7 h-7 rounded-lg bg-gray-700/50 border border-white/10" />
             )}
             <div className="flex flex-col leading-tight">
-                <span className="text-[0.95rem] font-bold text-white tracking-wide">{serverName || "ZIMPLY"}</span>
+              <span className="text-[0.95rem] font-bold text-white tracking-wide drop-shadow-sm">
+                {serverName || 'ZIMPLY'}
+              </span>
             </div>
           </div>
           
           {/* Mittlerer Bereich: Telemetry Bar (Neu) */}
-          <div className="telemetry-bar no-drag hidden md:flex gap-3 bg-black/30 border border-white/10 rounded-full px-2 py-1">
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5">
-                <span className="text-[0.65rem] font-bold text-gray-400 tracking-wider">PING</span>
-                <span className="font-mono text-sm font-semibold text-emerald-400">{ping ?? 24}ms</span>
+          <div className="telemetry-bar no-drag hidden md:flex gap-3">
+            <div className="t-item">
+              <span className="t-label">PING</span>
+              <span className="t-val text-emerald-200">{pingDisplay}ms</span>
             </div>
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5">
-                <span className="text-[0.65rem] font-bold text-gray-400 tracking-wider">LOSS</span>
-                <span className="font-mono text-sm font-semibold text-white">0%</span>
+            <div className="t-item">
+              <span className="t-label">LOSS</span>
+              <span className={classNames('t-val', lossTone)}>{lossDisplay}</span>
             </div>
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5">
-                <span className="text-[0.65rem] font-bold text-gray-400 tracking-wider">UPTIME</span>
-                <span className="font-mono text-sm font-semibold text-white" id="time">{uptime}</span>
+            <div className="t-item">
+              <span className="t-label">UPTIME</span>
+              <span className="t-val text-white" id="time">
+                {uptimeDisplay}
+              </span>
             </div>
           </div>
 
