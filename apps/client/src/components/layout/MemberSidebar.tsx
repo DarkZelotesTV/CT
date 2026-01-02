@@ -48,17 +48,15 @@ export const MemberAvatar = ({
   })();
 
   return (
-    <div className="relative mr-3 flex-shrink-0">
-      <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-white/5 shadow-inner">
-        {member.avatarUrl ? (
-          <img src={resolveServerAssetUrl(member.avatarUrl)} alt={finalAvatarAlt} className="h-full w-full object-cover" />
-        ) : (
-          <span className="select-none text-sm font-bold text-gray-300" aria-label={initialsLabel}>
-            {avatarInitial}
-          </span>
-        )}
-        <div className={`status-dot badge ${statusClass}`} aria-label={finalStatusLabel} />
-      </div>
+    <div className="m-av-lg" aria-label={finalStatusLabel}>
+      <span className={`m-status-ring ${statusClass}`} aria-hidden />
+      {member.avatarUrl ? (
+        <img src={resolveServerAssetUrl(member.avatarUrl)} alt={finalAvatarAlt} />
+      ) : (
+        <span className="m-av-initial" aria-label={initialsLabel}>
+          {avatarInitial}
+        </span>
+      )}
     </div>
   );
 };
@@ -418,19 +416,20 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
   const memberVirtualizer = useVirtualizer({
     count: memberRows.length,
     getScrollElement: () => listParentRef.current,
-    estimateSize: (index: number) => (memberRows[index]?.type === 'section' ? 32 : 92),
+    estimateSize: (index: number) => (memberRows[index]?.type === 'section' ? 32 : 110),
     overscan: 8,
   });
 
   const renderMember = (m: Member, style?: CSSProperties) => {
+    const statusClass = m.status === 'idle' || m.status === 'away' ? 'idle' : m.status;
     const statusTone =
-      m.status === 'online'
-        ? { border: 'border-emerald-500/40', glow: 'shadow-[0_8px_32px_rgba(16,185,129,0.18)]', chip: 'status-pill online' }
-        : m.status === 'idle' || m.status === 'away'
-          ? { border: 'border-amber-400/40', glow: 'shadow-[0_8px_32px_rgba(234,179,8,0.12)]', chip: 'status-pill idle' }
-          : m.status === 'dnd'
-            ? { border: 'border-rose-400/40', glow: 'shadow-[0_8px_32px_rgba(244,63,94,0.12)]', chip: 'status-pill dnd' }
-            : { border: 'border-white/10', glow: 'shadow-[0_10px_34px_rgba(0,0,0,0.32)]', chip: 'status-pill offline' };
+      statusClass === 'online'
+        ? { row: 'm-row online', chip: 'status-pill online' }
+        : statusClass === 'idle'
+          ? { row: 'm-row idle', chip: 'status-pill idle' }
+          : statusClass === 'dnd'
+            ? { row: 'm-row dnd', chip: 'status-pill dnd' }
+            : { row: 'm-row offline', chip: 'status-pill offline' };
 
     const roleTags = (m.roles || [])
       .map((role: any) => (typeof role === 'string' ? role : role?.name))
@@ -457,7 +456,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
       <div
         key={m.userId}
         style={style}
-        className={`group relative mb-2 cursor-pointer overflow-hidden rounded-2xl border bg-white/5 px-3 py-2 transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/10 ${statusTone.border} ${statusTone.glow}`}
+        className={`${statusTone.row} cursor-pointer`}
         onContextMenu={(e) => {
           e.preventDefault();
           openUserMenu({ x: e.clientX, y: e.clientY, target: e.currentTarget as HTMLElement }, m);
@@ -471,34 +470,34 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
         onTouchEnd={cancelLongPress}
         onTouchMove={cancelLongPress}
       >
-        <div className="flex items-center gap-3">
-          <MemberAvatar
-            member={m}
-            avatarAlt={t('memberSidebar.avatarAlt', { username: m.username }) ?? `${m.username} avatar`}
-            initialsLabel={t('memberSidebar.initialsAvatar') ?? undefined}
-            statusLabel={(status) => t('memberSidebar.statusLabel', { status }) ?? `Status: ${status}`}
-          />
+        <MemberAvatar
+          member={m}
+          avatarAlt={t('memberSidebar.avatarAlt', { username: m.username }) ?? `${m.username} avatar`}
+          initialsLabel={t('memberSidebar.initialsAvatar') ?? undefined}
+          statusLabel={(status) => t('memberSidebar.statusLabel', { status }) ?? `Status: ${status}`}
+        />
 
-          <div className="flex-1 overflow-hidden">
-            <div className="flex items-center gap-2 truncate text-sm font-semibold text-white/90 group-hover:text-white">
-              <span className="truncate">{m.username}</span>
-            </div>
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-gray-400">
-              <span className={statusTone.chip}>{statusText}</span>
-              {roleBadges.length === 0 && (
-                <span className="role-tag neutral">
-                  <UserX size={12} /> {t('memberSidebar.noRoles', { defaultValue: 'Keine Rollen' })}
+        <div className="m-body">
+          <div className="m-title-row">
+            <span className="m-name">{m.username}</span>
+          </div>
+          <div className="m-stat-row flex items-center gap-2 flex-wrap">
+            <span className={`m-stat ${statusClass}`}>{statusText}</span>
+          </div>
+          <div className="m-roles">
+            {roleBadges.length === 0 && (
+              <span className="role-tag neutral">
+                <UserX size={12} /> {t('memberSidebar.noRoles', { defaultValue: 'Keine Rollen' })}
+              </span>
+            )}
+            {roleBadges.map((badge) => {
+              const Icon = badge.icon;
+              return (
+                <span key={`${m.userId}-${badge.label}`} className={badge.className}>
+                  <Icon size={11} /> {badge.label}
                 </span>
-              )}
-              {roleBadges.map((badge) => {
-                const Icon = badge.icon;
-                return (
-                  <span key={`${m.userId}-${badge.label}`} className={`${badge.className} !text-[10px]`}>
-                    <Icon size={11} /> {badge.label}
-                  </span>
-                );
-              })}
-            </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -506,85 +505,72 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-transparent overflow-hidden">
-      {/* Header */}
-      <div className="h-12 flex items-center px-4 border-b border-white/5 flex-shrink-0">
-        <span className="text-xs font-black tracking-widest text-gray-500 uppercase">{t('memberSidebar.header')}</span>
-        <span className="ml-auto text-[10px] bg-white/5 text-gray-400 px-2 py-0.5 rounded-full">{filteredMembers.length}</span>
+    <div className="member-sidebar overflow-hidden">
+      <div className="member-sidebar__header">
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder={t('memberSidebar.searchPlaceholder') ?? ''}
+          className="member-sidebar__search"
+        />
       </div>
 
-      <div ref={listParentRef} className="flex-1 p-3 overflow-y-auto custom-scrollbar space-y-6">
-          <div className="px-2">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder={t('memberSidebar.searchPlaceholder') ?? ''}
-              className="w-full px-3 py-2 text-sm bg-white/5 border border-white/10 rounded-md text-gray-200 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/40"
-            />
-          </div>
-
-          {loading && (
-            <div className="space-y-3 px-2">
-              <Spinner label={t('memberSidebar.loading')} />
-              <div className="space-y-3">
-                {[0, 1, 2, 3].map((index) => (
-                  <div key={`member-skeleton-${index}`} className="flex items-center gap-3">
-                    <Skeleton className="h-10 w-10 rounded-full bg-[var(--color-surface-hover)]" />
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-3 w-1/3 bg-[var(--color-surface-hover)]" />
-                      <Skeleton className="h-2.5 w-1/4 bg-[var(--color-surface-hover)]" />
-                    </div>
+      <div ref={listParentRef} className="member-sidebar__list custom-scrollbar">
+        {loading && (
+          <div className="space-y-3">
+            <Spinner label={t('memberSidebar.loading')} />
+            <div className="space-y-3">
+              {[0, 1, 2, 3].map((index) => (
+                <div key={`member-skeleton-${index}`} className="m-row">
+                  <Skeleton className="h-[46px] w-[46px] rounded-xl bg-[var(--color-surface-hover)]" />
+                  <div className="m-body">
+                    <Skeleton className="h-3 w-1/3 bg-[var(--color-surface-hover)]" />
+                    <Skeleton className="h-2.5 w-1/2 bg-[var(--color-surface-hover)]" />
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-          )}
+          </div>
+        )}
 
-          {!loading && error && (
-            <div className="px-2">
-              <ErrorCard
-                message={error}
-                retryLabel={t('memberSidebar.retry') ?? undefined}
-                onRetry={() => fetchMembers()}
-              />
-            </div>
-          )}
+        {!loading && error && (
+          <div className="px-1">
+            <ErrorCard message={error} retryLabel={t('memberSidebar.retry') ?? undefined} onRetry={() => fetchMembers()} />
+          </div>
+        )}
 
-          {!loading && !error && filteredMembers.length === 0 && (
-            <div className="px-2 text-xs text-[color:var(--color-text-muted)]">{t('memberSidebar.empty')}</div>
-          )}
+        {!loading && !error && filteredMembers.length === 0 && (
+          <div className="px-1 text-xs text-[color:var(--color-text-muted)]">{t('memberSidebar.empty')}</div>
+        )}
 
-          {!loading && !error && filteredMembers.length > 0 && (
-            <div style={{ height: memberVirtualizer.getTotalSize(), position: 'relative' }}>
-              {memberVirtualizer.getVirtualItems().map((virtualRow: VirtualItem) => {
-                const row = memberRows[virtualRow.index];
-                if (!row) return null;
+        {!loading && !error && filteredMembers.length > 0 && (
+          <div style={{ height: memberVirtualizer.getTotalSize(), position: 'relative' }}>
+            {memberVirtualizer.getVirtualItems().map((virtualRow: VirtualItem) => {
+              const row = memberRows[virtualRow.index];
+              if (!row) return null;
 
-                const style: CSSProperties = {
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  transform: `translateY(${virtualRow.start}px)`,
-                };
+              const style: CSSProperties = {
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                transform: `translateY(${virtualRow.start}px)`,
+              };
 
-                if (row.type === 'section') {
-                  return (
-                    <div
-                      key={row.key}
-                      style={style}
-                      className="text-[10px] font-bold text-gray-500 mb-2 px-2 uppercase tracking-wider flex items-center gap-2"
-                    >
-                      {row.label} <span className="text-[9px] text-gray-600">— {row.count}</span>
-                    </div>
-                  );
-                }
+              if (row.type === 'section') {
+                return (
+                  <div key={row.key} style={style} className="grp-head">
+                    <span>{row.label}</span>
+                    <span className="grp-count">{row.count}</span>
+                  </div>
+                );
+              }
 
-                return renderMember(row.member, style);
-              })}
-            </div>
-          )}
+              return renderMember(row.member, style);
+            })}
+          </div>
+        )}
       </div>
 
       {contextMenu && (
