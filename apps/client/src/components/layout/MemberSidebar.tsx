@@ -483,12 +483,14 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
 
     if (onlineMembers.length > 0) {
       rows.push({ type: 'section', key: 'online', label: t('memberSidebar.online'), count: onlineMembers.length });
-      rows.push(...onlineMembers.map((member) => ({ type: 'member', key: `member-${member.userId}`, member })));
+      rows.push(...onlineMembers.map<MemberRow>((member) => ({ type: 'member', key: `member-${member.userId}`, member })));
     }
 
     if (afkMembers.length > 0) {
       rows.push({ type: 'section', key: 'afk', label: t('memberSidebar.afk'), count: afkMembers.length, variant: 'afk' });
-      rows.push(...afkMembers.map((member) => ({ type: 'member', key: `afk-${member.userId}`, member, variant: 'afk' })));
+      rows.push(
+        ...afkMembers.map<MemberRow>((member) => ({ type: 'member', key: `afk-${member.userId}`, member, variant: 'afk' }))
+      );
     }
 
     if (offlineMembers.length > 0) {
@@ -500,7 +502,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
         variant: 'offline',
       });
       rows.push(
-        ...offlineMembers.map((member) => ({ type: 'member', key: `member-${member.userId}`, member, variant: 'offline' }))
+        ...offlineMembers.map<MemberRow>((member) => ({ type: 'member', key: `member-${member.userId}`, member, variant: 'offline' }))
       );
     }
 
