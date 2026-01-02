@@ -16,7 +16,10 @@
 
 /* --- GRID LAYOUT --- */
 .main-layout {
-  height: 100vh; width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100vw;
   display: grid;
   /* Dynamische Spalten basierend auf React State (inline styles) */
   grid-template-columns: var(--w-rail) var(--curr-tree, var(--w-tree)) 1fr var(--curr-info, var(--w-info));
@@ -28,6 +31,7 @@
   transition: grid-template-columns var(--layout-transition), grid-template-rows var(--layout-transition);
   position: relative;
   z-index: 1;
+  overflow: hidden;
 }
 
 .mobile-overlay {
@@ -270,8 +274,11 @@
 .main-panel {
   grid-area: main; 
   background: var(--bg-main); 
-  position: relative; overflow: hidden;
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
   display: flex; flex-direction: column;
+  min-height: 0;
 }
 .edge-toggle {
   position: absolute;
