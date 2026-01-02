@@ -593,6 +593,24 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+.grp-head.accent-connected {
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.08), transparent);
+  border-bottom-color: rgba(16, 185, 129, 0.3);
+  color: #a7f3d0;
+}
+
+.grp-head.accent-afk {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.08), transparent);
+  border-bottom-color: rgba(245, 158, 11, 0.3);
+  color: #fcd34d;
+}
+
+.grp-head.accent-offline {
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.08), transparent);
+  border-bottom-color: rgba(148, 163, 184, 0.26);
+  color: #cbd5e1;
+}
+
 .grp-count {
   font-size: 0.65rem;
   padding: 3px 8px;
@@ -614,6 +632,24 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
   transition: 0.18s ease;
+}
+
+.m-row.accent-connected {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(16, 185, 129, 0.06));
+  border-color: rgba(16, 185, 129, 0.35);
+  box-shadow: 0 14px 34px rgba(16, 185, 129, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.m-row.accent-afk {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.14), rgba(245, 158, 11, 0.06));
+  border-color: rgba(245, 158, 11, 0.36);
+  box-shadow: 0 14px 34px rgba(245, 158, 11, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.m-row.accent-offline {
+  background: linear-gradient(135deg, rgba(148, 163, 184, 0.14), rgba(148, 163, 184, 0.06));
+  border-color: rgba(148, 163, 184, 0.28);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .m-row:hover {
