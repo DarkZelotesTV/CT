@@ -8,6 +8,7 @@ import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
 
 type PresenceStatus = 'online' | 'idle' | 'offline' | 'dnd' | 'away';
+type RowVariant = 'default' | 'connected' | 'afk' | 'offline';
 
 export interface Member {
   userId: number;
@@ -150,6 +151,12 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
   const listParentRef = useRef<HTMLDivElement | null>(null);
   const canMoveMembers = Boolean(permissions.move);
   const canKickMembers = Boolean(permissions.kick);
+
+  const voiceChannelLookup = useMemo(() => {
+    const lookup = new Map<number, string>();
+    voiceChannels.forEach((vc) => lookup.set(vc.id, vc.name));
+    return lookup;
+  }, [voiceChannels]);
 
   useEffect(() => () => {
     isMountedRef.current = false;
@@ -390,28 +397,115 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
   }, [contextMenu?.channelId, voiceChannels]);
 
   const normalizedSearch = debouncedSearch.toLowerCase();
-  const filteredMembers = normalizedSearch
-    ? members.filter((m) => m.username.toLowerCase().includes(normalizedSearch))
-    : members;
+  const matchesSearch = useCallback((member: Member) => {
+    if (!normalizedSearch) return true;
+    return member.username.toLowerCase().includes(normalizedSearch);
+  }, [normalizedSearch]);
 
-  // Gruppenlogik (Online / Offline)
-  const onlineMembers = filteredMembers.filter((m) => m.status === 'online' || m.status === 'idle' || m.status === 'away');
-  const offlineMembers = filteredMembers.filter((m) => !(m.status === 'online' || m.status === 'idle' || m.status === 'away'));
+  const filteredMembers = normalizedSearch ? members.filter(matchesSearch) : members;
+
+  const membersById = useMemo(() => {
+    const lookup = new Map<number, Member>();
+    members.forEach((m) => lookup.set(m.userId, m));
+    return lookup;
+  }, [members]);
+
+  const resolveVoiceMember = useCallback(
+    (user: { id: number; username?: string; avatar_url?: string; status?: PresenceStatus }): Member => {
+      const baseMember = membersById.get(user.id);
+      const mergedStatus = normalizeStatus(user.status ?? baseMember?.status ?? 'online');
+      const mergedAvatar = getAvatarUrl(user.avatar_url) ?? baseMember?.avatarUrl;
+
+      if (baseMember) {
+        return {
+          ...baseMember,
+          status: mergedStatus,
+          ...(mergedAvatar ? { avatarUrl: mergedAvatar } : {}),
+        };
+      }
+
+      return {
+        userId: user.id,
+        username: user.username ?? t('memberSidebar.unknownUser'),
+        status: mergedStatus,
+        ...(mergedAvatar ? { avatarUrl: mergedAvatar } : {}),
+        roles: [],
+      };
+    },
+    [membersById, t]
+  );
+
+  const isAfkStatus = (status: PresenceStatus) => status === 'idle' || status === 'away';
 
   type MemberRow =
-    | { type: 'section'; key: string; label: string; count: number }
-    | { type: 'member'; key: string; member: Member };
+    | { type: 'section'; key: string; label: string; count: number; variant?: RowVariant }
+    | { type: 'member'; key: string; member: Member; variant?: RowVariant };
 
   const memberRows = useMemo<MemberRow[]>(() => {
-    const rows: MemberRow[] = [
-      { type: 'section' as const, key: 'online', label: t('memberSidebar.online'), count: onlineMembers.length },
-      ...onlineMembers.map((member) => ({ type: 'member' as const, key: `member-${member.userId}`, member })),
-      { type: 'section' as const, key: 'offline', label: t('memberSidebar.offline'), count: offlineMembers.length },
-      ...offlineMembers.map((member) => ({ type: 'member' as const, key: `member-${member.userId}`, member })),
-    ];
+    const rows: MemberRow[] = [];
+    const connectedIds = new Set<number>();
+
+    const voiceEntries = Object.entries(channelPresence || {});
+    const orderedChannelIds = voiceChannels.map((vc) => vc.id);
+    const sortedVoiceEntries = voiceEntries.sort(([a], [b]) => {
+      const aId = Number(a);
+      const bId = Number(b);
+      const aIndex = orderedChannelIds.indexOf(aId);
+      const bIndex = orderedChannelIds.indexOf(bId);
+      if (aIndex === -1 || bIndex === -1) return aId - bId;
+      return aIndex - bIndex;
+    });
+
+    sortedVoiceEntries.forEach(([channelIdRaw, users]) => {
+      const channelId = Number(channelIdRaw);
+      const membersInChannel = (users || []).map(resolveVoiceMember).filter(matchesSearch);
+      if (membersInChannel.length === 0) return;
+
+      membersInChannel.forEach((m) => connectedIds.add(m.userId));
+
+      const channelLabel = voiceChannelLookup.get(channelId) ?? t('memberSidebar.unknownChannel', { channelId });
+      rows.push({
+        type: 'section',
+        key: `voice-${channelId}`,
+        label: t('memberSidebar.connectedTo', { channel: channelLabel }),
+        count: membersInChannel.length,
+        variant: 'connected',
+      });
+      membersInChannel.forEach((member) =>
+        rows.push({ type: 'member', key: `voice-${channelId}-member-${member.userId}`, member, variant: 'connected' })
+      );
+    });
+
+    const nonVoiceMembers = filteredMembers.filter((m) => !connectedIds.has(m.userId));
+    const afkMembers = nonVoiceMembers.filter((m) => isAfkStatus(m.status));
+    const offlineMembers = nonVoiceMembers.filter((m) => normalizeStatus(m.status) === 'offline');
+    const onlineMembers = nonVoiceMembers.filter((m) => !isAfkStatus(m.status) && normalizeStatus(m.status) !== 'offline');
+
+    if (onlineMembers.length > 0) {
+      rows.push({ type: 'section', key: 'online', label: t('memberSidebar.online'), count: onlineMembers.length });
+      rows.push(...onlineMembers.map((member) => ({ type: 'member', key: `member-${member.userId}`, member })));
+    }
+
+    if (afkMembers.length > 0) {
+      rows.push({ type: 'section', key: 'afk', label: t('memberSidebar.afk'), count: afkMembers.length, variant: 'afk' });
+      rows.push(...afkMembers.map((member) => ({ type: 'member', key: `afk-${member.userId}`, member, variant: 'afk' })));
+    }
+
+    if (offlineMembers.length > 0) {
+      rows.push({
+        type: 'section',
+        key: 'offline',
+        label: t('memberSidebar.offline'),
+        count: offlineMembers.length,
+        variant: 'offline',
+      });
+      rows.push(
+        ...offlineMembers.map((member) => ({ type: 'member', key: `member-${member.userId}`, member, variant: 'offline' }))
+      );
+    }
 
     return rows;
-  }, [offlineMembers, onlineMembers, t]);
+  }, [channelPresence, filteredMembers, matchesSearch, resolveVoiceMember, t, voiceChannelLookup, voiceChannels]);
 
   const memberVirtualizer = useVirtualizer({
     count: memberRows.length,
@@ -420,7 +514,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
     overscan: 8,
   });
 
-  const renderMember = (m: Member, style?: CSSProperties) => {
+  const renderMember = (m: Member, variant: RowVariant = 'default', style?: CSSProperties) => {
     const statusClass = m.status === 'idle' || m.status === 'away' ? 'idle' : m.status;
     const statusTone =
       statusClass === 'online'
@@ -431,16 +525,19 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
             ? { row: 'm-row dnd', chip: 'status-pill dnd' }
             : { row: 'm-row offline', chip: 'status-pill offline' };
 
+    const variantClass =
+      variant === 'connected' ? 'accent-connected' : variant === 'afk' ? 'accent-afk' : variant === 'offline' ? 'accent-offline' : '';
+
     const roleTags = (m.roles || [])
       .map((role: any) => (typeof role === 'string' ? role : role?.name))
       .filter(Boolean)
       .map((role: string) => role.toLowerCase());
 
     const roleBadges = [
-      roleTags.includes('owner') ? { label: 'Owner', icon: Crown, className: 'role-tag admin' } : null,
-      roleTags.includes('admin') ? { label: 'Admin', icon: Shield, className: 'role-tag admin' } : null,
-      roleTags.some((r) => r.includes('mod')) ? { label: 'Mod', icon: Shield, className: 'role-tag mod' } : null,
-      roleTags.some((r) => r.includes('bot')) ? { label: 'Bot', icon: UserCheck, className: 'role-tag bot' } : null,
+      roleTags.includes('owner') ? { label: 'Owner', icon: Crown, className: 'admin' } : null,
+      roleTags.includes('admin') ? { label: 'Admin', icon: Shield, className: 'admin' } : null,
+      roleTags.some((r) => r.includes('mod')) ? { label: 'Mod', icon: Shield, className: 'mod' } : null,
+      roleTags.some((r) => r.includes('bot')) ? { label: 'Bot', icon: UserCheck, className: 'bot' } : null,
     ].filter(Boolean) as { label: string; icon: typeof Shield; className: string }[];
 
     const statusText =
@@ -456,7 +553,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
       <div
         key={m.userId}
         style={style}
-        className={`${statusTone.row} cursor-pointer`}
+        className={`${statusTone.row} ${variantClass} cursor-pointer`}
         onContextMenu={(e) => {
           e.preventDefault();
           openUserMenu({ x: e.clientX, y: e.clientY, target: e.currentTarget as HTMLElement }, m);
@@ -486,14 +583,14 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
           </div>
           <div className="m-roles">
             {roleBadges.length === 0 && (
-              <span className="role-tag neutral">
+              <span className="tag role-tag neutral">
                 <UserX size={12} /> {t('memberSidebar.noRoles', { defaultValue: 'Keine Rollen' })}
               </span>
             )}
             {roleBadges.map((badge) => {
               const Icon = badge.icon;
               return (
-                <span key={`${m.userId}-${badge.label}`} className={badge.className}>
+                <span key={`${m.userId}-${badge.label}`} className={`tag role-tag ${badge.className}`}>
                   <Icon size={11} /> {badge.label}
                 </span>
               );
@@ -560,14 +657,18 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
 
               if (row.type === 'section') {
                 return (
-                  <div key={row.key} style={style} className="grp-head">
+                  <div
+                    key={row.key}
+                    style={style}
+                    className={`grp-head ${row.variant ? `accent-${row.variant}` : ''}`}
+                  >
                     <span>{row.label}</span>
                     <span className="grp-count">{row.count}</span>
                   </div>
                 );
               }
 
-              return renderMember(row.member, style);
+              return renderMember(row.member, row.variant, style);
             })}
           </div>
         )}
