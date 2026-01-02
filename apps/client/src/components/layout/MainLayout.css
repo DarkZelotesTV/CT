@@ -249,6 +249,35 @@
   position: relative; overflow: hidden;
   display: flex; flex-direction: column;
 }
+.edge-toggle {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  border: var(--border-glass);
+  color: #888;
+  cursor: pointer;
+  z-index: 60;
+  border-radius: 4px;
+  backdrop-filter: blur(5px);
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.edge-toggle:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.edge-left {
+  left: 4px;
+}
+.edge-right {
+  right: 4px;
+}
 
 /* 5. INFO (Right Sidebar) */
 .info-panel {

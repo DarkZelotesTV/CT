@@ -1115,6 +1115,26 @@ export const MainLayout = () => {
 
         {/* --- 4. MAIN STAGE (Mitte) --- */}
         <main ref={mainContentRef} id="main-content" tabIndex={-1} className="main-panel no-drag relative overflow-hidden flex flex-col">
+          {!isMobileLayout && (
+            <>
+              <button
+                type="button"
+                className="edge-toggle edge-left"
+                onClick={() => setShowLeftSidebar((prev) => !prev)}
+                aria-label={showLeftSidebar ? t('layout.hideChannels', { defaultValue: 'Kanäle ausblenden' }) : t('layout.showChannels', { defaultValue: 'Kanäle einblenden' })}
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <button
+                type="button"
+                className="edge-toggle edge-right"
+                onClick={() => setShowRightSidebar((prev) => !prev)}
+                aria-label={showRightSidebar ? t('layout.hideMembers', { defaultValue: 'Mitglieder ausblenden' }) : t('layout.showMembers', { defaultValue: 'Mitglieder einblenden' })}
+              >
+                <ChevronRight size={16} />
+              </button>
+            </>
+          )}
            {/* Mobile Toggle Row falls nötig, oder via Header gelöst */}
           <div className="main-content flex-1 min-h-0 relative">
               {renderContent()}
