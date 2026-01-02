@@ -888,8 +888,10 @@ export const MainLayout = () => {
     'fold-tree': !showLeftSidebar && !isMobileLayout,
     'fold-info': !showRightSidebar && !isMobileLayout,
     'fold-log': !showLogPanel && !isMobileLayout,
-    'mobile-nav-open': showMobileNav,
+    'mobile-nav-open': isMobileLayout && showMobileNav,
+    'mobile-info-open': isMobileLayout && showRightSidebar,
   });
+  const isMobileOverlayActive = isMobileLayout && (showMobileNav || showRightSidebar);
 
   // Dynamische CSS Variablen für Grid-Spalten
   const gridStyle = {
@@ -900,9 +902,21 @@ export const MainLayout = () => {
       : showLeftSidebar
       ? `${effectiveLeftSidebarWidth}px`
       : '0px',
-    '--curr-info': isMobileLayout ? '0px' : showRightSidebar ? `${effectiveRightSidebarWidth}px` : '0px',
+    '--curr-info': isMobileLayout
+      ? showRightSidebar
+        ? 'var(--mobile-info-width, min(75vw, 320px))'
+        : '0px'
+      : showRightSidebar
+      ? `${effectiveRightSidebarWidth}px`
+      : '0px',
     '--curr-log': showLogPanel ? 'var(--h-log, 160px)' : '36px',
   } as React.CSSProperties;
+
+  const handleOverlayClick = useCallback(() => {
+    if (!isMobileLayout) return;
+    setShowMobileNav(false);
+    setShowRightSidebar(false);
+  }, [isMobileLayout]);
 
   const ui = (
     <TopBarProvider>
@@ -1003,7 +1017,12 @@ export const MainLayout = () => {
           }}
         />
 
-        <div className="mobile-overlay" onClick={() => setShowMobileNav(false)} />
+        <div
+          className="mobile-overlay"
+          role="presentation"
+          aria-hidden={!isMobileOverlayActive}
+          onClick={handleOverlayClick}
+        />
 
         {/* --- 1. RAIL (Links außen) --- */}
         <nav
@@ -1079,13 +1098,18 @@ export const MainLayout = () => {
                  >
                     <ChevronDown size={14} className={showLogPanel ? "" : "rotate-180"} />
                  </button>
-                 <button 
-                    className={classNames("pill", {active: showRightSidebar})}
+                {isMobileLayout && (
+                  <button
+                    className={classNames('pill mobile-info-toggle', { active: showRightSidebar })}
                     onClick={() => setShowRightSidebar(!showRightSidebar)}
+                    aria-expanded={showRightSidebar}
+                    aria-controls="member-drawer"
                     title={showRightSidebar ? t('layout.hideMembers') : t('layout.showMembers')}
-                 >
+                  >
                     <Users size={14} />
-                 </button>
+                    <span className="mobile-info-label">{t('layout.showMembers', { defaultValue: 'Mitglieder' })}</span>
+                  </button>
+                )}
               </>
             )}
           </div>
@@ -1151,9 +1175,13 @@ export const MainLayout = () => {
         {selectedServerId && (
           <aside
             ref={rightSidebarRef}
-            className="info-panel no-drag relative"
-            style={{ display: isMobileLayout && !showRightSidebar ? 'none' : undefined }}
-            aria-hidden={!showRightSidebar && !isMobileLayout}
+            id="member-drawer"
+            className={classNames('info-panel no-drag relative', {
+              'mobile-info-panel': isMobileLayout,
+            })}
+            aria-hidden={isMobileLayout ? !showRightSidebar : !showRightSidebar}
+            aria-modal={isMobileLayout && showRightSidebar}
+            role={isMobileLayout ? 'dialog' : 'complementary'}
           >
             <div className="info-content custom-scrollbar h-full overflow-y-auto">
               <MemberSidebar serverId={selectedServerId} />
