@@ -486,7 +486,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
             <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-gray-400">
               <span className={statusTone.chip}>{statusText}</span>
               {roleBadges.length === 0 && (
-                <span className="role-tag flex items-center gap-1 text-xs text-gray-400 border-white/10 bg-white/5">
+                <span className="role-tag neutral">
                   <UserX size={12} /> {t('memberSidebar.noRoles', { defaultValue: 'Keine Rollen' })}
                 </span>
               )}

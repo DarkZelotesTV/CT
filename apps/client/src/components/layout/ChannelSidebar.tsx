@@ -221,10 +221,10 @@ export const ChannelSidebar = ({
   const resolveStatusClass = useCallback(
     (status?: string) => {
       const normalized = (status || '').toLowerCase();
-      if (normalized === 'online') return 'status-online';
-      if (normalized === 'idle' || normalized === 'away') return 'status-idle';
-      if (normalized === 'dnd' || normalized === 'busy') return 'status-dnd';
-      return 'status-offline';
+      if (normalized === 'online') return 'online';
+      if (normalized === 'idle' || normalized === 'away') return 'idle';
+      if (normalized === 'dnd' || normalized === 'busy') return 'dnd';
+      return 'offline';
     },
     []
   );
