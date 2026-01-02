@@ -893,7 +893,13 @@ export const MainLayout = () => {
 
   // Dynamische CSS Variablen für Grid-Spalten
   const gridStyle = {
-    '--curr-tree': isMobileLayout ? '0px' : showLeftSidebar ? `${effectiveLeftSidebarWidth}px` : '0px',
+    '--curr-tree': isMobileLayout
+      ? showMobileNav
+        ? 'var(--mobile-tree-width, min(80vw, 320px))'
+        : '0px'
+      : showLeftSidebar
+      ? `${effectiveLeftSidebarWidth}px`
+      : '0px',
     '--curr-info': isMobileLayout ? '0px' : showRightSidebar ? `${effectiveRightSidebarWidth}px` : '0px',
     '--curr-log': showLogPanel ? 'var(--h-log, 160px)' : '36px',
   } as React.CSSProperties;
@@ -1004,8 +1010,8 @@ export const MainLayout = () => {
           ref={railRef}
           className="rail-panel no-drag"
           role={isMobileLayout ? 'dialog' : 'complementary'}
-          aria-modal={isMobileLayout}
-          aria-hidden={!showMobileNav && isMobileLayout}
+          aria-modal={isMobileLayout && showMobileNav}
+          aria-hidden={isMobileLayout ? !showMobileNav : false}
         >
           <ServerRail
             selectedServerId={selectedServerId}
@@ -1090,7 +1096,7 @@ export const MainLayout = () => {
           <aside
             ref={leftSidebarRef}
             className="tree-panel no-drag relative"
-            aria-hidden={!showLeftSidebar && !isMobileLayout}
+            aria-hidden={isMobileLayout ? !showMobileNav : !showLeftSidebar}
           >
             <div className="tree-content custom-scrollbar flex-1 overflow-hidden">
               <ChannelSidebar

@@ -30,6 +30,25 @@
   z-index: 1;
 }
 
+.mobile-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 180;
+  transition: opacity 0.2s ease;
+}
+
+.main-layout.mobile-nav-open {
+  overflow: hidden;
+}
+
+.main-layout.mobile-nav-open .mobile-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 /* --- PANELS --- */
 
 /* 1. RAIL */
@@ -356,6 +375,64 @@
 .resizer:hover { background: rgba(255,255,255,0.1); }
 .resizer-left { right: 0; }
 .resizer-right { left: 0; }
+
+@media (max-width: 1024px) {
+  .main-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: var(--h-header) 1fr var(--curr-log, var(--h-log));
+    grid-template-areas:
+      "header"
+      "main"
+      "log";
+  }
+
+  .rail-panel,
+  .tree-panel {
+    position: fixed;
+    top: var(--h-header);
+    bottom: 0;
+    height: auto;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
+    transform: translateX(-100%);
+    transition: transform 0.25s ease, opacity 0.25s ease;
+    opacity: 0;
+    pointer-events: none;
+    backdrop-filter: blur(16px);
+  }
+
+  .rail-panel {
+    left: 0;
+    width: var(--w-rail);
+    background: var(--bg-rail);
+    z-index: 220;
+  }
+
+  .tree-panel {
+    left: var(--w-rail);
+    width: var(--mobile-tree-width, min(80vw, 320px));
+    max-width: 90vw;
+    background: var(--bg-tree);
+    z-index: 210;
+    transform: translateX(calc(-100% - var(--w-rail)));
+  }
+
+  .mobile-nav-open .rail-panel,
+  .mobile-nav-open .tree-panel {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .mobile-nav-open .main-panel,
+  .mobile-nav-open .log-panel,
+  .mobile-nav-open .header-panel {
+    pointer-events: none;
+  }
+
+  .mobile-nav-open .header-panel {
+    pointer-events: auto;
+  }
+}
 
 /* --- ROLE & STATUS BADGES --- */
 .role-tag,
