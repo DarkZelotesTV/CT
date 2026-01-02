@@ -263,12 +263,22 @@ export const ChannelSidebar = ({
     const voiceUsers = isVoice ? channelPresence?.[c.id] ?? [] : [];
     const Icon = c.type === 'web' ? Globe : isVoice ? Volume2 : c.type === 'data-transfer' ? Lock : c.type === 'list' ? ListChecks : Hash;
 
-    const wrapperPadding = isInside ? 'ml-3' : 'mx-2';
-    const baseBorder = isVoiceActive
-      ? 'border-emerald-400/30 bg-emerald-500/5 shadow-[0_8px_24px_rgba(16,185,129,0.12)]'
-      : isActive
-        ? 'border-white/15 bg-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.35)]'
-        : 'border-white/5 bg-white/5 hover:border-white/15 hover:bg-white/10';
+    const isHighlighted = isActive || isVoiceActive;
+    const channelSubLabel = isVoice
+      ? isVoiceActive
+        ? t('channelSidebar.connected')
+        : t('channelSidebar.voiceChannel', { defaultValue: 'Voice' })
+      : c.type === 'web'
+        ? t('channelSidebar.webChannel', { defaultValue: 'Web' })
+        : c.type === 'data-transfer'
+          ? t('channelSidebar.dataChannel', { defaultValue: 'Data' })
+          : c.type === 'list'
+            ? t('channelSidebar.listChannel', { defaultValue: 'List' })
+            : t('channelSidebar.textChannel', { defaultValue: 'Text' });
+
+    const channelClasses = ['t-chan', isInside ? 'nested' : '', isHighlighted ? 'active' : '', isVoiceActive ? 'live' : '']
+      .filter(Boolean)
+      .join(' ');
 
     return (
       <div key={c.id} className="relative" ref={dragMeta?.setNodeRef} style={dragMeta?.style}>
@@ -277,45 +287,27 @@ export const ChannelSidebar = ({
           onClick={() => {
             if (c.type !== 'spacer') onSelectChannel(c);
           }}
-          className={`flex items-center gap-3 px-3 py-2 mb-1 cursor-pointer group select-none rounded-2xl transition-all outline-none border ${wrapperPadding} ${baseBorder}`}
+          className={channelClasses}
         >
-          <div
-            className={`flex h-9 w-9 items-center justify-center rounded-xl border ${
-              isVoiceActive
-                ? 'border-emerald-300/60 bg-emerald-500/15 text-emerald-100'
-                : 'border-white/5 bg-black/30 text-gray-300 group-hover:text-white'
-            }`}
-          >
-            <Icon size={18} />
+          <span className="chan-icon">
+            <Icon size={16} />
+          </span>
+
+          <div className="chan-meta">
+            <span className="chan-name">{c.name}</span>
+            <span className="chan-sub">{channelSubLabel}</span>
           </div>
 
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <span className="text-[13px] font-semibold text-white truncate">{c.name}</span>
-              {isVoice && voiceUsers.length > 0 && (
-                <span className="flex items-center gap-1 text-[11px] text-emerald-200 bg-emerald-500/10 border border-emerald-400/30 rounded-full px-2 py-0.5">
-                  <Users2 size={12} /> {voiceUsers.length}
-                </span>
-              )}
-            </div>
-            <div className="text-[11px] text-gray-500">
-              {isVoice
-                ? isVoiceActive
-                  ? t('channelSidebar.connected')
-                  : t('channelSidebar.voiceChannel', { defaultValue: 'Voice' })
-                : t('channelSidebar.textChannel', { defaultValue: 'Text' })}
-            </div>
-          </div>
-
-          {isVoiceActive && (
-            <span className="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-emerald-500/20 text-emerald-100 border border-emerald-400/30">
-              LIVE
+          {isVoiceActive && <span className="chan-pill">LIVE</span>}
+          {isVoice && voiceUsers.length > 0 && (
+            <span className="chan-pill">
+              <Users2 size={12} /> {voiceUsers.length}
             </span>
           )}
         </div>
 
         {isVoice && voiceUsers.length > 0 && (
-          <div className={`space-y-1 ${isInside ? 'ml-11' : 'ml-4'} mb-1`}>
+          <div className={`space-y-1 ${isInside ? 'ml-8' : 'ml-4'} mb-1`}>
             {voiceUsers.map((user) => {
               const tag = resolveRoleTag(user);
               const statusCls = resolveStatusClass(user.status);
@@ -326,12 +318,10 @@ export const ChannelSidebar = ({
               return (
                 <div
                   key={`${c.id}-${user.id}`}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border bg-white/5 ${
-                    speaking ? 'border-emerald-400/40 bg-emerald-500/10 shadow-[0_4px_16px_rgba(16,185,129,0.15)]' : 'border-white/5'
-                  }`}
+                  className={`t-user ${speaking ? 'speaking' : ''}`}
                 >
                   <div className="relative">
-                    <div className="h-7 w-7 rounded-full overflow-hidden bg-white/10 flex items-center justify-center text-[11px] font-semibold text-gray-200">
+                    <div className="u-av-sm text-gray-200">
                       {avatar ? <img src={avatar} alt={user.username} className="h-full w-full object-cover" /> : initials}
                     </div>
                     <span className={`status-dot ${statusCls}`} />
@@ -341,7 +331,7 @@ export const ChannelSidebar = ({
                       <tag.Icon size={12} /> {tag.label.toUpperCase()}
                     </span>
                   )}
-                  <span className="flex-1 text-sm text-gray-100 truncate">{user.username}</span>
+                  <span className="u-name">{user.username}</span>
                   {speaking && <div className="w-1.5 h-4 rounded-full bg-emerald-400 animate-pulse" />}
                 </div>
               );
@@ -420,7 +410,7 @@ export const ChannelSidebar = ({
       )}
 
       {/* Liste */}
-      <div className="flex-1 overflow-y-auto px-3 sm:px-4 pb-5 pt-3 custom-scrollbar relative z-0">
+      <div className="tree-content custom-scrollbar relative z-0">
           {isLoading && <Spinner label={t('channelSidebar.loading')} />}
           {error && <ErrorCard className="mx-2 mb-3" message={error} onRetry={() => fetchData()} />}
 
@@ -437,12 +427,14 @@ export const ChannelSidebar = ({
               {categories.map((cat) => (
                   <SortableWrapper key={cat.id} item={cat} id={categoryKey(cat.id)} data={{ type: 'category', categoryId: cat.id }} disabled={dragDisabled}>
                     {(dragMeta) => (
-                        <div className={`mt-4 ${dragMeta.isDragging ? 'opacity-80' : ''}`} ref={dragMeta.setNodeRef} style={dragMeta.style}>
-                           <div className="flex items-center justify-between group no-drag mb-1 pl-1 pr-2 gap-2">
+                        <div className={dragMeta.isDragging ? 'opacity-80' : ''} ref={dragMeta.setNodeRef} style={dragMeta.style}>
+                           <div className="t-cat group justify-between pr-2 no-drag">
                                <div className="flex items-center gap-2">
-                                  {/* Drag Handle */}
                                   <button {...(dragMeta.isDisabled ? {} : dragMeta.handleProps)} className="flex h-7 w-7 items-center justify-center rounded-md text-gray-600 hover:text-gray-300 hover:bg-white/5"><GripVertical size={14} /></button>
-                                  <button onClick={() => toggleCategory(cat.id)} className="flex items-center gap-1 text-gray-500 text-xs font-bold uppercase hover:text-gray-300">{collapsed[cat.id] ? <ChevronRight size={10} /> : <ChevronDown size={10} />}{cat.name}</button>
+                                  <button onClick={() => toggleCategory(cat.id)} className="flex items-center gap-2 text-inherit hover:text-white">
+                                    {collapsed[cat.id] ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
+                                    <span className="truncate">{cat.name}</span>
+                                  </button>
                                </div>
                                <button className="no-drag opacity-0 group-hover:opacity-100 text-gray-500 hover:text-white" onClick={(e) => { e.stopPropagation(); setCreateType('text'); setCreateCategoryId(cat.id); setShowCreateModal(true); }}><Plus size={14} /></button>
                            </div>
@@ -466,21 +458,26 @@ export const ChannelSidebar = ({
       {shouldShowVoiceParticipants && <div className="relative z-10"><VoiceParticipantsPanel /></div>}
 
       {connectionState === 'connected' && (
-        <div className="px-3 pb-2 relative z-10 space-y-2">
+        <div className="relative z-10 pb-3">
           <button
             type="button"
             onClick={handleJumpToVoice}
-            className="w-full text-left px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-400/20 text-emerald-100 hover:border-emerald-300/40 transition-colors"
+            className="t-chan active w-full bg-transparent"
             title={activeChannelName || t('channelSidebar.inChannel')}
           >
-            <div className="text-[10px] uppercase font-bold tracking-widest">{t('channelSidebar.connected')}</div>
-            <div className="text-sm font-semibold truncate">{activeChannelName}</div>
+            <span className="chan-icon">
+              <Volume2 size={16} />
+            </span>
+            <div className="chan-meta">
+              <span className="chan-name">{activeChannelName || t('channelSidebar.inChannel')}</span>
+              <span className="chan-sub">{t('channelSidebar.connected')}</span>
+            </div>
           </button>
-          <div className="grid grid-cols-3 gap-2 rounded-xl border border-emerald-400/25 bg-emerald-500/5 p-2 shadow-[0_12px_30px_rgba(0,0,0,0.25)]">
+          <div className="call-ctrl">
             <button
               type="button"
               onClick={() => disconnect()}
-              className="h-10 rounded-lg bg-rose-500/15 text-rose-200 border border-rose-400/30 hover:bg-rose-500/30 flex items-center justify-center transition-colors"
+              className="cc-btn danger"
               aria-label={t('channelSidebar.leaveVoice', { defaultValue: 'Voice verlassen' })}
             >
               <PhoneOff size={16} />
@@ -488,11 +485,7 @@ export const ChannelSidebar = ({
             <button
               type="button"
               onClick={() => toggleCamera()}
-              className={`h-10 rounded-lg border flex items-center justify-center transition-colors ${
-                isCameraEnabled
-                  ? 'bg-cyan-500/15 border-cyan-400/30 text-cyan-100'
-                  : 'bg-white/5 border-white/10 text-gray-200 hover:border-white/20'
-              }`}
+              className={`cc-btn ${isCameraEnabled ? 'active' : ''}`}
               aria-pressed={isCameraEnabled}
               aria-label={t('channelSidebar.toggleCamera', { defaultValue: 'Kamera umschalten' })}
             >
@@ -501,11 +494,7 @@ export const ChannelSidebar = ({
             <button
               type="button"
               onClick={() => toggleScreenShare()}
-              className={`h-10 rounded-lg border flex items-center justify-center transition-colors ${
-                isScreenSharing
-                  ? 'bg-indigo-500/15 border-indigo-400/30 text-indigo-100'
-                  : 'bg-white/5 border-white/10 text-gray-200 hover:border-white/20'
-              }`}
+              className={`cc-btn ${isScreenSharing ? 'active' : ''}`}
               aria-pressed={isScreenSharing}
               aria-label={t('channelSidebar.toggleScreenShare', { defaultValue: 'Bildschirm teilen' })}
             >
