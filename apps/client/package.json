@@ -11,7 +11,7 @@
     "lint": "eslint \"src/**/*.{ts,tsx,js,jsx}\"",
     "format": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "test": "vitest run",
-    "package": "npm run build && electron-builder"
+    "package": "npm run build"
   },
   "dependencies": {
     "@discord-clone/shared": "*",
