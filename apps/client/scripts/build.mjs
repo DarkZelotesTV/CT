@@ -6,3 +6,9 @@ const run = (command) => {
 
 run('npx tsc -p tsconfig.json');
 run('npx vite build');
+
+if (process.env.SKIP_ELECTRON_BUILDER === 'true') {
+  console.log('Skipping electron-builder because SKIP_ELECTRON_BUILDER=true');
+} else {
+  run('npx electron-builder');
+}
