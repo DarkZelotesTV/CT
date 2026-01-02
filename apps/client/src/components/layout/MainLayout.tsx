@@ -1144,7 +1144,7 @@ export const MainLayout = () => {
         )}
 
         {/* --- 4. MAIN STAGE (Mitte) --- */}
-        <main ref={mainContentRef} id="main-content" tabIndex={-1} className="main-panel no-drag relative overflow-hidden flex flex-col">
+        <main ref={mainContentRef} id="main-content" tabIndex={-1} className="main-panel no-drag relative flex flex-col">
           {!isMobileLayout && (
             <>
               <button
