@@ -20,7 +20,6 @@ export type HotkeySettings = {
   commandPalette: string | null;
   toggleMembers: string | null;
   toggleNavigation: string | null;
-  skipToContent: string | null;
 };
 
 export const defaultHotkeySettings: HotkeySettings = {
@@ -29,7 +28,6 @@ export const defaultHotkeySettings: HotkeySettings = {
   commandPalette: 'Ctrl+K',
   toggleMembers: 'Ctrl+Shift+M',
   toggleNavigation: 'Ctrl+Shift+D',
-  skipToContent: 'Alt+S',
 };
 
 export type ThemeSettings = {

@@ -256,8 +256,6 @@ export const MainLayout = () => {
       toggleMembers: settings.hotkeys.toggleMembers ?? defaultHotkeySettings.toggleMembers,
       toggleNavigation:
         settings.hotkeys.toggleNavigation ?? defaultHotkeySettings.toggleNavigation,
-      skipToContent:
-        settings.hotkeys.skipToContent ?? defaultHotkeySettings.skipToContent,
     }),
     [settings.hotkeys]
   );
@@ -924,21 +922,10 @@ export const MainLayout = () => {
         Die Klassen (rail-panel, header-panel etc.) matchen die neuen CSS-Stile.
       */}
       <div className={layoutClassName} style={isDesktop ? { ...gridStyle, paddingTop: titlebarHeight } : gridStyle}>
-        
+
         {/* ORBS */}
         <div className="glow-orb orb-1"></div>
         <div className="glow-orb orb-2"></div>
-
-        <a
-          href="#main-content"
-          onClick={(event) => {
-            event.preventDefault();
-            focusMainContent();
-          }}
-          className="skip-link"
-        >
-          {t('layout.skipToContent', { defaultValue: 'Skip to content' })}
-        </a>
 
         {isDesktop && (
           <TitleBar
