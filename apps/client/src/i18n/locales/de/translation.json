@@ -6,37 +6,45 @@
     "stageAreaDescription": "Wähle einen Kanal links."
   },
   "onboarding": {
-    "welcome": "Willkommen",
-    "welcomeUser": "Willkommen, {{username}}",
-    "title": "Kurzes Tutorial",
-    "subtitle": "In 30 Sekunden bist du startklar.",
+    "welcome": "Willkommen an Bord",
+    "welcomeUser": "Willkommen zurück, {{username}}",
+    "title": "Richte Clover in wenigen Schritten ein",
+    "subtitle": "Folge der Anleitung, um deine Identität zu sichern, einen Server zu erstellen und Voice startklar zu machen.",
     "close": "Schließen",
-    "skip": "Überspringen",
+    "skip": "Vorerst überspringen",
     "next": "Weiter",
-    "finish": "Los geht's",
+    "finish": "Setup abschließen",
     "progressLabel": "Schritt {{index}} von {{total}}",
+    "progressTitle": "Setup-Fortschritt",
+    "stepCardHint": "Springe zu einem Schritt, um ihn anzusehen oder fortzufahren.",
+    "footerHint": "Du kannst die Schritte später in den Einstellungen erneut öffnen.",
+    "stepStatus": {
+      "active": "In Arbeit",
+      "done": "Erledigt",
+      "upcoming": "Als Nächstes"
+    },
     "actions": {
-      "identity": "Identität verwalten",
-      "servers": "Server erstellen",
-      "voice": "Voice beitreten",
-      "settings": "Einstellungen öffnen"
+      "identity": "Identität öffnen",
+      "servers": "Server hinzufügen",
+      "voice": "Voice testen",
+      "settings": "Einstellungen prüfen"
     },
     "steps": {
       "identity": {
-        "title": "Deine Clover Identity",
-        "body": "Deine Identität liegt lokal auf deinem Gerät. Du kannst sie jederzeit exportieren (Backup) oder importieren. Ohne Identity kannst du keinen Server beitreten."
+        "title": "Erstelle deine Clover Identity",
+        "body": "Erzeuge deine sichere Identität, um Nachrichten zu signieren, Server beizutreten und Backups sicher zwischen Geräten zu nutzen."
       },
       "servers": {
-        "title": "Server erstellen oder beitreten",
-        "body": "Über das grüne + links kannst du Server erstellen oder Server beitreten – auch von anderen Instanzen. Remote Server werden automatisch „gepinnt“."
+        "title": "Erstelle oder tritt deinem ersten Server bei",
+        "body": "Nutze das grüne Plus, um einen Heim-Server zu erstellen oder entfernten Servern beizutreten. Vertrauenswürdige Server bleiben angeheftet."
       },
       "voice": {
-        "title": "Voice Calls",
-        "body": "Klicke auf einen Voice-Channel um zu verbinden. Unter dem Call siehst du, wer im Talk ist – und wer gerade spricht."
+        "title": "Teste Voice und Medien",
+        "body": "Wähle einen Voice-Channel zum Verbinden, teste dein Mikro und sieh in Echtzeit, wer spricht. Wechsle Geräte direkt in der Call-Leiste."
       },
       "settings": {
-        "title": "Server Settings & Rollen",
-        "body": "Als Admin kannst du Kanäle erstellen, Rollen vergeben und Berechtigungen pro Kanal einstellen. Öffne die Server Settings über das Zahnrad am Servernamen."
+        "title": "Einstellungen & Rollen prüfen",
+        "body": "Passe Berechtigungen an, erstelle Kanäle und weise Rollen zu. Öffne die Server-Einstellungen über das Zahnrad neben dem Servernamen."
       }
     }
   },
