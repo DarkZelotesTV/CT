@@ -6,37 +6,45 @@
     "stageAreaDescription": "Select a channel on the left."
   },
   "onboarding": {
-    "welcome": "Welcome",
-    "welcomeUser": "Welcome, {{username}}",
-    "title": "Quick tutorial",
-    "subtitle": "Ready to go in 30 seconds.",
+    "welcome": "Welcome aboard",
+    "welcomeUser": "Welcome back, {{username}}",
+    "title": "Finish setting up Clover",
+    "subtitle": "Follow the guided steps to secure your identity, create a home server, and get voice ready.",
     "close": "Close",
-    "skip": "Skip",
-    "next": "Next",
-    "finish": "Let's go",
+    "skip": "Skip for now",
+    "next": "Continue",
+    "finish": "Finish setup",
     "progressLabel": "Step {{index}} of {{total}}",
+    "progressTitle": "Setup progress",
+    "stepCardHint": "Jump to a step to review or continue.",
+    "footerHint": "You can revisit these steps anytime from Settings.",
+    "stepStatus": {
+      "active": "In progress",
+      "done": "Done",
+      "upcoming": "Next up"
+    },
     "actions": {
-      "identity": "Manage identity",
-      "servers": "Create server",
-      "voice": "Join voice",
-      "settings": "Open settings"
+      "identity": "Open identity",
+      "servers": "Add a server",
+      "voice": "Test voice",
+      "settings": "Review settings"
     },
     "steps": {
       "identity": {
-        "title": "Your Clover identity",
-        "body": "Your identity stays local on your device. You can export (backup) or import it at any time. Without an identity you can't join a server."
+        "title": "Create your Clover identity",
+        "body": "Generate your secure identity so you can sign messages, join servers, and back it up safely across devices."
       },
       "servers": {
-        "title": "Create or join servers",
-        "body": "Use the green + on the left to create servers or join servers—including from other instances. Remote servers are pinned automatically."
+        "title": "Add or join your first server",
+        "body": "Use the green plus to create a home server or join remote ones. Clover keeps trusted servers pinned so you can return quickly."
       },
       "voice": {
-        "title": "Voice calls",
-        "body": "Click a voice channel to connect. Below the call you'll see who's in the talk—and who's currently speaking."
+        "title": "Try voice and media",
+        "body": "Pick a voice channel to connect, test your mic, and see who is speaking in real time. Switch devices from the call tray."
       },
       "settings": {
-        "title": "Server settings & roles",
-        "body": "As an admin you can create channels, assign roles, and set permissions per channel. Open server settings via the gear next to the server name."
+        "title": "Review settings & roles",
+        "body": "Adjust permissions, create channels, and assign roles. Open server settings from the gear icon next to the server name."
       }
     }
   },

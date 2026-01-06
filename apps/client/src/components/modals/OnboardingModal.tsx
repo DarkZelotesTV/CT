@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Shield, Plus, Volume2, Users } from 'lucide-react';
+import { Shield, Plus, Volume2, Users, Check, ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { storage } from '../../shared/config/storage';
 import { ModalLayout } from './ModalLayout';
@@ -22,10 +22,10 @@ const progressColors: Record<StepKey, string> = {
 };
 
 const visuals: Record<StepKey, string> = {
-  identity: new URL('../../assets/onboarding/identity.svg', import.meta.url).toString(),
-  servers: new URL('../../assets/onboarding/servers.svg', import.meta.url).toString(),
-  voice: new URL('../../assets/onboarding/voice.svg', import.meta.url).toString(),
-  settings: new URL('../../assets/onboarding/settings.svg', import.meta.url).toString(),
+  identity: new URL('../../assets/onboarding/identity-journey.svg', import.meta.url).toString(),
+  servers: new URL('../../assets/onboarding/servers-journey.svg', import.meta.url).toString(),
+  voice: new URL('../../assets/onboarding/voice-journey.svg', import.meta.url).toString(),
+  settings: new URL('../../assets/onboarding/settings-journey.svg', import.meta.url).toString(),
 };
 
 export const OnboardingModal = ({ onClose, initialStep = 0, onStepAction }: Props) => {
@@ -93,67 +93,124 @@ export const OnboardingModal = ({ onClose, initialStep = 0, onStepAction }: Prop
       description={t('onboarding.subtitle')}
       onClose={close}
       onOverlayClick={close}
-      bodyClassName="grid lg:grid-cols-[1.2fr,1fr] gap-8 p-6 lg:p-8"
+      bodyClassName="grid lg:grid-cols-[1.1fr,0.9fr] gap-6 lg:gap-10 p-0"
     >
-      <div className="space-y-6">
-        <div className="border-b border-white/5 pb-4">
-          <div className="text-xs uppercase tracking-widest text-gray-500">{welcomeLabel}</div>
-          <div className="flex items-center gap-3 mt-1">
-            <h2 className="text-2xl font-bold text-white">{t('onboarding.title')}</h2>
-            <div className="flex items-center gap-2 text-xs text-white/70">
-              <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-indigo-200">
-                <Icon size={22} />
+      <div className="flex flex-col gap-6 p-6 lg:p-8">
+        <div className="relative overflow-hidden rounded-3xl border border-white/5 bg-gradient-to-br from-white/[0.04] to-white/[0.02] p-6 lg:p-7 shadow-xl">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(125,211,252,0.12),transparent_30%),radial-gradient(circle_at_80%_0%,rgba(129,140,248,0.2),transparent_30%)]" />
+          <div className="relative flex flex-col gap-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <div className="text-xs uppercase tracking-[0.2em] text-white/60">{welcomeLabel}</div>
+                <h2 className="text-2xl lg:text-3xl font-bold text-white leading-tight">{t('onboarding.title')}</h2>
+                <p className="text-sm text-white/70 max-w-2xl">{t('onboarding.subtitle')}</p>
               </div>
-              <span className="font-semibold">{progress}%</span>
+              <div className="flex flex-col items-end gap-2">
+                <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-white/70">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-white/10 to-white/0 border border-white/10 text-indigo-200">
+                    <Icon size={18} />
+                  </div>
+                  <span className="font-semibold text-white">{progress}%</span>
+                </div>
+                <div className="text-[11px] uppercase tracking-[0.12em] text-white/50">{t('onboarding.progressTitle')}</div>
+              </div>
             </div>
+
+            <div className="space-y-3">
+              <div className="h-2 w-full rounded-full bg-white/5 overflow-hidden">
+                <div
+                  className={`h-full bg-gradient-to-r ${progressColors[current.key]} transition-all duration-300`}
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-white/60">
+                <div className="flex items-center gap-2">
+                  {steps.map((item, i) => {
+                    const isActive = i === step;
+                    const isDone = i < step;
+                    return (
+                      <div
+                        key={item.key}
+                        className={`flex items-center gap-2 rounded-full px-3 py-1 border text-[11px] uppercase tracking-[0.16em] ${
+                          isActive
+                            ? 'border-white/40 bg-white/10 text-white'
+                            : isDone
+                            ? 'border-white/15 bg-white/5 text-white/80'
+                            : 'border-white/5 bg-white/[0.02] text-white/50'
+                        }`}
+                      >
+                        <span className="font-semibold">{t('onboarding.progressLabel', { index: i + 1, total: steps.length })}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <span className="text-white/50">{t('onboarding.stepCardHint')}</span>
+              </div>
           </div>
-          <p className="text-gray-400 text-sm mt-2">{t('onboarding.subtitle')}</p>
-          <div className="mt-3">
-            <div className="h-2 rounded-full bg-white/5 overflow-hidden">
-              <div
-                className={`h-full bg-gradient-to-r ${progressColors[current.key]} transition-all duration-300`}
-                style={{ width: `${progress}%` }}
-              />
-            </div>
           </div>
         </div>
 
         <div className="flex flex-col gap-4">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-300">
-              <Icon size={24} />
-            </div>
-            <div className="flex-1 space-y-2">
-              <div className="text-white font-bold text-lg">{t(current.titleKey)}</div>
-              <div className="text-gray-300 text-sm leading-relaxed">{t(current.bodyKey)}</div>
-            </div>
-          </div>
+          {steps.map((item, i) => {
+            const isActive = i === step;
+            const isDone = i < step;
+            const StatusIcon = isDone ? Check : item.icon;
 
-          <div className="w-full rounded-2xl bg-white/[0.03] border border-white/5 p-4 flex items-center gap-4">
-            <div className="flex-1 grid grid-cols-2 gap-3">
-              {steps.map((item, i) => (
-                <button
-                  key={item.key}
-                  onClick={() => setStep(i)}
-                  className={`text-left rounded-xl px-3 py-2 transition-all border ${
-                    step === i
-                      ? 'bg-white/10 border-white/20 shadow-lg shadow-indigo-900/20'
-                      : 'bg-transparent border-white/5 hover:bg-white/5'
+            return (
+              <button
+                key={item.key}
+                onClick={() => setStep(i)}
+                className={`group flex w-full items-start gap-4 rounded-2xl border px-4 py-4 transition-all text-left ${
+                  isActive
+                    ? 'border-white/25 bg-white/10 shadow-lg shadow-indigo-900/30'
+                    : 'border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.07]'
+                }`}
+              >
+                <div
+                  className={`flex h-12 w-12 items-center justify-center rounded-xl border ${
+                    isActive
+                      ? 'border-indigo-200/60 bg-indigo-500/15 text-indigo-100'
+                      : isDone
+                      ? 'border-emerald-200/50 bg-emerald-500/15 text-emerald-100'
+                      : 'border-white/10 bg-white/5 text-white/70'
                   }`}
                 >
-                  <div className="text-xs uppercase tracking-wide text-gray-400">{t(item.titleKey)}</div>
-                  <div className="text-white/80 text-xs mt-1">{t('onboarding.progressLabel', { index: i + 1, total: steps.length })}</div>
-                </button>
-              ))}
-            </div>
-          </div>
+                  <StatusIcon size={22} />
+                </div>
+                <div className="flex-1 space-y-1.5">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="text-base font-semibold text-white">{t(item.titleKey)}</div>
+                    <span
+                      className={`rounded-full px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${
+                        isActive
+                          ? 'bg-indigo-500/15 text-indigo-100 border border-indigo-200/40'
+                          : isDone
+                          ? 'bg-emerald-500/15 text-emerald-100 border border-emerald-200/40'
+                          : 'bg-white/[0.04] text-white/60 border border-white/10'
+                      }`}
+                    >
+                      {t(`onboarding.stepStatus.${isDone ? 'done' : isActive ? 'active' : 'upcoming'}`)}
+                    </span>
+                  </div>
+                  <div className="text-sm text-white/75 leading-relaxed">{t(item.bodyKey)}</div>
+                  <div className="flex items-center gap-2 text-xs text-white/60">
+                    <span>{t('onboarding.progressLabel', { index: i + 1, total: steps.length })}</span>
+                    <ArrowRight
+                      size={14}
+                      className={`transition-transform ${isActive ? 'translate-x-1 text-indigo-200' : 'group-hover:translate-x-1 text-white/50'}`}
+                    />
+                  </div>
+                </div>
+              </button>
+            );
+          })}
 
-          <div className="flex flex-wrap items-center gap-3">
-            <button className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-sm" onClick={finish}>
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <button className="px-4 py-2 rounded-xl border border-white/10 bg-white/[0.04] text-white text-sm font-medium hover:border-white/20 hover:bg-white/[0.08]" onClick={finish}>
               {t('onboarding.skip')}
             </button>
             <button
-              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium"
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-400 text-white text-sm font-semibold shadow-lg shadow-indigo-900/30 hover:brightness-110"
               onClick={() => {
                 if (step >= steps.length - 1) finish();
                 else setStep((s) => s + 1);
@@ -162,7 +219,7 @@ export const OnboardingModal = ({ onClose, initialStep = 0, onStepAction }: Prop
               {step >= steps.length - 1 ? t('onboarding.finish') : t('onboarding.next')}
             </button>
             <button
-              className="px-4 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white text-sm font-medium"
+              className="px-4 py-2 rounded-xl border border-white/10 bg-white/[0.03] text-white text-sm font-medium hover:border-white/20 hover:bg-white/[0.07]"
               onClick={() => {
                 onStepAction?.(current.key);
                 finish();
@@ -170,20 +227,33 @@ export const OnboardingModal = ({ onClose, initialStep = 0, onStepAction }: Prop
             >
               {t(`onboarding.actions.${current.key}`)}
             </button>
+            <span className="text-xs text-white/50">{t('onboarding.footerHint')}</span>
           </div>
         </div>
       </div>
 
-      <div className="relative">
-        <div className="absolute -top-6 -right-6 h-20 w-20 rounded-full bg-indigo-600/20 blur-2xl" />
-        <div className="absolute -bottom-8 -left-10 h-24 w-24 rounded-full bg-sky-500/20 blur-3xl" />
-        <div className="relative overflow-hidden rounded-3xl border border-white/5 shadow-2xl bg-gradient-to-br from-white/5 to-white/[0.02]">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.06),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(99,102,241,0.25),transparent_30%)]" />
-          <img
-            src={current.visual}
-            alt={t(current.titleKey)}
-            className="relative w-full h-full object-cover mix-blend-screen"
-          />
+      <div className="relative overflow-hidden rounded-none lg:rounded-l-[28px] border-t lg:border-t-0 lg:border-l border-white/5 bg-gradient-to-b from-white/[0.03] to-white/[0.01]">
+        <div className="absolute -top-12 -right-10 h-40 w-40 rounded-full bg-indigo-500/15 blur-3xl" />
+        <div className="absolute -bottom-16 -left-12 h-44 w-44 rounded-full bg-cyan-400/15 blur-3xl" />
+        <div className="relative flex h-full flex-col gap-4 p-6 lg:p-8">
+          <div className="flex items-center justify-between text-sm text-white/70">
+            <span className="font-semibold">{t('onboarding.progressLabel', { index: step + 1, total: steps.length })}</span>
+            <div className="flex items-center gap-2 text-white/60">
+              <Icon size={16} />
+              <span>{t(current.titleKey)}</span>
+            </div>
+          </div>
+          <div className="relative overflow-hidden rounded-3xl border border-white/5 shadow-2xl bg-gradient-to-br from-white/5 to-white/[0.02]">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.08),transparent_40%),radial-gradient(circle_at_80%_0%,rgba(99,102,241,0.2),transparent_35%)]" />
+            <img
+              src={current.visual}
+              alt={t(current.titleKey)}
+              className="relative w-full h-full object-cover mix-blend-screen"
+            />
+          </div>
+          <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-3 text-xs text-white/60">
+            {t(current.bodyKey)}
+          </div>
         </div>
       </div>
     </ModalLayout>
