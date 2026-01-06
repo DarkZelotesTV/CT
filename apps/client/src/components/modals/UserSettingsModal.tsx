@@ -171,9 +171,6 @@ export const UserSettingsModal = ({
   const [toggleNavigationHotkey, setToggleNavigationHotkey] = useState<string>(
     settings.hotkeys.toggleNavigation ?? defaultHotkeySettings.toggleNavigation ?? ''
   );
-  const [skipToContentHotkey, setSkipToContentHotkey] = useState<string>(
-    settings.hotkeys.skipToContent ?? defaultHotkeySettings.skipToContent ?? ''
-  );
   const [deviceLists, setDeviceLists] = useState<DeviceLists>({ audioInputs: [], audioOutputs: [], videoInputs: [] });
   const [deviceError, setDeviceError] = useState<string | null>(null);
   const [pushToTalkEnabled, setPushToTalkEnabled] = useState(usePushToTalk);
@@ -408,7 +405,6 @@ export const UserSettingsModal = ({
     if (normalizeHotkey(commandPaletteHotkey) !== settings.hotkeys.commandPalette) return true;
     if (normalizeHotkey(toggleMembersHotkey) !== settings.hotkeys.toggleMembers) return true;
     if (normalizeHotkey(toggleNavigationHotkey) !== settings.hotkeys.toggleNavigation) return true;
-    if (normalizeHotkey(skipToContentHotkey) !== settings.hotkeys.skipToContent) return true;
 
     if (themeMode !== settings.theme.mode) return true;
     if (accentColor !== settings.theme.accentColor) return true;
@@ -441,7 +437,6 @@ export const UserSettingsModal = ({
     commandPaletteHotkey,
     toggleMembersHotkey,
     toggleNavigationHotkey,
-    skipToContentHotkey,
     themeMode,
     accentColor,
     serverAccentDraft,
@@ -481,7 +476,6 @@ export const UserSettingsModal = ({
     setCommandPaletteHotkey(settings.hotkeys.commandPalette ?? defaultHotkeySettings.commandPalette ?? '');
     setToggleMembersHotkey(settings.hotkeys.toggleMembers ?? defaultHotkeySettings.toggleMembers ?? '');
     setToggleNavigationHotkey(settings.hotkeys.toggleNavigation ?? defaultHotkeySettings.toggleNavigation ?? '');
-    setSkipToContentHotkey(settings.hotkeys.skipToContent ?? defaultHotkeySettings.skipToContent ?? '');
 
     setThemeMode(settings.theme.mode);
     setAccentColor(settings.theme.accentColor);
@@ -684,7 +678,6 @@ export const UserSettingsModal = ({
       commandPalette: commandPaletteHotkey || null,
       toggleMembers: toggleMembersHotkey || null,
       toggleNavigation: toggleNavigationHotkey || null,
-      skipToContent: skipToContentHotkey || null,
     });
     updateTheme({ mode: themeMode, accentColor, serverAccents: serverAccentDraft });
     updateNotifications({
@@ -1518,11 +1511,6 @@ export const UserSettingsModal = ({
                       label="Navigation umschalten"
                       value={toggleNavigationHotkey}
                       onChange={setToggleNavigationHotkey}
-                    />
-                    <HotkeyInput
-                      label="Skip to content"
-                      value={skipToContentHotkey}
-                      onChange={setSkipToContentHotkey}
                     />
                   </div>
                   <div className="text-[11px] text-amber-200 bg-amber-400/10 border border-amber-400/40 rounded-xl p-3">
