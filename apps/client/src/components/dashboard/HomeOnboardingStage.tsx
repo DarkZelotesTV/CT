@@ -25,12 +25,12 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer }: HomeOnboar
   ];
 
   return (
-    <div className="h-full w-full flex flex-col bg-gradient-to-br from-[#0b0b0f] via-[#0e0f18] to-[#0b0c12] relative overflow-hidden">
+    <div className="min-h-full w-full flex flex-col bg-gradient-to-br from-[#0b0b0f] via-[#0e0f18] to-[#0b0c12] relative overflow-hidden">
       <div className="absolute inset-0 opacity-[0.12]" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '22px 22px' }} />
       <div className="absolute -right-32 -top-32 w-96 h-96 bg-indigo-600/20 blur-3xl rounded-full" />
       <div className="absolute -left-24 bottom-0 w-80 h-80 bg-green-500/10 blur-3xl rounded-full" />
 
-      <div className="relative flex-1 flex flex-col lg:flex-row items-stretch gap-8 p-10">
+      <div className="relative flex-1 flex flex-col lg:flex-row items-stretch gap-8 px-6 py-8 lg:px-10 lg:py-12 justify-between">
         <div className="flex-1 space-y-6 max-w-2xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs uppercase tracking-wide text-gray-300">
             <Home size={14} />

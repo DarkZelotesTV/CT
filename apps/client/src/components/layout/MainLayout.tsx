@@ -1161,7 +1161,7 @@ export const MainLayout = () => {
             </>
           )}
            {/* Mobile Toggle Row falls nötig, oder via Header gelöst */}
-          <div className="main-content flex-1 min-h-0 relative">
+          <div className="main-content flex flex-1 h-full min-h-0 relative">
               {renderContent()}
           </div>
         </main>
