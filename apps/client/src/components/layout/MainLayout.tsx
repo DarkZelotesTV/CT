@@ -1040,39 +1040,45 @@ export const MainLayout = () => {
                   <Menu size={18} />
                 </button>
               )}
-            {resolvedServerIcon ? (
-              <img
-                src={resolvedServerIcon}
-                className="h-server-icon w-7 h-7 rounded-lg object-cover shadow-[0_0_20px_rgba(16,185,129,0.35)] border border-emerald-500/30"
-                alt={serverName || 'Server'}
-              />
-            ) : (
-              <div className="h-server-icon w-7 h-7 rounded-lg bg-gray-700/50 border border-white/10" />
+            {selectedServerId && (
+              <>
+                {resolvedServerIcon ? (
+                  <img
+                    src={resolvedServerIcon}
+                    className="h-server-icon w-7 h-7 rounded-lg object-cover shadow-[0_0_20px_rgba(16,185,129,0.35)] border border-emerald-500/30"
+                    alt={serverName || 'Server'}
+                  />
+                ) : (
+                  <div className="h-server-icon w-7 h-7 rounded-lg bg-gray-700/50 border border-white/10" />
+                )}
+                <div className="flex flex-col leading-tight">
+                  <span className="text-[0.95rem] font-bold text-white tracking-wide drop-shadow-sm">
+                    {serverName || 'ZIMPLY'}
+                  </span>
+                </div>
+              </>
             )}
-            <div className="flex flex-col leading-tight">
-              <span className="text-[0.95rem] font-bold text-white tracking-wide drop-shadow-sm">
-                {serverName || 'ZIMPLY'}
-              </span>
-            </div>
           </div>
           
           {/* Mittlerer Bereich: Telemetry Bar (Neu) */}
-          <div className="telemetry-bar no-drag hidden md:flex gap-3">
-            <div className="t-item">
-              <span className="t-label">PING</span>
-              <span className="t-val text-emerald-200">{pingDisplay}ms</span>
+          {selectedServerId && (
+            <div className="telemetry-bar no-drag hidden md:flex gap-3">
+              <div className="t-item">
+                <span className="t-label">PING</span>
+                <span className="t-val text-emerald-200">{pingDisplay}ms</span>
+              </div>
+              <div className="t-item">
+                <span className="t-label">LOSS</span>
+                <span className={classNames('t-val', lossTone)}>{lossDisplay}</span>
+              </div>
+              <div className="t-item">
+                <span className="t-label">UPTIME</span>
+                <span className="t-val text-white" id="time">
+                  {uptimeDisplay}
+                </span>
+              </div>
             </div>
-            <div className="t-item">
-              <span className="t-label">LOSS</span>
-              <span className={classNames('t-val', lossTone)}>{lossDisplay}</span>
-            </div>
-            <div className="t-item">
-              <span className="t-label">UPTIME</span>
-              <span className="t-val text-white" id="time">
-                {uptimeDisplay}
-              </span>
-            </div>
-          </div>
+          )}
 
           {/* Rechter Bereich: Actions */}
           <div className="flex items-center gap-2 no-drag">
@@ -1142,14 +1148,16 @@ export const MainLayout = () => {
               >
                 <ChevronLeft size={16} />
               </button>
-              <button
-                type="button"
-                className="edge-toggle edge-right"
-                onClick={() => setShowRightSidebar((prev) => !prev)}
-                aria-label={showRightSidebar ? t('layout.hideMembers', { defaultValue: 'Mitglieder ausblenden' }) : t('layout.showMembers', { defaultValue: 'Mitglieder einblenden' })}
-              >
-                <ChevronRight size={16} />
-              </button>
+              {selectedServerId && (
+                <button
+                  type="button"
+                  className="edge-toggle edge-right"
+                  onClick={() => setShowRightSidebar((prev) => !prev)}
+                  aria-label={showRightSidebar ? t('layout.hideMembers', { defaultValue: 'Mitglieder ausblenden' }) : t('layout.showMembers', { defaultValue: 'Mitglieder einblenden' })}
+                >
+                  <ChevronRight size={16} />
+                </button>
+              )}
             </>
           )}
            {/* Mobile Toggle Row falls nötig, oder via Header gelöst */}
