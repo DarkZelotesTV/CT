@@ -401,7 +401,8 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
           {loading && <Spinner label={t('serverRail.loading')} className="text-gray-400" />}
           {lastError && (
             <ErrorCard
-              className="w-full px-2 text-xs"
+              size="compact"
+              className="w-full px-2"
               message={lastError}
               retryLabel={t('serverRail.retry') ?? undefined}
               onRetry={fetchServers}
