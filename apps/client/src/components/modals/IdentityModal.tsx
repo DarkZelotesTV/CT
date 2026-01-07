@@ -97,10 +97,10 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           placeholder="z.B. jusbe"
-          className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+          className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
         />
         <button
-          className="mt-2 text-sm text-indigo-400 hover:text-indigo-300"
+          className="mt-2 text-sm text-[color:var(--color-accent)] hover:text-[color:var(--color-accent-hover)]"
           onClick={handleSaveDisplayName}
           disabled={!identity}
         >
@@ -111,7 +111,7 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
       {!identity ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
-            className="px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 transition text-white font-medium"
+            className="px-4 py-3 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] transition text-white font-medium"
             onClick={handleCreate}
           >
             Identity erstellen
@@ -159,7 +159,7 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
               value={backupPassphrase}
               onChange={(e) => setBackupPassphrase(e.target.value)}
               placeholder="Leer lassen für Klartext-Export"
-              className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+              className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
             />
             <p className="text-[11px] text-[color:var(--color-text-muted)] mt-1">Wenn gesetzt, wird dein Backup AES-GCM verschlüsselt (PBKDF2).</p>
           </div>

@@ -107,7 +107,7 @@ export const OnboardingModal = ({ onClose, initialStep = 0, onStepAction }: Prop
               </div>
               <div className="flex flex-col items-end gap-2">
                 <div className="flex items-center gap-2 rounded-full border border-[color:var(--color-border)] bg-white/[0.04] px-3 py-1 text-xs text-white/70">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-white/10 to-white/0 border border-[color:var(--color-border)] text-indigo-200">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-white/10 to-white/0 border border-[color:var(--color-border)] text-[color:var(--color-accent)]">
                     <Icon size={18} />
                   </div>
                   <span className="font-semibold text-white">{progress}%</span>
@@ -162,14 +162,14 @@ export const OnboardingModal = ({ onClose, initialStep = 0, onStepAction }: Prop
                 onClick={() => setStep(i)}
                 className={`group flex w-full items-start gap-4 rounded-2xl border px-4 py-4 transition-all text-left ${
                   isActive
-                    ? 'border-[color:var(--color-border-strong)]/60 bg-[color:var(--color-surface-hover)]/80 shadow-lg shadow-indigo-900/30'
+                    ? 'border-[color:var(--color-border-strong)]/60 bg-[color:var(--color-surface-hover)]/80 shadow-lg shadow-[0_18px_30px_color-mix(in_srgb,var(--color-accent)_30%,transparent)]'
                     : 'border-[color:var(--color-border)] bg-white/[0.03] hover:border-[color:var(--color-border-strong)] hover:bg-white/[0.07]'
                 }`}
               >
                 <div
                   className={`flex h-12 w-12 items-center justify-center rounded-xl border ${
                     isActive
-                      ? 'border-indigo-200/60 bg-indigo-500/15 text-indigo-100'
+                      ? 'border-[color:var(--color-accent)]/60 bg-[color:var(--color-accent)]/15 text-[color:var(--color-accent)]'
                       : isDone
                       ? 'border-emerald-200/50 bg-emerald-500/15 text-emerald-100'
                       : 'border-[color:var(--color-border)] bg-[color:var(--color-surface-hover)] text-white/70'
@@ -183,7 +183,7 @@ export const OnboardingModal = ({ onClose, initialStep = 0, onStepAction }: Prop
                     <span
                       className={`rounded-full px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${
                         isActive
-                          ? 'bg-indigo-500/15 text-indigo-100 border border-indigo-200/40'
+                          ? 'bg-[color:var(--color-accent)]/15 text-[color:var(--color-accent)] border border-[color:var(--color-accent)]/40'
                           : isDone
                           ? 'bg-emerald-500/15 text-emerald-100 border border-emerald-200/40'
                           : 'bg-white/[0.04] text-white/60 border border-[color:var(--color-border)]'
@@ -197,7 +197,7 @@ export const OnboardingModal = ({ onClose, initialStep = 0, onStepAction }: Prop
                     <span>{t('onboarding.progressLabel', { index: i + 1, total: steps.length })}</span>
                     <ArrowRight
                       size={14}
-                      className={`transition-transform ${isActive ? 'translate-x-1 text-indigo-200' : 'group-hover:translate-x-1 text-white/50'}`}
+                      className={`transition-transform ${isActive ? 'translate-x-1 text-[color:var(--color-accent)]' : 'group-hover:translate-x-1 text-white/50'}`}
                     />
                   </div>
                 </div>
@@ -210,7 +210,7 @@ export const OnboardingModal = ({ onClose, initialStep = 0, onStepAction }: Prop
               {t('onboarding.skip')}
             </button>
             <button
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-400 text-white text-sm font-semibold shadow-lg shadow-indigo-900/30 hover:brightness-110"
+              className="px-4 py-2 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white text-sm font-semibold shadow-lg shadow-[0_16px_28px_color-mix(in_srgb,var(--color-accent)_30%,transparent)]"
               onClick={() => {
                 if (step >= steps.length - 1) finish();
                 else setStep((s) => s + 1);

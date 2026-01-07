@@ -79,8 +79,9 @@ export const CreateChannelModal = ({
                   key={key}
                   onClick={() => setType(key)}
                   className={classNames(
-                    'flex items-center p-3 rounded-lg cursor-pointer border transition-all bg-[color:var(--color-surface-hover)] border-[color:var(--color-border)] hover:border-indigo-500 hover:bg-white/[0.08] text-white',
-                    isActive && 'border-indigo-500 bg-indigo-500/10 shadow-[0_0_15px_rgba(99,102,241,0.2)]'
+                    'flex items-center p-3 rounded-lg cursor-pointer border transition-all bg-[color:var(--color-surface-hover)] border-[color:var(--color-border)] hover:border-[var(--color-accent-hover)] hover:bg-white/[0.08] text-white',
+                    isActive
+                      && 'border-[var(--color-accent)] bg-[color:var(--color-accent)]/10 shadow-[0_0_15px_color-mix(in_srgb,var(--color-accent)_20%,transparent)]'
                   )}
                   style={{ color: palette.text }}
                 >
@@ -92,10 +93,12 @@ export const CreateChannelModal = ({
                   <div
                     className={classNames(
                       'w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ml-2',
-                      isActive ? 'border-indigo-500 bg-indigo-500/20' : 'border-[color:var(--color-border-strong)]'
+                      isActive
+                        ? 'border-[var(--color-accent)] bg-[color:var(--color-accent)]/20'
+                        : 'border-[color:var(--color-border-strong)]'
                     )}
                   >
-                    {isActive && <div className="w-2 h-2 rounded-full bg-indigo-400" />}
+                    {isActive && <div className="w-2 h-2 rounded-full bg-[color:var(--color-accent)]" />}
                   </div>
                 </div>
               );
@@ -106,7 +109,7 @@ export const CreateChannelModal = ({
         {/* Name Input */}
         <div>
           <label className="text-xs font-bold uppercase mb-2 block text-[color:var(--color-text-muted)]">Kanalname</label>
-          <div className="flex items-center px-3 rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 focus-within:border-indigo-500 text-white transition-colors">
+          <div className="flex items-center px-3 rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 focus-within:border-[var(--color-focus)] text-white transition-colors">
             {type === 'text' ? (
               <Hash size={16} className="mr-2 text-[color:var(--color-text-muted)]" />
             ) : type === 'voice' ? (
@@ -139,7 +142,7 @@ export const CreateChannelModal = ({
               type="text"
               value={defaultPassword}
               onChange={(e) => setDefaultPassword(e.target.value)}
-              className="w-full rounded-xl px-3 py-2 outline-none bg-[color:var(--color-surface)]/60 border border-[color:var(--color-border)] text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 transition-all placeholder:text-[color:var(--color-text-muted)] text-sm"
+              className="w-full rounded-xl px-3 py-2 outline-none bg-[color:var(--color-surface)]/60 border border-[color:var(--color-border)] text-white focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] disabled:opacity-50 transition-all placeholder:text-[color:var(--color-text-muted)] text-sm"
               placeholder={type === 'spacer' ? 'Nicht nötig' : 'Optional'}
               disabled={type === 'spacer'}
             />
@@ -150,7 +153,7 @@ export const CreateChannelModal = ({
               type="text"
               value={joinPassword}
               onChange={(e) => setJoinPassword(e.target.value)}
-              className="w-full rounded-xl px-3 py-2 outline-none bg-[color:var(--color-surface)]/60 border border-[color:var(--color-border)] text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 transition-all placeholder:text-[color:var(--color-text-muted)] text-sm"
+              className="w-full rounded-xl px-3 py-2 outline-none bg-[color:var(--color-surface)]/60 border border-[color:var(--color-border)] text-white focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] disabled:opacity-50 transition-all placeholder:text-[color:var(--color-text-muted)] text-sm"
               placeholder={type === 'spacer' ? 'Nicht nötig' : 'Optional'}
               disabled={type === 'spacer'}
             />
