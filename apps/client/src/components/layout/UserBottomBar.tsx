@@ -6,6 +6,7 @@ import { UserSettingsModal } from '../modals/UserSettingsModal';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
 import { useVoice } from '../../features/voice';
 import { storage } from '../../shared/config/storage';
+import { StatusBadge, type StatusTone } from '../ui';
 
 export const UserBottomBar = ({ onOpenUserSettings }: { onOpenUserSettings?: () => void }) => {
   const { settings } = useSettings();
@@ -16,8 +17,12 @@ export const UserBottomBar = ({ onOpenUserSettings }: { onOpenUserSettings?: () 
   const { micMuted, muted, setMicMuted, setMuted, connectionState } = useVoice();
   const status = settings.profile.status ?? (user as any)?.status ?? (connectionState === 'connected' ? 'online' : 'offline');
   const normalizedStatus = status?.toLowerCase?.();
-  const statusClass = status ? `status-pill ${normalizedStatus}` : 'status-pill';
-  const statusDotClass = normalizedStatus || 'offline';
+  const statusTone = (() => {
+    if (normalizedStatus === 'online') return 'online';
+    if (normalizedStatus === 'idle' || normalizedStatus === 'away') return 'idle';
+    if (normalizedStatus === 'dnd' || normalizedStatus === 'busy') return 'dnd';
+    return 'offline';
+  })() as StatusTone;
   const statusLabelMap: Record<string, string> = {
     online: t('userBottomBar.online', { defaultValue: 'Online' }),
     idle: t('userBottomBar.idle', { defaultValue: 'Idle' }),
@@ -55,12 +60,12 @@ export const UserBottomBar = ({ onOpenUserSettings }: { onOpenUserSettings?: () 
                 (displayName?.[0] ?? 'U').toUpperCase()
               )}
             </div>
-            <span className={`status-dot badge ${statusDotClass}`} />
+            <StatusBadge variant="dot" status={statusTone} size="md" className="absolute -right-0.5 -bottom-0.5" />
           </div>
 
           <div className="min-w-0 flex-1">
             <div className="text-sm text-white font-semibold truncate">{displayName}</div>
-            <div className={statusClass}>{statusLabel}</div>
+            <StatusBadge status={statusTone}>{statusLabel}</StatusBadge>
           </div>
 
           <div className="flex items-center gap-2">

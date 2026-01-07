@@ -14,7 +14,7 @@ import { useSettings } from '../../context/SettingsContext';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
 import { defaultServerTheme, deriveServerThemeFromSettings, type ServerTheme } from '../../theme/serverTheme';
 import { storage } from '../../shared/config/storage';
-import { ErrorCard, Skeleton, Spinner } from '../ui';
+import { ErrorCard, RoleTag, Skeleton, Spinner, StatusBadge, type StatusTone } from '../ui';
 
 interface Channel { id: number; name: string; type: 'text' | 'voice' | 'web' | 'data-transfer' | 'spacer' | 'list'; custom_icon?: string; }
 interface Category { id: number; name: string; channels: Channel[]; }
@@ -219,7 +219,7 @@ export const ChannelSidebar = ({
   }, [activeChannelName, onCloseMobileNav, onSelectChannel, t, voiceChannelId]);
 
   const resolveStatusClass = useCallback(
-    (status?: string) => {
+    (status?: string): StatusTone => {
       const normalized = (status || '').toLowerCase();
       if (normalized === 'online') return 'online';
       if (normalized === 'idle' || normalized === 'away') return 'idle';
@@ -229,16 +229,16 @@ export const ChannelSidebar = ({
     []
   );
 
-  const resolveRoleTag = useCallback((user: any): { label: string; className: string; Icon: typeof Shield } | null => {
+  const resolveRoleTag = useCallback((user: any): { label: string; variant: 'admin' | 'mod' | 'bot'; Icon: typeof Shield } | null => {
     const roles: string[] = Array.isArray(user?.roles)
       ? user.roles
       : typeof user?.role === 'string'
         ? [user.role]
         : [];
     const normalized = roles.map((r) => r.toLowerCase());
-    if (user?.isBot || normalized.some((r) => r.includes('bot'))) return { label: 'Bot', className: 'role-tag bot', Icon: Bot };
-    if (normalized.some((r) => r.includes('admin'))) return { label: 'Admin', className: 'role-tag admin', Icon: Shield };
-    if (normalized.some((r) => r.includes('mod') || r.includes('staff'))) return { label: 'Mod', className: 'role-tag mod', Icon: Gavel };
+    if (user?.isBot || normalized.some((r) => r.includes('bot'))) return { label: 'Bot', variant: 'bot', Icon: Bot };
+    if (normalized.some((r) => r.includes('admin'))) return { label: 'Admin', variant: 'admin', Icon: Shield };
+    if (normalized.some((r) => r.includes('mod') || r.includes('staff'))) return { label: 'Mod', variant: 'mod', Icon: Gavel };
     return null;
   }, []);
 
@@ -324,12 +324,12 @@ export const ChannelSidebar = ({
                     <div className="u-av-sm text-[color:var(--color-text)]">
                       {avatar ? <img src={avatar} alt={user.username} className="h-full w-full object-cover" /> : initials}
                     </div>
-                    <span className={`status-dot ${statusCls}`} />
+                    <StatusBadge variant="dot" status={statusCls} size="md" className="absolute -right-0.5 -bottom-0.5" />
                   </div>
                   {tag && (
-                    <span className={tag.className}>
-                      <tag.Icon size={12} /> {tag.label.toUpperCase()}
-                    </span>
+                    <RoleTag variant={tag.variant}>
+                      <tag.Icon size={12} /> {tag.label}
+                    </RoleTag>
                   )}
                   <span className="u-name">{user.username}</span>
                   {speaking && <div className="w-1.5 h-4 rounded-full bg-emerald-400 animate-pulse" />}

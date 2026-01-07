@@ -5,3 +5,7 @@ export { Badge } from './Badge';
 export { Input } from './Input';
 export { Select } from './Select';
 export { Toggle } from './Toggle';
+export { RoleTag } from './RoleTag';
+export { StatusBadge } from './StatusBadge';
+export type { RoleTagVariant } from './RoleTag';
+export type { StatusBadgeProps, StatusBadgeSize, StatusBadgeVariant, StatusTone } from './StatusBadge';
