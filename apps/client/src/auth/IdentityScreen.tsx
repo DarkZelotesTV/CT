@@ -96,7 +96,7 @@ export function IdentityScreen({ onAuthed, onIdentityChanged }: Props) {
 
         <label className="block text-sm text-[color:var(--color-text-muted)] mb-2">Anzeigename (optional)</label>
         <input
-          className="w-full rounded-xl bg-[color:var(--color-surface)]/70 border border-[color:var(--color-border)] p-3 mb-4 outline-none text-[color:var(--color-text)]"
+          className="w-full rounded-xl bg-[color:var(--color-surface)]/70 border border-[color:var(--color-border)] p-3 mb-4 outline-none text-[color:var(--color-text)] focus-visible:border-[var(--color-focus)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           placeholder="z.B. jusbe"
@@ -116,7 +116,7 @@ export function IdentityScreen({ onAuthed, onIdentityChanged }: Props) {
           </div>
 
           <button
-            className="px-4 py-2 rounded-xl bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-sm"
+            className="px-4 py-2 rounded-xl bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
             onClick={() => setShowIdentityModal(true)}
           >
             Identity verwalten
@@ -127,7 +127,7 @@ export function IdentityScreen({ onAuthed, onIdentityChanged }: Props) {
           <>
             <label className="block text-sm text-[color:var(--color-text-muted)] mb-2">Server Adresse</label>
             <input
-              className="w-full rounded-xl bg-[color:var(--color-surface)]/70 border border-[color:var(--color-border)] p-3 mb-4 outline-none text-[color:var(--color-text)]"
+              className="w-full rounded-xl bg-[color:var(--color-surface)]/70 border border-[color:var(--color-border)] p-3 mb-4 outline-none text-[color:var(--color-text)] focus-visible:border-[var(--color-focus)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
               value={serverHost}
               onChange={(e) => setServerHost(e.target.value)}
               onBlur={() => setServerHost(normalizeServerUrlString(serverHost))}
@@ -154,7 +154,7 @@ export function IdentityScreen({ onAuthed, onIdentityChanged }: Props) {
             <label className="block text-sm text-[color:var(--color-text-muted)] mb-2">Server Passwort (optional)
             </label>
             <input
-              className="w-full rounded-xl bg-[color:var(--color-surface)]/70 border border-[color:var(--color-border)] p-3 mb-4 outline-none text-[color:var(--color-text)]"
+              className="w-full rounded-xl bg-[color:var(--color-surface)]/70 border border-[color:var(--color-border)] p-3 mb-4 outline-none text-[color:var(--color-text)] focus-visible:border-[var(--color-focus)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
               value={serverPassword}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Leer lassen wenn keins"
@@ -168,14 +168,14 @@ export function IdentityScreen({ onAuthed, onIdentityChanged }: Props) {
 
         <div className="flex flex-wrap gap-3">
           <button
-            className="px-4 py-3 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white transition disabled:opacity-50"
+            className="px-4 py-3 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white transition disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
             onClick={handleLogin}
             disabled={busy || !identity}
           >
             {busy ? "Verbinde..." : "Verbinden"}
           </button>
           <button
-            className="px-4 py-3 rounded-xl bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface)] transition disabled:opacity-50"
+            className="px-4 py-3 rounded-xl bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface)] transition disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
             onClick={handleSkip}
             disabled={!identity}
           >

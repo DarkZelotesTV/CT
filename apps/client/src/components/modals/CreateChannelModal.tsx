@@ -133,7 +133,7 @@ export const CreateChannelModal = ({
               value={name}
               onChange={(e) => setName(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
               placeholder="neuer-kanal"
-              className="w-full bg-transparent py-2.5 outline-none font-medium no-drag placeholder:text-[color:var(--color-text-muted)]"
+              className="w-full bg-transparent py-2.5 outline-none font-medium no-drag placeholder:text-[color:var(--color-text-muted)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)] focus-visible:rounded-md"
             />
           </div>
         </div>
