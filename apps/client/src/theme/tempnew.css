@@ -32,7 +32,7 @@
   --curr-info: var(--layout-info-current, var(--w-info));
 
   --border-glass: var(--layout-border);
-  --border-shine: 1px solid rgba(255, 255, 255, 0.15);
+  --border-shine: 1px solid color-mix(in srgb, var(--color-surface-tint) 15%, transparent);
   --anim: var(--layout-transition);
 }
 
@@ -43,7 +43,7 @@
 /* --- Utilities --- */
 .glass {
   backdrop-filter: blur(30px);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-surface-tint) 3%, transparent);
 }
 
 .scroll-y {
@@ -63,7 +63,7 @@
 
   /* Desktop: respect the titlebar height var if present */
   padding: var(--space-4);
-  background: rgba(0, 0, 0, 0.72);
+  background: var(--color-overlay);
   backdrop-filter: blur(18px);
 }
 
@@ -75,7 +75,7 @@
   background: color-mix(in srgb, var(--bg-tree) 92%, transparent);
   border: var(--border-glass);
   border-radius: var(--layout-radius);
-  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.6);
+  box-shadow: var(--shadow-1);
   overflow: hidden;
 
   display: flex;
@@ -87,8 +87,8 @@
   align-items: flex-start;
   justify-content: space-between;
   padding: var(--space-4);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--color-border-subtle);
+  background: color-mix(in srgb, var(--color-surface-tint) 2%, transparent);
 }
 
 .ct-modal-title {
@@ -102,21 +102,21 @@
 .ct-modal-desc {
   margin-top: 8px;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.65);
+  color: color-mix(in srgb, var(--color-surface-tint) 65%, transparent);
 }
 
 .ct-modal-close {
   appearance: none;
   border: 0;
   background: transparent;
-  color: rgba(255, 255, 255, 0.6);
+  color: color-mix(in srgb, var(--color-surface-tint) 60%, transparent);
   padding: var(--space-2);
   border-radius: var(--radius-3);
   cursor: pointer;
 }
 .ct-modal-close:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.92);
+  background: color-mix(in srgb, var(--color-surface-tint) 6%, transparent);
+  color: color-mix(in srgb, var(--color-surface-tint) 92%, transparent);
 }
 
 .ct-modal-body {
@@ -129,7 +129,7 @@
 .ct-modal-footer {
   padding: var(--space-3);
   text-align: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid var(--color-border-subtle);
+  background: color-mix(in srgb, var(--color-surface-tint) 2%, transparent);
   flex-shrink: 0;
 }
