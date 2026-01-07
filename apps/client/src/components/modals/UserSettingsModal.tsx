@@ -34,6 +34,7 @@ import { buildBackupPayload, getBackupFilename, parseIdentityBackup } from '../.
 import { storage } from '../../shared/config/storage';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
 import { Badge, Select, Toggle } from '../ui';
+import { MIN_ACCENT_CONTRAST, getAccentContrastReport, getThemeContrastTargets } from '../../theme/appTheme';
 
 const modifierKeys = ['Control', 'Shift', 'Alt', 'Meta'];
 
@@ -207,6 +208,10 @@ export const UserSettingsModal = ({
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
+  const accentContrastReport = useMemo(() => {
+    const { surface, text } = getThemeContrastTargets(themeMode);
+    return getAccentContrastReport(accentColor, surface, text, MIN_ACCENT_CONTRAST);
+  }, [accentColor, themeMode]);
 
   // 'Talk & Audio' wurde in 'devices' integriert und entfernt
   const categories = useMemo<Category[]>(
@@ -667,6 +672,9 @@ export const UserSettingsModal = ({
       setAvatarError('Bitte lade den ausgewählten Avatar hoch oder entferne die Auswahl.');
       return;
     }
+    const accentToSave = accentContrastReport.meetsContrast
+      ? accentColor
+      : accentContrastReport.adjustedAccent;
     updateProfile({ displayName, avatarUrl });
     updateDevices({
       audioInputId: audioInputId || null,
@@ -680,7 +688,7 @@ export const UserSettingsModal = ({
       toggleMembers: toggleMembersHotkey || null,
       toggleNavigation: toggleNavigationHotkey || null,
     });
-    updateTheme({ mode: themeMode, accentColor, serverAccents: serverAccentDraft });
+    updateTheme({ mode: themeMode, accentColor: accentToSave, serverAccents: serverAccentDraft });
     updateNotifications({
       permission: notificationPermission,
       mentions: notifyMentions,
@@ -895,6 +903,21 @@ export const UserSettingsModal = ({
                           className="flex-1 bg-[color:var(--color-surface)]/60 text-white p-3 rounded-xl border border-[var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
                         />
                       </div>
+                      {!accentContrastReport.meetsContrast && (
+                        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-amber-400/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                          <span>
+                            Kontrast ist zu niedrig. Empfohlen: {accentContrastReport.adjustedAccent.toUpperCase()} (min.
+                            {MIN_ACCENT_CONTRAST}:1 gegen Oberfläche/Text).
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setAccentColor(accentContrastReport.adjustedAccent)}
+                            className="px-2 py-1 rounded-lg bg-amber-400/20 text-amber-100 hover:bg-amber-400/30"
+                          >
+                            Auto-anpassen
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-2">
