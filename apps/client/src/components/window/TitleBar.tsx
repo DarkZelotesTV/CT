@@ -108,14 +108,14 @@ export const TitleBar = ({
   const platform = state.platform ?? 'win32';
   const isMac = platform === 'darwin';
 
-  const windowBtnBase = 'no-drag h-full px-4 flex items-center justify-center text-[color:var(--color-text-muted)] hover:text-white hover:bg-[color:var(--color-surface-hover)] transition ' + focusRing;
-  const iconButtonBase = 'no-drag h-full px-3 flex items-center justify-center text-[color:var(--color-text-muted)] hover:text-white hover:bg-[color:var(--color-surface-hover)] transition ' + focusRing;
+  const windowBtnBase = 'no-drag h-full px-4 flex items-center justify-center text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] hover:bg-[color:var(--color-surface-hover)] transition ' + focusRing;
+  const iconButtonBase = 'no-drag h-full px-3 flex items-center justify-center text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] hover:bg-[color:var(--color-surface-hover)] transition ' + focusRing;
 
   const left = slots.left ?? (
     <div className="flex items-center h-full px-4 select-none">
       <div className="flex items-center gap-2">
-        <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">
-            Clover Talk <span className="text-blue-500">Beta</span>
+        <span className="text-xs font-bold text-[color:var(--color-text-muted)] uppercase tracking-wider">
+            Clover Talk <span className="text-[color:var(--color-text)]">Beta</span>
         </span>
       </div>
     </div>
@@ -132,16 +132,16 @@ export const TitleBar = ({
                 className="w-4 h-4 rounded-full object-cover"
               />
             ) : (
-              <div className="w-4 h-4 rounded-full bg-neutral-700 flex items-center justify-center text-[8px] text-white">
+              <div className="w-4 h-4 rounded-full bg-[color:var(--color-border)] flex items-center justify-center text-[8px] text-[color:var(--color-text)]">
                 {serverName.substring(0, 1)}
               </div>
             )}
-            <span className="text-xs text-neutral-300 font-medium">
+            <span className="text-xs text-[color:var(--color-text)] font-medium">
               {serverName}
             </span>
           </>
         ) : (
-             <span className="text-xs text-neutral-400">Home</span>
+             <span className="text-xs text-[color:var(--color-text-muted)]">Home</span>
         )}
     </div>
   );
@@ -196,7 +196,7 @@ export const TitleBar = ({
           <button type="button" className={windowBtnBase} onClick={() => void controls.toggleMaximize()}>
             {state.isMaximized ? <Minimize2 size={16} aria-hidden="true" /> : <Maximize2 size={16} aria-hidden="true" />}
           </button>
-          <button type="button" className={`${windowBtnBase} hover:bg-red-500 hover:text-white`} onClick={() => void controls.close()}>
+          <button type="button" className={windowBtnBase} onClick={() => void controls.close()}>
             <X size={16} aria-hidden="true" />
           </button>
         </div>
@@ -210,7 +210,7 @@ export const TitleBar = ({
         // Z-Index auf 50000 erhöht. 
         // Dies liegt über dem ModalLayout (z-9999), sodass die Titlebar auch bei "Kanal erstellen" 
         // oder "Server Einstellungen" sichtbar und im Vordergrund bleibt.
-        className="fixed top-0 left-0 right-0 z-[50000] drag border-b border-black bg-[color:var(--color-surface)] select-none"
+        className="fixed top-0 left-0 right-0 z-[50000] drag border-b border-[color:var(--color-border)] bg-[color:var(--color-surface)] select-none"
         style={{ height: state.titlebarHeight }}
       >
         <div className="h-full w-full flex items-center justify-between">
