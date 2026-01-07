@@ -89,7 +89,7 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
           <button
             type="submit"
             form="feedback-form"
-            className="px-4 py-2 rounded-lg bg-cyan-600 text-white text-sm font-semibold flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="px-4 py-2 rounded-[var(--radius-2)] bg-cyan-600 text-white text-sm font-semibold flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
             disabled={submitting || message.trim().length === 0}
           >
             {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
@@ -105,7 +105,7 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
           </label>
           <select
             id="feedback-category"
-            className="w-full rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 px-3 py-2 text-sm text-[color:var(--color-text)] focus:border-cyan-500 focus:outline-none"
+            className="w-full rounded-[var(--radius-2)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 px-3 py-2 text-sm text-[color:var(--color-text)] focus:border-cyan-500 focus:outline-none"
             value={category}
             onChange={(event) => setCategory(event.target.value as FeedbackCategory)}
           >
@@ -124,7 +124,7 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
           <textarea
             id="feedback-message"
             ref={textareaRef}
-            className="w-full min-h-[140px] rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 px-3 py-2 text-sm text-[color:var(--color-text)] focus:border-cyan-500 focus:outline-none"
+            className="w-full min-h-[140px] rounded-[var(--radius-2)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 px-3 py-2 text-sm text-[color:var(--color-text)] focus:border-cyan-500 focus:outline-none"
             placeholder={t('feedbackModal.messagePlaceholder')}
             value={message}
             onChange={(event) => setMessage(event.target.value)}
@@ -140,7 +140,7 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
           <div className="flex items-center gap-2">
             <label
               htmlFor="feedback-screenshot"
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 text-sm text-[color:var(--color-text)] cursor-pointer hover:border-cyan-500 focus-within:border-cyan-500"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-[var(--radius-2)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 text-sm text-[color:var(--color-text)] cursor-pointer hover:border-cyan-500 focus-within:border-cyan-500"
             >
               <ImagePlus size={16} />
               <span className="truncate">{screenshotLabel}</span>

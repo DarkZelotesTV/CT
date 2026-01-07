@@ -129,7 +129,7 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
             <button
               onClick={() => handleSubmit()}
               disabled={loading || !serverInput || !identity}
-              className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white px-6 py-2 rounded-lg font-bold disabled:opacity-50 flex items-center gap-2 transition-all active:scale-[0.98]"
+              className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white px-6 py-2 rounded-[var(--radius-2)] font-bold disabled:opacity-50 flex items-center gap-2 transition-all active:scale-[0.98]"
             >
               {loading && <Loader2 className="animate-spin" size={16} />}
               Beitreten
@@ -154,7 +154,7 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
               value={serverInput}
               onChange={(e) => setServerInput(e.target.value)}
               placeholder="z.B. 1 oder https://example.com/invite/1"
-              className="w-full bg-[color:var(--color-surface)]/60 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none transition-all placeholder:text-[color:var(--color-text-muted)] font-medium"
+              className="w-full bg-[color:var(--color-surface)]/60 text-white p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none transition-all placeholder:text-[color:var(--color-text-muted)] font-medium"
             />
           </div>
 
@@ -168,12 +168,12 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
               value={instanceUrl}
               onChange={(e) => setInstanceUrlState(e.target.value)}
               placeholder="z.B. https://mein-server.tld"
-              className="w-full bg-[color:var(--color-surface)]/60 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none transition-all placeholder:text-[color:var(--color-text-muted)] font-medium"
+              className="w-full bg-[color:var(--color-surface)]/60 text-white p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none transition-all placeholder:text-[color:var(--color-text-muted)] font-medium"
             />
             <p className="text-[10px] text-[color:var(--color-text-muted)] mt-1">Leer lassen, um die aktuelle Instanz zu nutzen.</p>
           </div>
 
-          <div className="rounded-2xl border border-[color:var(--color-border)] bg-white/[0.02] p-4 flex items-start gap-3">
+          <div className="rounded-[var(--radius-4)] border border-[color:var(--color-border)] bg-white/[0.02] p-4 flex items-start gap-3">
             <div className="p-2 rounded-full bg-[color:var(--color-surface-hover)] text-[color:var(--color-accent)]">
               <Shield size={18} />
             </div>

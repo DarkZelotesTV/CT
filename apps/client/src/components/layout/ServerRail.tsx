@@ -548,10 +548,10 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
             </button>
 
             {showAddMenu && (
-              <div className="absolute left-16 bottom-0 w-52 bg-[color:var(--color-surface)] border border-[color:var(--color-border)] rounded-xl shadow-2xl p-2 z-50 no-drag">
+              <div className="absolute left-16 bottom-0 w-52 bg-[color:var(--color-surface)] border border-[color:var(--color-border)] rounded-[var(--radius-3)] shadow-2xl p-2 z-50 no-drag">
                 <button
                   type="button"
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-[color:var(--color-surface-hover)] text-sm text-white"
+                  className="w-full text-left px-3 py-2 rounded-[var(--radius-2)] hover:bg-[color:var(--color-surface-hover)] text-sm text-white"
                   onClick={() => {
                     setShowAddMenu(false);
                     onCreateServer(); // Ruft jetzt die Prop auf
@@ -561,7 +561,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                 </button>
                 <button
                   type="button"
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-[color:var(--color-surface-hover)] text-sm text-white"
+                  className="w-full text-left px-3 py-2 rounded-[var(--radius-2)] hover:bg-[color:var(--color-surface-hover)] text-sm text-white"
                   onClick={() => {
                     setShowAddMenu(false);
                     onJoinServer(); // Ruft jetzt die Prop auf
@@ -584,13 +584,13 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
             tabIndex={-1}
             data-server-menu
             aria-label={t('serverRail.contextMenuAria') ?? 'Server Menü'}
-            className="pointer-events-auto absolute min-w-[180px] bg-[color:var(--color-surface)] border border-[color:var(--color-border)] rounded-xl shadow-2xl p-2 text-sm text-white"
+            className="pointer-events-auto absolute min-w-[180px] bg-[color:var(--color-surface)] border border-[color:var(--color-border)] rounded-[var(--radius-3)] shadow-2xl p-2 text-sm text-white"
             style={{ left: contextMenu.x, top: contextMenu.y }}
           >
             <button
               type="button"
               role="menuitem"
-              className="flex w-full items-center gap-2 px-3 py-2 rounded-lg hover:bg-[color:var(--color-surface-hover)] focus:bg-[color:var(--color-surface-hover)]/80 focus:outline-none"
+              className="flex w-full items-center gap-2 px-3 py-2 rounded-[var(--radius-2)] hover:bg-[color:var(--color-surface-hover)] focus:bg-[color:var(--color-surface-hover)]/80 focus:outline-none"
               onClick={() => handleContextAction('rename')}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -607,7 +607,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
               <button
                 type="button"
                 role="menuitem"
-                className="flex w-full items-center gap-2 px-3 py-2 rounded-lg hover:bg-[color:var(--color-surface-hover)] focus:bg-[color:var(--color-surface-hover)]/80 focus:outline-none"
+                className="flex w-full items-center gap-2 px-3 py-2 rounded-[var(--radius-2)] hover:bg-[color:var(--color-surface-hover)] focus:bg-[color:var(--color-surface-hover)]/80 focus:outline-none"
                 onClick={() => handleContextAction('pin-toggle')}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
@@ -629,7 +629,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
               <button
                 type="button"
                 role="menuitem"
-                className="flex w-full items-center gap-2 px-3 py-2 rounded-lg hover:bg-[color:var(--color-surface-hover)] focus:bg-[color:var(--color-surface-hover)]/80 focus:outline-none"
+                className="flex w-full items-center gap-2 px-3 py-2 rounded-[var(--radius-2)] hover:bg-[color:var(--color-surface-hover)] focus:bg-[color:var(--color-surface-hover)]/80 focus:outline-none"
                 onClick={() => handleContextAction('remove')}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {

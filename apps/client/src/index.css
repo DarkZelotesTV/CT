@@ -85,11 +85,25 @@
   --h-header: var(--layout-header-height);
   --h-log: var(--layout-log-height); /* Standard Log Höhe */
 
-  --layout-radius: 12px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
+  --radius-1: 6px;
+  --radius-2: 8px;
+  --radius-3: 12px;
+  --radius-4: 16px;
+  --radius-5: 24px;
   --radius-pill: 999px;
+  --layout-radius: var(--radius-3);
+  --radius-sm: var(--radius-1);
+  --radius-md: var(--radius-2);
+  --radius-lg: var(--radius-3);
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
   --layout-transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
   
   /* Helper for existing components relying on old vars */

@@ -83,7 +83,7 @@ export const CreateChannelModal = ({
                   key={key}
                   onClick={() => setType(key)}
                   className={classNames(
-                    'flex items-center p-3 rounded-lg cursor-pointer border transition-all bg-[color:var(--color-surface-hover)] border-[color:var(--color-border)] hover:border-[var(--color-accent-hover)] hover:bg-white/[0.08] text-white',
+                    'flex items-center p-3 rounded-[var(--radius-2)] cursor-pointer border transition-all bg-[color:var(--color-surface-hover)] border-[color:var(--color-border)] hover:border-[var(--color-accent-hover)] hover:bg-white/[0.08] text-white',
                     isActive
                       && 'border-[var(--color-accent)] bg-[color:var(--color-accent)]/10 shadow-[0_0_15px_color-mix(in_srgb,var(--color-accent)_20%,transparent)]'
                   )}
@@ -113,7 +113,7 @@ export const CreateChannelModal = ({
         {/* Name Input */}
         <div>
           <label className="text-xs font-bold uppercase mb-2 block text-[color:var(--color-text-muted)]">Kanalname</label>
-          <div className="flex items-center px-3 rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 focus-within:border-[var(--color-focus)] text-white transition-colors">
+          <div className="flex items-center px-3 rounded-[var(--radius-2)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 focus-within:border-[var(--color-focus)] text-white transition-colors">
             {type === 'text' ? (
               <Hash size={16} className="mr-2 text-[color:var(--color-text-muted)]" />
             ) : type === 'voice' ? (
@@ -176,7 +176,7 @@ export const CreateChannelModal = ({
           <button
             type="submit"
             disabled={loading || !name}
-            className="px-6 py-2 rounded-lg font-bold shadow-lg disabled:opacity-50 flex items-center gap-2 transition-all active:scale-95 text-white text-sm bg-[var(--accent)] hover:bg-[var(--accent-hover)] active:bg-[var(--accent-hover)] focus-visible:bg-[var(--accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
+            className="px-6 py-2 rounded-[var(--radius-2)] font-bold shadow-lg disabled:opacity-50 flex items-center gap-2 transition-all active:scale-95 text-white text-sm bg-[var(--accent)] hover:bg-[var(--accent-hover)] active:bg-[var(--accent-hover)] focus-visible:bg-[var(--accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
             style={
               {
                 '--accent': palette.accent,

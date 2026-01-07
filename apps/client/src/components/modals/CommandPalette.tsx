@@ -324,7 +324,7 @@ export const CommandPalette = ({
                   onMouseEnter={() => setActiveIndex(index)}
                   onClick={() => selectItem(item)}
                 >
-                  <span className="w-8 h-8 rounded-lg bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] flex items-center justify-center text-[color:var(--color-text)]">
+                  <span className="w-8 h-8 rounded-[var(--radius-2)] bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] flex items-center justify-center text-[color:var(--color-text)]">
                     {item.type === 'command' && <CommandIcon size={16} />}
                     {item.type === 'server' && <Server size={16} />}
                     {item.type === 'channel' && (item.badge === 'Voice' ? <Volume2 size={16} /> : <Hash size={16} />)}
