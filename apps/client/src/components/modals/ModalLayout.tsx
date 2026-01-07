@@ -117,46 +117,38 @@ export const ModalLayout = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-[color:var(--color-surface)]/80 backdrop-blur-sm"
+      className="ct-modal-overlay"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onOverlayClick?.();
       }}
     >
-      {/* Verwende die .glass Klasse aus index.css
-        Inline Styles für spezifisches Modal-Layout angelehnt an das Design
-      */}
       <div
         ref={modalRef}
         tabIndex={-1}
-        className="glass flex flex-col max-h-[85vh] w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200"
-        style={{ 
-          borderRadius: '16px', 
-          border: 'var(--border-shine)',
-          background: 'rgba(22, 22, 25, 0.65)'
-        }}
+        className="ct-modal glass animate-in fade-in zoom-in-95 duration-200"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-[rgba(255,255,255,0.08)]">
+        <div className="ct-modal-header">
           <div>
-            <h2 className="text-lg font-bold text-white tracking-wide">{title}</h2>
-            {description && <p className="text-sm text-[color:var(--color-text-muted)] mt-1">{description}</p>}
+            <h2 className="ct-modal-title">{title}</h2>
+            {description && <p className="ct-modal-desc">{description}</p>}
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-[color:var(--color-text-muted)] hover:text-white hover:bg-[color:var(--color-surface-hover)]/80 rounded-lg transition-colors no-drag"
+            className="ct-modal-close no-drag"
           >
             <X size={20} />
           </button>
         </div>
 
         {/* Body */}
-        <div className={`p-5 overflow-y-auto custom-scrollbar ${bodyClassName ?? ''}`}>
+        <div className={`ct-modal-body custom-scrollbar ${bodyClassName ?? ''}`}>
           {children}
         </div>
 
         {/* Footer */}
         {footer && (
-          <div className="p-4 bg-[rgba(0,0,0,0.2)] border-t border-[rgba(255,255,255,0.08)] flex justify-end gap-3">
+          <div className="ct-modal-footer flex justify-end gap-3">
             {footer}
           </div>
         )}
