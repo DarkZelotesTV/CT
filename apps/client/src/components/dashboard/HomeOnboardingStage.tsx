@@ -52,9 +52,9 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
 
   return (
     <div className="min-h-full w-full flex flex-col bg-gradient-to-br from-[#0b0b0f] via-[#0e0f18] to-[#0b0c12] relative overflow-hidden">
-      <div className="absolute inset-0 opacity-[0.12]" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '22px 22px' }} />
-      <div className="absolute -right-32 -top-32 w-96 h-96 bg-indigo-600/20 blur-3xl rounded-full" />
-      <div className="absolute -left-24 bottom-0 w-80 h-80 bg-green-500/10 blur-3xl rounded-full" />
+      <div className="absolute inset-0 opacity-[0.1]" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '22px 22px' }} />
+      <div className="absolute -right-32 -top-32 w-96 h-96 bg-indigo-600/12 blur-3xl rounded-full" />
+      <div className="absolute -left-24 bottom-0 w-80 h-80 bg-green-500/12 blur-3xl rounded-full" />
 
       <div className="relative flex-1 grid grid-cols-12 gap-6 px-8 pt-10 pb-10 mx-auto max-w-full min-[900px]:max-w-[920px] min-[1200px]:max-w-[1040px] max-[899px]:px-5">
         <div className="col-span-12 min-[900px]:col-span-7 flex flex-col gap-6">
@@ -103,9 +103,9 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
             {steps.map(({ title, body, icon: Icon }) => (
               <div
                 key={title}
-                className="bg-white/[0.04] border border-[color:var(--color-border)]/70 rounded-2xl p-4 backdrop-blur-sm h-full flex flex-col gap-4"
+                className="bg-surface-2 hover:bg-surface-3 border border-[color:var(--color-border)]/70 rounded-2xl p-4 backdrop-blur-sm h-full flex flex-col gap-4 transition-colors"
               >
-                <div className="w-10 h-10 rounded-xl bg-indigo-500/15 border border-indigo-500/20 text-indigo-200 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-surface-3 border border-[color:var(--color-border)] text-[color:var(--color-text)] flex items-center justify-center">
                   <Icon size={18} />
                 </div>
                 <div className="text-sm font-semibold text-white leading-snug">{title}</div>
@@ -115,10 +115,10 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
           </div>
         </div>
 
-        <div className="col-span-12 min-[900px]:col-span-5 rounded-2xl border border-[color:var(--color-border)] bg-surface-alt p-[18px] min-[900px]:p-5 shadow-2xl flex flex-col gap-5">
+        <div className="col-span-12 min-[900px]:col-span-5 rounded-2xl border border-[color:var(--color-border)] bg-surface-2 hover:bg-surface-3 p-[18px] min-[900px]:p-5 shadow-2xl flex flex-col gap-5 transition-colors">
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-200">
+              <div className="w-10 h-10 rounded-2xl bg-surface-3 border border-[color:var(--color-border)] flex items-center justify-center text-[color:var(--color-text)]">
                 <MessageSquare size={20} />
               </div>
               <div>
@@ -128,8 +128,8 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
                 </div>
               </div>
             </div>
-            <div className="h-1.5 rounded-full bg-[color:var(--color-surface-hover)]">
-              <div className="h-full w-[28%] rounded-full bg-[color:var(--color-accent)]" />
+            <div className="h-1.5 rounded-full bg-surface-3/70">
+              <div className="h-full w-[28%] rounded-full bg-surface-3" />
             </div>
           </div>
 
@@ -146,11 +146,11 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
                   title={isDisabled ? tooltip : undefined}
                   className={`group flex h-11 items-center gap-3 rounded-xl border border-[color:var(--color-border)]/70 px-3 text-left transition ${
                     isDisabled
-                      ? 'cursor-not-allowed bg-[color:var(--color-surface)]/30 text-[color:var(--color-text-muted)]/80'
-                      : 'bg-[color:var(--color-surface)]/40 text-white hover:bg-[color:var(--color-surface-hover)] hover:border-[color:var(--color-accent)]/30 hover:ring-1 hover:ring-[color:var(--color-accent)]/15'
+                      ? 'cursor-not-allowed bg-surface-2/30 text-[color:var(--color-text-muted)]/80'
+                      : 'bg-surface-2 text-white hover:bg-surface-3 hover:border-[color:var(--color-accent)]/30 hover:ring-1 hover:ring-[color:var(--color-accent)]/15'
                   }`}
                 >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[color:var(--color-surface-hover)] text-[color:var(--color-text)]">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-3 text-[color:var(--color-text)]">
                     <Icon size={20} />
                   </span>
                   <span className="text-[14px] font-medium">{label}</span>

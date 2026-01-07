@@ -320,6 +320,8 @@ export const applyAppTheme = (theme: AppTheme) => {
     '--color-surface': theme.surface,
     '--color-surface-alt': theme.surfaceAlt,
     '--color-surface-hover': theme.surfaceHover,
+    '--color-surface-2': theme.surfaceAlt,
+    '--color-surface-3': theme.surfaceHover,
     '--color-surface-body': theme.surfaceBody,
     '--color-surface-rail': theme.surfaceRail,
     '--color-surface-tree': theme.surfaceTree,

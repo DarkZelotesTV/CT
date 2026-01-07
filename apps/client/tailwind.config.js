@@ -14,6 +14,8 @@ export default {
         surface: 'var(--color-surface)',
         'surface-alt': 'var(--color-surface-alt)',
         'surface-hover': 'var(--color-surface-hover)',
+        'surface-2': 'var(--color-surface-2)',
+        'surface-3': 'var(--color-surface-3)',
         border: {
           DEFAULT: 'var(--color-border)',
           strong: 'var(--color-border-strong)',

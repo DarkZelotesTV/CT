@@ -10,6 +10,8 @@
   --color-surface: #111827;
   --color-surface-alt: #0f1625;
   --color-surface-hover: #1f2937;
+  --color-surface-2: var(--color-surface-alt);
+  --color-surface-3: var(--color-surface-hover);
   --color-surface-body: #050505;
   --color-surface-rail: rgba(10, 10, 12, 0.9);
   --color-surface-tree: rgba(22, 22, 25, 0.85);
