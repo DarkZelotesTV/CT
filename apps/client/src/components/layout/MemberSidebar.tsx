@@ -3,7 +3,7 @@ import { Shield, Crown, UserCheck, UserX } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../../api/http';
 import { useSocket } from '../../context/SocketContext';
-import { ErrorCard, Skeleton, Spinner } from '../ui';
+import { ErrorCard, RoleTag, Skeleton, Spinner } from '../ui';
 import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
 
@@ -520,12 +520,12 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
     const statusClass = m.status === 'idle' || m.status === 'away' ? 'idle' : m.status;
     const statusTone =
       statusClass === 'online'
-        ? { row: 'm-row online', chip: 'status-pill online' }
+        ? { row: 'm-row online' }
         : statusClass === 'idle'
-          ? { row: 'm-row idle', chip: 'status-pill idle' }
+          ? { row: 'm-row idle' }
           : statusClass === 'dnd'
-            ? { row: 'm-row dnd', chip: 'status-pill dnd' }
-            : { row: 'm-row offline', chip: 'status-pill offline' };
+            ? { row: 'm-row dnd' }
+            : { row: 'm-row offline' };
 
     const variantClass =
       variant === 'connected' ? 'accent-connected' : variant === 'afk' ? 'accent-afk' : variant === 'offline' ? 'accent-offline' : '';
@@ -536,11 +536,11 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
       .map((role: string) => role.toLowerCase());
 
     const roleBadges = [
-      roleTags.includes('owner') ? { label: 'Owner', icon: Crown, className: 'admin' } : null,
-      roleTags.includes('admin') ? { label: 'Admin', icon: Shield, className: 'admin' } : null,
-      roleTags.some((r) => r.includes('mod')) ? { label: 'Mod', icon: Shield, className: 'mod' } : null,
-      roleTags.some((r) => r.includes('bot')) ? { label: 'Bot', icon: UserCheck, className: 'bot' } : null,
-    ].filter(Boolean) as { label: string; icon: typeof Shield; className: string }[];
+      roleTags.includes('owner') ? { label: 'Owner', icon: Crown, variant: 'admin' } : null,
+      roleTags.includes('admin') ? { label: 'Admin', icon: Shield, variant: 'admin' } : null,
+      roleTags.some((r) => r.includes('mod')) ? { label: 'Mod', icon: Shield, variant: 'mod' } : null,
+      roleTags.some((r) => r.includes('bot')) ? { label: 'Bot', icon: UserCheck, variant: 'bot' } : null,
+    ].filter(Boolean) as { label: string; icon: typeof Shield; variant: 'admin' | 'mod' | 'bot' }[];
 
     const statusText =
       m.status === 'online'
@@ -585,16 +585,16 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
           </div>
           <div className="m-roles">
             {roleBadges.length === 0 && (
-              <span className="tag role-tag neutral">
+              <RoleTag variant="neutral">
                 <UserX size={12} /> {t('memberSidebar.noRoles', { defaultValue: 'Keine Rollen' })}
-              </span>
+              </RoleTag>
             )}
             {roleBadges.map((badge) => {
               const Icon = badge.icon;
               return (
-                <span key={`${m.userId}-${badge.label}`} className={`tag role-tag ${badge.className}`}>
+                <RoleTag key={`${m.userId}-${badge.label}`} variant={badge.variant}>
                   <Icon size={11} /> {badge.label}
-                </span>
+                </RoleTag>
               );
             })}
           </div>

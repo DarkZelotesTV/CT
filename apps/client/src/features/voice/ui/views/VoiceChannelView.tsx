@@ -24,6 +24,7 @@ import { useVoice } from '../..';
 // 3. Settings und Modals (vier Ebenen hoch bis src/)
 import { useSettings } from '../../../../context/SettingsContext';
 import { UserSettingsModal } from '../../../../components/modals/UserSettingsModal';
+import { StatusBadge, type StatusTone } from '../../../../components/ui';
 
 const ContextMenu = ({ onClose, children }: { onClose: () => void, children: React.ReactNode }) => {
     const ref = useRef<HTMLDivElement>(null);
@@ -101,13 +102,13 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
   const streamingActive = streamState === 'live';
   const streamPaused = streamState === 'paused';
   const canStartStream = connectionState !== 'disconnected' || Boolean(activeChannelId);
-  const streamStatusVariant = streamingActive
+  const streamStatusVariant = (streamingActive
     ? 'live'
     : streamPaused
       ? 'paused'
       : connectionState === 'connected'
         ? 'idle'
-        : 'offline';
+        : 'offline') as StatusTone;
   const streamLabel = streamingActive ? 'LIVE' : streamPaused ? 'PAUSIERT' : connectionState === 'connected' ? 'BEREIT' : 'OFFLINE';
   const streamDetail = streamingActive
     ? (isScreenSharing ? 'Bildschirmfreigabe aktiv' : 'Kamera aktiv')
@@ -178,10 +179,9 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
   return (
     <div className="voice-channel-view">
       <div className="voice-topbar">
-        <div className={`status-pill ${streamStatusVariant}`}>
-          <span className="status-dot" />
+        <StatusBadge status={streamStatusVariant} withDot size="md">
           {streamLabel}
-        </div>
+        </StatusBadge>
 
         <div className="voice-topbar__meta">
           <div className="streamer-pill inline">
