@@ -384,10 +384,10 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
             onClick={() => onSelectServer(null)}
             className={
               `
-              w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 group relative no-drag border border-white/10
+              w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 group relative no-drag border border-[color:var(--color-border)]
               ${selectedServerId === null
                 ? 'bg-emerald-500 text-white rounded-[14px] shadow-[0_0_0_6px_rgba(16,185,129,0.16)] shadow-emerald-500/40'
-                : 'bg-white/5 hover:bg-white/10 text-gray-300 rounded-full hover:rounded-[14px] hover:shadow-[0_0_0_6px_rgba(255,255,255,0.06)]'}
+                : 'bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 text-[color:var(--color-text)] rounded-full hover:rounded-[14px] hover:shadow-[0_0_0_6px_rgba(255,255,255,0.06)]'}
             `
             }
             aria-label="Home"
@@ -395,10 +395,10 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
             <Home size={22} />
           </button>
 
-          <div className="w-10 h-px bg-white/10 rounded-full flex-shrink-0" />
+          <div className="w-10 h-px bg-[color:var(--color-surface-hover)]/80 rounded-full flex-shrink-0" />
 
           {/* LOCAL SERVERS */}
-          {loading && <Spinner label={t('serverRail.loading')} className="text-gray-400" />}
+          {loading && <Spinner label={t('serverRail.loading')} className="text-[color:var(--color-text-muted)]" />}
           {lastError && (
             <ErrorCard
               size="compact"
@@ -409,7 +409,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
             />
           )}
           {!loading && servers.length === 0 && !lastError && (
-            <div className="text-xs text-gray-400">{t('serverRail.empty')}</div>
+            <div className="text-xs text-[color:var(--color-text-muted)]">{t('serverRail.empty')}</div>
           )}
           {orderedServers.map((server) => {
             const name = displayName(server);
@@ -424,9 +424,9 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                 onClick={() => onSelectServer(server.id)}
                 className={
                   `
-                w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 relative group no-drag border border-white/10
+                w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 relative group no-drag border border-[color:var(--color-border)]
                 ${selectedServerId === server.id ? 'rounded-[14px]' : 'rounded-full hover:rounded-[14px]'}
-                bg-white/5 hover:bg-white/10 hover:shadow-[0_0_0_6px_rgba(255,255,255,0.05)] ${selectedServerId === server.id ? 'shadow-[0_0_0_6px_rgba(16,185,129,0.16)] shadow-emerald-500/40' : ''}
+                bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 hover:shadow-[0_0_0_6px_rgba(255,255,255,0.05)] ${selectedServerId === server.id ? 'shadow-[0_0_0_6px_rgba(16,185,129,0.16)] shadow-emerald-500/40' : ''}
               `
                 }
                 title={tooltip}
@@ -469,7 +469,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                     className={`w-full h-full object-cover transition-all ${selectedServerId === server.id ? 'rounded-[14px]' : 'rounded-full group-hover:rounded-[14px]'}`}
                   />
                 ) : (
-                  <span className="text-gray-200 font-bold text-sm group-hover:text-white transition-colors">
+                  <span className="text-[color:var(--color-text)] font-bold text-sm group-hover:text-white transition-colors">
                     {name.substring(0, 2).toUpperCase()}
                   </span>
                 )}
@@ -480,7 +480,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
           {/* REMOTE / PINNED SERVERS */}
           {pinnedRemote.length > 0 && (
             <>
-              <div className="w-8 h-[2px] bg-white/5 rounded-full flex-shrink-0" />
+              <div className="w-8 h-[2px] bg-[color:var(--color-surface-hover)] rounded-full flex-shrink-0" />
               {pinnedRemote.map((p) => (
                 <div
                   key={`remote-${p.instanceUrl}-${p.serverId}`}
@@ -494,11 +494,11 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                     }
                     handleKeyboardContext(e, p.serverId, 'remote', p.instanceUrl);
                   }}
-                  className="no-drag w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 relative group no-drag rounded-full hover:rounded-[14px] bg-white/5 hover:bg-white/10 outline-none border border-white/10 hover:shadow-[0_0_0_6px_rgba(255,255,255,0.06)]"
+                  className="no-drag w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 relative group no-drag rounded-full hover:rounded-[14px] bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 outline-none border border-[color:var(--color-border)] hover:shadow-[0_0_0_6px_rgba(255,255,255,0.06)]"
                   title={`${p.name ?? `Server ${p.serverId}`} (${p.instanceUrl})`}
                   onContextMenu={(e) => handleContextMenu(e, p.serverId, 'remote', p.instanceUrl)}
                 >
-                  <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-black/70 border border-white/10 flex items-center justify-center text-cyan-300">
+                  <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[color:var(--color-surface)]/90 border border-[color:var(--color-border)] flex items-center justify-center text-cyan-300">
                     <Globe size={12} />
                   </div>
 
@@ -509,7 +509,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                       removePinnedServer(p.instanceUrl, p.serverId);
                       setPinnedTick((x) => x + 1);
                     }}
-                    className="no-drag absolute -top-1 -left-1 w-5 h-5 rounded-full bg-black/70 border border-white/10 hidden group-hover:flex items-center justify-center text-gray-300 hover:text-white"
+                    className="no-drag absolute -top-1 -left-1 w-5 h-5 rounded-full bg-[color:var(--color-surface)]/90 border border-[color:var(--color-border)] hidden group-hover:flex items-center justify-center text-[color:var(--color-text)] hover:text-white"
                     title="Entfernen"
                     aria-label="Server entfernen"
                   >
@@ -523,7 +523,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                       className="w-full h-full object-cover transition-all rounded-full group-hover:rounded-[14px]"
                     />
                   ) : (
-                    <span className="text-gray-200 font-bold text-sm group-hover:text-white transition-colors">
+                    <span className="text-[color:var(--color-text)] font-bold text-sm group-hover:text-white transition-colors">
                       {(p.name ?? `S${p.serverId}`).substring(0, 2).toUpperCase()}
                     </span>
                   )}
@@ -548,10 +548,10 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
             </button>
 
             {showAddMenu && (
-              <div className="absolute left-16 bottom-0 w-52 bg-[#0f1014] border border-white/10 rounded-xl shadow-2xl p-2 z-50 no-drag">
+              <div className="absolute left-16 bottom-0 w-52 bg-[color:var(--color-surface)] border border-[color:var(--color-border)] rounded-xl shadow-2xl p-2 z-50 no-drag">
                 <button
                   type="button"
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-sm text-white"
+                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-[color:var(--color-surface-hover)] text-sm text-white"
                   onClick={() => {
                     setShowAddMenu(false);
                     onCreateServer(); // Ruft jetzt die Prop auf
@@ -561,7 +561,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                 </button>
                 <button
                   type="button"
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 text-sm text-white"
+                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-[color:var(--color-surface-hover)] text-sm text-white"
                   onClick={() => {
                     setShowAddMenu(false);
                     onJoinServer(); // Ruft jetzt die Prop auf
@@ -569,7 +569,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                 >
                   Server beitreten / hinzufügen
                 </button>
-                <div className="text-[10px] text-gray-500 px-3 pt-2 pb-1">Aktuelle Instanz: {currentInstance}</div>
+                <div className="text-[10px] text-[color:var(--color-text-muted)] px-3 pt-2 pb-1">Aktuelle Instanz: {currentInstance}</div>
               </div>
             )}
           </div>
@@ -584,13 +584,13 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
             tabIndex={-1}
             data-server-menu
             aria-label={t('serverRail.contextMenuAria') ?? 'Server Menü'}
-            className="pointer-events-auto absolute min-w-[180px] bg-[#0f1014] border border-white/10 rounded-xl shadow-2xl p-2 text-sm text-white"
+            className="pointer-events-auto absolute min-w-[180px] bg-[color:var(--color-surface)] border border-[color:var(--color-border)] rounded-xl shadow-2xl p-2 text-sm text-white"
             style={{ left: contextMenu.x, top: contextMenu.y }}
           >
             <button
               type="button"
               role="menuitem"
-              className="flex w-full items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 focus:bg-white/10 focus:outline-none"
+              className="flex w-full items-center gap-2 px-3 py-2 rounded-lg hover:bg-[color:var(--color-surface-hover)] focus:bg-[color:var(--color-surface-hover)]/80 focus:outline-none"
               onClick={() => handleContextAction('rename')}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -607,7 +607,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
               <button
                 type="button"
                 role="menuitem"
-                className="flex w-full items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 focus:bg-white/10 focus:outline-none"
+                className="flex w-full items-center gap-2 px-3 py-2 rounded-lg hover:bg-[color:var(--color-surface-hover)] focus:bg-[color:var(--color-surface-hover)]/80 focus:outline-none"
                 onClick={() => handleContextAction('pin-toggle')}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
@@ -629,7 +629,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
               <button
                 type="button"
                 role="menuitem"
-                className="flex w-full items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 focus:bg-white/10 focus:outline-none"
+                className="flex w-full items-center gap-2 px-3 py-2 rounded-lg hover:bg-[color:var(--color-surface-hover)] focus:bg-[color:var(--color-surface-hover)]/80 focus:outline-none"
                 onClick={() => handleContextAction('remove')}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {

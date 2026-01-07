@@ -91,22 +91,22 @@ export function FirstStartModal({ onComplete }: Props) {
       bodyClassName="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6"
     >
       <div className="space-y-4">
-        <div className="flex items-center gap-2 text-sm text-gray-300">
-          <div className={`h-8 w-8 rounded-full flex items-center justify-center ${step === "identity" ? "bg-indigo-600" : "bg-white/10"}`}>
+        <div className="flex items-center gap-2 text-sm text-[color:var(--color-text)]">
+          <div className={`h-8 w-8 rounded-full flex items-center justify-center ${step === "identity" ? "bg-indigo-600" : "bg-[color:var(--color-surface-hover)]/80"}`}>
             <span className="font-bold">1</span>
           </div>
           <div>
             <div className="text-white font-semibold">Identity erstellen oder importieren</div>
-            <p className="text-gray-400 text-xs">Ohne Identity kannst du dich nicht mit einem Server verbinden.</p>
+            <p className="text-[color:var(--color-text-muted)] text-xs">Ohne Identity kannst du dich nicht mit einem Server verbinden.</p>
           </div>
         </div>
 
-        <label className="text-xs uppercase font-semibold text-gray-400 block">Anzeigename (optional)</label>
+        <label className="text-xs uppercase font-semibold text-[color:var(--color-text-muted)] block">Anzeigename (optional)</label>
         <input
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           placeholder="z.B. jusbe"
-          className="w-full rounded-xl bg-black/40 border border-white/10 p-3 text-white outline-none focus:border-indigo-500"
+          className="w-full rounded-xl bg-[color:var(--color-surface)]/70 border border-[color:var(--color-border)] p-3 text-white outline-none focus:border-indigo-500"
         />
 
         <div className="flex flex-wrap gap-3">
@@ -118,7 +118,7 @@ export function FirstStartModal({ onComplete }: Props) {
           </button>
           <button
             onClick={triggerFileSelect}
-            className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition flex items-center gap-2"
+            className="px-4 py-3 rounded-xl bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition flex items-center gap-2"
           >
             <Upload size={18} /> Identity importieren
           </button>
@@ -135,47 +135,47 @@ export function FirstStartModal({ onComplete }: Props) {
           />
         </div>
 
-        <div className="text-sm text-gray-400 bg-white/5 border border-white/10 rounded-2xl p-4">
+        <div className="text-sm text-[color:var(--color-text-muted)] bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] rounded-2xl p-4">
           <div className="text-white font-semibold">Aktuelle Identity</div>
           {identity ? (
             <div className="mt-2 font-mono break-all text-indigo-200">{formatFingerprint(fp!)}</div>
           ) : (
             <div className="mt-2 text-yellow-300">Noch keine Identity vorhanden.</div>
           )}
-          <p className="mt-2 text-gray-500 text-xs">
+          <p className="mt-2 text-[color:var(--color-text-muted)] text-xs">
             Identitäten bleiben lokal. Du kannst sie jederzeit neu exportieren oder später in den Einstellungen verwalten.
           </p>
         </div>
       </div>
 
       <div className="space-y-4">
-        <div className="flex items-center gap-2 text-sm text-gray-300">
-          <div className={`h-8 w-8 rounded-full flex items-center justify-center ${step === "backup" ? "bg-indigo-600" : "bg-white/10"}`}>
+        <div className="flex items-center gap-2 text-sm text-[color:var(--color-text)]">
+          <div className={`h-8 w-8 rounded-full flex items-center justify-center ${step === "backup" ? "bg-indigo-600" : "bg-[color:var(--color-surface-hover)]/80"}`}>
             <span className="font-bold">2</span>
           </div>
           <div>
             <div className="text-white font-semibold">Backup speichern</div>
-            <p className="text-gray-400 text-xs">Sichere deine Identity als Datei. Optional mit Passphrase verschlüsselt.</p>
+            <p className="text-[color:var(--color-text-muted)] text-xs">Sichere deine Identity als Datei. Optional mit Passphrase verschlüsselt.</p>
           </div>
         </div>
 
-        <label className="text-xs uppercase font-semibold text-gray-400 block">Passphrase fürs Backup (optional)</label>
+        <label className="text-xs uppercase font-semibold text-[color:var(--color-text-muted)] block">Passphrase fürs Backup (optional)</label>
         <input
           value={backupPassphrase}
           onChange={(e) => setBackupPassphrase(e.target.value)}
           placeholder="Leer lassen für unverschlüsselt"
-          className="w-full rounded-xl bg-black/40 border border-white/10 p-3 text-white outline-none focus:border-indigo-500"
+          className="w-full rounded-xl bg-[color:var(--color-surface)]/70 border border-[color:var(--color-border)] p-3 text-white outline-none focus:border-indigo-500"
         />
 
         <button
           onClick={handleExport}
           disabled={!identity}
-          className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 disabled:opacity-50 transition flex items-center gap-2"
+          className="px-4 py-3 rounded-xl bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 disabled:opacity-50 transition flex items-center gap-2"
         >
           <Download size={18} /> Backup herunterladen
         </button>
 
-        <div className="text-xs text-gray-500 bg-white/5 border border-indigo-500/30 rounded-2xl p-4 flex items-start gap-3">
+        <div className="text-xs text-[color:var(--color-text-muted)] bg-[color:var(--color-surface-hover)] border border-indigo-500/30 rounded-2xl p-4 flex items-start gap-3">
           <Check className="text-indigo-300 mt-0.5" size={16} />
           <div>
             Bewahre dein Backup sicher auf. Ohne Backup kannst du deine Identität auf neuen Geräten nicht wiederherstellen.

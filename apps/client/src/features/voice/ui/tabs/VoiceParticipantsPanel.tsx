@@ -77,15 +77,15 @@ export const VoiceParticipantsPanel = () => {
   }
 
   return (
-    <div className="bg-[#0b0c0f] border-t border-white/5 px-2 py-2">
+    <div className="bg-[color:var(--color-surface)] border-t border-[color:var(--color-border)] px-2 py-2">
       <div className="flex items-center justify-between px-1 mb-1">
-        <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Teilnehmer</div>
-        <div className="text-[10px] text-gray-600">{countLabel}</div>
+        <div className="text-[10px] uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold">Teilnehmer</div>
+        <div className="text-[10px] text-[color:var(--color-text-muted)]">{countLabel}</div>
       </div>
 
       <div className="space-y-1 max-h-28 overflow-y-auto custom-scrollbar pr-1">
         {displayPeople.length === 0 && (
-          <div className="px-2 py-1 text-[11px] text-gray-500">Niemand im Talk</div>
+          <div className="px-2 py-1 text-[11px] text-[color:var(--color-text-muted)]">Niemand im Talk</div>
         )}
         {displayPeople.map((p) => {
           const isSpeaking = activeSpeakerSidSet.has(p.sid);
@@ -95,17 +95,17 @@ export const VoiceParticipantsPanel = () => {
               className={`flex items-center gap-2 px-2 py-1 rounded-lg border transition-colors ${
                 isSpeaking
                   ? 'bg-green-500/10 border-green-500/20'
-                  : 'bg-white/[0.02] border-white/5'
+                  : 'bg-[color:var(--color-surface)]/40 border-[color:var(--color-border)]'
               }`}
             >
               <div
-                className={`w-2 h-2 rounded-full ${isSpeaking ? 'bg-green-400 animate-pulse' : 'bg-white/10'}`}
+                className={`w-2 h-2 rounded-full ${isSpeaking ? 'bg-green-400 animate-pulse' : 'bg-[color:var(--color-surface-hover)]'}`}
                 title={isSpeaking ? 'Spricht gerade' : 'Leise'}
               />
 
-              <div className="flex-1 truncate text-xs text-gray-200">
+              <div className="flex-1 truncate text-xs text-[color:var(--color-text)]">
                 {p.label}
-                {p.isLocal ? <span className="text-gray-500"> (du)</span> : null}
+                {p.isLocal ? <span className="text-[color:var(--color-text-muted)]"> (du)</span> : null}
               </div>
 
               <div className="flex items-center gap-1">
@@ -120,7 +120,7 @@ export const VoiceParticipantsPanel = () => {
                   </span>
                 )}
                 {p.micEnabled ? (
-                  <Volume2 size={14} className={isSpeaking ? 'text-green-400' : 'text-gray-500'} />
+                  <Volume2 size={14} className={isSpeaking ? 'text-green-400' : 'text-[color:var(--color-text-muted)]'} />
                 ) : (
                   <MicOff size={14} className="text-red-400" />
                 )}
@@ -137,7 +137,7 @@ export const VoiceParticipantsPanel = () => {
                     className="w-24 accent-cyan-400"
                     title="Lautstärke anpassen"
                   />
-                  <span className="text-[10px] text-gray-400 w-8 text-right">
+                  <span className="text-[10px] text-[color:var(--color-text-muted)] w-8 text-right">
                     {Math.round((savedVolumes[p.sid] ?? 1) * 100)}%
                   </span>
                 </div>

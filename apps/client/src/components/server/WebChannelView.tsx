@@ -30,7 +30,7 @@ const layoutClassNameSet = new Set(
 );
 
 const RowsPreview = () => (
-  <div className="flex flex-col gap-0.5 w-4 h-4 text-gray-300">
+  <div className="flex flex-col gap-0.5 w-4 h-4 text-[color:var(--color-text)]">
     <span className="block h-1 w-full rounded-sm bg-current" />
     <span className="block h-1 w-full rounded-sm bg-current" />
     <span className="block h-1 w-3/4 rounded-sm bg-current" />
@@ -89,7 +89,7 @@ const templateOptions: { key: string; label: string; description: string; layout
   <div class="bg-dark-200 border border-dark-400 p-6 rounded-xl">
     <p class="text-blue-300 text-sm font-semibold">Neu</p>
     <h1 class="text-3xl font-bold">Willkommen in deinem Web-Channel</h1>
-    <p class="text-gray-300 mt-2">Füge Widgets hinzu, teile Medien und binde Formulare ein, ohne HTML per Hand zu schreiben.</p>
+    <p class="text-[color:var(--color-text)] mt-2">Füge Widgets hinzu, teile Medien und binde Formulare ein, ohne HTML per Hand zu schreiben.</p>
     <button class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Loslegen</button>
   </div>
 </section>`
@@ -104,7 +104,7 @@ const templateOptions: { key: string; label: string; description: string; layout
 ];
 
 const placeholderHtml =
-  '<div class="text-center text-gray-500 mt-10"><h1>Willkommen</h1><p>Diese Seite ist noch leer.</p></div>';
+  '<div class="text-center text-[color:var(--color-text-muted)] mt-10"><h1>Willkommen</h1><p>Diese Seite ist noch leer.</p></div>';
 
 // --- Codenames Stage Component ---
 const CodenamesStage = ({ initialUrl, channelId, isEditing }: { initialUrl: string, channelId: number, isEditing: boolean }) => {
@@ -158,7 +158,7 @@ const CodenamesStage = ({ initialUrl, channelId, isEditing }: { initialUrl: stri
             <div className="bg-dark-200 border-b border-dark-400 p-2 flex items-center gap-3 shrink-0 shadow-sm z-10">
                 <div className="flex items-center gap-2 text-yellow-500 px-2">
                     <Gamepad2 size={18} />
-                    <span className="font-bold text-gray-100 text-sm hidden md:inline">Codenames</span>
+                    <span className="font-bold text-[color:var(--color-text)] text-sm hidden md:inline">Codenames</span>
                 </div>
                 <div className="h-6 w-px bg-dark-400 mx-1 hidden md:block"></div>
                 <div className="flex-1 flex items-center gap-2 max-w-2xl">
@@ -166,7 +166,7 @@ const CodenamesStage = ({ initialUrl, channelId, isEditing }: { initialUrl: stri
                         type="text" 
                         value={inputUrl}
                         onChange={(e) => setInputUrl(e.target.value)}
-                        className="flex-1 bg-dark-300 text-gray-200 text-sm px-3 py-1.5 rounded border border-dark-400 focus:border-blue-500 focus:outline-none font-mono"
+                        className="flex-1 bg-dark-300 text-[color:var(--color-text)] text-sm px-3 py-1.5 rounded border border-dark-400 focus:border-blue-500 focus:outline-none font-mono"
                         placeholder="Raum-Link hier einfügen..."
                     />
                     <button 
@@ -178,7 +178,7 @@ const CodenamesStage = ({ initialUrl, channelId, isEditing }: { initialUrl: stri
                         <span>Sync</span>
                     </button>
                 </div>
-                <div className="ml-auto text-xs text-gray-400 hidden md:flex items-center gap-2">
+                <div className="ml-auto text-xs text-[color:var(--color-text-muted)] hidden md:flex items-center gap-2">
                    <span className="bg-dark-300 px-2 py-1 rounded border border-dark-400">Erstelle Raum &rarr; Kopiere Link &rarr; Sync</span>
                 </div>
             </div>
@@ -194,8 +194,8 @@ const CodenamesStage = ({ initialUrl, channelId, isEditing }: { initialUrl: stri
                 />
                  {url === 'https://codenames.game/' && (
                     <div className="absolute bottom-6 left-6 max-w-sm bg-dark-200/95 backdrop-blur border border-dark-400 p-4 rounded-xl shadow-2xl pointer-events-none">
-                         <h4 className="font-bold text-gray-100 mb-1 flex items-center gap-2"><Play size={16} className="text-blue-500"/> Los geht's</h4>
-                         <p className="text-xs text-gray-300">Erstelle einen Raum im Spiel, kopiere den Link oben in die Leiste und klicke auf Sync, damit deine Freunde beitreten können.</p>
+                         <h4 className="font-bold text-[color:var(--color-text)] mb-1 flex items-center gap-2"><Play size={16} className="text-blue-500"/> Los geht's</h4>
+                         <p className="text-xs text-[color:var(--color-text)]">Erstelle einen Raum im Spiel, kopiere den Link oben in die Leiste und klicke auf Sync, damit deine Freunde beitreten können.</p>
                     </div>
                  )}
             </div>
@@ -448,7 +448,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
   };
 
   const layoutBadge = (
-    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${isEditing ? 'bg-blue-500/20 text-blue-200 border border-blue-500/50' : 'bg-dark-300 text-gray-300 border border-dark-400'}`}>
+    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${isEditing ? 'bg-blue-500/20 text-blue-200 border border-blue-500/50' : 'bg-dark-300 text-[color:var(--color-text)] border border-dark-400'}`}>
       {isEditing ? 'Edit Mode' : (layoutMode === 'codenames' ? 'Game Mode' : 'Read-only')}
     </span>
   );
@@ -475,7 +475,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
           className={`flex items-center gap-2 text-xs uppercase font-bold px-3 py-2 rounded border transition ${
             isEditing
               ? 'text-red-200 border-red-400/40 hover:border-red-300'
-              : 'text-gray-200 border-dark-400 hover:border-dark-200'
+              : 'text-[color:var(--color-text)] border-dark-400 hover:border-dark-200'
           }`}
         >
           {isEditing ? <X size={16} /> : <Edit size={16} />}
@@ -501,7 +501,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                {!isDesktop && (
                 <div className="h-12 border-b border-dark-400 flex items-center px-4 shadow-sm bg-dark-100 flex-shrink-0 justify-between">
                     <div className="flex items-center gap-3">
-                    <Globe className="text-gray-400" size={20} />
+                    <Globe className="text-[color:var(--color-text-muted)]" size={20} />
                     <span className="font-bold text-white mr-2">{channelName}</span>
                     {layoutBadge}
                     </div>
@@ -512,7 +512,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                             if (!isEditing) setEditValue(contentBody || 'https://codenames.game/');
                             setIsEditing(!isEditing);
                             }}
-                            className="flex items-center gap-2 text-xs uppercase font-bold px-3 py-2 rounded border border-dark-400 text-gray-200"
+                            className="flex items-center gap-2 text-xs uppercase font-bold px-3 py-2 rounded border border-dark-400 text-[color:var(--color-text)]"
                         >
                             <Edit size={16} /> Seite bearbeiten
                         </button>
@@ -532,7 +532,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
       {!isDesktop && (
       <div className="h-12 border-b border-dark-400 flex items-center px-4 shadow-sm bg-dark-100 flex-shrink-0 justify-between">
         <div className="flex items-center gap-3">
-          <Globe className="text-gray-400" size={20} />
+          <Globe className="text-[color:var(--color-text-muted)]" size={20} />
           <span className="font-bold text-white mr-2">{channelName}</span>
           {layoutBadge}
         </div>
@@ -552,7 +552,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
             className={`flex items-center gap-2 text-xs uppercase font-bold px-3 py-2 rounded border transition ${
               isEditing
                 ? 'text-red-200 border-red-400/40 hover:border-red-300'
-                : 'text-gray-200 border-dark-400 hover:border-dark-200'
+                : 'text-[color:var(--color-text)] border-dark-400 hover:border-dark-200'
             }`}
           >
             {isEditing ? <X size={16} /> : <Edit size={16} />}
@@ -583,7 +583,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
             <div className="bg-dark-200 border border-dark-400 rounded-lg p-3 flex flex-col gap-3">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold">Layout & Modus</p>
+                    <p className="text-xs uppercase tracking-wide text-[color:var(--color-text-muted)] font-semibold">Layout & Modus</p>
                     <div className="flex flex-wrap gap-2 mt-2">
                       {layoutOptions.map((option) => (
                         <button
@@ -592,25 +592,25 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                           className={`flex items-center gap-2 px-3 py-2 rounded border text-sm transition ${
                             layoutMode === option.key
                               ? 'bg-blue-600/20 border-blue-500 text-blue-100'
-                              : 'bg-dark-300 border-dark-400 text-gray-200 hover:border-dark-200'
+                              : 'bg-dark-300 border-dark-400 text-[color:var(--color-text)] hover:border-dark-200'
                           }`}
                         >
                           {option.icon}
                           <div className="text-left">
                             <div className="font-semibold leading-4">{option.label}</div>
-                            <div className="text-[11px] text-gray-400 leading-4">{option.description}</div>
+                            <div className="text-[11px] text-[color:var(--color-text-muted)] leading-4">{option.description}</div>
                           </div>
                         </button>
                       ))}
                     </div>
                   </div>
                   <div className="flex flex-col gap-3 min-w-[260px]">
-                    <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold">Vorlagen & Widgets</p>
+                    <p className="text-xs uppercase tracking-wide text-[color:var(--color-text-muted)] font-semibold">Vorlagen & Widgets</p>
                     <div className="flex flex-wrap gap-2 items-center">
                       <select
                         value={selectedTemplate}
                         onChange={(event) => setSelectedTemplate(event.target.value)}
-                        className="bg-dark-300 border border-dark-400 text-gray-200 text-sm rounded px-3 py-2 min-w-[180px]"
+                        className="bg-dark-300 border border-dark-400 text-[color:var(--color-text)] text-sm rounded px-3 py-2 min-w-[180px]"
                       >
                         <option value="">Vorlage wählen</option>
                         {templateOptions.map((template) => (
@@ -637,7 +637,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                             onDragStart={(event) => handleWidgetDragStart(event, widgetSnippets.media)}
                             className="border border-dark-400 rounded-lg p-3 bg-dark-300 text-left cursor-grab hover:border-dark-200 transition"
                         >
-                            <div className="flex items-center gap-2 font-semibold text-gray-100">
+                            <div className="flex items-center gap-2 font-semibold text-[color:var(--color-text)]">
                             <Image size={16} /> Media
                             </div>
                         </div>
@@ -651,21 +651,21 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
               <div className="grid lg:grid-cols-2 gap-4 flex-1 min-h-0">
                 <div className="flex flex-col h-full gap-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <label className="text-sm text-gray-300 font-semibold">
+                    <label className="text-sm text-[color:var(--color-text)] font-semibold">
                         {layoutMode === 'codenames' ? 'Start-URL (Codenames)' : 'Visueller Editor'}
                     </label>
                   </div>
                   
                   {layoutMode === 'codenames' ? (
-                      <div className="flex-1 bg-dark-300 border border-dark-400 rounded-lg p-4 font-mono text-gray-200 flex flex-col gap-2">
-                          <label className="text-xs text-gray-400 uppercase">Standard URL</label>
+                      <div className="flex-1 bg-dark-300 border border-dark-400 rounded-lg p-4 font-mono text-[color:var(--color-text)] flex flex-col gap-2">
+                          <label className="text-xs text-[color:var(--color-text-muted)] uppercase">Standard URL</label>
                           <input 
                             type="text" 
                             value={editValue} 
                             onChange={(e) => setEditValue(e.target.value)}
                             className="w-full bg-dark-200 border border-dark-400 p-2 rounded text-blue-300"
                           />
-                          <p className="text-sm text-gray-400 mt-2">
+                          <p className="text-sm text-[color:var(--color-text-muted)] mt-2">
                               Im Codenames-Modus wird dieser Link als Standard geladen. Spieler können zur Laufzeit Räume synchronisieren.
                           </p>
                       </div>
@@ -689,14 +689,14 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                         modules={quillModules}
                         formats={quillFormats}
                         placeholder="Inhalt hier..."
-                        className="h-full flex flex-col text-gray-100 [&_.ql-editor]:min-h-[280px] [&_.ql-editor]:bg-dark-300 [&_.ql-editor]:text-gray-100 [&_.ql-toolbar]:bg-dark-200 [&_.ql-toolbar]:border-dark-400 [&_.ql-container]:border-none"
+                        className="h-full flex flex-col text-[color:var(--color-text)] [&_.ql-editor]:min-h-[280px] [&_.ql-editor]:bg-dark-300 [&_.ql-editor]:text-[color:var(--color-text)] [&_.ql-toolbar]:bg-dark-200 [&_.ql-toolbar]:border-dark-400 [&_.ql-container]:border-none"
                         />
                     </div>
                   )}
 
                   <div className="mt-auto flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-xs text-gray-400">
-                      Aktives Layout: <strong className="text-gray-200">{activeLayout?.label}</strong>
+                    <span className="text-xs text-[color:var(--color-text-muted)]">
+                      Aktives Layout: <strong className="text-[color:var(--color-text)]">{activeLayout?.label}</strong>
                     </span>
                     <button
                       onClick={handleSave}
@@ -710,15 +710,15 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
 
                 <div className="h-full rounded-lg border border-dark-400 bg-dark-200 p-4 overflow-auto">
                   <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2 text-gray-200">
+                    <div className="flex items-center gap-2 text-[color:var(--color-text)]">
                       <Eye size={16} />
                       <span className="font-semibold">Live Vorschau</span>
                     </div>
-                    <span className="text-xs text-gray-400">Layout: {activeLayout?.label}</span>
+                    <span className="text-xs text-[color:var(--color-text-muted)]">Layout: {activeLayout?.label}</span>
                   </div>
                   {layoutMode === 'codenames' ? (
                       <div className="h-[400px] border border-dark-400 rounded overflow-hidden relative">
-                          <div className="absolute inset-0 flex items-center justify-center bg-dark-300 text-gray-400 flex-col gap-2">
+                          <div className="absolute inset-0 flex items-center justify-center bg-dark-300 text-[color:var(--color-text-muted)] flex-col gap-2">
                              <Gamepad2 size={48} className="opacity-50"/>
                              <p>Vorschau der Spiel-Ansicht</p>
                           </div>

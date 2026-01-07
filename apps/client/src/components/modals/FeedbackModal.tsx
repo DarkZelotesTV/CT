@@ -74,7 +74,7 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
       onClose={onClose}
       footer={
         <div className="flex items-center justify-between gap-3">
-          <div className="text-left text-xs text-gray-400" aria-live="polite">
+          <div className="text-left text-xs text-[color:var(--color-text-muted)]" aria-live="polite">
             {success && (
               <span className="flex items-center gap-1 text-emerald-400">
                 <CheckCircle2 size={16} /> {t('feedbackModal.success')}
@@ -105,7 +105,7 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
           </label>
           <select
             id="feedback-category"
-            className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-gray-100 focus:border-cyan-500 focus:outline-none"
+            className="w-full rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 px-3 py-2 text-sm text-[color:var(--color-text)] focus:border-cyan-500 focus:outline-none"
             value={category}
             onChange={(event) => setCategory(event.target.value as FeedbackCategory)}
           >
@@ -124,13 +124,13 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
           <textarea
             id="feedback-message"
             ref={textareaRef}
-            className="w-full min-h-[140px] rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-gray-100 focus:border-cyan-500 focus:outline-none"
+            className="w-full min-h-[140px] rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 px-3 py-2 text-sm text-[color:var(--color-text)] focus:border-cyan-500 focus:outline-none"
             placeholder={t('feedbackModal.messagePlaceholder')}
             value={message}
             onChange={(event) => setMessage(event.target.value)}
             required
           />
-          <p className="text-xs text-gray-400">{t('feedbackModal.messageHelp')}</p>
+          <p className="text-xs text-[color:var(--color-text-muted)]">{t('feedbackModal.messageHelp')}</p>
         </div>
 
         <div className="space-y-2">
@@ -140,7 +140,7 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
           <div className="flex items-center gap-2">
             <label
               htmlFor="feedback-screenshot"
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-white/10 bg-black/30 text-sm text-gray-100 cursor-pointer hover:border-cyan-500 focus-within:border-cyan-500"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 text-sm text-[color:var(--color-text)] cursor-pointer hover:border-cyan-500 focus-within:border-cyan-500"
             >
               <ImagePlus size={16} />
               <span className="truncate">{screenshotLabel}</span>
@@ -155,14 +155,14 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
             {screenshotFile && (
               <button
                 type="button"
-                className="text-xs text-gray-400 underline hover:text-white"
+                className="text-xs text-[color:var(--color-text-muted)] underline hover:text-white"
                 onClick={() => setScreenshotFile(null)}
               >
                 {t('feedbackModal.removeScreenshot')}
               </button>
             )}
           </div>
-          <p className="text-xs text-gray-400">{t('feedbackModal.screenshotHelp')}</p>
+          <p className="text-xs text-[color:var(--color-text-muted)]">{t('feedbackModal.screenshotHelp')}</p>
         </div>
       </form>
     </ModalLayout>

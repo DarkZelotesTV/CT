@@ -87,16 +87,16 @@ export function IdentityScreen({ onAuthed, onIdentityChanged }: Props) {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[#050507] text-gray-200 p-6">
-      <div className="w-full max-w-xl bg-white/[0.03] border border-white/10 rounded-3xl p-6">
+    <div className="min-h-screen w-full flex items-center justify-center bg-[color:var(--color-background)] text-[color:var(--color-text)] p-6">
+      <div className="w-full max-w-xl bg-[color:var(--color-surface)]/40 border border-[color:var(--color-border)] rounded-3xl p-6">
         <h1 className="text-2xl font-bold mb-2">Clover Identity</h1>
-        <p className="text-sm text-gray-400 mb-6">
+        <p className="text-sm text-[color:var(--color-text-muted)] mb-6">
           Keine E-Mail, kein Passwort. Deine Identität ist ein lokaler Schlüssel (wie TS3).
         </p>
 
-        <label className="block text-sm text-gray-300 mb-2">Anzeigename (optional)</label>
+        <label className="block text-sm text-[color:var(--color-text-muted)] mb-2">Anzeigename (optional)</label>
         <input
-          className="w-full rounded-xl bg-black/40 border border-white/10 p-3 mb-4 outline-none"
+          className="w-full rounded-xl bg-[color:var(--color-surface)]/70 border border-[color:var(--color-border)] p-3 mb-4 outline-none text-[color:var(--color-text)]"
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           placeholder="z.B. jusbe"
@@ -104,19 +104,19 @@ export function IdentityScreen({ onAuthed, onIdentityChanged }: Props) {
 
         <div className="flex items-start justify-between gap-4 mb-6">
           <div className="flex-1 text-sm">
-            <div className="text-gray-400">Aktuelle Identity</div>
+            <div className="text-[color:var(--color-text-muted)]">Aktuelle Identity</div>
             {identity ? (
-              <div className="mt-1 font-mono break-all text-gray-200">{formatFingerprint(fp!)}</div>
+              <div className="mt-1 font-mono break-all text-[color:var(--color-text)]">{formatFingerprint(fp!)}</div>
             ) : (
               <div className="mt-1 text-yellow-300">Keine Identity vorhanden.</div>
             )}
-            <p className="text-gray-500 mt-2">
+            <p className="text-[color:var(--color-text-muted)] mt-2">
               Erstelle oder importiere zuerst eine Identity. Danach kannst du dich mit einem Server verbinden.
             </p>
           </div>
 
           <button
-            className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 transition text-sm"
+            className="px-4 py-2 rounded-xl bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-sm"
             onClick={() => setShowIdentityModal(true)}
           >
             Identity verwalten
@@ -125,19 +125,19 @@ export function IdentityScreen({ onAuthed, onIdentityChanged }: Props) {
 
         {identity && (
           <>
-            <label className="block text-sm text-gray-300 mb-2">Server Adresse</label>
+            <label className="block text-sm text-[color:var(--color-text-muted)] mb-2">Server Adresse</label>
             <input
-              className="w-full rounded-xl bg-black/40 border border-white/10 p-3 mb-4 outline-none"
+              className="w-full rounded-xl bg-[color:var(--color-surface)]/70 border border-[color:var(--color-border)] p-3 mb-4 outline-none text-[color:var(--color-text)]"
               value={serverHost}
               onChange={(e) => setServerHost(e.target.value)}
               onBlur={() => setServerHost(normalizeServerUrlString(serverHost))}
               placeholder="https://localhost:3001"
             />
-            <div className="flex items-center gap-2 mb-4 text-xs text-gray-400">
+            <div className="flex items-center gap-2 mb-4 text-xs text-[color:var(--color-text-muted)]">
               <input
                 id="allow-http-identity"
                 type="checkbox"
-                className="rounded border-white/20 bg-black/40"
+                className="rounded border-[color:var(--color-border)] bg-[color:var(--color-surface)]/70"
                 checked={allowInsecureHttp}
                 onChange={(e) => {
                   const allow = e.target.checked;
@@ -147,14 +147,14 @@ export function IdentityScreen({ onAuthed, onIdentityChanged }: Props) {
                 }}
               />
               <label htmlFor="allow-http-identity" className="leading-tight">
-                Unsichere <code className="text-gray-200">http://</code> Verbindungen erlauben (nur lokale Entwicklung)
+                Unsichere <code className="text-[color:var(--color-text)]">http://</code> Verbindungen erlauben (nur lokale Entwicklung)
               </label>
             </div>
 
-            <label className="block text-sm text-gray-300 mb-2">Server Passwort (optional)
+            <label className="block text-sm text-[color:var(--color-text-muted)] mb-2">Server Passwort (optional)
             </label>
             <input
-              className="w-full rounded-xl bg-black/40 border border-white/10 p-3 mb-4 outline-none"
+              className="w-full rounded-xl bg-[color:var(--color-surface)]/70 border border-[color:var(--color-border)] p-3 mb-4 outline-none text-[color:var(--color-text)]"
               value={serverPassword}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Leer lassen wenn keins"
@@ -162,7 +162,7 @@ export function IdentityScreen({ onAuthed, onIdentityChanged }: Props) {
           </>
         )}
 
-        <div className="text-xs text-gray-500 mb-4">
+        <div className="text-xs text-[color:var(--color-text-muted)] mb-4">
           Du kannst die Server-Verbindung überspringen und später in den Einstellungen setzen.
         </div>
 
@@ -175,7 +175,7 @@ export function IdentityScreen({ onAuthed, onIdentityChanged }: Props) {
             {busy ? "Verbinde..." : "Verbinden"}
           </button>
           <button
-            className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition disabled:opacity-50"
+            className="px-4 py-3 rounded-xl bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface)] transition disabled:opacity-50"
             onClick={handleSkip}
             disabled={!identity}
           >

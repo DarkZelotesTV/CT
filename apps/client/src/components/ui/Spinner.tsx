@@ -15,7 +15,7 @@ export const Spinner = ({ className, size = 18, label }: SpinnerProps) => {
     <div
       role="status"
       aria-live="polite"
-      className={classNames('flex items-center gap-2 text-gray-300', className)}
+      className={classNames('flex items-center gap-2 text-[color:var(--color-text-muted)]', className)}
     >
       <Loader2
         aria-hidden
