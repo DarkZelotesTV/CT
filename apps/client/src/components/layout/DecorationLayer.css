@@ -1,0 +1,68 @@
+/* apps/client/src/components/layout/DecorationLayer.css */
+
+@keyframes decoration-float {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(30px, 20px);
+  }
+}
+
+.decoration-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.decoration-noise {
+  position: absolute;
+  inset: 0;
+  opacity: var(--decor-noise-opacity, 0.05);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  mix-blend-mode: soft-light;
+}
+
+.decoration-grid {
+  position: absolute;
+  inset: 0;
+  opacity: var(--decor-grid-opacity, 0.04);
+  background-image: radial-gradient(circle, var(--decor-grid-color, #ffffff) 1px, transparent 1px);
+  background-size: var(--decor-grid-size, 24px) var(--decor-grid-size, 24px);
+}
+
+.decoration-orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(120px);
+  z-index: 0;
+  pointer-events: none;
+  animation: decoration-float 25s infinite ease-in-out alternate;
+}
+
+.decoration-orb-primary {
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, var(--decor-orb-1-color, var(--color-accent)) 0%, transparent 70%);
+  opacity: var(--decor-orb-1-opacity, 0.5);
+  top: -300px;
+  left: -200px;
+}
+
+.decoration-orb-secondary {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, var(--decor-orb-2-color, var(--color-text)) 0%, transparent 70%);
+  opacity: var(--decor-orb-2-opacity, 0.4);
+  bottom: -200px;
+  right: -200px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .decoration-orb {
+    animation: none;
+    filter: blur(40px);
+  }
+}

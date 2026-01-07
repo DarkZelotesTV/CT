@@ -275,6 +275,26 @@ export const buildAppTheme = (mode: ThemeMode, accentColor: string): AppTheme =>
 export const applyAppTheme = (theme: AppTheme) => {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
+  const decorationVars =
+    theme.mode === 'dark'
+      ? {
+          '--decor-noise-opacity': '0.06',
+          '--decor-grid-opacity': '0.04',
+          '--decor-grid-color': '#ffffff',
+          '--decor-orb-1-color': theme.accent,
+          '--decor-orb-2-color': '#60a5fa',
+          '--decor-orb-1-opacity': '0.5',
+          '--decor-orb-2-opacity': '0.4',
+        }
+      : {
+          '--decor-noise-opacity': '0.035',
+          '--decor-grid-opacity': '0.025',
+          '--decor-grid-color': '#0f172a',
+          '--decor-orb-1-color': theme.accent,
+          '--decor-orb-2-color': '#2563eb',
+          '--decor-orb-1-opacity': '0.25',
+          '--decor-orb-2-opacity': '0.2',
+        };
   const entries: Record<string, string> = {
     '--color-background': theme.background,
     '--color-surface': theme.surface,
@@ -317,6 +337,7 @@ export const applyAppTheme = (theme: AppTheme) => {
     '--bg-main': theme.surfaceMain,
     '--bg-info': theme.surfaceInfo,
     '--bg-log': theme.surfaceLog,
+    ...decorationVars,
   };
 
   Object.entries(entries).forEach(([key, value]) => root.style.setProperty(key, value));

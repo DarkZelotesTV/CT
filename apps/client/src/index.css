@@ -105,6 +105,15 @@
   --space-7: 32px;
   --space-8: 40px;
   --layout-transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  --decor-grid-size: 24px;
+  --decor-grid-color: #ffffff;
+  --decor-grid-opacity: 0.04;
+  --decor-noise-opacity: 0.05;
+  --decor-orb-1-color: var(--color-accent);
+  --decor-orb-2-color: #60a5fa;
+  --decor-orb-1-opacity: 0.5;
+  --decor-orb-2-opacity: 0.4;
   
   /* Helper for existing components relying on old vars */
   --color-text-base: #eee;
@@ -140,8 +149,6 @@
     background-color: var(--color-surface-body);
     color: var(--color-text-base);
     font-family: var(--font-ui);
-    /* Noise Texture */
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
   }
 
   ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -183,10 +190,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body {
-    background-image: none;
-  }
-
   .glass {
     backdrop-filter: blur(12px);
   }

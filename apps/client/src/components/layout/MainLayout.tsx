@@ -9,6 +9,7 @@ import { MemberSidebar } from './MemberSidebar';
 import { ChannelSidebar } from './ChannelSidebar';
 import { TitleBar } from '../window/TitleBar';
 import { TopBarProvider } from '../window/TopBarContext';
+import { DecorationLayer } from './DecorationLayer';
 import './MainLayout.css';
 
 // Web & Voice Views
@@ -114,6 +115,7 @@ const onboardingStepIndex: Record<OnboardingReplayKey, number> = {
 export const MainLayout = () => {
   const { t } = useTranslation();
   const { settings } = useSettings();
+  const decorationsEnabled = settings.theme.decorationsEnabled ?? true;
   
   // UI State
   const [showMobileNav, setShowMobileNav] = useState(false);
@@ -796,7 +798,6 @@ export const MainLayout = () => {
     if (activeChannel?.type === 'text') {
       return (
         <div className="flex-1 flex items-center justify-center relative h-full">
-          <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
           <div className="text-center p-10 bg-white/[0.02] rounded-[var(--radius-5)] border border-[color:var(--color-border)]/70 backdrop-blur-sm">
             <h2 className="text-xl font-bold text-white mb-2">{t('layout.textChannelSelected')}</h2>
             <p className="text-[color:var(--color-text-muted)] text-sm max-w-md">{t('layout.textChannelUnsupported')}</p>
@@ -827,7 +828,6 @@ export const MainLayout = () => {
     }
     return (
       <div className="flex-1 flex items-center justify-center relative h-full">
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
         <div className="text-center p-12 bg-white/[0.02] rounded-[var(--radius-5)] border border-[color:var(--color-border)]/70 backdrop-blur-sm">
           <h2 className="text-2xl font-bold text-white mb-2">{t('layout.stageAreaTitle')}</h2>
           <p className="text-[color:var(--color-text-muted)] text-sm">{t('layout.stageAreaDescription')}</p>
@@ -950,10 +950,7 @@ export const MainLayout = () => {
         Die Klassen (rail-panel, header-panel etc.) matchen die neuen CSS-Stile.
       */}
       <div className={layoutClassName} style={isDesktop ? { ...gridStyle, paddingTop: titlebarHeight } : gridStyle}>
-
-        {/* ORBS */}
-        <div className="glow-orb orb-1"></div>
-        <div className="glow-orb orb-2"></div>
+        <DecorationLayer enabled={decorationsEnabled} />
 
         {isDesktop && (
           <TitleBar

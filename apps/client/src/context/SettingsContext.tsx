@@ -34,6 +34,7 @@ export type ThemeSettings = {
   mode: 'light' | 'dark';
   accentColor: string;
   serverAccents: Record<number, string>;
+  decorationsEnabled?: boolean;
 };
 
 export type TalkSettings = {
@@ -90,6 +91,7 @@ const defaultSettings: SettingsState = {
     mode: 'dark',
     accentColor: '#6366f1',
     serverAccents: {},
+    decorationsEnabled: true,
   },
   talk: {
     muted: false,
