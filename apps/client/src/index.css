@@ -59,6 +59,20 @@
   --font-ui: "Segoe UI Variable", "Inter", sans-serif;
   --font-mono: "JetBrains Mono", "Consolas", monospace;
 
+  /* Type scale (font-size + line-height)
+     Use for app UI text to avoid ad-hoc sizes:
+     xs = helper/labels, sm = secondary text, base = body/UI, lg/xl = headers. */
+  --font-size-xs: 0.7rem;
+  --font-size-sm: 0.8rem;
+  --font-size-base: 0.9rem;
+  --font-size-lg: 1rem;
+  --font-size-xl: 1.1rem;
+  --line-height-xs: 1.2;
+  --line-height-sm: 1.35;
+  --line-height-base: 1.5;
+  --line-height-lg: 1.6;
+  --line-height-xl: 1.75;
+
   /* --- LAYOUT DIMENSIONS --- */
   --layout-rail-width: 72px; /* maps to --w-rail */
   --layout-tree-width: 280px; /* maps to --w-tree */
