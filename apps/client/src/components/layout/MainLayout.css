@@ -26,6 +26,11 @@
   overflow: hidden;
 }
 
+.main-layout.home-layout {
+  grid-template-columns: var(--w-rail) 0 1fr 0;
+  grid-template-rows: var(--h-header) 1fr 0;
+}
+
 body.mobile-scroll-lock {
   overflow: hidden;
   overscroll-behavior: none;

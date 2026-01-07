@@ -890,6 +890,7 @@ export const MainLayout = () => {
     'fold-tree': !showLeftSidebar && !isMobileLayout,
     'fold-info': !showRightSidebar && !isMobileLayout,
     'fold-log': !showLogPanel && !isMobileLayout,
+    'home-layout': !selectedServerId,
     'mobile-nav-open': isMobileLayout && showMobileNav,
     'mobile-info-open': isMobileLayout && showRightSidebar,
   });
@@ -924,21 +925,25 @@ export const MainLayout = () => {
 
   // Dynamische CSS Variablen für Grid-Spalten
   const gridStyle = {
-    '--curr-tree': isMobileLayout
+    '--curr-tree': !selectedServerId
+      ? '0px'
+      : isMobileLayout
       ? showMobileNav
         ? 'var(--mobile-tree-width, min(80vw, 320px))'
         : '0px'
       : showLeftSidebar
       ? `${effectiveLeftSidebarWidth}px`
       : '0px',
-    '--curr-info': isMobileLayout
+    '--curr-info': !selectedServerId
+      ? '0px'
+      : isMobileLayout
       ? showRightSidebar
         ? 'var(--mobile-info-width, min(75vw, 320px))'
         : '0px'
       : showRightSidebar
       ? `${effectiveRightSidebarWidth}px`
       : '0px',
-    '--curr-log': showLogPanel ? 'var(--h-log, 160px)' : '36px',
+    '--curr-log': !selectedServerId ? '0px' : showLogPanel ? 'var(--h-log, 160px)' : '36px',
   } as React.CSSProperties;
 
   const handleOverlayClick = useCallback(() => {
@@ -1166,7 +1171,7 @@ export const MainLayout = () => {
 
         {/* --- 4. MAIN STAGE (Mitte) --- */}
         <main ref={mainContentRef} id="main-content" tabIndex={-1} className="main-panel no-drag relative flex flex-col">
-          {!isMobileLayout && (
+          {!isMobileLayout && selectedServerId && (
             <>
               <button
                 type="button"
