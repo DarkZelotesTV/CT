@@ -72,6 +72,10 @@
   --h-log: var(--layout-log-height); /* Standard Log Höhe */
 
   --layout-radius: 12px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
   --layout-transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
   
   /* Helper for existing components relying on old vars */
