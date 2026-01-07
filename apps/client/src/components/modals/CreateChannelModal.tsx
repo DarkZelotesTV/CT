@@ -172,10 +172,13 @@ export const CreateChannelModal = ({
           <button
             type="submit"
             disabled={loading || !name}
-            className="px-6 py-2 rounded-lg font-bold shadow-lg disabled:opacity-50 flex items-center gap-2 transition-all active:scale-95 text-white text-sm"
-            style={{ background: palette.accent }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = palette.accentHover)}
-            onMouseLeave={(e) => (e.currentTarget.style.background = palette.accent)}
+            className="px-6 py-2 rounded-lg font-bold shadow-lg disabled:opacity-50 flex items-center gap-2 transition-all active:scale-95 text-white text-sm bg-[var(--accent)] hover:bg-[var(--accent-hover)] active:bg-[var(--accent-hover)] focus-visible:bg-[var(--accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
+            style={
+              {
+                '--accent': palette.accent,
+                '--accent-hover': palette.accentHover,
+              } as React.CSSProperties
+            }
           >
             {loading && <Loader2 className="animate-spin" size={16} />}
             Kanal erstellen
