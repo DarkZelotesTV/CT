@@ -33,6 +33,7 @@ import { clearIdentity, computeFingerprint, createIdentity, formatFingerprint, l
 import { buildBackupPayload, getBackupFilename, parseIdentityBackup } from '../../auth/identityBackup';
 import { storage } from '../../shared/config/storage';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
+import { Badge, Select, Toggle } from '../ui';
 
 const modifierKeys = ['Control', 'Shift', 'Alt', 'Meta'];
 
@@ -964,11 +965,9 @@ export const UserSettingsModal = ({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <label className="flex items-center gap-3 p-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-alt)]">
-                      <input
-                        type="checkbox"
+                      <Toggle
                         checked={notifyMentions}
                         onChange={(e) => setNotifyMentions(e.target.checked)}
-                        className="form-checkbox h-4 w-4"
                       />
                       <div>
                         <div className="text-sm font-medium">Erwähnungen</div>
@@ -977,11 +976,9 @@ export const UserSettingsModal = ({
                     </label>
 
                     <label className="flex items-center gap-3 p-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-alt)]">
-                      <input
-                        type="checkbox"
+                      <Toggle
                         checked={notifyDirectMessages}
                         onChange={(e) => setNotifyDirectMessages(e.target.checked)}
-                        className="form-checkbox h-4 w-4"
                       />
                       <div>
                         <div className="text-sm font-medium">Direktnachrichten</div>
@@ -990,11 +987,9 @@ export const UserSettingsModal = ({
                     </label>
 
                     <label className="flex items-center gap-3 p-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-alt)] sm:col-span-2">
-                      <input
-                        type="checkbox"
+                      <Toggle
                         checked={notifyInvites}
                         onChange={(e) => setNotifyInvites(e.target.checked)}
-                        className="form-checkbox h-4 w-4"
                       />
                       <div>
                         <div className="text-sm font-medium">Server-Einladungen</div>
@@ -1006,7 +1001,9 @@ export const UserSettingsModal = ({
                   <div className="text-xs text-[color:var(--color-text-muted)] bg-white/[0.04] border border-[var(--color-border)] rounded-xl p-3 flex items-center gap-2">
                     <Bell size={14} />
                     <div>
-                      <div className="font-semibold">Status: {permissionLabel}</div>
+                      <div className="font-semibold flex items-center gap-2">
+                        Status: <Badge>{permissionLabel}</Badge>
+                      </div>
                       <div className="text-[11px] text-[color:var(--color-text-muted)]">
                         Browser-Entscheidungen werden gespeichert, damit CT weiß, ob Benachrichtigungen ausgeliefert werden dürfen.
                       </div>
@@ -1102,10 +1099,10 @@ export const UserSettingsModal = ({
                             <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold flex items-center gap-2">
                               <Mic size={14} /> Eingabegerät
                             </div>
-                            <select
+                            <Select
                               value={audioInputId}
                               onChange={(e) => setAudioInputId(e.target.value)}
-                              className="w-full bg-[var(--color-surface-alt)] text-[color:var(--color-text)] p-3 rounded-xl border border-[var(--color-border)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] focus:border-[var(--color-accent)]"
+                              className="bg-[var(--color-surface-alt)]"
                             >
                               <option value="">System-Standard</option>
                               {deviceLists.audioInputs.map((d) => (
@@ -1113,17 +1110,17 @@ export const UserSettingsModal = ({
                                   {d.label || `Mikrofon (${d.deviceId.slice(0, 6)})`}
                                 </option>
                               ))}
-                            </select>
+                            </Select>
                           </label>
 
                           <label className="space-y-2">
                             <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold flex items-center gap-2">
                               <Headphones size={14} /> Ausgabegerät
                             </div>
-                            <select
+                            <Select
                               value={audioOutputId}
                               onChange={(e) => setAudioOutputId(e.target.value)}
-                              className="w-full bg-[var(--color-surface-alt)] text-[color:var(--color-text)] p-3 rounded-xl border border-[var(--color-border)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] focus:border-[var(--color-accent)]"
+                              className="bg-[var(--color-surface-alt)]"
                             >
                               <option value="">System-Standard</option>
                               {deviceLists.audioOutputs.map((d) => (
@@ -1131,7 +1128,7 @@ export const UserSettingsModal = ({
                                   {d.label || `Ausgabe (${d.deviceId.slice(0, 6)})`}
                                 </option>
                               ))}
-                            </select>
+                            </Select>
                           </label>
                         </div>
                       </div>

@@ -4,6 +4,7 @@ import { apiFetch } from '../../api/http';
 import classNames from 'classnames';
 import { ServerTheme, defaultServerTheme, resolveServerTheme } from '../../theme/serverTheme';
 import { ModalLayout } from './ModalLayout';
+import { Badge, Input } from '../ui';
 
 interface CreateChannelModalProps {
   serverId: number;
@@ -62,7 +63,10 @@ export const CreateChannelModal = ({
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Typ Auswahl - Responsive Grid: Mobile 1 Spalte, Tablet+ 2 Spalten */}
         <div className="space-y-2">
-          <label className="text-xs font-bold uppercase text-[color:var(--color-text-muted)]">Kanaltyp</label>
+          <label className="flex items-center gap-2 text-xs font-bold uppercase text-[color:var(--color-text-muted)]">
+            Kanaltyp
+            <Badge variant="accent">Neu</Badge>
+          </label>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {[
@@ -138,22 +142,22 @@ export const CreateChannelModal = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="text-xs font-bold uppercase mb-2 block text-[color:var(--color-text-muted)]">Standard Passwort</label>
-            <input
+            <Input
               type="text"
               value={defaultPassword}
               onChange={(e) => setDefaultPassword(e.target.value)}
-              className="w-full rounded-xl px-3 py-2 outline-none bg-[color:var(--color-surface)]/60 border border-[color:var(--color-border)] text-white focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] disabled:opacity-50 transition-all placeholder:text-[color:var(--color-text-muted)] text-sm"
+              className="bg-[color:var(--color-surface)]/60 text-white focus-visible:border-[color:var(--color-focus)] focus-visible:ring-[color:var(--color-focus)]/50"
               placeholder={type === 'spacer' ? 'Nicht nötig' : 'Optional'}
               disabled={type === 'spacer'}
             />
           </div>
           <div>
             <label className="text-xs font-bold uppercase mb-2 block text-[color:var(--color-text-muted)]">Beitritts Passwort</label>
-            <input
+            <Input
               type="text"
               value={joinPassword}
               onChange={(e) => setJoinPassword(e.target.value)}
-              className="w-full rounded-xl px-3 py-2 outline-none bg-[color:var(--color-surface)]/60 border border-[color:var(--color-border)] text-white focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] disabled:opacity-50 transition-all placeholder:text-[color:var(--color-text-muted)] text-sm"
+              className="bg-[color:var(--color-surface)]/60 text-white focus-visible:border-[color:var(--color-focus)] focus-visible:ring-[color:var(--color-focus)]/50"
               placeholder={type === 'spacer' ? 'Nicht nötig' : 'Optional'}
               disabled={type === 'spacer'}
             />
