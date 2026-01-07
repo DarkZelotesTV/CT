@@ -35,7 +35,20 @@ export type AppTheme = {
   overlay: string;
 };
 
-const darkBase: Omit<AppTheme, 'mode' | 'accent' | 'accentHover'> = {
+type BaseTheme = Pick<
+  AppTheme,
+  | 'background'
+  | 'surface'
+  | 'surfaceAlt'
+  | 'surfaceHover'
+  | 'border'
+  | 'borderStrong'
+  | 'text'
+  | 'textMuted'
+  | 'overlay'
+>;
+
+const darkBase: BaseTheme = {
   background: '#0b1021',
   surface: '#111827',
   surfaceAlt: '#0f1625',
@@ -47,7 +60,7 @@ const darkBase: Omit<AppTheme, 'mode' | 'accent' | 'accentHover'> = {
   overlay: 'rgba(6, 8, 16, 0.78)',
 };
 
-const lightBase: Omit<AppTheme, 'mode' | 'accent' | 'accentHover'> = {
+const lightBase: BaseTheme = {
   background: '#f5f7fb',
   surface: '#ffffff',
   surfaceAlt: '#eef2ff',
@@ -171,8 +184,15 @@ const computeAccentHover = (accent: string, surface: string, text: string, minCo
     { delta: -delta, color: adjustHexColor(accent, -delta) },
   ]);
 
-  let best: { color: string; delta: number; surfaceContrast: number; textContrast: number } | null = null;
-  let fallback: typeof best = null;
+  type AccentCandidate = {
+    color: string;
+    delta: number;
+    surfaceContrast: number;
+    textContrast: number;
+    minContrast: number;
+  };
+  let best: AccentCandidate | null = null;
+  let fallback: AccentCandidate | null = null;
 
   for (const candidate of candidates) {
     const metrics = getAccentMetrics(candidate.color, surface, text);
