@@ -84,12 +84,12 @@ const HotkeyInput = ({
           onKeyDown={handleKeyDown}
           readOnly
           placeholder="Press keys"
-          className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
+          className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
         />
         {displayValue && (
           <button
             onClick={() => onChange('')}
-            className="px-3 py-2 rounded-lg bg-[color:var(--color-surface-hover)] text-[color:var(--color-text)] hover:text-white hover:bg-[color:var(--color-surface-hover)]/80"
+            className="px-3 py-2 rounded-[var(--radius-2)] bg-[color:var(--color-surface-hover)] text-[color:var(--color-text)] hover:text-white hover:bg-[color:var(--color-surface-hover)]/80"
           >
             <X size={16} />
           </button>
@@ -719,7 +719,7 @@ export const UserSettingsModal = ({
 		    className="fixed left-0 right-0 bottom-0 top-[var(--ct-titlebar-height)] bg-[color:var(--color-surface)]/95 backdrop-blur-sm flex items-center justify-center p-4"
 		    style={{ zIndex: 9999, transform: 'translateZ(0)', willChange: 'transform' }}
 		  >
-      <div className="bg-[var(--color-surface)] w-11/12 max-w-5xl h-[85vh] rounded-3xl border border-[var(--color-border)] shadow-2xl overflow-hidden flex flex-col text-[color:var(--color-text)]">
+      <div className="bg-[var(--color-surface)] w-11/12 max-w-5xl h-[85vh] rounded-[var(--radius-5)] border border-[var(--color-border)] shadow-2xl overflow-hidden flex flex-col text-[color:var(--color-text)]">
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-border)] shrink-0">
           <div>
             <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] flex items-center gap-2">
@@ -740,7 +740,7 @@ export const UserSettingsModal = ({
             <nav className="bg-[var(--color-surface-alt)] border-r border-[var(--color-border)] p-4 flex flex-col gap-3 overflow-hidden">
   <button
     onClick={() => setActiveCategory('profile')}
-          className="w-full flex items-center gap-3 p-3 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] transition text-left"
+          className="w-full flex items-center gap-3 p-3 rounded-[var(--radius-4)] bg-[var(--color-surface)] border border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] transition text-left"
   >
     <div className="w-10 h-10 rounded-full overflow-hidden bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] flex items-center justify-center shrink-0">
       {avatarPreview ? (
@@ -766,7 +766,7 @@ export const UserSettingsModal = ({
       value={navQuery}
       onChange={(e) => setNavQuery(e.target.value)}
       placeholder="Suche"
-      className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-sm text-[color:var(--color-text)] placeholder:text-[color:var(--color-text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-focus)] focus:border-[var(--color-focus)]"
+      className="w-full pl-10 pr-3 py-2.5 rounded-[var(--radius-3)] bg-[var(--color-surface)] border border-[var(--color-border)] text-sm text-[color:var(--color-text)] placeholder:text-[color:var(--color-text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-focus)] focus:border-[var(--color-focus)]"
     />
   </div>
 
@@ -780,7 +780,7 @@ export const UserSettingsModal = ({
         <button
           key={cat.id}
           onClick={() => setActiveCategory(cat.id)}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-left transition ${
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-[var(--radius-3)] text-sm font-medium text-left transition ${
             activeCategory === cat.id
               ? 'bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] text-[color:var(--color-text)]'
               : 'text-[color:var(--color-text-muted)] hover:bg-[color:var(--color-surface-hover)]'
@@ -814,7 +814,7 @@ export const UserSettingsModal = ({
                             value={displayName}
                             onChange={(e) => setDisplayName(e.target.value)}
                             placeholder="Dein Name"
-                            className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
+                            className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
                           />
                         </div>
                         <div className="space-y-2">
@@ -830,7 +830,7 @@ export const UserSettingsModal = ({
                             <div className="flex flex-wrap items-center gap-2">
                               <button
                                 onClick={() => avatarInputRef.current?.click()}
-                                className="px-4 py-2 rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface-hover)] text-sm text-[color:var(--color-text)] hover:bg-[color:var(--color-surface-hover)]/80"
+                                className="px-4 py-2 rounded-[var(--radius-3)] border border-[color:var(--color-border)] bg-[color:var(--color-surface-hover)] text-sm text-[color:var(--color-text)] hover:bg-[color:var(--color-surface-hover)]/80"
                               >
                                 Datei wählen
                               </button>
@@ -842,7 +842,7 @@ export const UserSettingsModal = ({
                               <button
                                 onClick={handleAvatarUpload}
                                 disabled={avatarUploading || (!avatarFile && !avatarUrl)}
-                                className="px-4 py-2 rounded-xl bg-[var(--color-accent)]/80 hover:bg-[var(--color-accent)] text-sm font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
+                                className="px-4 py-2 rounded-[var(--radius-3)] bg-[var(--color-accent)]/80 hover:bg-[var(--color-accent)] text-sm font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
                               >
                                 {avatarUploading ? <Loader2 className="animate-spin" size={16} /> : <Upload size={16} />}
                                 {avatarUploading ? 'Lade hoch...' : 'Avatar hochladen'}
@@ -856,7 +856,7 @@ export const UserSettingsModal = ({
                         </div>
                       </div>
                     </div>
-                    <div className="flex flex-col items-center justify-center gap-3 bg-[color:var(--color-surface-hover)] rounded-2xl border border-[color:var(--color-border)] p-4">
+                    <div className="flex flex-col items-center justify-center gap-3 bg-[color:var(--color-surface-hover)] rounded-[var(--radius-4)] border border-[color:var(--color-border)] p-4">
                       <div className="w-20 h-20 rounded-full overflow-hidden bg-[var(--color-surface-alt)] border border-[var(--color-border)] flex items-center justify-center text-[color:var(--color-accent)] font-bold text-xl">
                         {avatarPreview ? (
                           <img src={avatarPreview} className="w-full h-full object-cover" />
@@ -879,7 +879,7 @@ export const UserSettingsModal = ({
                     </div>
                     <button
                       onClick={() => setThemeMode(themeMode === 'dark' ? 'light' : 'dark')}
-                      className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--color-border)] text-[color:var(--color-text)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-hover)]"
+                      className="flex items-center gap-2 px-4 py-2 rounded-[var(--radius-3)] border border-[var(--color-border)] text-[color:var(--color-text)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-hover)]"
                     >
                       <SunMoon size={16} />
                       <span>{themeMode === 'dark' ? 'Dark' : 'Light'}</span>
@@ -894,17 +894,17 @@ export const UserSettingsModal = ({
                           type="color"
                           value={accentColor}
                           onChange={(e) => setAccentColor(e.target.value)}
-                          className="h-10 w-16 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]"
+                          className="h-10 w-16 rounded-[var(--radius-2)] border border-[var(--color-border)] bg-[var(--color-surface)]"
                         />
                         <input
                           type="text"
                           value={accentColor}
                           onChange={(e) => setAccentColor(e.target.value)}
-                          className="flex-1 bg-[color:var(--color-surface)]/60 text-white p-3 rounded-xl border border-[var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
+                          className="flex-1 bg-[color:var(--color-surface)]/60 text-white p-3 rounded-[var(--radius-3)] border border-[var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
                         />
                       </div>
                       {!accentContrastReport.meetsContrast && (
-                        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-amber-400/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                        <div className="flex flex-wrap items-center gap-2 rounded-[var(--radius-3)] border border-amber-400/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
                           <span>
                             Kontrast ist zu niedrig. Empfohlen: {accentContrastReport.adjustedAccent.toUpperCase()} (min.
                             {MIN_ACCENT_CONTRAST}:1 gegen Oberfläche/Text).
@@ -912,7 +912,7 @@ export const UserSettingsModal = ({
                           <button
                             type="button"
                             onClick={() => setAccentColor(accentContrastReport.adjustedAccent)}
-                            className="px-2 py-1 rounded-lg bg-amber-400/20 text-amber-100 hover:bg-amber-400/30"
+                            className="px-2 py-1 rounded-[var(--radius-2)] bg-amber-400/20 text-amber-100 hover:bg-amber-400/30"
                           >
                             Auto-anpassen
                           </button>
@@ -928,17 +928,17 @@ export const UserSettingsModal = ({
                           value={serverAccentTarget}
                           onChange={(e) => setServerAccentTarget(e.target.value)}
                           placeholder="Server ID"
-                          className="bg-[color:var(--color-surface)]/60 text-white p-3 rounded-xl border border-[var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
+                          className="bg-[color:var(--color-surface)]/60 text-white p-3 rounded-[var(--radius-3)] border border-[var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
                         />
                         <input
                           type="color"
                           value={serverAccentColor}
                           onChange={(e) => setServerAccentColor(e.target.value)}
-                          className="h-12 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]"
+                          className="h-12 w-full rounded-[var(--radius-2)] border border-[var(--color-border)] bg-[var(--color-surface)]"
                         />
                         <button
                           onClick={handleAddServerAccent}
-                          className="px-3 py-2 rounded-xl bg-[var(--color-accent)] text-white font-semibold hover:bg-[var(--color-accent-hover)]"
+                          className="px-3 py-2 rounded-[var(--radius-3)] bg-[var(--color-accent)] text-white font-semibold hover:bg-[var(--color-accent-hover)]"
                         >
                           Speichern
                         </button>
@@ -951,9 +951,9 @@ export const UserSettingsModal = ({
                             {Object.entries(serverAccentDraft).map(([id, color]) => (
                               <div
                                 key={id}
-                                className="flex items-center gap-3 bg-[var(--color-surface-alt)] border border-[var(--color-border)] rounded-xl px-3 py-2"
+                                className="flex items-center gap-3 bg-[var(--color-surface-alt)] border border-[var(--color-border)] rounded-[var(--radius-3)] px-3 py-2"
                               >
-                                <div className="w-10 h-10 rounded-lg border border-[var(--color-border)]" style={{ background: color }} />
+                                <div className="w-10 h-10 rounded-[var(--radius-2)] border border-[var(--color-border)]" style={{ background: color }} />
                                 <div className="flex-1 text-sm text-[color:var(--color-text)]">Server {id}</div>
                                 <button
                                   onClick={() => handleRemoveServerAccent(Number(id))}
@@ -980,14 +980,14 @@ export const UserSettingsModal = ({
                     </div>
                     <button
                       onClick={handleRequestPermission}
-                      className="px-4 py-2 rounded-xl border border-[var(--color-border)] text-[color:var(--color-text)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-hover)]"
+                      className="px-4 py-2 rounded-[var(--radius-3)] border border-[var(--color-border)] text-[color:var(--color-text)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-hover)]"
                     >
                       Berechtigung anfragen
                     </button>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <label className="flex items-center gap-3 p-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-alt)]">
+                    <label className="flex items-center gap-3 p-3 rounded-[var(--radius-3)] border border-[var(--color-border)] bg-[var(--color-surface-alt)]">
                       <Toggle
                         checked={notifyMentions}
                         onChange={(e) => setNotifyMentions(e.target.checked)}
@@ -998,7 +998,7 @@ export const UserSettingsModal = ({
                       </div>
                     </label>
 
-                    <label className="flex items-center gap-3 p-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-alt)]">
+                    <label className="flex items-center gap-3 p-3 rounded-[var(--radius-3)] border border-[var(--color-border)] bg-[var(--color-surface-alt)]">
                       <Toggle
                         checked={notifyDirectMessages}
                         onChange={(e) => setNotifyDirectMessages(e.target.checked)}
@@ -1009,7 +1009,7 @@ export const UserSettingsModal = ({
                       </div>
                     </label>
 
-                    <label className="flex items-center gap-3 p-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-alt)] sm:col-span-2">
+                    <label className="flex items-center gap-3 p-3 rounded-[var(--radius-3)] border border-[var(--color-border)] bg-[var(--color-surface-alt)] sm:col-span-2">
                       <Toggle
                         checked={notifyInvites}
                         onChange={(e) => setNotifyInvites(e.target.checked)}
@@ -1021,7 +1021,7 @@ export const UserSettingsModal = ({
                     </label>
                   </div>
 
-                  <div className="text-xs text-[color:var(--color-text-muted)] bg-white/[0.04] border border-[var(--color-border)] rounded-xl p-3 flex items-center gap-2">
+                  <div className="text-xs text-[color:var(--color-text-muted)] bg-white/[0.04] border border-[var(--color-border)] rounded-[var(--radius-3)] p-3 flex items-center gap-2">
                     <Bell size={14} />
                     <div>
                       <div className="font-semibold flex items-center gap-2">
@@ -1075,7 +1075,7 @@ export const UserSettingsModal = ({
 
                   {devicesTab === 'voice' && (
                     <div className="space-y-6">
-                      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-3">
+                      <div className="rounded-[var(--radius-4)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-3">
                         <div className="flex items-start justify-between gap-4">
                           <div>
                             <div className="text-sm font-semibold">Voice-Check</div>
@@ -1098,7 +1098,7 @@ export const UserSettingsModal = ({
                       </div>
 
                       {/* Geräte */}
-                      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-4">
+                      <div className="rounded-[var(--radius-4)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-4">
                         <div className="flex items-start justify-between gap-4">
                           <div>
                             <div className="text-sm font-semibold">Geräte</div>
@@ -1157,7 +1157,7 @@ export const UserSettingsModal = ({
                       </div>
 
                       {/* Eingabelautstärke & Mikrofontest */}
-                      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-4">
+                      <div className="rounded-[var(--radius-4)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-4">
                         <div className="text-sm font-semibold">Mikrofontest</div>
 
                         <div className="space-y-2">
@@ -1186,7 +1186,7 @@ export const UserSettingsModal = ({
                           <div className="flex items-center justify-between gap-4">
                             <button
                               onClick={() => setMicTestNonce((v) => v + 1)}
-                              className="px-4 py-2 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white text-sm font-semibold"
+                              className="px-4 py-2 rounded-[var(--radius-3)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white text-sm font-semibold"
                             >
                               Schauen wir mal
                             </button>
@@ -1220,13 +1220,13 @@ export const UserSettingsModal = ({
                       </div>
 
                       {/* Eingabemodus */}
-                      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-3">
+                      <div className="rounded-[var(--radius-4)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-3">
                         <div className="text-sm font-semibold">Eingabemodus</div>
 
                         <div className="space-y-2">
                           <button
                             onClick={() => setPushToTalkEnabled(false)}
-                            className={`w-full p-4 rounded-2xl border text-left transition ${
+                            className={`w-full p-4 rounded-[var(--radius-4)] border text-left transition ${
                               !pushToTalkEnabled
                                 ? 'bg-[color:var(--color-surface-hover)] border-[var(--color-accent)]'
                                 : 'bg-transparent border-[var(--color-border)] hover:bg-[color:var(--color-surface-hover)]'
@@ -1245,7 +1245,7 @@ export const UserSettingsModal = ({
 
                           <button
                             onClick={() => setPushToTalkEnabled(true)}
-                            className={`w-full p-4 rounded-2xl border text-left transition ${
+                            className={`w-full p-4 rounded-[var(--radius-4)] border text-left transition ${
                               pushToTalkEnabled
                                 ? 'bg-[color:var(--color-surface-hover)] border-[var(--color-accent)]'
                                 : 'bg-transparent border-[var(--color-border)] hover:bg-[color:var(--color-surface-hover)]'
@@ -1265,7 +1265,7 @@ export const UserSettingsModal = ({
                   </div>
 
                   {/* Audio-Preset */}
-                  <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-3">
+                  <div className="rounded-[var(--radius-4)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-3">
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <div className="text-sm font-semibold">Audio-Preset</div>
@@ -1280,7 +1280,7 @@ export const UserSettingsModal = ({
                         <button
                           key={option.value}
                           onClick={() => setAudioPreset(option.value)}
-                          className={`p-4 rounded-xl border text-left transition ${
+                          className={`p-4 rounded-[var(--radius-3)] border text-left transition ${
                             audioPreset === option.value
                               ? 'bg-[color:var(--color-surface-hover)] border-[var(--color-accent)]'
                               : 'bg-transparent border-[var(--color-border)] hover:bg-[color:var(--color-surface-hover)]'
@@ -1297,12 +1297,12 @@ export const UserSettingsModal = ({
                   </div>
 
                   {/* Audio-Steuerung */}
-                  <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-3">
+                  <div className="rounded-[var(--radius-4)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-3">
                     <div className="text-sm font-semibold">Audio-Steuerung</div>
                     <div className="flex flex-col sm:flex-row gap-2">
                           <button
                             onClick={() => setLocallyMuted((v) => !v)}
-                            className={`flex-1 px-4 py-3 rounded-xl border transition flex items-center justify-center gap-2 ${
+                            className={`flex-1 px-4 py-3 rounded-[var(--radius-3)] border transition flex items-center justify-center gap-2 ${
                               locallyMuted
                                 ? 'bg-red-500/15 border-red-400/30 text-red-200'
                                 : 'bg-transparent border-[var(--color-border)] text-[color:var(--color-text-muted)] hover:bg-[color:var(--color-surface-hover)]'
@@ -1314,7 +1314,7 @@ export const UserSettingsModal = ({
 
                           <button
                             onClick={() => setLocallyMicMuted((v) => !v)}
-                            className={`flex-1 px-4 py-3 rounded-xl border transition flex items-center justify-center gap-2 ${
+                            className={`flex-1 px-4 py-3 rounded-[var(--radius-3)] border transition flex items-center justify-center gap-2 ${
                               locallyMicMuted
                                 ? 'bg-red-500/15 border-red-400/30 text-red-200'
                                 : 'bg-transparent border-[var(--color-border)] text-[color:var(--color-text-muted)] hover:bg-[color:var(--color-surface-hover)]'
@@ -1327,7 +1327,7 @@ export const UserSettingsModal = ({
                       </div>
 
                       {/* Rauschunterdrückung */}
-                      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-3">
+                      <div className="rounded-[var(--radius-4)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-3">
                         <div className="text-sm font-semibold">Rauschunterdrückung</div>
 
                         {!rnnoiseAvailable && (
@@ -1340,7 +1340,7 @@ export const UserSettingsModal = ({
                         <button
                           disabled={!rnnoiseAvailable}
                           onClick={() => setUseRnnoise((v) => !v)}
-                          className={`w-full px-4 py-3 rounded-xl border transition flex items-center justify-between ${
+                          className={`w-full px-4 py-3 rounded-[var(--radius-3)] border transition flex items-center justify-between ${
                             useRnnoise
                               ? 'bg-[color:var(--color-surface-hover)] border-[var(--color-accent)]'
                               : 'bg-transparent border-[var(--color-border)] hover:bg-[color:var(--color-surface-hover)]'
@@ -1365,13 +1365,13 @@ export const UserSettingsModal = ({
                       </div>
 
                       {/* Ausgabegerät testen */}
-                      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-3">
+                      <div className="rounded-[var(--radius-4)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-3">
                         <div className="text-sm font-semibold">Ausgabe testen</div>
 
                         <button
                           onClick={handleTestOutput}
                           disabled={isTestingOutput}
-                          className="px-4 py-3 rounded-xl bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 border border-[var(--color-border)] text-[color:var(--color-text)] flex items-center gap-2 disabled:opacity-60"
+                          className="px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 border border-[var(--color-border)] text-[color:var(--color-text)] flex items-center gap-2 disabled:opacity-60"
                         >
                           <Play size={18} />
                           {isTestingOutput ? 'Teste…' : 'Testton abspielen'}
@@ -1384,7 +1384,7 @@ export const UserSettingsModal = ({
 
                   {devicesTab === 'video' && (
                     <div className="space-y-6">
-                      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-4">
+                      <div className="rounded-[var(--radius-4)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-4">
                         <div className="text-sm font-semibold">Kamera</div>
                         <label className="space-y-2">
                           <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold flex items-center gap-2">
@@ -1393,7 +1393,7 @@ export const UserSettingsModal = ({
                           <select
                             value={videoInputId}
                             onChange={(e) => setVideoInputId(e.target.value)}
-                            className="w-full bg-[var(--color-surface-alt)] text-[color:var(--color-text)] p-3 rounded-xl border border-[var(--color-border)] focus:outline-none focus:ring-1 focus:ring-[var(--color-focus)] focus:border-[var(--color-focus)]"
+                            className="w-full bg-[var(--color-surface-alt)] text-[color:var(--color-text)] p-3 rounded-[var(--radius-3)] border border-[var(--color-border)] focus:outline-none focus:ring-1 focus:ring-[var(--color-focus)] focus:border-[var(--color-focus)]"
                           >
                             <option value="">System-Standard</option>
                             {deviceLists.videoInputs.map((d) => (
@@ -1410,7 +1410,7 @@ export const UserSettingsModal = ({
                           <select
                             value={cameraQuality}
                             onChange={(e) => setCameraQuality(e.target.value as typeof cameraQuality)}
-                            className="w-full bg-[var(--color-surface-alt)] text-[color:var(--color-text)] p-3 rounded-xl border border-[var(--color-border)] focus:outline-none focus:ring-1 focus:ring-[var(--color-focus)] focus:border-[var(--color-focus)]"
+                            className="w-full bg-[var(--color-surface-alt)] text-[color:var(--color-text)] p-3 rounded-[var(--radius-3)] border border-[var(--color-border)] focus:outline-none focus:ring-1 focus:ring-[var(--color-focus)] focus:border-[var(--color-focus)]"
                           >
                             <option value="low">Niedrig</option>
                             <option value="medium">Mittel</option>
@@ -1418,7 +1418,7 @@ export const UserSettingsModal = ({
                           </select>
                           <p className="text-xs text-[color:var(--color-text-muted)]">Beeinflusst die Standardqualität deiner Kameraübertragung.</p>
                         </label>
-                        <div className="h-48 rounded-2xl bg-[color:var(--color-surface)]/50 border border-[var(--color-border)] flex items-center justify-center text-sm text-[color:var(--color-text-muted)]">
+                        <div className="h-48 rounded-[var(--radius-4)] bg-[color:var(--color-surface)]/50 border border-[var(--color-border)] flex items-center justify-center text-sm text-[color:var(--color-text-muted)]">
                           Vorschau folgt (optional).
                         </div>
                       </div>
@@ -1427,7 +1427,7 @@ export const UserSettingsModal = ({
 
                   {devicesTab === 'stream' && (
                     <div className="space-y-6">
-                      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-4">
+                      <div className="rounded-[var(--radius-4)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-4">
                         <div className="text-sm font-semibold">Stream-Qualität</div>
                         <p className="text-sm text-[color:var(--color-text-muted)]">
                           Passe Standardauflösung und Bildrate für Bildschirmübertragungen an.
@@ -1440,7 +1440,7 @@ export const UserSettingsModal = ({
                               <button
                                 key={option.value}
                                 onClick={() => setScreenQuality(option.value)}
-                                className={`p-4 rounded-xl border text-left transition ${
+                                className={`p-4 rounded-[var(--radius-3)] border text-left transition ${
                                   screenQuality === option.value
                                     ? 'bg-[color:var(--color-surface-hover)] border-[var(--color-accent)]'
                                     : 'bg-transparent border-[var(--color-border)] hover:bg-[color:var(--color-surface-hover)]'
@@ -1463,7 +1463,7 @@ export const UserSettingsModal = ({
                               <button
                                 key={option.value}
                                 onClick={() => setScreenFrameRate(option.value)}
-                                className={`p-4 rounded-xl border text-left transition ${
+                                className={`p-4 rounded-[var(--radius-3)] border text-left transition ${
                                   screenFrameRate === option.value
                                     ? 'bg-[color:var(--color-surface-hover)] border-[var(--color-accent)]'
                                     : 'bg-transparent border-[var(--color-border)] hover:bg-[color:var(--color-surface-hover)]'
@@ -1486,7 +1486,7 @@ export const UserSettingsModal = ({
                               <button
                                 key={option.value}
                                 onClick={() => setScreenBitrateProfile(option.value)}
-                                className={`p-4 rounded-xl border text-left transition ${
+                                className={`p-4 rounded-[var(--radius-3)] border text-left transition ${
                                   screenBitrateProfile === option.value
                                     ? 'bg-[color:var(--color-surface-hover)] border-[var(--color-accent)]'
                                     : 'bg-transparent border-[var(--color-border)] hover:bg-[color:var(--color-surface-hover)]'
@@ -1533,7 +1533,7 @@ export const UserSettingsModal = ({
                       onChange={setToggleNavigationHotkey}
                     />
                   </div>
-                  <div className="text-[11px] text-amber-200 bg-amber-400/10 border border-amber-400/40 rounded-xl p-3">
+                  <div className="text-[11px] text-amber-200 bg-amber-400/10 border border-amber-400/40 rounded-[var(--radius-3)] p-3">
                     <strong className="font-semibold">Hinweis zu Browser-Shortcuts:</strong> Einige Kombinationen werden ggf.
                     vom Browser abgefangen (z. B. Ctrl+K für die Adressleiste oder Ctrl+Shift+D zum Speichern aller Tabs).
                     Passe die Hotkeys an, wenn sie nicht ausgelöst werden.
@@ -1554,7 +1554,7 @@ export const UserSettingsModal = ({
                         value={identityName}
                         onChange={(e) => setIdentityName(e.target.value)}
                         placeholder="z.B. jusbe"
-                        className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
+                        className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
                       />
                       <button
                         className="text-sm text-[color:var(--color-accent)] hover:text-[color:var(--color-accent-hover)]"
@@ -1565,7 +1565,7 @@ export const UserSettingsModal = ({
                       </button>
                     </div>
 
-                    <div className="flex flex-col gap-2 p-4 rounded-2xl bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)]">
+                    <div className="flex flex-col gap-2 p-4 rounded-[var(--radius-4)] bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)]">
                       <div className="text-[color:var(--color-text-muted)] text-sm">Fingerprint</div>
                       <div className="font-mono break-all text-[color:var(--color-text)] text-xs">
                         {fingerprint ? formatFingerprint(fingerprint) : '–'}
@@ -1576,13 +1576,13 @@ export const UserSettingsModal = ({
                   {!identity ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <button
-                        className="px-4 py-3 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] transition text-white font-medium"
+                        className="px-4 py-3 rounded-[var(--radius-3)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] transition text-white font-medium"
                         onClick={handleCreateIdentity}
                       >
                         Identity erstellen
                       </button>
 
-                      <label className="px-4 py-3 rounded-xl bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition cursor-pointer text-center text-white font-medium">
+                      <label className="px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition cursor-pointer text-center text-white font-medium">
                         <div className="flex items-center justify-center gap-2">
                           <Upload size={18} />
                           <span>Identity importieren</span>
@@ -1601,12 +1601,12 @@ export const UserSettingsModal = ({
                   ) : (
                     <div className="space-y-3">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="text-sm bg-white/[0.02] border border-[color:var(--color-border)]/70 rounded-xl p-3">
+                        <div className="text-sm bg-white/[0.02] border border-[color:var(--color-border)]/70 rounded-[var(--radius-3)] p-3">
                           <div className="text-[color:var(--color-text-muted)] mb-1">Erstellt</div>
                           <div className="text-[color:var(--color-text)]">{identity.createdAt ? new Date(identity.createdAt).toLocaleString() : '–'}</div>
                         </div>
 
-                        <div className="text-sm bg-white/[0.02] border border-[color:var(--color-border)]/70 rounded-xl p-3">
+                        <div className="text-sm bg-white/[0.02] border border-[color:var(--color-border)]/70 rounded-[var(--radius-3)] p-3">
                           <div className="text-[color:var(--color-text-muted)] mb-1">Public Key</div>
                           <div className="font-mono break-all text-[color:var(--color-text)] text-xs">{identity.publicKeyB64}</div>
                         </div>
@@ -1619,21 +1619,21 @@ export const UserSettingsModal = ({
                           value={backupPassphrase}
                           onChange={(e) => setBackupPassphrase(e.target.value)}
                           placeholder="Leer lassen für Klartext-Export"
-                          className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
+                          className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
                         />
                         <p className="text-[11px] text-[color:var(--color-text-muted)] mt-1">Wenn gesetzt, wird dein Backup AES-GCM verschlüsselt (PBKDF2).</p>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <button
-                          className="px-4 py-3 rounded-xl bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-white font-medium flex items-center justify-center gap-2"
+                          className="px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-white font-medium flex items-center justify-center gap-2"
                           onClick={handleExportIdentity}
                         >
                           <Download size={18} />
                           Export / Backup
                         </button>
 
-                        <label className="px-4 py-3 rounded-xl bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition cursor-pointer text-center text-white font-medium">
+                        <label className="px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition cursor-pointer text-center text-white font-medium">
                           <div className="flex items-center justify-center gap-2">
                             <Upload size={18} />
                             <span>Import (ersetzen)</span>
@@ -1650,7 +1650,7 @@ export const UserSettingsModal = ({
                         </label>
 
                         <button
-                          className="px-4 py-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 transition text-red-100 font-medium flex items-center justify-center gap-2 sm:col-span-2"
+                          className="px-4 py-3 rounded-[var(--radius-3)] bg-red-500/20 hover:bg-red-500/30 transition text-red-100 font-medium flex items-center justify-center gap-2 sm:col-span-2"
                           onClick={handleResetIdentity}
                         >
                           <ShieldAlert size={18} />
@@ -1674,13 +1674,13 @@ export const UserSettingsModal = ({
               <div className="flex gap-2">
                 <button
                   onClick={resetDraft}
-                  className="px-4 py-2 rounded-xl bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 border border-[var(--color-border)] text-[color:var(--color-text)]"
+                  className="px-4 py-2 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 border border-[var(--color-border)] text-[color:var(--color-text)]"
                 >
                   Zurücksetzen
                 </button>
                 <button
                   onClick={handleSave}
-                  className="px-4 py-2 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white flex items-center gap-2"
+                  className="px-4 py-2 rounded-[var(--radius-3)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white flex items-center gap-2"
                 >
                   <Save size={16} />
                   Änderungen speichern
@@ -1695,7 +1695,7 @@ export const UserSettingsModal = ({
               </div>
               <button
                 onClick={onClose}
-                className="px-4 py-2 rounded-xl bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 border border-[var(--color-border)] text-[color:var(--color-text)]"
+                className="px-4 py-2 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 border border-[var(--color-border)] text-[color:var(--color-text)]"
               >
                 Schließen
               </button>

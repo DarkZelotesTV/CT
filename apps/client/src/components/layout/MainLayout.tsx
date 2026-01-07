@@ -796,7 +796,7 @@ export const MainLayout = () => {
       return (
         <div className="flex-1 flex items-center justify-center relative h-full">
           <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-          <div className="text-center p-10 bg-white/[0.02] rounded-3xl border border-[color:var(--color-border)]/70 backdrop-blur-sm">
+          <div className="text-center p-10 bg-white/[0.02] rounded-[var(--radius-5)] border border-[color:var(--color-border)]/70 backdrop-blur-sm">
             <h2 className="text-xl font-bold text-white mb-2">{t('layout.textChannelSelected')}</h2>
             <p className="text-[color:var(--color-text-muted)] text-sm max-w-md">{t('layout.textChannelUnsupported')}</p>
           </div>
@@ -827,7 +827,7 @@ export const MainLayout = () => {
     return (
       <div className="flex-1 flex items-center justify-center relative h-full">
         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-        <div className="text-center p-12 bg-white/[0.02] rounded-3xl border border-[color:var(--color-border)]/70 backdrop-blur-sm">
+        <div className="text-center p-12 bg-white/[0.02] rounded-[var(--radius-5)] border border-[color:var(--color-border)]/70 backdrop-blur-sm">
           <h2 className="text-2xl font-bold text-white mb-2">{t('layout.stageAreaTitle')}</h2>
           <p className="text-[color:var(--color-text-muted)] text-sm">{t('layout.stageAreaDescription')}</p>
         </div>
@@ -1045,11 +1045,11 @@ export const MainLayout = () => {
                 {resolvedServerIcon ? (
                   <img
                     src={resolvedServerIcon}
-                    className="h-server-icon w-7 h-7 rounded-lg object-cover shadow-[0_0_20px_rgba(16,185,129,0.35)] border border-emerald-500/30"
+                    className="h-server-icon w-7 h-7 rounded-[var(--radius-2)] object-cover shadow-[0_0_20px_rgba(16,185,129,0.35)] border border-emerald-500/30"
                     alt={serverName || 'Server'}
                   />
                 ) : (
-                  <div className="h-server-icon w-7 h-7 rounded-lg bg-[color:var(--color-surface-hover)]/50 border border-[color:var(--color-border)]" />
+                  <div className="h-server-icon w-7 h-7 rounded-[var(--radius-2)] bg-[color:var(--color-surface-hover)]/50 border border-[color:var(--color-border)]" />
                 )}
                 <div className="flex flex-col leading-tight">
                   <span className="text-[0.95rem] font-bold text-white tracking-wide drop-shadow-sm">

@@ -46,9 +46,9 @@ export const UserBottomBar = ({ onOpenUserSettings }: { onOpenUserSettings?: () 
   return (
     <>
       <div className="px-3 pb-4">
-        <div className="flex items-center gap-3 rounded-2xl border border-[color:var(--color-border)] bg-gradient-to-r from-black/40 via-[#0c0f14]/70 to-black/30 shadow-[0_10px_30px_rgba(0,0,0,0.35)] p-3">
+        <div className="flex items-center gap-3 rounded-[var(--radius-4)] border border-[color:var(--color-border)] bg-gradient-to-r from-black/40 via-[#0c0f14]/70 to-black/30 shadow-[0_10px_30px_rgba(0,0,0,0.35)] p-3">
           <div className="relative">
-            <div className="h-12 w-12 rounded-2xl overflow-hidden bg-[color:var(--color-surface-hover)]/80 flex items-center justify-center text-lg font-bold text-white">
+            <div className="h-12 w-12 rounded-[var(--radius-4)] overflow-hidden bg-[color:var(--color-surface-hover)]/80 flex items-center justify-center text-lg font-bold text-white">
               {avatarSrc ? (
                 <img src={avatarSrc} className="w-full h-full object-cover" alt={`${displayName} Avatar`} />
               ) : (
@@ -65,7 +65,7 @@ export const UserBottomBar = ({ onOpenUserSettings }: { onOpenUserSettings?: () 
 
           <div className="flex items-center gap-2">
             <button
-              className={`h-10 w-10 rounded-xl border flex items-center justify-center transition-colors ${
+              className={`h-10 w-10 rounded-[var(--radius-3)] border flex items-center justify-center transition-colors ${
                 micMuted
                   ? 'bg-rose-500/15 border-rose-400/40 text-rose-100'
                   : 'bg-[color:var(--color-surface-hover)] border-[color:var(--color-border)] text-[color:var(--color-text)] hover:border-[color:var(--color-border-strong)]'
@@ -78,7 +78,7 @@ export const UserBottomBar = ({ onOpenUserSettings }: { onOpenUserSettings?: () 
             </button>
 
             <button
-              className={`h-10 w-10 rounded-xl border flex items-center justify-center transition-colors ${
+              className={`h-10 w-10 rounded-[var(--radius-3)] border flex items-center justify-center transition-colors ${
                 muted
                   ? 'bg-rose-500/15 border-rose-400/40 text-rose-100'
                   : 'bg-[color:var(--color-surface-hover)] border-[color:var(--color-border)] text-[color:var(--color-text)] hover:border-[color:var(--color-border-strong)]'
@@ -91,7 +91,7 @@ export const UserBottomBar = ({ onOpenUserSettings }: { onOpenUserSettings?: () 
             </button>
 
             <button
-              className="h-10 w-10 rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface-hover)] text-[color:var(--color-text)] hover:border-[color:var(--color-border-strong)] transition-colors flex items-center justify-center"
+              className="h-10 w-10 rounded-[var(--radius-3)] border border-[color:var(--color-border)] bg-[color:var(--color-surface-hover)] text-[color:var(--color-text)] hover:border-[color:var(--color-border-strong)] transition-colors flex items-center justify-center"
               onClick={handleSettings}
               title={t('userBottomBar.settings')}
             >

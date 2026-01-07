@@ -62,7 +62,7 @@
   justify-content: center;
 
   /* Desktop: respect the titlebar height var if present */
-  padding: 16px;
+  padding: var(--space-4);
   background: rgba(0, 0, 0, 0.72);
   backdrop-filter: blur(18px);
 }
@@ -86,7 +86,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 16px;
+  padding: var(--space-4);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.02);
 }
@@ -110,8 +110,8 @@
   border: 0;
   background: transparent;
   color: rgba(255, 255, 255, 0.6);
-  padding: 8px;
-  border-radius: 12px;
+  padding: var(--space-2);
+  border-radius: var(--radius-3);
   cursor: pointer;
 }
 .ct-modal-close:hover {
@@ -120,14 +120,14 @@
 }
 
 .ct-modal-body {
-  padding: 16px;
+  padding: var(--space-4);
   overflow-y: auto;
   min-height: 0;
   flex: 1;
 }
 
 .ct-modal-footer {
-  padding: 12px;
+  padding: var(--space-3);
   text-align: center;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.02);

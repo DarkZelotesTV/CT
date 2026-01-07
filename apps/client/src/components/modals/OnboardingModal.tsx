@@ -96,7 +96,7 @@ export const OnboardingModal = ({ onClose, initialStep = 0, onStepAction }: Prop
       bodyClassName="grid lg:grid-cols-[1.1fr,0.9fr] gap-6 lg:gap-10 p-0"
     >
       <div className="flex flex-col gap-6 p-6 lg:p-8">
-        <div className="relative overflow-hidden rounded-3xl border border-[color:var(--color-border)]/70 bg-gradient-to-br from-white/[0.04] to-white/[0.02] p-6 lg:p-7 shadow-xl">
+        <div className="relative overflow-hidden rounded-[var(--radius-5)] border border-[color:var(--color-border)]/70 bg-gradient-to-br from-white/[0.04] to-white/[0.02] p-6 lg:p-7 shadow-xl">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(125,211,252,0.12),transparent_30%),radial-gradient(circle_at_80%_0%,rgba(129,140,248,0.2),transparent_30%)]" />
           <div className="relative flex flex-col gap-4">
             <div className="flex items-start justify-between gap-4">
@@ -107,7 +107,7 @@ export const OnboardingModal = ({ onClose, initialStep = 0, onStepAction }: Prop
               </div>
               <div className="flex flex-col items-end gap-2">
                 <div className="flex items-center gap-2 rounded-full border border-[color:var(--color-border)] bg-white/[0.04] px-3 py-1 text-xs text-white/70">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-white/10 to-white/0 border border-[color:var(--color-border)] text-[color:var(--color-accent)]">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-3)] bg-gradient-to-br from-white/10 to-white/0 border border-[color:var(--color-border)] text-[color:var(--color-accent)]">
                     <Icon size={18} />
                   </div>
                   <span className="font-semibold text-white">{progress}%</span>
@@ -160,14 +160,14 @@ export const OnboardingModal = ({ onClose, initialStep = 0, onStepAction }: Prop
               <button
                 key={item.key}
                 onClick={() => setStep(i)}
-                className={`group flex w-full items-start gap-4 rounded-2xl border px-4 py-4 transition-all text-left ${
+                className={`group flex w-full items-start gap-4 rounded-[var(--radius-4)] border px-4 py-4 transition-all text-left ${
                   isActive
                     ? 'border-[color:var(--color-border-strong)]/60 bg-[color:var(--color-surface-hover)]/80 shadow-lg shadow-[0_18px_30px_color-mix(in_srgb,var(--color-accent)_30%,transparent)]'
                     : 'border-[color:var(--color-border)] bg-white/[0.03] hover:border-[color:var(--color-border-strong)] hover:bg-white/[0.07]'
                 }`}
               >
                 <div
-                  className={`flex h-12 w-12 items-center justify-center rounded-xl border ${
+                  className={`flex h-12 w-12 items-center justify-center rounded-[var(--radius-3)] border ${
                     isActive
                       ? 'border-[color:var(--color-accent)]/60 bg-[color:var(--color-accent)]/15 text-[color:var(--color-accent)]'
                       : isDone
@@ -206,11 +206,11 @@ export const OnboardingModal = ({ onClose, initialStep = 0, onStepAction }: Prop
           })}
 
           <div className="flex flex-wrap items-center gap-3 pt-2">
-            <button className="px-4 py-2 rounded-xl border border-[color:var(--color-border)] bg-white/[0.04] text-white text-sm font-medium hover:border-[color:var(--color-border-strong)] hover:bg-white/[0.08]" onClick={finish}>
+            <button className="px-4 py-2 rounded-[var(--radius-3)] border border-[color:var(--color-border)] bg-white/[0.04] text-white text-sm font-medium hover:border-[color:var(--color-border-strong)] hover:bg-white/[0.08]" onClick={finish}>
               {t('onboarding.skip')}
             </button>
             <button
-              className="px-4 py-2 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white text-sm font-semibold shadow-lg shadow-[0_16px_28px_color-mix(in_srgb,var(--color-accent)_30%,transparent)]"
+              className="px-4 py-2 rounded-[var(--radius-3)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white text-sm font-semibold shadow-lg shadow-[0_16px_28px_color-mix(in_srgb,var(--color-accent)_30%,transparent)]"
               onClick={() => {
                 if (step >= steps.length - 1) finish();
                 else setStep((s) => s + 1);
@@ -219,7 +219,7 @@ export const OnboardingModal = ({ onClose, initialStep = 0, onStepAction }: Prop
               {step >= steps.length - 1 ? t('onboarding.finish') : t('onboarding.next')}
             </button>
             <button
-              className="px-4 py-2 rounded-xl border border-[color:var(--color-border)] bg-white/[0.03] text-white text-sm font-medium hover:border-[color:var(--color-border-strong)] hover:bg-white/[0.07]"
+              className="px-4 py-2 rounded-[var(--radius-3)] border border-[color:var(--color-border)] bg-white/[0.03] text-white text-sm font-medium hover:border-[color:var(--color-border-strong)] hover:bg-white/[0.07]"
               onClick={() => {
                 onStepAction?.(current.key);
                 finish();
@@ -243,7 +243,7 @@ export const OnboardingModal = ({ onClose, initialStep = 0, onStepAction }: Prop
               <span>{t(current.titleKey)}</span>
             </div>
           </div>
-          <div className="relative overflow-hidden rounded-3xl border border-[color:var(--color-border)]/70 shadow-2xl bg-gradient-to-br from-white/5 to-white/[0.02]">
+          <div className="relative overflow-hidden rounded-[var(--radius-5)] border border-[color:var(--color-border)]/70 shadow-2xl bg-gradient-to-br from-white/5 to-white/[0.02]">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.08),transparent_40%),radial-gradient(circle_at_80%_0%,rgba(99,102,241,0.2),transparent_35%)]" />
             <img
               src={current.visual}
@@ -251,7 +251,7 @@ export const OnboardingModal = ({ onClose, initialStep = 0, onStepAction }: Prop
               className="relative w-full h-full object-cover mix-blend-screen"
             />
           </div>
-          <div className="rounded-2xl border border-[color:var(--color-border)]/70 bg-white/[0.03] p-3 text-xs text-white/60">
+          <div className="rounded-[var(--radius-4)] border border-[color:var(--color-border)]/70 bg-white/[0.03] p-3 text-xs text-white/60">
             {t(current.bodyKey)}
           </div>
         </div>

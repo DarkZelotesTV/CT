@@ -97,7 +97,7 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           placeholder="z.B. jusbe"
-          className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
+          className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
         />
         <button
           className="mt-2 text-sm text-[color:var(--color-accent)] hover:text-[color:var(--color-accent-hover)]"
@@ -111,13 +111,13 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
       {!identity ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
-            className="px-4 py-3 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] transition text-white font-medium"
+            className="px-4 py-3 rounded-[var(--radius-3)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] transition text-white font-medium"
             onClick={handleCreate}
           >
             Identity erstellen
           </button>
 
-          <label className="px-4 py-3 rounded-xl bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition cursor-pointer text-center text-white font-medium">
+          <label className="px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition cursor-pointer text-center text-white font-medium">
             <div className="flex items-center justify-center gap-2">
               <Upload size={18} />
               <span>Identity importieren</span>
@@ -136,18 +136,18 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="text-sm bg-white/[0.02] border border-[color:var(--color-border)]/70 rounded-xl p-3">
+            <div className="text-sm bg-white/[0.02] border border-[color:var(--color-border)]/70 rounded-[var(--radius-3)] p-3">
               <div className="text-[color:var(--color-text-muted)] mb-1">Erstellt</div>
               <div className="text-[color:var(--color-text)]">{identity.createdAt ? new Date(identity.createdAt).toLocaleString() : '–'}</div>
             </div>
 
-            <div className="text-sm bg-white/[0.02] border border-[color:var(--color-border)]/70 rounded-xl p-3">
+            <div className="text-sm bg-white/[0.02] border border-[color:var(--color-border)]/70 rounded-[var(--radius-3)] p-3">
               <div className="text-[color:var(--color-text-muted)] mb-1">Public Key</div>
               <div className="font-mono break-all text-[color:var(--color-text)]">{identity.publicKeyB64}</div>
             </div>
           </div>
 
-          <div className="text-sm bg-white/[0.02] border border-[color:var(--color-border)]/70 rounded-xl p-3">
+          <div className="text-sm bg-white/[0.02] border border-[color:var(--color-border)]/70 rounded-[var(--radius-3)] p-3">
             <div className="text-[color:var(--color-text-muted)] mb-1">Fingerprint</div>
             <div className="font-mono break-all text-[color:var(--color-text)]">{fingerprint ? formatFingerprint(fingerprint) : '–'}</div>
           </div>
@@ -159,21 +159,21 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
               value={backupPassphrase}
               onChange={(e) => setBackupPassphrase(e.target.value)}
               placeholder="Leer lassen für Klartext-Export"
-              className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
+              className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
             />
             <p className="text-[11px] text-[color:var(--color-text-muted)] mt-1">Wenn gesetzt, wird dein Backup AES-GCM verschlüsselt (PBKDF2).</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button
-              className="px-4 py-3 rounded-xl bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-white font-medium flex items-center justify-center gap-2"
+              className="px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-white font-medium flex items-center justify-center gap-2"
               onClick={handleExport}
             >
               <Download size={18} />
               Export / Backup
             </button>
 
-            <label className="px-4 py-3 rounded-xl bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition cursor-pointer text-center text-white font-medium">
+            <label className="px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition cursor-pointer text-center text-white font-medium">
               <div className="flex items-center justify-center gap-2">
                 <Upload size={18} />
                 <span>Import (ersetzen)</span>
@@ -190,7 +190,7 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
             </label>
 
             <button
-              className="px-4 py-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 transition text-red-100 font-medium flex items-center justify-center gap-2 sm:col-span-2"
+              className="px-4 py-3 rounded-[var(--radius-3)] bg-red-500/20 hover:bg-red-500/30 transition text-red-100 font-medium flex items-center justify-center gap-2 sm:col-span-2"
               onClick={handleReset}
             >
               <ShieldAlert size={18} />

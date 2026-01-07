@@ -622,7 +622,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
             <div className="space-y-3">
               {[0, 1, 2, 3].map((index) => (
                 <div key={`member-skeleton-${index}`} className="m-row">
-                  <Skeleton className="h-[46px] w-[46px] rounded-xl bg-[var(--color-surface-hover)]" />
+                  <Skeleton className="h-[46px] w-[46px] rounded-[var(--radius-3)] bg-[var(--color-surface-hover)]" />
                   <div className="m-body">
                     <Skeleton className="h-3 w-1/3 bg-[var(--color-surface-hover)]" />
                     <Skeleton className="h-2.5 w-1/2 bg-[var(--color-surface-hover)]" />
