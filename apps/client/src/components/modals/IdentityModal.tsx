@@ -91,13 +91,13 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
       bodyClassName="p-6 space-y-4"
     >
       <div>
-        <label className="text-xs uppercase font-bold text-gray-400 block mb-1">Anzeigename (optional)</label>
+        <label className="text-xs uppercase font-bold text-[color:var(--color-text-muted)] block mb-1">Anzeigename (optional)</label>
         <input
           type="text"
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           placeholder="z.B. jusbe"
-          className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+          className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
         />
         <button
           className="mt-2 text-sm text-indigo-400 hover:text-indigo-300"
@@ -117,7 +117,7 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
             Identity erstellen
           </button>
 
-          <label className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition cursor-pointer text-center text-white font-medium">
+          <label className="px-4 py-3 rounded-xl bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition cursor-pointer text-center text-white font-medium">
             <div className="flex items-center justify-center gap-2">
               <Upload size={18} />
               <span>Identity importieren</span>
@@ -136,44 +136,44 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="text-sm bg-white/[0.02] border border-white/5 rounded-xl p-3">
-              <div className="text-gray-400 mb-1">Erstellt</div>
-              <div className="text-gray-200">{identity.createdAt ? new Date(identity.createdAt).toLocaleString() : '–'}</div>
+            <div className="text-sm bg-white/[0.02] border border-[color:var(--color-border)]/70 rounded-xl p-3">
+              <div className="text-[color:var(--color-text-muted)] mb-1">Erstellt</div>
+              <div className="text-[color:var(--color-text)]">{identity.createdAt ? new Date(identity.createdAt).toLocaleString() : '–'}</div>
             </div>
 
-            <div className="text-sm bg-white/[0.02] border border-white/5 rounded-xl p-3">
-              <div className="text-gray-400 mb-1">Public Key</div>
-              <div className="font-mono break-all text-gray-200">{identity.publicKeyB64}</div>
+            <div className="text-sm bg-white/[0.02] border border-[color:var(--color-border)]/70 rounded-xl p-3">
+              <div className="text-[color:var(--color-text-muted)] mb-1">Public Key</div>
+              <div className="font-mono break-all text-[color:var(--color-text)]">{identity.publicKeyB64}</div>
             </div>
           </div>
 
-          <div className="text-sm bg-white/[0.02] border border-white/5 rounded-xl p-3">
-            <div className="text-gray-400 mb-1">Fingerprint</div>
-            <div className="font-mono break-all text-gray-200">{fingerprint ? formatFingerprint(fingerprint) : '–'}</div>
+          <div className="text-sm bg-white/[0.02] border border-[color:var(--color-border)]/70 rounded-xl p-3">
+            <div className="text-[color:var(--color-text-muted)] mb-1">Fingerprint</div>
+            <div className="font-mono break-all text-[color:var(--color-text)]">{fingerprint ? formatFingerprint(fingerprint) : '–'}</div>
           </div>
 
           <div>
-            <label className="text-xs uppercase font-bold text-gray-400 block mb-1">Backup-Passphrase (optional)</label>
+            <label className="text-xs uppercase font-bold text-[color:var(--color-text-muted)] block mb-1">Backup-Passphrase (optional)</label>
             <input
               type="password"
               value={backupPassphrase}
               onChange={(e) => setBackupPassphrase(e.target.value)}
               placeholder="Leer lassen für Klartext-Export"
-              className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+              className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
             />
-            <p className="text-[11px] text-gray-500 mt-1">Wenn gesetzt, wird dein Backup AES-GCM verschlüsselt (PBKDF2).</p>
+            <p className="text-[11px] text-[color:var(--color-text-muted)] mt-1">Wenn gesetzt, wird dein Backup AES-GCM verschlüsselt (PBKDF2).</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button
-              className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition text-white font-medium flex items-center justify-center gap-2"
+              className="px-4 py-3 rounded-xl bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-white font-medium flex items-center justify-center gap-2"
               onClick={handleExport}
             >
               <Download size={18} />
               Export / Backup
             </button>
 
-            <label className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition cursor-pointer text-center text-white font-medium">
+            <label className="px-4 py-3 rounded-xl bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition cursor-pointer text-center text-white font-medium">
               <div className="flex items-center justify-center gap-2">
                 <Upload size={18} />
                 <span>Import (ersetzen)</span>

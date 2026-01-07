@@ -139,7 +139,7 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex justify-center">
-            <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-indigo-400">
+            <div className="w-20 h-20 rounded-full bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] flex items-center justify-center text-indigo-400">
               <Compass size={32} />
             </div>
           </div>
@@ -147,19 +147,19 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
           {error && <div className="text-red-400 text-sm text-center bg-red-500/10 p-2 rounded">{error}</div>}
 
           <div className="space-y-1">
-            <label className="text-xs font-bold text-gray-400 uppercase mb-1 block">Invite / Server ID</label>
+            <label className="text-xs font-bold text-[color:var(--color-text-muted)] uppercase mb-1 block">Invite / Server ID</label>
             <input
               autoFocus
               type="text"
               value={serverInput}
               onChange={(e) => setServerInput(e.target.value)}
               placeholder="z.B. 1 oder https://example.com/invite/1"
-              className="w-full bg-black/30 text-white p-3 rounded-xl border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-600 font-medium"
+              className="w-full bg-[color:var(--color-surface)]/60 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all placeholder:text-[color:var(--color-text-muted)] font-medium"
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-bold text-gray-400 uppercase mb-1 block flex items-center gap-2">
+            <label className="text-xs font-bold text-[color:var(--color-text-muted)] uppercase mb-1 block flex items-center gap-2">
               <Globe size={14} />
               Instanz URL (optional)
             </label>
@@ -168,19 +168,19 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
               value={instanceUrl}
               onChange={(e) => setInstanceUrlState(e.target.value)}
               placeholder="z.B. https://mein-server.tld"
-              className="w-full bg-black/30 text-white p-3 rounded-xl border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-600 font-medium"
+              className="w-full bg-[color:var(--color-surface)]/60 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all placeholder:text-[color:var(--color-text-muted)] font-medium"
             />
-            <p className="text-[10px] text-gray-500 mt-1">Leer lassen, um die aktuelle Instanz zu nutzen.</p>
+            <p className="text-[10px] text-[color:var(--color-text-muted)] mt-1">Leer lassen, um die aktuelle Instanz zu nutzen.</p>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 flex items-start gap-3">
-            <div className="p-2 rounded-full bg-white/5 text-indigo-400">
+          <div className="rounded-2xl border border-[color:var(--color-border)] bg-white/[0.02] p-4 flex items-start gap-3">
+            <div className="p-2 rounded-full bg-[color:var(--color-surface-hover)] text-indigo-400">
               <Shield size={18} />
             </div>
             <div className="flex-1">
               <div className="text-sm font-medium text-white">Clover Identity</div>
               {identity && fingerprint ? (
-                <p className="text-xs text-gray-400 mt-1 break-all">Fingerprint: {formatFingerprint(fingerprint)}</p>
+                <p className="text-xs text-[color:var(--color-text-muted)] mt-1 break-all">Fingerprint: {formatFingerprint(fingerprint)}</p>
               ) : (
                 <p className="text-xs text-yellow-300 mt-1">Du benötigst eine Identity, um einem Server beizutreten.</p>
               )}

@@ -33,8 +33,8 @@ export const ModalLayout = ({
   useEffect(() => {
     setSlots({
       center: (
-        <div className="flex items-center gap-2 text-[13px] text-gray-100">
-          {topbarIcon && <span className="text-gray-300">{topbarIcon}</span>}
+        <div className="flex items-center gap-2 text-[13px] text-[color:var(--color-text)]">
+          {topbarIcon && <span className="text-[color:var(--color-text)]">{topbarIcon}</span>}
           <span className="font-bold">{title}</span>
         </div>
       ),
@@ -46,7 +46,7 @@ export const ModalLayout = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-[color:var(--color-surface)]/80 backdrop-blur-sm"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onOverlayClick?.();
       }}
@@ -66,11 +66,11 @@ export const ModalLayout = ({
         <div className="flex items-center justify-between p-5 border-b border-[rgba(255,255,255,0.08)]">
           <div>
             <h2 className="text-lg font-bold text-white tracking-wide">{title}</h2>
-            {description && <p className="text-sm text-gray-400 mt-1">{description}</p>}
+            {description && <p className="text-sm text-[color:var(--color-text-muted)] mt-1">{description}</p>}
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors no-drag"
+            className="p-2 text-[color:var(--color-text-muted)] hover:text-white hover:bg-[color:var(--color-surface-hover)]/80 rounded-lg transition-colors no-drag"
           >
             <X size={20} />
           </button>

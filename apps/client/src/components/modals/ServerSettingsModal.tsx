@@ -209,7 +209,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
             <button
               type="button"
               onClick={onClose}
-              className="text-white/80 hover:text-white text-sm font-medium px-3 py-2 rounded-lg hover:bg-white/5"
+              className="text-white/80 hover:text-white text-sm font-medium px-3 py-2 rounded-lg hover:bg-[color:var(--color-surface-hover)]"
             >
               Abbrechen
             </button>
@@ -235,29 +235,29 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
       ) : (
         <form onSubmit={handleSave} className="space-y-6">
           <div className="flex items-start gap-4 flex-wrap">
-            <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden">
+            <div className="w-16 h-16 rounded-2xl bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] flex items-center justify-center overflow-hidden">
               {previewUrl ? (
                 <img src={previewUrl} alt="Server Icon" className="w-full h-full object-cover" />
               ) : (
-                <ImageIcon className="text-gray-500" />
+                <ImageIcon className="text-[color:var(--color-text-muted)]" />
               )}
             </div>
             <div className="flex-1 space-y-3 min-w-[240px]">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-400 uppercase ml-1">Server Name</label>
+                <label className="text-xs font-bold text-[color:var(--color-text-muted)] uppercase ml-1">Server Name</label>
                 <input
                   autoFocus
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Mein Server"
-                  className="w-full bg-black/30 text-white p-3 rounded-xl border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-600 font-medium"
+                  className="w-full bg-[color:var(--color-surface)]/60 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all placeholder:text-[color:var(--color-text-muted)] font-medium"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-400 uppercase ml-1">Server Icon</label>
+                <label className="text-xs font-bold text-[color:var(--color-text-muted)] uppercase ml-1">Server Icon</label>
                 <div className="flex flex-wrap gap-2 items-center">
-                  <label className="cursor-pointer inline-flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2 rounded-lg text-sm font-semibold hover:border-indigo-500 hover:text-indigo-300 transition-colors">
+                  <label className="cursor-pointer inline-flex items-center gap-2 bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] px-3 py-2 rounded-lg text-sm font-semibold hover:border-indigo-500 hover:text-indigo-300 transition-colors">
                     <input type="file" accept="image/*" className="hidden" onChange={handleIconChange} />
                     <ImageIcon size={16} />
                     Icon auswählen
@@ -266,7 +266,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
                     type="button"
                     onClick={handleRemoveIcon}
                     disabled={isSaving || isUploadingIcon || (!iconUrl && !iconFile)}
-                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-white/10 text-white/80 hover:text-white hover:border-red-400 hover:text-red-200 disabled:opacity-50"
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-[color:var(--color-border)] text-white/80 hover:text-white hover:border-red-400 hover:text-red-200 disabled:opacity-50"
                   >
                     <Trash2 size={16} />
                     Icon entfernen
@@ -277,7 +277,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] text-gray-500">
+                <p className="text-[11px] text-[color:var(--color-text-muted)]">
                   Unterstützt PNG, JPG oder WebP bis 2 MB. Die Datei wird direkt auf den Server hochgeladen und sicher gespeichert.
                 </p>
                 {iconError && (
@@ -288,19 +288,19 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-gray-400 uppercase ml-1 flex items-center gap-2">
+            <label className="text-xs font-bold text-[color:var(--color-text-muted)] uppercase ml-1 flex items-center gap-2">
               <Shield size={14} />
               Fallback-Kanal
             </label>
             {channelOptions.length === 0 ? (
-              <div className="text-sm text-gray-400 bg-white/5 border border-white/10 rounded-xl p-3">
+              <div className="text-sm text-[color:var(--color-text-muted)] bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] rounded-xl p-3">
                 Keine Text- oder Web-Kanäle verfügbar.
               </div>
             ) : (
               <select
                 value={fallbackChannelId ?? ''}
                 onChange={(e) => setFallbackChannelId(e.target.value ? Number(e.target.value) : null)}
-                className="w-full bg-black/30 text-white p-3 rounded-xl border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                className="w-full bg-[color:var(--color-surface)]/60 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
               >
                 <option value="">Kein Fallback</option>
                 {channelOptions.map((channel) => (
@@ -310,15 +310,15 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
                 ))}
               </select>
             )}
-            <p className="text-[11px] text-gray-500">
+            <p className="text-[11px] text-[color:var(--color-text-muted)]">
               Der Fallback-Kanal wird geöffnet, wenn kein spezifischer Kanal ausgewählt ist.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 flex items-center justify-between gap-4">
+          <div className="rounded-2xl border border-[color:var(--color-border)] bg-white/[0.02] p-4 flex items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="text-sm font-semibold text-white">Drag & Drop zum Sortieren</div>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-[color:var(--color-text-muted)]">
                 Wenn deaktiviert, können nur Administratoren die Reihenfolge von Kategorien und Kanälen anpassen.
               </p>
             </div>
@@ -331,7 +331,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
               />
               <span
                 className={`h-6 w-11 rounded-full transition-colors ${
-                  dragAndDropEnabled ? 'bg-indigo-500' : 'bg-white/10'
+                  dragAndDropEnabled ? 'bg-indigo-500' : 'bg-[color:var(--color-surface-hover)]/80'
                 }`}
               >
                 <span
@@ -347,12 +347,12 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
             <div className="text-red-400 text-sm bg-red-500/10 border border-red-500/30 rounded-lg p-3">{actionError}</div>
           )}
 
-          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 space-y-3">
+          <div className="rounded-2xl border border-[color:var(--color-border)] bg-white/[0.02] p-4 space-y-3">
             <div className="flex items-center gap-2 text-red-300">
               <Trash2 size={16} />
               <div className="text-sm font-semibold">Server dauerhaft löschen</div>
             </div>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-[color:var(--color-text-muted)]">
               Diese Aktion entfernt den Server unwiderruflich. Alle Kanäle und Daten gehen verloren.
             </p>
             {deleteError && (

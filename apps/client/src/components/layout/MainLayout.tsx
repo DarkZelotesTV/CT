@@ -796,9 +796,9 @@ export const MainLayout = () => {
       return (
         <div className="flex-1 flex items-center justify-center relative h-full">
           <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-          <div className="text-center p-10 bg-white/[0.02] rounded-3xl border border-white/5 backdrop-blur-sm">
+          <div className="text-center p-10 bg-white/[0.02] rounded-3xl border border-[color:var(--color-border)]/70 backdrop-blur-sm">
             <h2 className="text-xl font-bold text-white mb-2">{t('layout.textChannelSelected')}</h2>
-            <p className="text-gray-500 text-sm max-w-md">{t('layout.textChannelUnsupported')}</p>
+            <p className="text-[color:var(--color-text-muted)] text-sm max-w-md">{t('layout.textChannelUnsupported')}</p>
           </div>
         </div>
       );
@@ -827,9 +827,9 @@ export const MainLayout = () => {
     return (
       <div className="flex-1 flex items-center justify-center relative h-full">
         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-        <div className="text-center p-12 bg-white/[0.02] rounded-3xl border border-white/5 backdrop-blur-sm">
+        <div className="text-center p-12 bg-white/[0.02] rounded-3xl border border-[color:var(--color-border)]/70 backdrop-blur-sm">
           <h2 className="text-2xl font-bold text-white mb-2">{t('layout.stageAreaTitle')}</h2>
-          <p className="text-gray-500 text-sm">{t('layout.stageAreaDescription')}</p>
+          <p className="text-[color:var(--color-text-muted)] text-sm">{t('layout.stageAreaDescription')}</p>
         </div>
       </div>
     );
@@ -1049,7 +1049,7 @@ export const MainLayout = () => {
                     alt={serverName || 'Server'}
                   />
                 ) : (
-                  <div className="h-server-icon w-7 h-7 rounded-lg bg-gray-700/50 border border-white/10" />
+                  <div className="h-server-icon w-7 h-7 rounded-lg bg-[color:var(--color-surface-hover)]/50 border border-[color:var(--color-border)]" />
                 )}
                 <div className="flex flex-col leading-tight">
                   <span className="text-[0.95rem] font-bold text-white tracking-wide drop-shadow-sm">
@@ -1131,7 +1131,7 @@ export const MainLayout = () => {
                 onResolveFallback={handleResolveFallback}
                 refreshKey={serverRefreshKey}
               />
-              {!isMobileLayout && showLeftSidebar && <div className="absolute top-0 right-0 w-1 h-full cursor-col-resize z-20 hover:bg-white/10" onMouseDown={startDragLeft} />}
+              {!isMobileLayout && showLeftSidebar && <div className="absolute top-0 right-0 w-1 h-full cursor-col-resize z-20 hover:bg-[color:var(--color-surface-hover)]/80" onMouseDown={startDragLeft} />}
             </div>
           </aside>
         )}
@@ -1180,7 +1180,7 @@ export const MainLayout = () => {
           >
             <div className="info-content custom-scrollbar h-full overflow-y-auto">
               <MemberSidebar serverId={selectedServerId} />
-              {!isMobileLayout && showRightSidebar && <div className="absolute top-0 left-0 w-1 h-full cursor-col-resize z-20 hover:bg-white/10" onMouseDown={startDragRight} />}
+              {!isMobileLayout && showRightSidebar && <div className="absolute top-0 left-0 w-1 h-full cursor-col-resize z-20 hover:bg-[color:var(--color-surface-hover)]/80" onMouseDown={startDragRight} />}
             </div>
           </aside>
         )}
@@ -1188,12 +1188,12 @@ export const MainLayout = () => {
         {/* --- 6. LOG (Unten) --- */}
         {selectedServerId && (
           <footer
-            className="log-panel no-drag flex flex-col shadow-2xl z-50 backdrop-blur-xl bg-[rgba(8,8,10,0.9)] border-t border-white/5"
+            className="log-panel no-drag flex flex-col shadow-2xl z-50 backdrop-blur-xl bg-[rgba(8,8,10,0.9)] border-t border-[color:var(--color-border)]/70"
             style={{ display: isMobileLayout && !showLogPanel ? 'none' : undefined }}
             aria-hidden={!showLogPanel && !isMobileLayout}
           >
             {/* Log Header */}
-            <div className="log-head h-9 bg-white/5 border-b border-white/5 flex items-center px-3 gap-2">
+            <div className="log-head h-9 bg-[color:var(--color-surface-hover)] border-b border-[color:var(--color-border)]/70 flex items-center px-3 gap-2">
               {logTabs.map((tab) => (
                 <div
                     key={tab.id}
@@ -1205,7 +1205,7 @@ export const MainLayout = () => {
               ))}
               <div style={{flex:1}} className="drag-handle h-full" />
               <div 
-                className="pill hover:bg-white/5 cursor-pointer text-xs px-4 py-1 rounded-full text-gray-400 transition-colors" 
+                className="pill hover:bg-[color:var(--color-surface-hover)] cursor-pointer text-xs px-4 py-1 rounded-full text-[color:var(--color-text-muted)] transition-colors" 
                 onClick={() => clearLogEntries()}
                 title={t('layout.log.clear')}
               >
@@ -1216,15 +1216,15 @@ export const MainLayout = () => {
             {/* Log Body */}
             {showLogPanel && (
               <>
-                <div ref={logBodyRef} className="log-body flex-1 overflow-y-auto p-4 font-mono text-xs text-gray-300 leading-relaxed custom-scrollbar">
+                <div ref={logBodyRef} className="log-body flex-1 overflow-y-auto p-4 font-mono text-xs text-[color:var(--color-text)] leading-relaxed custom-scrollbar">
                   {filteredLogEntries.length === 0 && (
-                    <div className="text-gray-600 text-center py-4 italic">
+                    <div className="text-[color:var(--color-text-muted)] text-center py-4 italic">
                       {t('layout.log.empty', { defaultValue: 'Keine Einträge' })}
                     </div>
                   )}
                   {filteredLogEntries.map((entry) => (
                     <div key={entry.id} className="ln mb-0.5">
-                      <span className="ts text-gray-600 mr-2">[{formatLogTime(entry.createdAt)}]</span>
+                      <span className="ts text-[color:var(--color-text-muted)] mr-2">[{formatLogTime(entry.createdAt)}]</span>
                       <span className={classNames("font-bold mr-2", {
                           "text-emerald-400": entry.category === 'system',
                           "text-blue-400": entry.category === 'voice',
@@ -1237,10 +1237,10 @@ export const MainLayout = () => {
                   ))}
                 </div>
                 {/* Log Command Input */}
-                <form className="log-cmd bg-black/20 border-t border-white/5 p-2 px-4 flex items-center gap-2" onSubmit={handleLogCommand}>
+                <form className="log-cmd bg-[color:var(--color-surface)]/50 border-t border-[color:var(--color-border)]/70 p-2 px-4 flex items-center gap-2" onSubmit={handleLogCommand}>
                   <span className="text-emerald-500 font-bold">&gt;</span>
                   <input
-                    className="bg-transparent border-none text-white w-full font-mono text-[13px] focus:outline-none placeholder-gray-600"
+                    className="bg-transparent border-none text-white w-full font-mono text-[13px] focus:outline-none placeholder:text-[color:var(--color-text-muted)]"
                     value={logInput}
                     onChange={(event) => setLogInput(event.target.value)}
                     placeholder={t('layout.log.commandPlaceholder', { defaultValue: 'Befehl eingeben...' }) ?? ''}

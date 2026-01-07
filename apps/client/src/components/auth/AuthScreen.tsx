@@ -104,19 +104,19 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
   };
 
   return (
-    <div className="min-h-screen w-screen bg-gray-900 flex items-center justify-center p-4 relative overflow-hidden font-sans">
+    <div className="min-h-screen w-screen bg-[color:var(--color-background)] flex items-center justify-center p-4 relative overflow-hidden font-sans">
       
       {/* Background Blobs */}
       <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-green-500/20 rounded-full blur-[100px] animate-pulse"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[100px] animate-pulse delay-1000"></div>
 
       {/* Glass Card */}
-      <div className="relative z-10 w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8 animate-in fade-in zoom-in duration-500 transition-all">
+      <div className="relative z-10 w-full max-w-md bg-[color:var(--color-surface-hover)] backdrop-blur-xl border border-[color:var(--color-border)] rounded-2xl shadow-2xl p-8 animate-in fade-in zoom-in duration-500 transition-all">
         
         {/* SERVER SETTINGS TOGGLE (Oben Rechts) */}
         <button 
             onClick={() => setShowServerSettings(!showServerSettings)}
-            className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+            className="absolute top-4 right-4 p-2 text-[color:var(--color-text-muted)] hover:text-white hover:bg-[color:var(--color-surface-hover)]/80 rounded-lg transition-colors"
             title="Server Einstellungen"
         >
             <Server size={20} className={connectionStatus === 'error' ? 'text-red-500' : ''} />
@@ -128,18 +128,18 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
             <Clover className="text-white" size={32} />
           </div>
           <h1 className="text-3xl font-bold text-white tracking-tight">CloverTalk</h1>
-          <p className="text-gray-400 mt-2 text-sm">
+          <p className="text-[color:var(--color-text-muted)] mt-2 text-sm">
             {isRegistering ? 'Erstelle deinen Zugang' : 'Willkommen zurück'}
           </p>
         </div>
 
         {/* SERVER SETTINGS BEREICH (Collapsible) */}
         <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showServerSettings ? 'max-h-80 mb-6 opacity-100' : 'max-h-0 opacity-0'}`}>
-            <div className="bg-black/30 rounded-xl p-4 border border-white/10 space-y-3">
+            <div className="bg-[color:var(--color-surface)]/60 rounded-xl p-4 border border-[color:var(--color-border)] space-y-3">
                 <div className="flex items-start justify-between gap-2">
-                  <label className="text-xs font-bold text-gray-400 uppercase block">
+                  <label className="text-xs font-bold text-[color:var(--color-text-muted)] uppercase block">
                     Server Adresse
-                    <div className="text-[10px] text-gray-500 font-normal normal-case mt-1">Hoste deinen eigenen CloverTalk Server und verbinde dich hier.</div>
+                    <div className="text-[10px] text-[color:var(--color-text-muted)] font-normal normal-case mt-1">Hoste deinen eigenen CloverTalk Server und verbinde dich hier.</div>
                   </label>
                   <div className="flex items-center gap-2 text-xs">
                     {connectionStatus === 'ok' && <span className="text-green-400 flex items-center gap-1"><CheckCircle2 size={12}/> Online</span>}
@@ -147,7 +147,7 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
                     <button
                       type="button"
                       onClick={handleRestoreServerSettings}
-                      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300"
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 text-[color:var(--color-text)]"
                     >
                       <RefreshCw size={12} /> Zurücksetzen
                     </button>
@@ -164,15 +164,15 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
                           setServerUrl(normalized);
                           checkServerConnection(normalized);
                         }}
-                        className="flex-1 bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-green-500 outline-none"
+                        className="flex-1 bg-[color:var(--color-surface)]/50 border border-[color:var(--color-border)] rounded-lg px-3 py-2 text-sm text-white focus:border-green-500 outline-none"
                         placeholder="https://localhost:3001"
                     />
                 </div>
-                <div className="flex items-center gap-2 text-[11px] text-gray-400">
+                <div className="flex items-center gap-2 text-[11px] text-[color:var(--color-text-muted)]">
                   <input
                     id="allow-http-auth"
                     type="checkbox"
-                    className="rounded border-white/20 bg-black/40"
+                    className="rounded border-[color:var(--color-border-strong)] bg-[color:var(--color-surface)]/70"
                     checked={allowInsecureHttp}
                     onChange={(e) => {
                       const allow = e.target.checked;
@@ -184,20 +184,20 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
                     }}
                   />
                   <label htmlFor="allow-http-auth" className="cursor-pointer">
-                    Unsichere <code className="text-gray-200">http://</code>-Verbindungen erlauben (nur Entwicklung)
+                    Unsichere <code className="text-[color:var(--color-text)]">http://</code>-Verbindungen erlauben (nur Entwicklung)
                   </label>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-400 uppercase block">Server Passwort (optional)</label>
+                  <label className="text-xs font-bold text-[color:var(--color-text-muted)] uppercase block">Server Passwort (optional)</label>
                   <input
                     type="password"
                     value={serverPassword}
                     onChange={(e) => setServerPasswordState(e.target.value)}
                     onBlur={() => setServerPassword(serverPassword)}
-                    className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-green-500 outline-none"
+                    className="w-full bg-[color:var(--color-surface)]/50 border border-[color:var(--color-border)] rounded-lg px-3 py-2 text-sm text-white focus:border-green-500 outline-none"
                     placeholder="Leer lassen wenn keins"
                   />
-                  <p className="text-[10px] text-gray-500">Für private Installationen kannst du hier das Server-Passwort hinterlegen.</p>
+                  <p className="text-[10px] text-[color:var(--color-text-muted)]">Für private Installationen kannst du hier das Server-Passwort hinterlegen.</p>
                 </div>
             </div>
         </div>
@@ -214,17 +214,17 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
           
           {isRegistering && (
             <div className="space-y-1">
-              <label className="text-xs font-medium text-gray-300 ml-1">Benutzername</label>
+              <label className="text-xs font-medium text-[color:var(--color-text)] ml-1">Benutzername</label>
               <div className="relative group">
                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="text-gray-500 group-focus-within:text-green-400 transition-colors" size={18} />
+                    <User className="text-[color:var(--color-text-muted)] group-focus-within:text-green-400 transition-colors" size={18} />
                  </div>
                  <input 
                     type="text" 
                     required={isRegistering}
                     value={username}
                     onChange={e => setUsername(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-3 bg-black/20 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-all sm:text-sm"
+                    className="block w-full pl-10 pr-3 py-3 bg-[color:var(--color-surface)]/50 border border-[color:var(--color-border)] rounded-xl text-white placeholder:text-[color:var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-all sm:text-sm"
                     placeholder="Dein Name"
                  />
               </div>
@@ -232,34 +232,34 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
           )}
 
           <div className="space-y-1">
-            <label className="text-xs font-medium text-gray-300 ml-1">Email Adresse</label>
+            <label className="text-xs font-medium text-[color:var(--color-text)] ml-1">Email Adresse</label>
             <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="text-gray-500 group-focus-within:text-green-400 transition-colors" size={18} />
+                  <Mail className="text-[color:var(--color-text-muted)] group-focus-within:text-green-400 transition-colors" size={18} />
                 </div>
                 <input 
                   type="email" 
                   required
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 bg-black/20 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-all sm:text-sm"
+                  className="block w-full pl-10 pr-3 py-3 bg-[color:var(--color-surface)]/50 border border-[color:var(--color-border)] rounded-xl text-white placeholder:text-[color:var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-all sm:text-sm"
                   placeholder="name@beispiel.de"
                 />
             </div>
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-medium text-gray-300 ml-1">Passwort</label>
+            <label className="text-xs font-medium text-[color:var(--color-text)] ml-1">Passwort</label>
             <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="text-gray-500 group-focus-within:text-green-400 transition-colors" size={18} />
+                  <Lock className="text-[color:var(--color-text-muted)] group-focus-within:text-green-400 transition-colors" size={18} />
                 </div>
                 <input 
                   type="password" 
                   required
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 bg-black/20 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-all sm:text-sm"
+                  className="block w-full pl-10 pr-3 py-3 bg-[color:var(--color-surface)]/50 border border-[color:var(--color-border)] rounded-xl text-white placeholder:text-[color:var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-all sm:text-sm"
                   placeholder="••••••••"
                 />
             </div>
@@ -274,12 +274,12 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
                {loading ? <Loader2 className="animate-spin" /> : (isRegistering ? 'Starten' : 'Anmelden')}
                {!loading && <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />}
             </div>
-            <div className="absolute inset-0 h-full w-full scale-0 rounded-xl transition-all duration-300 group-hover:scale-100 group-hover:bg-white/10"></div>
+            <div className="absolute inset-0 h-full w-full scale-0 rounded-xl transition-all duration-300 group-hover:scale-100 group-hover:bg-[color:var(--color-surface-hover)]/80"></div>
           </button>
         </form>
 
-        <div className="mt-8 pt-6 border-t border-white/10 text-center">
-          <p className="text-sm text-gray-400">
+        <div className="mt-8 pt-6 border-t border-[color:var(--color-border)] text-center">
+          <p className="text-sm text-[color:var(--color-text-muted)]">
             {isRegistering ? 'Bereits registriert?' : 'Noch keinen Account?'}
           </p>
           <button 
@@ -292,7 +292,7 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
 
       </div>
 
-      <div className="absolute bottom-4 text-center w-full text-gray-600 text-xs">
+      <div className="absolute bottom-4 text-center w-full text-[color:var(--color-text-muted)] text-xs">
          Host: {serverAddress} &copy; 2024 CloverTalk.
       </div>
     </div>

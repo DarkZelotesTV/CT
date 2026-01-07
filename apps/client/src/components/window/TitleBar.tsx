@@ -108,8 +108,8 @@ export const TitleBar = ({
   const platform = state.platform ?? 'win32';
   const isMac = platform === 'darwin';
 
-  const windowBtnBase = 'no-drag h-full px-4 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/5 transition ' + focusRing;
-  const iconButtonBase = 'no-drag h-full px-3 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/5 transition ' + focusRing;
+  const windowBtnBase = 'no-drag h-full px-4 flex items-center justify-center text-[color:var(--color-text-muted)] hover:text-white hover:bg-[color:var(--color-surface-hover)] transition ' + focusRing;
+  const iconButtonBase = 'no-drag h-full px-3 flex items-center justify-center text-[color:var(--color-text-muted)] hover:text-white hover:bg-[color:var(--color-surface-hover)] transition ' + focusRing;
 
   const left = slots.left ?? (
     <div className="flex items-center h-full px-4 select-none">
@@ -189,7 +189,7 @@ export const TitleBar = ({
       </div>
 
       {!isMac && (
-        <div className="flex items-center h-full border-l border-white/5">
+        <div className="flex items-center h-full border-l border-[color:var(--color-border)]/70">
           <button type="button" className={windowBtnBase} onClick={() => void controls.minimize()}>
             <Minus size={16} aria-hidden="true" />
           </button>
@@ -210,7 +210,7 @@ export const TitleBar = ({
         // Z-Index auf 50000 erhöht. 
         // Dies liegt über dem ModalLayout (z-9999), sodass die Titlebar auch bei "Kanal erstellen" 
         // oder "Server Einstellungen" sichtbar und im Vordergrund bleibt.
-        className="fixed top-0 left-0 right-0 z-[50000] drag border-b border-black bg-[#111] select-none"
+        className="fixed top-0 left-0 right-0 z-[50000] drag border-b border-black bg-[color:var(--color-surface)] select-none"
         style={{ height: state.titlebarHeight }}
       >
         <div className="h-full w-full flex items-center justify-between">
@@ -222,17 +222,17 @@ export const TitleBar = ({
       {showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} />}
       {showNotifications && (
         <ModalLayout title={t('titlebar.notifications')} onClose={() => setShowNotifications(false)}>
-          <div className="space-y-3 text-gray-200 text-sm leading-relaxed"><p>{t('titlebar.notificationsEmpty')}</p></div>
+          <div className="space-y-3 text-[color:var(--color-text)] text-sm leading-relaxed"><p>{t('titlebar.notificationsEmpty')}</p></div>
         </ModalLayout>
       )}
       {showInbox && (
         <ModalLayout title={t('titlebar.inbox')} onClose={() => setShowInbox(false)}>
-          <div className="space-y-3 text-gray-200 text-sm leading-relaxed"><p>{t('titlebar.inboxEmpty')}</p></div>
+          <div className="space-y-3 text-[color:var(--color-text)] text-sm leading-relaxed"><p>{t('titlebar.inboxEmpty')}</p></div>
         </ModalLayout>
       )}
       {showHelp && (
         <ModalLayout title={t('titlebar.help')} onClose={() => setShowHelp(false)}>
-          <div className="space-y-3 text-gray-200 text-sm leading-relaxed"><p>{t('titlebar.helpOverview')}</p></div>
+          <div className="space-y-3 text-[color:var(--color-text)] text-sm leading-relaxed"><p>{t('titlebar.helpOverview')}</p></div>
         </ModalLayout>
       )}
     </>

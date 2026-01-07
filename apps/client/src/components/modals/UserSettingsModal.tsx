@@ -71,7 +71,7 @@ const HotkeyInput = ({
 
   return (
     <div className="space-y-1">
-      <div className="text-xs uppercase tracking-widest text-gray-500 font-bold flex items-center justify-between">
+      <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold flex items-center justify-between">
         <span>{label}</span>
         {displayValue && <span className="text-[10px] text-[color:var(--color-accent)]">Press Backspace/Esc to clear</span>}
       </div>
@@ -82,12 +82,12 @@ const HotkeyInput = ({
           onKeyDown={handleKeyDown}
           readOnly
           placeholder="Press keys"
-          className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] outline-none"
+          className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] outline-none"
         />
         {displayValue && (
           <button
             onClick={() => onChange('')}
-            className="px-3 py-2 rounded-lg bg-white/5 text-gray-300 hover:text-white hover:bg-white/10"
+            className="px-3 py-2 rounded-lg bg-[color:var(--color-surface-hover)] text-[color:var(--color-text)] hover:text-white hover:bg-[color:var(--color-surface-hover)]/80"
           >
             <X size={16} />
           </button>
@@ -124,8 +124,8 @@ export const UserSettingsModal = ({
     setSlots({
       ...base,
       center: (
-        <div className="flex items-center gap-2 text-[13px] text-gray-100 leading-tight min-w-0">
-          <Settings size={16} className="text-gray-300" aria-hidden />
+        <div className="flex items-center gap-2 text-[13px] text-[color:var(--color-text)] leading-tight min-w-0">
+          <Settings size={16} className="text-[color:var(--color-text)]" aria-hidden />
           <span className="truncate" title={modalTitle}>
             {modalTitle}
           </span>
@@ -707,7 +707,7 @@ export const UserSettingsModal = ({
 
 	  return createPortal(
 		  <div
-		    className="fixed left-0 right-0 bottom-0 top-[var(--ct-titlebar-height)] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+		    className="fixed left-0 right-0 bottom-0 top-[var(--ct-titlebar-height)] bg-[color:var(--color-surface)]/95 backdrop-blur-sm flex items-center justify-center p-4"
 		    style={{ zIndex: 9999, transform: 'translateZ(0)', willChange: 'transform' }}
 		  >
       <div className="bg-[var(--color-surface)] w-11/12 max-w-5xl h-[85vh] rounded-3xl border border-[var(--color-border)] shadow-2xl overflow-hidden flex flex-col text-[color:var(--color-text)]">
@@ -733,7 +733,7 @@ export const UserSettingsModal = ({
     onClick={() => setActiveCategory('profile')}
           className="w-full flex items-center gap-3 p-3 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] transition text-left"
   >
-    <div className="w-10 h-10 rounded-full overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+    <div className="w-10 h-10 rounded-full overflow-hidden bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] flex items-center justify-center shrink-0">
       {avatarPreview ? (
         <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
       ) : (
@@ -773,8 +773,8 @@ export const UserSettingsModal = ({
           onClick={() => setActiveCategory(cat.id)}
           className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-left transition ${
             activeCategory === cat.id
-              ? 'bg-white/5 border border-white/10 text-[color:var(--color-text)]'
-              : 'text-[color:var(--color-text-muted)] hover:bg-white/5'
+              ? 'bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] text-[color:var(--color-text)]'
+              : 'text-[color:var(--color-text-muted)] hover:bg-[color:var(--color-surface-hover)]'
           }`}
         >
           <cat.icon size={16} />
@@ -797,19 +797,19 @@ export const UserSettingsModal = ({
                 <div className="space-y-6 animate-in fade-in zoom-in-95 duration-200">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
                     <div className="space-y-2 md:col-span-2">
-                      <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Profil</div>
+                      <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold">Profil</div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1">
-                          <label className="text-xs text-gray-400 uppercase font-semibold">Anzeigename</label>
+                          <label className="text-xs text-[color:var(--color-text-muted)] uppercase font-semibold">Anzeigename</label>
                           <input
                             value={displayName}
                             onChange={(e) => setDisplayName(e.target.value)}
                             placeholder="Dein Name"
-                            className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] outline-none"
+                            className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] outline-none"
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-xs text-gray-400 uppercase font-semibold">Avatar</label>
+                          <label className="text-xs text-[color:var(--color-text-muted)] uppercase font-semibold">Avatar</label>
                           <input
                             ref={avatarInputRef}
                             type="file"
@@ -821,12 +821,12 @@ export const UserSettingsModal = ({
                             <div className="flex flex-wrap items-center gap-2">
                               <button
                                 onClick={() => avatarInputRef.current?.click()}
-                                className="px-4 py-2 rounded-xl border border-white/10 bg-white/5 text-sm text-gray-200 hover:bg-white/10"
+                                className="px-4 py-2 rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface-hover)] text-sm text-[color:var(--color-text)] hover:bg-[color:var(--color-surface-hover)]/80"
                               >
                                 Datei wählen
                               </button>
                               {avatarFile && (
-                                <span className="text-xs text-gray-300 truncate max-w-[160px]" title={avatarFile.name}>
+                                <span className="text-xs text-[color:var(--color-text)] truncate max-w-[160px]" title={avatarFile.name}>
                                   {avatarFile.name}
                                 </span>
                               )}
@@ -839,7 +839,7 @@ export const UserSettingsModal = ({
                                 {avatarUploading ? 'Lade hoch...' : 'Avatar hochladen'}
                               </button>
                             </div>
-                            <p className="text-xs text-gray-400">
+                            <p className="text-xs text-[color:var(--color-text-muted)]">
                               Unterstützt Bilddateien bis 3 MB. Bereits gesetzte Avatar-Links bleiben bestehen, bis ein neuer Upload erfolgt.
                             </p>
                             {avatarError && <p className="text-xs text-red-400">{avatarError}</p>}
@@ -847,7 +847,7 @@ export const UserSettingsModal = ({
                         </div>
                       </div>
                     </div>
-                    <div className="flex flex-col items-center justify-center gap-3 bg-white/5 rounded-2xl border border-white/10 p-4">
+                    <div className="flex flex-col items-center justify-center gap-3 bg-[color:var(--color-surface-hover)] rounded-2xl border border-[color:var(--color-border)] p-4">
                       <div className="w-20 h-20 rounded-full overflow-hidden bg-[var(--color-surface-alt)] border border-[var(--color-border)] flex items-center justify-center text-[color:var(--color-accent)] font-bold text-xl">
                         {avatarPreview ? (
                           <img src={avatarPreview} className="w-full h-full object-cover" />
@@ -855,7 +855,7 @@ export const UserSettingsModal = ({
                           (displayName || settings.profile.displayName || 'CT').substring(0, 2).toUpperCase()
                         )}
                       </div>
-                      <div className="text-xs text-gray-400 text-center">Vorschau</div>
+                      <div className="text-xs text-[color:var(--color-text-muted)] text-center">Vorschau</div>
                     </div>
                   </div>
                 </div>
@@ -865,8 +865,8 @@ export const UserSettingsModal = ({
                 <div className="space-y-6 animate-in fade-in zoom-in-95 duration-200">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Theme</div>
-                      <p className="text-sm text-gray-400">Schalte zwischen Light/Dark um und passe die Farben an.</p>
+                      <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold">Theme</div>
+                      <p className="text-sm text-[color:var(--color-text-muted)]">Schalte zwischen Light/Dark um und passe die Farben an.</p>
                     </div>
                     <button
                       onClick={() => setThemeMode(themeMode === 'dark' ? 'light' : 'dark')}
@@ -879,7 +879,7 @@ export const UserSettingsModal = ({
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-xs uppercase font-bold text-gray-400 block">Akzentfarbe</label>
+                      <label className="text-xs uppercase font-bold text-[color:var(--color-text-muted)] block">Akzentfarbe</label>
                       <div className="flex items-center gap-3">
                         <input
                           type="color"
@@ -891,20 +891,20 @@ export const UserSettingsModal = ({
                           type="text"
                           value={accentColor}
                           onChange={(e) => setAccentColor(e.target.value)}
-                          className="flex-1 bg-black/30 text-white p-3 rounded-xl border border-[var(--color-border)] focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] outline-none"
+                          className="flex-1 bg-[color:var(--color-surface)]/60 text-white p-3 rounded-xl border border-[var(--color-border)] focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] outline-none"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-xs uppercase font-bold text-gray-400 block">Server Akzentfarbe</label>
+                      <label className="text-xs uppercase font-bold text-[color:var(--color-text-muted)] block">Server Akzentfarbe</label>
                       <div className="grid grid-cols-[1fr,110px,auto] gap-2 items-center">
                         <input
                           type="number"
                           value={serverAccentTarget}
                           onChange={(e) => setServerAccentTarget(e.target.value)}
                           placeholder="Server ID"
-                          className="bg-black/30 text-white p-3 rounded-xl border border-[var(--color-border)] focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] outline-none"
+                          className="bg-[color:var(--color-surface)]/60 text-white p-3 rounded-xl border border-[var(--color-border)] focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] outline-none"
                         />
                         <input
                           type="color"
@@ -921,7 +921,7 @@ export const UserSettingsModal = ({
                       </div>
                       <div className="space-y-2">
                         {Object.keys(serverAccentDraft).length === 0 ? (
-                          <p className="text-sm text-gray-400">Keine server-spezifischen Farben hinterlegt.</p>
+                          <p className="text-sm text-[color:var(--color-text-muted)]">Keine server-spezifischen Farben hinterlegt.</p>
                         ) : (
                           <div className="space-y-2">
                             {Object.entries(serverAccentDraft).map(([id, color]) => (
@@ -951,8 +951,8 @@ export const UserSettingsModal = ({
                 <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Desktop-Status</div>
-                      <p className="text-gray-400 text-sm">Steuert, wann CT Desktop-Benachrichtigungen zeigt.</p>
+                      <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold">Desktop-Status</div>
+                      <p className="text-[color:var(--color-text-muted)] text-sm">Steuert, wann CT Desktop-Benachrichtigungen zeigt.</p>
                     </div>
                     <button
                       onClick={handleRequestPermission}
@@ -972,7 +972,7 @@ export const UserSettingsModal = ({
                       />
                       <div>
                         <div className="text-sm font-medium">Erwähnungen</div>
-                        <div className="text-xs text-gray-500">Benachrichtige mich bei Erwähnungen.</div>
+                        <div className="text-xs text-[color:var(--color-text-muted)]">Benachrichtige mich bei Erwähnungen.</div>
                       </div>
                     </label>
 
@@ -985,7 +985,7 @@ export const UserSettingsModal = ({
                       />
                       <div>
                         <div className="text-sm font-medium">Direktnachrichten</div>
-                        <div className="text-xs text-gray-500">Hinweise auf neue private Nachrichten.</div>
+                        <div className="text-xs text-[color:var(--color-text-muted)]">Hinweise auf neue private Nachrichten.</div>
                       </div>
                     </label>
 
@@ -998,16 +998,16 @@ export const UserSettingsModal = ({
                       />
                       <div>
                         <div className="text-sm font-medium">Server-Einladungen</div>
-                        <div className="text-xs text-gray-500">Zeige eine Benachrichtigung, wenn dich jemand einlädt.</div>
+                        <div className="text-xs text-[color:var(--color-text-muted)]">Zeige eine Benachrichtigung, wenn dich jemand einlädt.</div>
                       </div>
                     </label>
                   </div>
 
-                  <div className="text-xs text-gray-400 bg-white/[0.04] border border-[var(--color-border)] rounded-xl p-3 flex items-center gap-2">
+                  <div className="text-xs text-[color:var(--color-text-muted)] bg-white/[0.04] border border-[var(--color-border)] rounded-xl p-3 flex items-center gap-2">
                     <Bell size={14} />
                     <div>
                       <div className="font-semibold">Status: {permissionLabel}</div>
-                      <div className="text-[11px] text-gray-500">
+                      <div className="text-[11px] text-[color:var(--color-text-muted)]">
                         Browser-Entscheidungen werden gespeichert, damit CT weiß, ob Benachrichtigungen ausgeliefert werden dürfen.
                       </div>
                     </div>
@@ -1181,7 +1181,7 @@ export const UserSettingsModal = ({
                                     <div
                                       key={i}
                                       style={{ height }}
-                                      className={`w-[3px] rounded-sm ${lit ? 'bg-[var(--color-accent)]' : 'bg-white/10'}`}
+                                      className={`w-[3px] rounded-sm ${lit ? 'bg-[var(--color-accent)]' : 'bg-[color:var(--color-surface-hover)]/80'}`}
                                     />
                                   );
                                 })}
@@ -1208,8 +1208,8 @@ export const UserSettingsModal = ({
                             onClick={() => setPushToTalkEnabled(false)}
                             className={`w-full p-4 rounded-2xl border text-left transition ${
                               !pushToTalkEnabled
-                                ? 'bg-white/5 border-[var(--color-accent)]'
-                                : 'bg-transparent border-[var(--color-border)] hover:bg-white/5'
+                                ? 'bg-[color:var(--color-surface-hover)] border-[var(--color-accent)]'
+                                : 'bg-transparent border-[var(--color-border)] hover:bg-[color:var(--color-surface-hover)]'
                             }`}
                           >
                             <div className="flex items-center justify-between gap-4">
@@ -1227,8 +1227,8 @@ export const UserSettingsModal = ({
                             onClick={() => setPushToTalkEnabled(true)}
                             className={`w-full p-4 rounded-2xl border text-left transition ${
                               pushToTalkEnabled
-                                ? 'bg-white/5 border-[var(--color-accent)]'
-                                : 'bg-transparent border-[var(--color-border)] hover:bg-white/5'
+                                ? 'bg-[color:var(--color-surface-hover)] border-[var(--color-accent)]'
+                                : 'bg-transparent border-[var(--color-border)] hover:bg-[color:var(--color-surface-hover)]'
                             }`}
                           >
                             <div className="flex items-center justify-between gap-4">
@@ -1262,8 +1262,8 @@ export const UserSettingsModal = ({
                           onClick={() => setAudioPreset(option.value)}
                           className={`p-4 rounded-xl border text-left transition ${
                             audioPreset === option.value
-                              ? 'bg-white/5 border-[var(--color-accent)]'
-                              : 'bg-transparent border-[var(--color-border)] hover:bg-white/5'
+                              ? 'bg-[color:var(--color-surface-hover)] border-[var(--color-accent)]'
+                              : 'bg-transparent border-[var(--color-border)] hover:bg-[color:var(--color-surface-hover)]'
                           }`}
                         >
                           <div className="flex items-center justify-between">
@@ -1285,7 +1285,7 @@ export const UserSettingsModal = ({
                             className={`flex-1 px-4 py-3 rounded-xl border transition flex items-center justify-center gap-2 ${
                               locallyMuted
                                 ? 'bg-red-500/15 border-red-400/30 text-red-200'
-                                : 'bg-transparent border-[var(--color-border)] text-[color:var(--color-text-muted)] hover:bg-white/5'
+                                : 'bg-transparent border-[var(--color-border)] text-[color:var(--color-text-muted)] hover:bg-[color:var(--color-surface-hover)]'
                             }`}
                           >
                             <Headphones size={16} />
@@ -1297,7 +1297,7 @@ export const UserSettingsModal = ({
                             className={`flex-1 px-4 py-3 rounded-xl border transition flex items-center justify-center gap-2 ${
                               locallyMicMuted
                                 ? 'bg-red-500/15 border-red-400/30 text-red-200'
-                                : 'bg-transparent border-[var(--color-border)] text-[color:var(--color-text-muted)] hover:bg-white/5'
+                                : 'bg-transparent border-[var(--color-border)] text-[color:var(--color-text-muted)] hover:bg-[color:var(--color-surface-hover)]'
                             }`}
                           >
                             <Mic size={16} />
@@ -1322,8 +1322,8 @@ export const UserSettingsModal = ({
                           onClick={() => setUseRnnoise((v) => !v)}
                           className={`w-full px-4 py-3 rounded-xl border transition flex items-center justify-between ${
                             useRnnoise
-                              ? 'bg-white/5 border-[var(--color-accent)]'
-                              : 'bg-transparent border-[var(--color-border)] hover:bg-white/5'
+                              ? 'bg-[color:var(--color-surface-hover)] border-[var(--color-accent)]'
+                              : 'bg-transparent border-[var(--color-border)] hover:bg-[color:var(--color-surface-hover)]'
                           } ${!rnnoiseAvailable ? 'opacity-60 cursor-not-allowed' : ''}`}
                         >
                           <div>
@@ -1332,7 +1332,7 @@ export const UserSettingsModal = ({
                           </div>
                           <div
                             className={`w-10 h-6 rounded-full p-1 transition ${
-                              useRnnoise ? 'bg-[var(--color-accent)]' : 'bg-white/10'
+                              useRnnoise ? 'bg-[var(--color-accent)]' : 'bg-[color:var(--color-surface-hover)]/80'
                             }`}
                           >
                             <div
@@ -1351,7 +1351,7 @@ export const UserSettingsModal = ({
                         <button
                           onClick={handleTestOutput}
                           disabled={isTestingOutput}
-                          className="px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-[var(--color-border)] text-[color:var(--color-text)] flex items-center gap-2 disabled:opacity-60"
+                          className="px-4 py-3 rounded-xl bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 border border-[var(--color-border)] text-[color:var(--color-text)] flex items-center gap-2 disabled:opacity-60"
                         >
                           <Play size={18} />
                           {isTestingOutput ? 'Teste…' : 'Testton abspielen'}
@@ -1398,7 +1398,7 @@ export const UserSettingsModal = ({
                           </select>
                           <p className="text-xs text-[color:var(--color-text-muted)]">Beeinflusst die Standardqualität deiner Kameraübertragung.</p>
                         </label>
-                        <div className="h-48 rounded-2xl bg-black/20 border border-[var(--color-border)] flex items-center justify-center text-sm text-[color:var(--color-text-muted)]">
+                        <div className="h-48 rounded-2xl bg-[color:var(--color-surface)]/50 border border-[var(--color-border)] flex items-center justify-center text-sm text-[color:var(--color-text-muted)]">
                           Vorschau folgt (optional).
                         </div>
                       </div>
@@ -1422,8 +1422,8 @@ export const UserSettingsModal = ({
                                 onClick={() => setScreenQuality(option.value)}
                                 className={`p-4 rounded-xl border text-left transition ${
                                   screenQuality === option.value
-                                    ? 'bg-white/5 border-[var(--color-accent)]'
-                                    : 'bg-transparent border-[var(--color-border)] hover:bg-white/5'
+                                    ? 'bg-[color:var(--color-surface-hover)] border-[var(--color-accent)]'
+                                    : 'bg-transparent border-[var(--color-border)] hover:bg-[color:var(--color-surface-hover)]'
                                 }`}
                               >
                                 <div className="flex items-center justify-between">
@@ -1445,8 +1445,8 @@ export const UserSettingsModal = ({
                                 onClick={() => setScreenFrameRate(option.value)}
                                 className={`p-4 rounded-xl border text-left transition ${
                                   screenFrameRate === option.value
-                                    ? 'bg-white/5 border-[var(--color-accent)]'
-                                    : 'bg-transparent border-[var(--color-border)] hover:bg-white/5'
+                                    ? 'bg-[color:var(--color-surface-hover)] border-[var(--color-accent)]'
+                                    : 'bg-transparent border-[var(--color-border)] hover:bg-[color:var(--color-surface-hover)]'
                                 }`}
                               >
                                 <div className="flex items-center justify-between">
@@ -1468,8 +1468,8 @@ export const UserSettingsModal = ({
                                 onClick={() => setScreenBitrateProfile(option.value)}
                                 className={`p-4 rounded-xl border text-left transition ${
                                   screenBitrateProfile === option.value
-                                    ? 'bg-white/5 border-[var(--color-accent)]'
-                                    : 'bg-transparent border-[var(--color-border)] hover:bg-white/5'
+                                    ? 'bg-[color:var(--color-surface-hover)] border-[var(--color-accent)]'
+                                    : 'bg-transparent border-[var(--color-border)] hover:bg-[color:var(--color-surface-hover)]'
                                 }`}
                               >
                                 <div className="flex items-center justify-between">
@@ -1489,8 +1489,8 @@ export const UserSettingsModal = ({
 
               {activeCategory === 'hotkeys' && (
                 <div className="space-y-3 animate-in fade-in zoom-in-95 duration-200">
-                  <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Hotkeys</div>
-                  <p className="text-gray-400 text-sm">
+                  <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold">Hotkeys</div>
+                  <p className="text-[color:var(--color-text-muted)] text-sm">
                     Lege Tasten für Push-to-Talk, Schnelles Muten und Navigation fest. Leere Felder deaktivieren den jeweiligen
                     Hotkey.
                   </p>
@@ -1523,18 +1523,18 @@ export const UserSettingsModal = ({
 
               {activeCategory === 'identity' && (
                 <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
-                  <div className="text-xs uppercase tracking-widest text-gray-500 font-bold">Identity</div>
-                  <p className="text-gray-400 text-sm">Verwalte deine lokale Clover Identity direkt aus den Einstellungen.</p>
+                  <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold">Identity</div>
+                  <p className="text-[color:var(--color-text-muted)] text-sm">Verwalte deine lokale Clover Identity direkt aus den Einstellungen.</p>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-xs uppercase font-bold text-gray-400 block">Anzeigename (optional)</label>
+                      <label className="text-xs uppercase font-bold text-[color:var(--color-text-muted)] block">Anzeigename (optional)</label>
                       <input
                         type="text"
                         value={identityName}
                         onChange={(e) => setIdentityName(e.target.value)}
                         placeholder="z.B. jusbe"
-                        className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                        className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
                       />
                       <button
                         className="text-sm text-indigo-400 hover:text-indigo-300"
@@ -1545,9 +1545,9 @@ export const UserSettingsModal = ({
                       </button>
                     </div>
 
-                    <div className="flex flex-col gap-2 p-4 rounded-2xl bg-white/5 border border-white/10">
-                      <div className="text-gray-400 text-sm">Fingerprint</div>
-                      <div className="font-mono break-all text-gray-200 text-xs">
+                    <div className="flex flex-col gap-2 p-4 rounded-2xl bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)]">
+                      <div className="text-[color:var(--color-text-muted)] text-sm">Fingerprint</div>
+                      <div className="font-mono break-all text-[color:var(--color-text)] text-xs">
                         {fingerprint ? formatFingerprint(fingerprint) : '–'}
                       </div>
                     </div>
@@ -1562,7 +1562,7 @@ export const UserSettingsModal = ({
                         Identity erstellen
                       </button>
 
-                      <label className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition cursor-pointer text-center text-white font-medium">
+                      <label className="px-4 py-3 rounded-xl bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition cursor-pointer text-center text-white font-medium">
                         <div className="flex items-center justify-center gap-2">
                           <Upload size={18} />
                           <span>Identity importieren</span>
@@ -1581,39 +1581,39 @@ export const UserSettingsModal = ({
                   ) : (
                     <div className="space-y-3">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="text-sm bg-white/[0.02] border border-white/5 rounded-xl p-3">
-                          <div className="text-gray-400 mb-1">Erstellt</div>
-                          <div className="text-gray-200">{identity.createdAt ? new Date(identity.createdAt).toLocaleString() : '–'}</div>
+                        <div className="text-sm bg-white/[0.02] border border-[color:var(--color-border)]/70 rounded-xl p-3">
+                          <div className="text-[color:var(--color-text-muted)] mb-1">Erstellt</div>
+                          <div className="text-[color:var(--color-text)]">{identity.createdAt ? new Date(identity.createdAt).toLocaleString() : '–'}</div>
                         </div>
 
-                        <div className="text-sm bg-white/[0.02] border border-white/5 rounded-xl p-3">
-                          <div className="text-gray-400 mb-1">Public Key</div>
-                          <div className="font-mono break-all text-gray-200 text-xs">{identity.publicKeyB64}</div>
+                        <div className="text-sm bg-white/[0.02] border border-[color:var(--color-border)]/70 rounded-xl p-3">
+                          <div className="text-[color:var(--color-text-muted)] mb-1">Public Key</div>
+                          <div className="font-mono break-all text-[color:var(--color-text)] text-xs">{identity.publicKeyB64}</div>
                         </div>
                       </div>
 
                       <div>
-                        <label className="text-xs uppercase font-bold text-gray-400 block mb-1">Backup-Passphrase (optional)</label>
+                        <label className="text-xs uppercase font-bold text-[color:var(--color-text-muted)] block mb-1">Backup-Passphrase (optional)</label>
                         <input
                           type="password"
                           value={backupPassphrase}
                           onChange={(e) => setBackupPassphrase(e.target.value)}
                           placeholder="Leer lassen für Klartext-Export"
-                          className="w-full bg-black/40 text-white p-3 rounded-xl border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                          className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
                         />
-                        <p className="text-[11px] text-gray-500 mt-1">Wenn gesetzt, wird dein Backup AES-GCM verschlüsselt (PBKDF2).</p>
+                        <p className="text-[11px] text-[color:var(--color-text-muted)] mt-1">Wenn gesetzt, wird dein Backup AES-GCM verschlüsselt (PBKDF2).</p>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <button
-                          className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition text-white font-medium flex items-center justify-center gap-2"
+                          className="px-4 py-3 rounded-xl bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-white font-medium flex items-center justify-center gap-2"
                           onClick={handleExportIdentity}
                         >
                           <Download size={18} />
                           Export / Backup
                         </button>
 
-                        <label className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition cursor-pointer text-center text-white font-medium">
+                        <label className="px-4 py-3 rounded-xl bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition cursor-pointer text-center text-white font-medium">
                           <div className="flex items-center justify-center gap-2">
                             <Upload size={18} />
                             <span>Import (ersetzen)</span>
@@ -1654,7 +1654,7 @@ export const UserSettingsModal = ({
               <div className="flex gap-2">
                 <button
                   onClick={resetDraft}
-                  className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-[var(--color-border)] text-[color:var(--color-text)]"
+                  className="px-4 py-2 rounded-xl bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 border border-[var(--color-border)] text-[color:var(--color-text)]"
                 >
                   Zurücksetzen
                 </button>
@@ -1675,7 +1675,7 @@ export const UserSettingsModal = ({
               </div>
               <button
                 onClick={onClose}
-                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-[var(--color-border)] text-[color:var(--color-text)]"
+                className="px-4 py-2 rounded-xl bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 border border-[var(--color-border)] text-[color:var(--color-text)]"
               >
                 Schließen
               </button>

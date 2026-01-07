@@ -32,14 +32,14 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer }: HomeOnboar
 
       <div className="relative flex-1 flex flex-col lg:flex-row items-stretch gap-8 px-6 py-8 lg:px-10 lg:py-12 justify-between">
         <div className="flex-1 space-y-6 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs uppercase tracking-wide text-gray-300">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] text-xs uppercase tracking-wide text-[color:var(--color-text)]">
             <Home size={14} />
             Willkommen
           </div>
 
           <div className="space-y-2">
             <h1 className="text-3xl lg:text-4xl font-bold text-white">Starte in deine neue Homebase</h1>
-            <p className="text-gray-400 text-base leading-relaxed">
+            <p className="text-[color:var(--color-text-muted)] text-base leading-relaxed">
               Erstelle Server, organisiere Kanäle und lade dein Team ein. Diese Oberfläche bleibt dein Startpunkt, solange kein Server ausgewählt ist.
             </p>
           </div>
@@ -55,7 +55,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer }: HomeOnboar
             <button
               type="button"
               onClick={onJoinServer}
-              className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl border border-white/10 flex items-center gap-2 transition-colors"
+              className="px-4 py-2.5 bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 text-white rounded-xl border border-[color:var(--color-border)] flex items-center gap-2 transition-colors"
             >
               <Compass size={18} /> Server beitreten
             </button>
@@ -63,31 +63,31 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer }: HomeOnboar
 
           <div className="grid sm:grid-cols-3 gap-4 pt-2">
             {steps.map(({ title, body, icon: Icon }) => (
-              <div key={title} className="bg-white/[0.04] border border-white/5 rounded-2xl p-4 backdrop-blur-sm h-full flex flex-col gap-3">
+              <div key={title} className="bg-white/[0.04] border border-[color:var(--color-border)]/70 rounded-2xl p-4 backdrop-blur-sm h-full flex flex-col gap-3">
                 <div className="w-10 h-10 rounded-xl bg-indigo-500/15 border border-indigo-500/20 text-indigo-200 flex items-center justify-center">
                   <Icon size={18} />
                 </div>
                 <div className="text-sm font-semibold text-white leading-snug">{title}</div>
-                <p className="text-xs text-gray-400 leading-relaxed flex-1">{body}</p>
+                <p className="text-xs text-[color:var(--color-text-muted)] leading-relaxed flex-1">{body}</p>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="w-full lg:w-[360px] bg-white/[0.03] border border-white/5 rounded-2xl backdrop-blur-sm p-6 shadow-2xl flex flex-col gap-4">
+        <div className="w-full lg:w-[360px] bg-white/[0.03] border border-[color:var(--color-border)]/70 rounded-2xl backdrop-blur-sm p-6 shadow-2xl flex flex-col gap-4">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-200">
               <MessageSquare size={24} />
             </div>
             <div>
               <div className="text-white font-semibold">Kein Server ausgewählt</div>
-              <div className="text-xs text-gray-400">Nutze diese Übersicht, um deinen nächsten Schritt zu wählen.</div>
+              <div className="text-xs text-[color:var(--color-text-muted)]">Nutze diese Übersicht, um deinen nächsten Schritt zu wählen.</div>
             </div>
           </div>
 
-          <div className="bg-black/20 border border-white/5 rounded-xl p-4 space-y-3">
+          <div className="bg-[color:var(--color-surface)]/50 border border-[color:var(--color-border)]/70 rounded-xl p-4 space-y-3">
             <div className="text-sm font-semibold text-white">Schnellstart</div>
-            <ul className="text-xs text-gray-300 space-y-2 list-disc list-inside leading-relaxed">
+            <ul className="text-xs text-[color:var(--color-text)] space-y-2 list-disc list-inside leading-relaxed">
               <li>Klicke auf das grüne Plus in der linken Leiste, um einen Server zu erstellen oder beizutreten.</li>
               <li>Lege Text-, Voice- oder Web-Kanäle an, um Teams zu organisieren.</li>
               <li>Nutze Server-Einstellungen für Rollen, Berechtigungen und Branding.</li>

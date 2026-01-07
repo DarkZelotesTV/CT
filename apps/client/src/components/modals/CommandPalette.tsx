@@ -282,26 +282,26 @@ export const CommandPalette = ({
       bodyClassName="p-0"
     >
       <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-surface-alt)]">
-        <Search size={18} className="text-gray-400" aria-hidden="true" />
+        <Search size={18} className="text-[color:var(--color-text-muted)]" aria-hidden="true" />
         <input
           ref={inputRef}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyNavigation}
           placeholder="Search servers, channels, members, commands..."
-          className="flex-1 bg-transparent outline-none text-white placeholder:text-gray-500"
+          className="flex-1 bg-transparent outline-none text-white placeholder:text-[color:var(--color-text-muted)]"
           aria-label="Command palette search"
         />
-        <div className="text-xs text-gray-500 bg-white/5 rounded-md px-2 py-1 border border-white/10" aria-hidden="true">
+        <div className="text-xs text-[color:var(--color-text-muted)] bg-[color:var(--color-surface-hover)] rounded-md px-2 py-1 border border-[color:var(--color-border)]" aria-hidden="true">
           Ctrl/Cmd + K
         </div>
       </div>
 
       <div className="max-h-[60vh] overflow-y-auto" role="listbox" aria-activedescendant={activeId}>
-        {loading && <div className="px-4 py-3 text-sm text-gray-400">Loading...</div>}
+        {loading && <div className="px-4 py-3 text-sm text-[color:var(--color-text-muted)]">Loading...</div>}
 
         {!loading && filtered.length === 0 && (
-          <div className="px-4 py-6 text-center text-sm text-gray-400">No results found</div>
+          <div className="px-4 py-6 text-center text-sm text-[color:var(--color-text-muted)]">No results found</div>
         )}
 
         {!loading && filtered.length > 0 && (
@@ -319,12 +319,12 @@ export const CommandPalette = ({
                   }}
                   className={classNames(
                     'px-4 py-3 cursor-pointer flex items-center gap-3 transition-colors',
-                    isActive ? 'bg-white/10 text-white' : 'hover:bg-white/5 text-gray-200'
+                    isActive ? 'bg-[color:var(--color-surface-hover)]/80 text-white' : 'hover:bg-[color:var(--color-surface-hover)] text-[color:var(--color-text)]'
                   )}
                   onMouseEnter={() => setActiveIndex(index)}
                   onClick={() => selectItem(item)}
                 >
-                  <span className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-gray-300">
+                  <span className="w-8 h-8 rounded-lg bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] flex items-center justify-center text-[color:var(--color-text)]">
                     {item.type === 'command' && <CommandIcon size={16} />}
                     {item.type === 'server' && <Server size={16} />}
                     {item.type === 'channel' && (item.badge === 'Voice' ? <Volume2 size={16} /> : <Hash size={16} />)}
@@ -332,10 +332,10 @@ export const CommandPalette = ({
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold truncate">{item.label}</div>
-                    <div className="text-xs text-gray-400 truncate">{item.description}</div>
+                    <div className="text-xs text-[color:var(--color-text-muted)] truncate">{item.description}</div>
                   </div>
                   {item.badge && (
-                    <span className="text-[10px] uppercase tracking-wide text-gray-400 border border-white/10 rounded-full px-2 py-0.5">
+                    <span className="text-[10px] uppercase tracking-wide text-[color:var(--color-text-muted)] border border-[color:var(--color-border)] rounded-full px-2 py-0.5">
                       {item.badge}
                     </span>
                   )}

@@ -74,14 +74,14 @@ export const CreateServerModal = ({ onClose, onCreated }: CreateServerModalProps
       description="Erschaffe einen neuen Ort für deine Community."
       onClose={onClose}
       footer={
-        <p className="text-[11px] text-gray-500">
+        <p className="text-[11px] text-[color:var(--color-text-muted)]">
           Durch das Erstellen stimmst du den <span className="text-indigo-400 cursor-pointer hover:underline">Community Guidelines</span> zu.
         </p>
       }
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="flex flex-col items-center gap-2">
-          <label className="w-24 h-24 rounded-full bg-white/5 border-2 border-dashed border-white/20 flex flex-col items-center justify-center text-gray-400 hover:border-indigo-500 hover:text-indigo-400 cursor-pointer transition-all group overflow-hidden">
+          <label className="w-24 h-24 rounded-full bg-[color:var(--color-surface-hover)] border-2 border-dashed border-[color:var(--color-border-strong)] flex flex-col items-center justify-center text-[color:var(--color-text-muted)] hover:border-indigo-500 hover:text-indigo-400 cursor-pointer transition-all group overflow-hidden">
             <input type="file" accept="image/*" className="hidden" onChange={handleIconChange} />
             {iconPreview ? (
               <img src={iconPreview} alt="Server Icon" className="w-full h-full object-cover" />
@@ -92,7 +92,7 @@ export const CreateServerModal = ({ onClose, onCreated }: CreateServerModalProps
               </>
             )}
           </label>
-          <div className="flex items-center gap-2 text-xs text-gray-400">
+          <div className="flex items-center gap-2 text-xs text-[color:var(--color-text-muted)]">
             <span>{iconFile ? iconFile.name : 'PNG, JPG oder WebP bis 2 MB'}</span>
             {iconFile && (
               <button
@@ -118,14 +118,14 @@ export const CreateServerModal = ({ onClose, onCreated }: CreateServerModalProps
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs font-bold text-gray-400 uppercase ml-1">Server Name</label>
+          <label className="text-xs font-bold text-[color:var(--color-text-muted)] uppercase ml-1">Server Name</label>
           <input
             autoFocus
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Mein epischer Server"
-            className="w-full bg-black/30 text-white p-3 rounded-xl border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-600 font-medium"
+            className="w-full bg-[color:var(--color-surface)]/60 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all placeholder:text-[color:var(--color-text-muted)] font-medium"
           />
         </div>
 
