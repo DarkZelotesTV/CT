@@ -1,4 +1,4 @@
-import { ArrowRight, Compass, Home, Layers, MessageSquare, PlusCircle, Settings, Users } from 'lucide-react';
+import { ArrowRight, Compass, Home, Layers, MessageSquare, PlusCircle, Server, Settings, Users } from 'lucide-react';
 
 interface HomeOnboardingStageProps {
   onCreateServer: () => void;
@@ -49,6 +49,12 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
       tooltip: 'Erstelle zuerst einen Server, um Kanäle anzulegen.',
     },
   ];
+  // TODO: Replace with real server discovery data once available.
+  const suggestedServers = [
+    { id: 'design-lounge', name: 'Design Lounge' },
+    { id: 'dev-collective', name: 'Dev Collective' },
+    { id: 'coffee-break', name: 'Coffee Break' },
+  ];
 
   return (
     <div className="min-h-full w-full flex flex-col bg-gradient-to-br from-[#0b0b0f] via-[#0e0f18] to-[#0b0c12] relative overflow-hidden">
@@ -97,6 +103,25 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
             >
               Demo-Server ansehen
             </button>
+            <div className="mt-6 flex flex-col gap-2 max-w-[420px]">
+              {suggestedServers.slice(0, 3).map((server) => (
+                <div
+                  key={server.id}
+                  className="flex h-10 items-center gap-3 rounded-[10px] border border-[color:var(--color-border)]/70 bg-surface-2 px-3"
+                >
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-3 text-[color:var(--color-text)]">
+                    <Server size={16} />
+                  </span>
+                  <span className="text-[14px] font-medium text-white">{server.name}</span>
+                  <button
+                    type="button"
+                    className="ml-auto inline-flex h-8 items-center rounded-[8px] border border-[color:var(--color-border)] px-3 text-[13px] font-semibold text-[color:var(--color-text)] transition-colors hover:border-[color:var(--color-accent)]/40 hover:text-[color:var(--color-accent)]"
+                  >
+                    Beitreten
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="grid min-[600px]:grid-cols-3 gap-4">
