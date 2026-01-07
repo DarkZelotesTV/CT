@@ -15,13 +15,18 @@ export type AppTheme = {
   surfaceInfo: string;
   surfaceLog: string;
   surfaceHeader: string;
+  surfaceTint: string;
   border: string;
   borderStrong: string;
   borderGlass: string;
   borderShine: string;
+  borderSubtle: string;
   shadowPanelInset: string;
   shadowPanel: string;
   shadowPanelStrong: string;
+  shadowColor: string;
+  shadow1: string;
+  shadow2: string;
   text: string;
   textMuted: string;
   accent: string;
@@ -51,7 +56,7 @@ const lightBase: Omit<AppTheme, 'mode' | 'accent' | 'accentHover'> = {
   borderStrong: '#94a3b8',
   text: '#0f172a',
   textMuted: '#475569',
-  overlay: 'rgba(15, 23, 42, 0.4)',
+  overlay: 'rgba(15, 23, 42, 0.28)',
 };
 
 const clamp = (value: number) => Math.min(255, Math.max(0, value));
@@ -226,15 +231,20 @@ export const buildAppTheme = (mode: ThemeMode, accentColor: string): AppTheme =>
   const surfaceInfo = hexToRgba(base.surfaceAlt, mode === 'dark' ? 0.85 : 0.92);
   const surfaceLog = hexToRgba(base.surface, mode === 'dark' ? 0.9 : 0.92);
   const surfaceHeader = hexToRgba(base.surfaceAlt, mode === 'dark' ? 0.88 : 0.96);
+  const surfaceTint = mode === 'dark' ? '#ffffff' : '#ffffff';
   const shadowPanelInset = mode === 'dark'
     ? 'inset 0 0 0 1px rgba(255, 255, 255, 0.03)'
     : `inset 0 0 0 1px ${hexToRgba(base.text, 0.08)}`;
+  const borderSubtle = hexToRgba(mode === 'dark' ? '#ffffff' : base.border, mode === 'dark' ? 0.08 : 0.6);
+  const shadowColor = mode === 'dark' ? '#000000' : base.text;
   const shadowPanel = mode === 'dark'
     ? '0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.02)'
     : '0 10px 28px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(15, 23, 42, 0.08)';
   const shadowPanelStrong = mode === 'dark'
     ? '0 -10px 40px rgba(0, 0, 0, 0.5)'
     : '0 -12px 30px rgba(15, 23, 42, 0.18)';
+  const shadow1 = `0 24px 70px ${hexToRgba(shadowColor, mode === 'dark' ? 0.6 : 0.2)}`;
+  const shadow2 = `0 12px 32px ${hexToRgba(shadowColor, mode === 'dark' ? 0.5 : 0.16)}`;
 
   return {
     mode,
@@ -249,11 +259,16 @@ export const buildAppTheme = (mode: ThemeMode, accentColor: string): AppTheme =>
     surfaceInfo,
     surfaceLog,
     surfaceHeader,
+    surfaceTint,
     borderGlass: glassBorder,
     borderShine: glassShine,
+    borderSubtle,
     shadowPanelInset,
     shadowPanel,
     shadowPanelStrong,
+    shadowColor,
+    shadow1,
+    shadow2,
   };
 };
 
@@ -272,19 +287,24 @@ export const applyAppTheme = (theme: AppTheme) => {
     '--color-surface-info': theme.surfaceInfo,
     '--color-surface-log': theme.surfaceLog,
     '--color-surface-header': theme.surfaceHeader,
+    '--color-surface-tint': theme.surfaceTint,
     '--color-border': theme.border,
     '--color-border-strong': theme.borderStrong,
     '--color-border-glass': theme.borderGlass,
     '--color-border-shine': theme.borderShine,
+    '--color-border-subtle': theme.borderSubtle,
     '--color-text': theme.text,
     '--color-text-muted': theme.textMuted,
     '--color-accent': theme.accent,
     '--color-accent-hover': theme.accentHover,
     '--color-focus': theme.focus,
     '--color-overlay': theme.overlay,
+    '--color-shadow': theme.shadowColor,
     '--shadow-panel-inset': theme.shadowPanelInset,
     '--shadow-panel': theme.shadowPanel,
     '--shadow-panel-strong': theme.shadowPanelStrong,
+    '--shadow-1': theme.shadow1,
+    '--shadow-2': theme.shadow2,
     '--layout-bg-body': theme.surfaceBody,
     '--layout-bg-rail': theme.surfaceRail,
     '--layout-bg-tree': theme.surfaceTree,
