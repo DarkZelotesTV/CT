@@ -1,11 +1,13 @@
-import { Compass, Home, Layers, MessageSquare, PlusCircle, Users } from 'lucide-react';
+import { ArrowRight, Compass, Home, Layers, MessageSquare, PlusCircle, Settings, Users } from 'lucide-react';
 
 interface HomeOnboardingStageProps {
   onCreateServer: () => void;
   onJoinServer: () => void;
+  onOpenSettings: () => void;
+  hasServers: boolean;
 }
 
-export const HomeOnboardingStage = ({ onCreateServer, onJoinServer }: HomeOnboardingStageProps) => {
+export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettings, hasServers }: HomeOnboardingStageProps) => {
   const steps = [
     {
       title: '1. Server entdecken oder erstellen',
@@ -21,6 +23,30 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer }: HomeOnboar
       title: '3. Leute einladen',
       body: 'Lade Freunde oder Teammitglieder ein und bleib per Chat oder Voice in Kontakt.',
       icon: Users,
+    },
+  ];
+  const checklistItems = [
+    {
+      label: 'Server erstellen',
+      icon: PlusCircle,
+      action: onCreateServer,
+    },
+    {
+      label: 'Einladung eingeben',
+      icon: Compass,
+      action: onJoinServer,
+    },
+    {
+      label: 'Profil einrichten',
+      icon: Settings,
+      action: onOpenSettings,
+    },
+    {
+      label: 'Ersten Kanal erstellen',
+      icon: MessageSquare,
+      action: () => undefined,
+      disabled: !hasServers,
+      tooltip: 'Erstelle zuerst einen Server, um Kanäle anzulegen.',
     },
   ];
 
@@ -89,26 +115,58 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer }: HomeOnboar
           </div>
         </div>
 
-        <div className="col-span-12 min-[900px]:col-span-5 bg-white/[0.03] border border-[color:var(--color-border)]/70 rounded-2xl backdrop-blur-sm p-6 shadow-2xl flex flex-col gap-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-200">
-              <MessageSquare size={24} />
+        <div className="col-span-12 min-[900px]:col-span-5 rounded-2xl border border-[color:var(--color-border)] bg-surface-alt p-[18px] min-[900px]:p-5 shadow-2xl flex flex-col gap-5">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-200">
+                <MessageSquare size={20} />
+              </div>
+              <div>
+                <div className="text-white font-semibold">Kein Server ausgewählt</div>
+                <div className="text-[13px] text-[color:var(--color-text-muted)]">
+                  Starte mit einem Server, um Kanäle anzulegen und dein Profil zu personalisieren.
+                </div>
+              </div>
             </div>
-            <div>
-              <div className="text-white font-semibold">Kein Server ausgewählt</div>
-              <div className="text-xs text-[color:var(--color-text-muted)]">Nutze diese Übersicht, um deinen nächsten Schritt zu wählen.</div>
+            <div className="h-1.5 rounded-full bg-[color:var(--color-surface-hover)]">
+              <div className="h-full w-[28%] rounded-full bg-[color:var(--color-accent)]" />
             </div>
           </div>
 
-          <div className="bg-[color:var(--color-surface)]/50 border border-[color:var(--color-border)]/70 rounded-xl p-4 space-y-4">
-            <div className="text-sm font-semibold text-white">Schnellstart</div>
-            <ul className="text-xs text-[color:var(--color-text)] space-y-2 list-disc list-inside leading-relaxed">
-              <li>Klicke auf das grüne Plus in der linken Leiste, um einen Server zu erstellen oder beizutreten.</li>
-              <li>Lege Text-, Voice- oder Web-Kanäle an, um Teams zu organisieren.</li>
-              <li>Nutze Server-Einstellungen für Rollen, Berechtigungen und Branding.</li>
-            </ul>
+          <div className="flex flex-col gap-2">
+            {checklistItems.map(({ label, icon: Icon, action, disabled, tooltip }) => {
+              const isDisabled = Boolean(disabled);
+              return (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={isDisabled ? undefined : action}
+                  aria-disabled={isDisabled}
+                  tabIndex={isDisabled ? -1 : 0}
+                  title={isDisabled ? tooltip : undefined}
+                  className={`group flex h-11 items-center gap-3 rounded-xl border border-[color:var(--color-border)]/70 px-3 text-left transition ${
+                    isDisabled
+                      ? 'cursor-not-allowed bg-[color:var(--color-surface)]/30 text-[color:var(--color-text-muted)]/80'
+                      : 'bg-[color:var(--color-surface)]/40 text-white hover:bg-[color:var(--color-surface-hover)] hover:border-[color:var(--color-accent)]/30 hover:ring-1 hover:ring-[color:var(--color-accent)]/15'
+                  }`}
+                >
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[color:var(--color-surface-hover)] text-[color:var(--color-text)]">
+                    <Icon size={20} />
+                  </span>
+                  <span className="text-[14px] font-medium">{label}</span>
+                  <span
+                    className={`ml-auto inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[12px] transition ${
+                      isDisabled
+                        ? 'border-transparent text-[color:var(--color-text-muted)]/70'
+                        : 'border-transparent text-[color:var(--color-text-muted)] group-hover:border-[color:var(--color-accent)]/20 group-hover:text-[color:var(--color-accent)]'
+                    }`}
+                  >
+                    Los <ArrowRight size={14} />
+                  </span>
+                </button>
+              );
+            })}
           </div>
-
         </div>
       </div>
     </div>
