@@ -157,6 +157,7 @@ export const MainLayout = () => {
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const lastSocketConnectedRef = useRef<boolean | null>(null);
+  const scrollLockPositionRef = useRef<number | null>(null);
 
   const isDesktop = typeof window !== 'undefined' && !!window.ct?.windowControls;
   
@@ -890,6 +891,33 @@ export const MainLayout = () => {
     'mobile-info-open': isMobileLayout && showRightSidebar,
   });
   const isMobileOverlayActive = isMobileLayout && (showMobileNav || showRightSidebar);
+
+  useEffect(() => {
+    if (!isMobileOverlayActive || typeof window === 'undefined') {
+      return;
+    }
+
+    const scrollY = window.scrollY;
+    scrollLockPositionRef.current = scrollY;
+    document.body.classList.add('mobile-scroll-lock');
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    document.body.style.width = '100%';
+
+    return () => {
+      const restorePosition = scrollLockPositionRef.current ?? scrollY;
+      scrollLockPositionRef.current = null;
+      document.body.classList.remove('mobile-scroll-lock');
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      document.body.style.width = '';
+      window.scrollTo(0, restorePosition);
+    };
+  }, [isMobileOverlayActive]);
 
   // Dynamische CSS Variablen für Grid-Spalten
   const gridStyle = {
