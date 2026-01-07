@@ -200,6 +200,7 @@ export const UserSettingsModal = ({
   const [identityError, setIdentityError] = useState<string | null>(null);
   const [themeMode, setThemeMode] = useState(settings.theme.mode);
   const [accentColor, setAccentColor] = useState(settings.theme.accentColor);
+  const [decorationsEnabled, setDecorationsEnabled] = useState(settings.theme.decorationsEnabled ?? true);
   const [serverAccentDraft, setServerAccentDraft] = useState<Record<number, string>>(settings.theme.serverAccents || {});
   const [serverAccentTarget, setServerAccentTarget] = useState('');
   const [serverAccentColor, setServerAccentColor] = useState(settings.theme.accentColor);
@@ -414,6 +415,7 @@ export const UserSettingsModal = ({
 
     if (themeMode !== settings.theme.mode) return true;
     if (accentColor !== settings.theme.accentColor) return true;
+    if (decorationsEnabled !== (settings.theme.decorationsEnabled ?? true)) return true;
     if (JSON.stringify(serverAccentDraft) !== JSON.stringify(settings.theme.serverAccents || {})) return true;
 
     if (notificationPermission !== settings.notifications.permission) return true;
@@ -445,6 +447,7 @@ export const UserSettingsModal = ({
     toggleNavigationHotkey,
     themeMode,
     accentColor,
+    decorationsEnabled,
     serverAccentDraft,
     notificationPermission,
     notifyMentions,
@@ -485,6 +488,7 @@ export const UserSettingsModal = ({
 
     setThemeMode(settings.theme.mode);
     setAccentColor(settings.theme.accentColor);
+    setDecorationsEnabled(settings.theme.decorationsEnabled ?? true);
     setServerAccentDraft(settings.theme.serverAccents || {});
 
     setNotificationPermission(settings.notifications.permission);
@@ -688,7 +692,12 @@ export const UserSettingsModal = ({
       toggleMembers: toggleMembersHotkey || null,
       toggleNavigation: toggleNavigationHotkey || null,
     });
-    updateTheme({ mode: themeMode, accentColor: accentToSave, serverAccents: serverAccentDraft });
+    updateTheme({
+      mode: themeMode,
+      accentColor: accentToSave,
+      serverAccents: serverAccentDraft,
+      decorationsEnabled,
+    });
     updateNotifications({
       permission: notificationPermission,
       mentions: notifyMentions,
@@ -967,6 +976,21 @@ export const UserSettingsModal = ({
                         )}
                       </div>
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <label className="flex items-center gap-3 p-3 rounded-[var(--radius-3)] border border-[var(--color-border)] bg-[var(--color-surface-alt)]">
+                      <Toggle
+                        checked={decorationsEnabled}
+                        onChange={(e) => setDecorationsEnabled(e.target.checked)}
+                      />
+                      <div>
+                        <div className="text-sm font-medium">Dekorationen</div>
+                        <div className="text-xs text-[color:var(--color-text-muted)]">
+                          Hintergrundeffekte wie Rauschen, Punktgitter und Lichtkugeln.
+                        </div>
+                      </div>
+                    </label>
                   </div>
                 </div>
               )}
