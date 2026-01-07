@@ -198,6 +198,12 @@
   color: var(--color-text-strong);
 }
 
+.t-chan:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus) 35%, transparent);
+}
+
 .t-chan.active {
   background: linear-gradient(90deg, rgba(16, 185, 129, 0.1), transparent);
   border-left: 3px solid var(--accent);
@@ -228,6 +234,12 @@
 
 .t-user:hover {
   background: rgba(255, 255, 255, 0.04);
+}
+
+.t-user:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus) 35%, transparent);
 }
 
 .t-user::before {
@@ -303,6 +315,11 @@
   color: var(--color-text-strong);
   border-color: rgba(255, 255, 255, 0.2);
 }
+.edge-toggle:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus) 35%, transparent);
+}
 .edge-left {
   left: 4px;
 }
@@ -362,6 +379,11 @@
 }
 .pill:hover { color: var(--color-text-strong); background: rgba(255,255,255,0.05); }
 .pill.active { color: var(--color-text-strong); background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.1); }
+.pill:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus) 35%, transparent);
+}
 
 .log-body {
   flex: 1; padding: 10px 16px; overflow-y: auto;
@@ -639,6 +661,15 @@
   background: linear-gradient(135deg, rgba(148, 163, 184, 0.15), rgba(148, 163, 184, 0.05));
   border-color: rgba(148, 163, 184, 0.25);
   box-shadow: 0 10px 24px rgba(148, 163, 184, 0.18);
+}
+
+.status-pill:focus-visible,
+.role-tag:focus-visible,
+.tag:focus-visible,
+.thumb-chip:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus) 35%, transparent);
 }
 
 /* Voice Controls */

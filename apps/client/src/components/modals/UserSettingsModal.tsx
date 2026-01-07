@@ -83,7 +83,7 @@ const HotkeyInput = ({
           onKeyDown={handleKeyDown}
           readOnly
           placeholder="Press keys"
-          className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] outline-none"
+          className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
         />
         {displayValue && (
           <button
@@ -758,7 +758,7 @@ export const UserSettingsModal = ({
       value={navQuery}
       onChange={(e) => setNavQuery(e.target.value)}
       placeholder="Suche"
-      className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-sm text-[color:var(--color-text)] placeholder:text-[color:var(--color-text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] focus:border-[var(--color-accent)]"
+      className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] text-sm text-[color:var(--color-text)] placeholder:text-[color:var(--color-text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-focus)] focus:border-[var(--color-focus)]"
     />
   </div>
 
@@ -806,7 +806,7 @@ export const UserSettingsModal = ({
                             value={displayName}
                             onChange={(e) => setDisplayName(e.target.value)}
                             placeholder="Dein Name"
-                            className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] outline-none"
+                            className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
                           />
                         </div>
                         <div className="space-y-2">
@@ -892,7 +892,7 @@ export const UserSettingsModal = ({
                           type="text"
                           value={accentColor}
                           onChange={(e) => setAccentColor(e.target.value)}
-                          className="flex-1 bg-[color:var(--color-surface)]/60 text-white p-3 rounded-xl border border-[var(--color-border)] focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] outline-none"
+                          className="flex-1 bg-[color:var(--color-surface)]/60 text-white p-3 rounded-xl border border-[var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
                         />
                       </div>
                     </div>
@@ -905,7 +905,7 @@ export const UserSettingsModal = ({
                           value={serverAccentTarget}
                           onChange={(e) => setServerAccentTarget(e.target.value)}
                           placeholder="Server ID"
-                          className="bg-[color:var(--color-surface)]/60 text-white p-3 rounded-xl border border-[var(--color-border)] focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] outline-none"
+                          className="bg-[color:var(--color-surface)]/60 text-white p-3 rounded-xl border border-[var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
                         />
                         <input
                           type="color"
@@ -1370,7 +1370,7 @@ export const UserSettingsModal = ({
                           <select
                             value={videoInputId}
                             onChange={(e) => setVideoInputId(e.target.value)}
-                            className="w-full bg-[var(--color-surface-alt)] text-[color:var(--color-text)] p-3 rounded-xl border border-[var(--color-border)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] focus:border-[var(--color-accent)]"
+                            className="w-full bg-[var(--color-surface-alt)] text-[color:var(--color-text)] p-3 rounded-xl border border-[var(--color-border)] focus:outline-none focus:ring-1 focus:ring-[var(--color-focus)] focus:border-[var(--color-focus)]"
                           >
                             <option value="">System-Standard</option>
                             {deviceLists.videoInputs.map((d) => (
@@ -1387,7 +1387,7 @@ export const UserSettingsModal = ({
                           <select
                             value={cameraQuality}
                             onChange={(e) => setCameraQuality(e.target.value as typeof cameraQuality)}
-                            className="w-full bg-[var(--color-surface-alt)] text-[color:var(--color-text)] p-3 rounded-xl border border-[var(--color-border)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] focus:border-[var(--color-accent)]"
+                            className="w-full bg-[var(--color-surface-alt)] text-[color:var(--color-text)] p-3 rounded-xl border border-[var(--color-border)] focus:outline-none focus:ring-1 focus:ring-[var(--color-focus)] focus:border-[var(--color-focus)]"
                           >
                             <option value="low">Niedrig</option>
                             <option value="medium">Mittel</option>
