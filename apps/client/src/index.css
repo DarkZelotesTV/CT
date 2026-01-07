@@ -154,6 +154,16 @@
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03); 
 }
 
+@media (prefers-reduced-motion: reduce) {
+  body {
+    background-image: none;
+  }
+
+  .glass {
+    backdrop-filter: blur(12px);
+  }
+}
+
 /* Utilities */
 .no-drag { -webkit-app-region: no-drag; }
 .drag { -webkit-app-region: drag; }
