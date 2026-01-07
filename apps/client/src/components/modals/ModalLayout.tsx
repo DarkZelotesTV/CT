@@ -59,8 +59,9 @@ export const ModalLayout = ({
 
     const focusInitialElement = () => {
       const focusableElements = getFocusableElements();
-      if (focusableElements.length > 0) {
-        focusableElements[0].focus();
+      const firstElement = focusableElements[0];
+      if (firstElement) {
+        firstElement.focus();
       } else if (modalElement) {
         modalElement.focus();
       }
@@ -85,6 +86,12 @@ export const ModalLayout = ({
       const firstElement = focusableElements[0];
       const lastElement = focusableElements[focusableElements.length - 1];
       const activeElement = document.activeElement as HTMLElement | null;
+
+      if (!firstElement || !lastElement) {
+        event.preventDefault();
+        modalElement.focus();
+        return;
+      }
 
       if (!modalElement.contains(activeElement)) {
         event.preventDefault();
