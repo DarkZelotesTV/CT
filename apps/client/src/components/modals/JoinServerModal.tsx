@@ -129,7 +129,7 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
             <button
               onClick={() => handleSubmit()}
               disabled={loading || !serverInput || !identity}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-lg font-bold disabled:opacity-50 flex items-center gap-2 transition-all active:scale-[0.98]"
+              className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white px-6 py-2 rounded-lg font-bold disabled:opacity-50 flex items-center gap-2 transition-all active:scale-[0.98]"
             >
               {loading && <Loader2 className="animate-spin" size={16} />}
               Beitreten
@@ -139,7 +139,7 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex justify-center">
-            <div className="w-20 h-20 rounded-full bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] flex items-center justify-center text-indigo-400">
+            <div className="w-20 h-20 rounded-full bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] flex items-center justify-center text-[color:var(--color-accent)]">
               <Compass size={32} />
             </div>
           </div>
@@ -154,7 +154,7 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
               value={serverInput}
               onChange={(e) => setServerInput(e.target.value)}
               placeholder="z.B. 1 oder https://example.com/invite/1"
-              className="w-full bg-[color:var(--color-surface)]/60 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all placeholder:text-[color:var(--color-text-muted)] font-medium"
+              className="w-full bg-[color:var(--color-surface)]/60 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none transition-all placeholder:text-[color:var(--color-text-muted)] font-medium"
             />
           </div>
 
@@ -168,13 +168,13 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
               value={instanceUrl}
               onChange={(e) => setInstanceUrlState(e.target.value)}
               placeholder="z.B. https://mein-server.tld"
-              className="w-full bg-[color:var(--color-surface)]/60 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all placeholder:text-[color:var(--color-text-muted)] font-medium"
+              className="w-full bg-[color:var(--color-surface)]/60 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none transition-all placeholder:text-[color:var(--color-text-muted)] font-medium"
             />
             <p className="text-[10px] text-[color:var(--color-text-muted)] mt-1">Leer lassen, um die aktuelle Instanz zu nutzen.</p>
           </div>
 
           <div className="rounded-2xl border border-[color:var(--color-border)] bg-white/[0.02] p-4 flex items-start gap-3">
-            <div className="p-2 rounded-full bg-[color:var(--color-surface-hover)] text-indigo-400">
+            <div className="p-2 rounded-full bg-[color:var(--color-surface-hover)] text-[color:var(--color-accent)]">
               <Shield size={18} />
             </div>
             <div className="flex-1">
@@ -186,7 +186,7 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
               )}
               <button
                 type="button"
-                className="mt-2 text-sm text-indigo-400 hover:text-indigo-300"
+                className="mt-2 text-sm text-[color:var(--color-accent)] hover:text-[color:var(--color-accent-hover)]"
                 onClick={() => setShowIdentityModal(true)}
               >
                 Identity verwalten

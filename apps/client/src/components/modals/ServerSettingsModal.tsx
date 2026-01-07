@@ -217,7 +217,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
               type="button"
               onClick={() => void handleSave()}
               disabled={isSaving}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-lg font-bold disabled:opacity-50 flex items-center gap-2 transition-all active:scale-[0.98]"
+              className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white px-5 py-2 rounded-lg font-bold disabled:opacity-50 flex items-center gap-2 transition-all active:scale-[0.98]"
             >
               {isSaving && <Loader2 className="animate-spin" size={16} />}
               Speichern
@@ -251,13 +251,13 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Mein Server"
-                  className="w-full bg-[color:var(--color-surface)]/60 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all placeholder:text-[color:var(--color-text-muted)] font-medium"
+                  className="w-full bg-[color:var(--color-surface)]/60 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none transition-all placeholder:text-[color:var(--color-text-muted)] font-medium"
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold text-[color:var(--color-text-muted)] uppercase ml-1">Server Icon</label>
                 <div className="flex flex-wrap gap-2 items-center">
-                  <label className="cursor-pointer inline-flex items-center gap-2 bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] px-3 py-2 rounded-lg text-sm font-semibold hover:border-indigo-500 hover:text-indigo-300 transition-colors">
+                  <label className="cursor-pointer inline-flex items-center gap-2 bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] px-3 py-2 rounded-lg text-sm font-semibold hover:border-[var(--color-accent-hover)] hover:text-[color:var(--color-accent-hover)] transition-colors">
                     <input type="file" accept="image/*" className="hidden" onChange={handleIconChange} />
                     <ImageIcon size={16} />
                     Icon auswählen
@@ -272,7 +272,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
                     Icon entfernen
                   </button>
                   {(iconFile || removeIcon) && (
-                    <span className="text-xs text-indigo-300 bg-indigo-500/10 border border-indigo-500/30 rounded-full px-2 py-1">
+                    <span className="text-xs text-[color:var(--color-accent)] bg-[color:var(--color-accent)]/10 border border-[color:var(--color-accent)]/30 rounded-full px-2 py-1">
                       {iconFile ? `Ausgewählt: ${iconFile.name}` : 'Icon wird entfernt'}
                     </span>
                   )}
@@ -300,7 +300,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
               <select
                 value={fallbackChannelId ?? ''}
                 onChange={(e) => setFallbackChannelId(e.target.value ? Number(e.target.value) : null)}
-                className="w-full bg-[color:var(--color-surface)]/60 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                className="w-full bg-[color:var(--color-surface)]/60 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
               >
                 <option value="">Kein Fallback</option>
                 {channelOptions.map((channel) => (
@@ -331,7 +331,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
               />
               <span
                 className={`h-6 w-11 rounded-full transition-colors ${
-                  dragAndDropEnabled ? 'bg-indigo-500' : 'bg-[color:var(--color-surface-hover)]/80'
+                  dragAndDropEnabled ? 'bg-[var(--color-accent)]' : 'bg-[color:var(--color-surface-hover)]/80'
                 }`}
               >
                 <span

@@ -168,7 +168,7 @@ export function IdentityScreen({ onAuthed, onIdentityChanged }: Props) {
 
         <div className="flex flex-wrap gap-3">
           <button
-            className="px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 transition disabled:opacity-50"
+            className="px-4 py-3 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white transition disabled:opacity-50"
             onClick={handleLogin}
             disabled={busy || !identity}
           >

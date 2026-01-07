@@ -92,7 +92,7 @@ export function FirstStartModal({ onComplete }: Props) {
     >
       <div className="space-y-4">
         <div className="flex items-center gap-2 text-sm text-[color:var(--color-text)]">
-          <div className={`h-8 w-8 rounded-full flex items-center justify-center ${step === "identity" ? "bg-indigo-600" : "bg-[color:var(--color-surface-hover)]/80"}`}>
+          <div className={`h-8 w-8 rounded-full flex items-center justify-center ${step === "identity" ? "bg-[var(--color-accent)]" : "bg-[color:var(--color-surface-hover)]/80"}`}>
             <span className="font-bold">1</span>
           </div>
           <div>
@@ -106,13 +106,13 @@ export function FirstStartModal({ onComplete }: Props) {
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           placeholder="z.B. jusbe"
-          className="w-full rounded-xl bg-[color:var(--color-surface)]/70 border border-[color:var(--color-border)] p-3 text-white outline-none focus:border-indigo-500"
+          className="w-full rounded-xl bg-[color:var(--color-surface)]/70 border border-[color:var(--color-border)] p-3 text-white outline-none focus:border-[var(--color-focus)]"
         />
 
         <div className="flex flex-wrap gap-3">
           <button
             onClick={handleCreate}
-            className="px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 transition flex items-center gap-2"
+            className="px-4 py-3 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white transition flex items-center gap-2"
           >
             <ArrowRight size={18} /> Identity erstellen
           </button>
@@ -138,7 +138,7 @@ export function FirstStartModal({ onComplete }: Props) {
         <div className="text-sm text-[color:var(--color-text-muted)] bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] rounded-2xl p-4">
           <div className="text-white font-semibold">Aktuelle Identity</div>
           {identity ? (
-            <div className="mt-2 font-mono break-all text-indigo-200">{formatFingerprint(fp!)}</div>
+            <div className="mt-2 font-mono break-all text-[color:var(--color-accent)]">{formatFingerprint(fp!)}</div>
           ) : (
             <div className="mt-2 text-yellow-300">Noch keine Identity vorhanden.</div>
           )}
@@ -150,7 +150,7 @@ export function FirstStartModal({ onComplete }: Props) {
 
       <div className="space-y-4">
         <div className="flex items-center gap-2 text-sm text-[color:var(--color-text)]">
-          <div className={`h-8 w-8 rounded-full flex items-center justify-center ${step === "backup" ? "bg-indigo-600" : "bg-[color:var(--color-surface-hover)]/80"}`}>
+          <div className={`h-8 w-8 rounded-full flex items-center justify-center ${step === "backup" ? "bg-[var(--color-accent)]" : "bg-[color:var(--color-surface-hover)]/80"}`}>
             <span className="font-bold">2</span>
           </div>
           <div>
@@ -164,7 +164,7 @@ export function FirstStartModal({ onComplete }: Props) {
           value={backupPassphrase}
           onChange={(e) => setBackupPassphrase(e.target.value)}
           placeholder="Leer lassen für unverschlüsselt"
-          className="w-full rounded-xl bg-[color:var(--color-surface)]/70 border border-[color:var(--color-border)] p-3 text-white outline-none focus:border-indigo-500"
+          className="w-full rounded-xl bg-[color:var(--color-surface)]/70 border border-[color:var(--color-border)] p-3 text-white outline-none focus:border-[var(--color-focus)]"
         />
 
         <button
@@ -175,8 +175,8 @@ export function FirstStartModal({ onComplete }: Props) {
           <Download size={18} /> Backup herunterladen
         </button>
 
-        <div className="text-xs text-[color:var(--color-text-muted)] bg-[color:var(--color-surface-hover)] border border-indigo-500/30 rounded-2xl p-4 flex items-start gap-3">
-          <Check className="text-indigo-300 mt-0.5" size={16} />
+        <div className="text-xs text-[color:var(--color-text-muted)] bg-[color:var(--color-surface-hover)] border border-[color:var(--color-accent)]/30 rounded-2xl p-4 flex items-start gap-3">
+          <Check className="text-[color:var(--color-accent)] mt-0.5" size={16} />
           <div>
             Bewahre dein Backup sicher auf. Ohne Backup kannst du deine Identität auf neuen Geräten nicht wiederherstellen.
           </div>

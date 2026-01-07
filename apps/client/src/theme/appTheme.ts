@@ -26,6 +26,7 @@ export type AppTheme = {
   textMuted: string;
   accent: string;
   accentHover: string;
+  focus: string;
   overlay: string;
 };
 
@@ -114,6 +115,7 @@ export const buildAppTheme = (mode: ThemeMode, accentColor: string): AppTheme =>
     ...base,
     accent,
     accentHover: adjustHexColor(accent, hoverDelta),
+    focus: accent,
     surfaceBody,
     surfaceRail,
     surfaceTree,
@@ -152,6 +154,7 @@ export const applyAppTheme = (theme: AppTheme) => {
     '--color-text-muted': theme.textMuted,
     '--color-accent': theme.accent,
     '--color-accent-hover': theme.accentHover,
+    '--color-focus': theme.focus,
     '--color-overlay': theme.overlay,
     '--shadow-panel-inset': theme.shadowPanelInset,
     '--shadow-panel': theme.shadowPanel,

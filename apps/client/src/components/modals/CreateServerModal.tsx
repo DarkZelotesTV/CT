@@ -75,13 +75,13 @@ export const CreateServerModal = ({ onClose, onCreated }: CreateServerModalProps
       onClose={onClose}
       footer={
         <p className="text-[11px] text-[color:var(--color-text-muted)]">
-          Durch das Erstellen stimmst du den <span className="text-indigo-400 cursor-pointer hover:underline">Community Guidelines</span> zu.
+          Durch das Erstellen stimmst du den <span className="text-[color:var(--color-accent)] cursor-pointer hover:underline">Community Guidelines</span> zu.
         </p>
       }
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="flex flex-col items-center gap-2">
-          <label className="w-24 h-24 rounded-full bg-[color:var(--color-surface-hover)] border-2 border-dashed border-[color:var(--color-border-strong)] flex flex-col items-center justify-center text-[color:var(--color-text-muted)] hover:border-indigo-500 hover:text-indigo-400 cursor-pointer transition-all group overflow-hidden">
+          <label className="w-24 h-24 rounded-full bg-[color:var(--color-surface-hover)] border-2 border-dashed border-[color:var(--color-border-strong)] flex flex-col items-center justify-center text-[color:var(--color-text-muted)] hover:border-[var(--color-accent-hover)] hover:text-[color:var(--color-accent)] cursor-pointer transition-all group overflow-hidden">
             <input type="file" accept="image/*" className="hidden" onChange={handleIconChange} />
             {iconPreview ? (
               <img src={iconPreview} alt="Server Icon" className="w-full h-full object-cover" />
@@ -125,14 +125,14 @@ export const CreateServerModal = ({ onClose, onCreated }: CreateServerModalProps
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Mein epischer Server"
-            className="w-full bg-[color:var(--color-surface)]/60 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all placeholder:text-[color:var(--color-text-muted)] font-medium"
+            className="w-full bg-[color:var(--color-surface)]/60 text-white p-3 rounded-xl border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none transition-all placeholder:text-[color:var(--color-text-muted)] font-medium"
           />
         </div>
 
         <button
           type="submit"
           disabled={loading || !name.trim()}
-          className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-bold shadow-lg shadow-indigo-900/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+          className="w-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white py-3 rounded-xl font-bold shadow-lg shadow-[0_12px_24px_color-mix(in_srgb,var(--color-accent)_25%,transparent)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
         >
           {loading ? <Loader2 className="animate-spin" size={18} /> : 'Server erstellen'}
         </button>

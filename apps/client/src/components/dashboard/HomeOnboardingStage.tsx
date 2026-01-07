@@ -48,7 +48,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer }: HomeOnboar
             <button
               type="button"
               onClick={onCreateServer}
-              className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-900/30 flex items-center gap-2 transition-colors"
+              className="px-4 py-2.5 bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white rounded-xl shadow-lg shadow-[0_16px_28px_color-mix(in_srgb,var(--color-accent)_30%,transparent)] flex items-center gap-2 transition-colors"
             >
               <PlusCircle size={18} /> Server erstellen
             </button>
