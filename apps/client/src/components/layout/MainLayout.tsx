@@ -191,6 +191,7 @@ export const MainLayout = () => {
   const [lastNonVoiceChannel, setLastNonVoiceChannel] = useState<Channel | null>(null);
   const [pendingVoiceChannelId, setPendingVoiceChannelId] = useState<number | null>(null);
   const [serverRefreshKey, setServerRefreshKey] = useState(0);
+  const hasServers = useMemo(() => (storage.get('serverRailOrder') ?? []).length > 0, [serverRefreshKey]);
   const { entries: logEntries, filteredEntries: filteredLogEntries, addEntry: addLogEntry, clear: clearLogEntries, filter: logFilter, setFilter: setLogFilter } = useLogStore();
 
   // Voice Context
@@ -788,6 +789,8 @@ export const MainLayout = () => {
           <HomeOnboardingStage
             onCreateServer={handleCreateServer}
             onJoinServer={handleJoinServer}
+            onOpenSettings={() => setShowUserSettings(true)}
+            hasServers={hasServers}
           />
         </div>
       );
