@@ -23,6 +23,12 @@
 
 /* --- GRID LAYOUT --- */
 .main-layout {
+  --safe-area-top: env(safe-area-inset-top);
+  --safe-area-bottom: env(safe-area-inset-bottom);
+  --safe-area-left: env(safe-area-inset-left);
+  --safe-area-right: env(safe-area-inset-right);
+  --h-header: calc(var(--layout-header-height) + var(--safe-area-top));
+  --h-log: calc(var(--layout-log-height) + var(--safe-area-bottom));
   height: 100vh;
   min-height: 100vh;
   width: 100%;
@@ -39,6 +45,11 @@
   position: relative;
   z-index: 1;
   overflow: hidden;
+}
+
+body.mobile-scroll-lock {
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 .mobile-overlay {
@@ -84,7 +95,8 @@
   background: var(--color-surface-header);
   border-bottom: 1px solid var(--color-border-glass); 
   display: flex; align-items: center; justify-content: space-between;
-  padding: 0 24px; z-index: 40; 
+  padding: var(--safe-area-top) calc(24px + var(--safe-area-right)) 0 calc(24px + var(--safe-area-left));
+  z-index: 40; 
   backdrop-filter: blur(20px);
   -webkit-app-region: drag; /* Electron Drag */
   position: relative;
@@ -309,8 +321,8 @@
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 20px;
-  height: 60px;
+  width: 44px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -359,6 +371,9 @@
   box-shadow: var(--shadow-panel-strong); z-index: 100;
   backdrop-filter: blur(40px);
   overflow: hidden;
+  padding-bottom: var(--safe-area-bottom);
+  padding-left: var(--safe-area-left);
+  padding-right: var(--safe-area-right);
 }
 
 /* --- COMPONENTS Styles from HTML --- */
@@ -389,6 +404,26 @@
 }
 .pill { 
   font-size: var(--font-size-sm); line-height: var(--line-height-sm); padding: 4px 16px; border-radius: 99px; color: var(--color-text-muted); cursor: pointer; transition: 0.2s; border: 1px solid transparent; 
+}
+.icon-button {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+.mobile-info-toggle {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 8px 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 .pill:hover { color: var(--color-text-strong); background: color-mix(in srgb, var(--color-surface-tint) 5%, transparent); }
 .pill.active { color: var(--color-text-strong); background: color-mix(in srgb, var(--color-surface-tint) 10%, transparent); border-color: color-mix(in srgb, var(--color-surface-tint) 10%, transparent); }
