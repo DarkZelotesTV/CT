@@ -34,16 +34,16 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer }: HomeOnboar
         <div className="col-span-12 min-[900px]:col-span-7 flex flex-col gap-6">
           <div className="flex flex-col">
             <div className="flex flex-col gap-3">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] text-xs uppercase tracking-wide text-[color:var(--color-text)]">
+              <div className="inline-flex h-7 items-center gap-2 px-2.5 py-1.5 rounded-full bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] text-[12px] font-semibold uppercase tracking-wide text-[color:var(--color-text)]">
                 <Home size={14} />
                 Willkommen
               </div>
 
               <div className="space-y-3">
-                <h1 className="text-[32px] min-[900px]:text-[38px] min-[1200px]:text-[44px] font-bold text-white leading-tight">
+                <h1 className="text-[32px] min-[900px]:text-[38px] min-[1200px]:text-[44px] font-extrabold text-white leading-[48px] min-[900px]:leading-[52px]">
                   Starte in deine neue Homebase
                 </h1>
-                <p className="text-[color:var(--color-text-muted)] text-base leading-relaxed">
+                <p className="text-[15px] min-[900px]:text-[16px] text-[color:var(--color-text-muted)] leading-[22px] min-[900px]:leading-[24px] max-w-[52ch]">
                   Erstelle Server, organisiere Kanäle und lade dein Team ein. Diese Oberfläche bleibt dein Startpunkt, solange kein Server ausgewählt ist.
                 </p>
               </div>
@@ -53,18 +53,24 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer }: HomeOnboar
               <button
                 type="button"
                 onClick={onCreateServer}
-                className="px-4 py-2.5 bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white rounded-xl shadow-lg shadow-[0_16px_28px_color-mix(in_srgb,var(--color-accent)_30%,transparent)] flex items-center gap-2 transition-colors max-[899px]:w-full max-[899px]:h-12 max-[899px]:justify-center"
+                className="h-11 px-4 bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white rounded-xl shadow-lg shadow-[0_16px_28px_color-mix(in_srgb,var(--color-accent)_30%,transparent)] flex items-center gap-2.5 transition-colors max-[899px]:w-full max-[899px]:justify-center"
               >
                 <PlusCircle size={18} /> Server erstellen
               </button>
               <button
                 type="button"
                 onClick={onJoinServer}
-                className="px-4 py-2.5 bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 text-white rounded-xl border border-[color:var(--color-border)] flex items-center gap-2 transition-colors max-[899px]:w-full max-[899px]:h-12 max-[899px]:justify-center"
+                className="h-11 px-4 bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 text-white rounded-xl border border-[color:var(--color-border)] flex items-center gap-2.5 transition-colors max-[899px]:w-full max-[899px]:justify-center"
               >
-                <Compass size={18} /> Server beitreten
+                <Compass size={18} /> Mit Einladung beitreten
               </button>
             </div>
+            <button
+              type="button"
+              className="mt-3 text-[14px] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-accent)] transition-colors self-start"
+            >
+              Demo-Server ansehen
+            </button>
           </div>
 
           <div className="grid min-[600px]:grid-cols-3 gap-4">
