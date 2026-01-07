@@ -7,12 +7,21 @@
 
 :root {
   /* --- PALETTE (aus index.html) --- */
+  --color-surface: #111827;
+  --color-surface-alt: #0f1625;
+  --color-surface-hover: #1f2937;
   --color-surface-body: #050505;
   --color-surface-rail: rgba(10, 10, 12, 0.9);
   --color-surface-tree: rgba(22, 22, 25, 0.85);
   --color-surface-main: rgba(10, 10, 12, 0.3);
   --color-surface-info: rgba(22, 22, 25, 0.85);
   --color-surface-log: rgba(8, 8, 10, 0.9);
+  --color-surface-header: rgba(15, 22, 37, 0.88);
+  --color-border: #1f2a3a;
+  --color-border-strong: #303a4e;
+  --shadow-panel-inset: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  --shadow-panel: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.02);
+  --shadow-panel-strong: 0 -10px 40px rgba(0, 0, 0, 0.5);
   --layout-bg-body: var(--color-surface-body);
   --layout-bg-rail: var(--color-surface-rail);
   --layout-bg-tree: var(--color-surface-tree);
