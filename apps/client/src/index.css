@@ -7,18 +7,19 @@
 
 :root {
   /* --- PALETTE (aus index.html) --- */
+  --color-background: #0b1021;
   --color-surface: #111827;
   --color-surface-alt: #0f1625;
   --color-surface-hover: #1f2937;
   --color-surface-2: var(--color-surface-alt);
   --color-surface-3: var(--color-surface-hover);
-  --color-surface-body: #050505;
-  --color-surface-rail: rgba(10, 10, 12, 0.9);
-  --color-surface-tree: rgba(22, 22, 25, 0.85);
-  --color-surface-main: rgba(10, 10, 12, 0.3);
-  --color-surface-info: rgba(22, 22, 25, 0.85);
-  --color-surface-log: rgba(8, 8, 10, 0.9);
-  --color-surface-header: rgba(15, 22, 37, 0.88);
+  --color-surface-body: color-mix(in srgb, var(--color-background) 75%, var(--color-surface) 25%);
+  --color-surface-rail: color-mix(in srgb, var(--color-surface) 92%, var(--color-background) 8%);
+  --color-surface-tree: color-mix(in srgb, var(--color-surface) 84%, var(--color-background) 16%);
+  --color-surface-main: color-mix(in srgb, var(--color-surface) 70%, var(--color-background) 30%);
+  --color-surface-info: color-mix(in srgb, var(--color-surface) 86%, var(--color-background) 14%);
+  --color-surface-log: color-mix(in srgb, var(--color-surface) 94%, var(--color-background) 6%);
+  --color-surface-header: color-mix(in srgb, var(--color-surface) 88%, var(--color-background) 12%);
   --color-border: #1f2a3a;
   --color-border-strong: #303a4e;
   --color-accent: #10b981;

@@ -295,6 +295,13 @@ export const buildAppTheme = (mode: ThemeMode, accentColor: string): AppTheme =>
 export const applyAppTheme = (theme: AppTheme) => {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
+  const derivedSurfaceBody = `color-mix(in srgb, ${theme.background} 75%, ${theme.surface} 25%)`;
+  const derivedSurfaceRail = `color-mix(in srgb, ${theme.surface} 92%, ${theme.background} 8%)`;
+  const derivedSurfaceTree = `color-mix(in srgb, ${theme.surface} 84%, ${theme.background} 16%)`;
+  const derivedSurfaceMain = `color-mix(in srgb, ${theme.surface} 70%, ${theme.background} 30%)`;
+  const derivedSurfaceInfo = `color-mix(in srgb, ${theme.surface} 86%, ${theme.background} 14%)`;
+  const derivedSurfaceLog = `color-mix(in srgb, ${theme.surface} 94%, ${theme.background} 6%)`;
+  const derivedSurfaceHeader = `color-mix(in srgb, ${theme.surface} 88%, ${theme.background} 12%)`;
   const decorationVars =
     theme.mode === 'dark'
       ? {
@@ -322,13 +329,13 @@ export const applyAppTheme = (theme: AppTheme) => {
     '--color-surface-hover': theme.surfaceHover,
     '--color-surface-2': theme.surfaceAlt,
     '--color-surface-3': theme.surfaceHover,
-    '--color-surface-body': theme.surfaceBody,
-    '--color-surface-rail': theme.surfaceRail,
-    '--color-surface-tree': theme.surfaceTree,
-    '--color-surface-main': theme.surfaceMain,
-    '--color-surface-info': theme.surfaceInfo,
-    '--color-surface-log': theme.surfaceLog,
-    '--color-surface-header': theme.surfaceHeader,
+    '--color-surface-body': derivedSurfaceBody,
+    '--color-surface-rail': derivedSurfaceRail,
+    '--color-surface-tree': derivedSurfaceTree,
+    '--color-surface-main': derivedSurfaceMain,
+    '--color-surface-info': derivedSurfaceInfo,
+    '--color-surface-log': derivedSurfaceLog,
+    '--color-surface-header': derivedSurfaceHeader,
     '--color-surface-tint': theme.surfaceTint,
     '--color-border': theme.border,
     '--color-border-strong': theme.borderStrong,
@@ -349,18 +356,18 @@ export const applyAppTheme = (theme: AppTheme) => {
     '--shadow-panel-strong': theme.shadowPanelStrong,
     '--shadow-1': theme.shadow1,
     '--shadow-2': theme.shadow2,
-    '--layout-bg-body': theme.surfaceBody,
-    '--layout-bg-rail': theme.surfaceRail,
-    '--layout-bg-tree': theme.surfaceTree,
-    '--layout-bg-main': theme.surfaceMain,
-    '--layout-bg-info': theme.surfaceInfo,
-    '--layout-bg-log': theme.surfaceLog,
-    '--bg-body': theme.surfaceBody,
-    '--bg-rail': theme.surfaceRail,
-    '--bg-tree': theme.surfaceTree,
-    '--bg-main': theme.surfaceMain,
-    '--bg-info': theme.surfaceInfo,
-    '--bg-log': theme.surfaceLog,
+    '--layout-bg-body': derivedSurfaceBody,
+    '--layout-bg-rail': derivedSurfaceRail,
+    '--layout-bg-tree': derivedSurfaceTree,
+    '--layout-bg-main': derivedSurfaceMain,
+    '--layout-bg-info': derivedSurfaceInfo,
+    '--layout-bg-log': derivedSurfaceLog,
+    '--bg-body': derivedSurfaceBody,
+    '--bg-rail': derivedSurfaceRail,
+    '--bg-tree': derivedSurfaceTree,
+    '--bg-main': derivedSurfaceMain,
+    '--bg-info': derivedSurfaceInfo,
+    '--bg-log': derivedSurfaceLog,
     ...decorationVars,
   };
 
