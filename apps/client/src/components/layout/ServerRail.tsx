@@ -386,8 +386,8 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
               `
               w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 group relative no-drag border border-[color:var(--color-border)]
               ${selectedServerId === null
-                ? 'bg-emerald-500 text-white rounded-[14px] shadow-[0_0_0_6px_rgba(16,185,129,0.16)] shadow-emerald-500/40'
-                : 'bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 text-[color:var(--color-text)] rounded-full hover:rounded-[14px] hover:shadow-[0_0_0_6px_rgba(255,255,255,0.06)]'}
+                ? 'bg-[color:var(--color-accent)] text-accent rounded-[14px] shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-accent)_16%,transparent)]'
+                : 'bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 text-text-muted hover:text-accent rounded-full hover:rounded-[14px] hover:shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-accent-hover)_6%,transparent)]'}
             `
             }
             aria-label="Home"
@@ -426,7 +426,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                   `
                 w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 relative group no-drag border border-[color:var(--color-border)]
                 ${selectedServerId === server.id ? 'rounded-[14px]' : 'rounded-full hover:rounded-[14px]'}
-                bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 hover:shadow-[0_0_0_6px_rgba(255,255,255,0.05)] ${selectedServerId === server.id ? 'shadow-[0_0_0_6px_rgba(16,185,129,0.16)] shadow-emerald-500/40' : ''}
+                bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 hover:shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-accent-hover)_5%,transparent)] ${selectedServerId === server.id ? 'shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-accent)_16%,transparent)]' : ''}
               `
                 }
                 title={tooltip}
@@ -457,7 +457,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                 )}
 
                 {isPinned && (
-                  <div className="absolute -bottom-2 text-[10px] text-indigo-300" aria-hidden>
+                  <div className="absolute -bottom-2 text-[10px] text-text-muted group-hover:text-accent" aria-hidden>
                     <Pin size={12} />
                   </div>
                 )}
@@ -469,7 +469,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                     className={`w-full h-full object-cover transition-all ${selectedServerId === server.id ? 'rounded-[14px]' : 'rounded-full group-hover:rounded-[14px]'}`}
                   />
                 ) : (
-                  <span className="text-[color:var(--color-text)] font-bold text-sm group-hover:text-white transition-colors">
+                  <span className={`font-bold text-sm transition-colors ${selectedServerId === server.id ? 'text-accent' : 'text-text-muted group-hover:text-accent'}`}>
                     {name.substring(0, 2).toUpperCase()}
                   </span>
                 )}
@@ -494,11 +494,11 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                     }
                     handleKeyboardContext(e, p.serverId, 'remote', p.instanceUrl);
                   }}
-                  className="no-drag w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 relative group no-drag rounded-full hover:rounded-[14px] bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 outline-none border border-[color:var(--color-border)] hover:shadow-[0_0_0_6px_rgba(255,255,255,0.06)]"
+                  className="no-drag w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 relative group no-drag rounded-full hover:rounded-[14px] bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 outline-none border border-[color:var(--color-border)] hover:shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-accent-hover)_6%,transparent)]"
                   title={`${p.name ?? `Server ${p.serverId}`} (${p.instanceUrl})`}
                   onContextMenu={(e) => handleContextMenu(e, p.serverId, 'remote', p.instanceUrl)}
                 >
-                  <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[color:var(--color-surface)]/90 border border-[color:var(--color-border)] flex items-center justify-center text-cyan-300">
+                  <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[color:var(--color-surface)]/90 border border-[color:var(--color-border)] flex items-center justify-center text-text-muted group-hover:text-accent">
                     <Globe size={12} />
                   </div>
 
@@ -509,7 +509,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                       removePinnedServer(p.instanceUrl, p.serverId);
                       setPinnedTick((x) => x + 1);
                     }}
-                    className="no-drag absolute -top-1 -left-1 w-5 h-5 rounded-full bg-[color:var(--color-surface)]/90 border border-[color:var(--color-border)] hidden group-hover:flex items-center justify-center text-[color:var(--color-text)] hover:text-white"
+                    className="no-drag absolute -top-1 -left-1 w-5 h-5 rounded-full bg-[color:var(--color-surface)]/90 border border-[color:var(--color-border)] hidden group-hover:flex items-center justify-center text-text-muted hover:text-accent"
                     title="Entfernen"
                     aria-label="Server entfernen"
                   >
@@ -523,7 +523,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                       className="w-full h-full object-cover transition-all rounded-full group-hover:rounded-[14px]"
                     />
                   ) : (
-                    <span className="text-[color:var(--color-text)] font-bold text-sm group-hover:text-white transition-colors">
+                    <span className="text-text-muted font-bold text-sm group-hover:text-accent transition-colors">
                       {(p.name ?? `S${p.serverId}`).substring(0, 2).toUpperCase()}
                     </span>
                   )}
@@ -540,11 +540,11 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
               type="button"
               onMouseDown={(e) => e.stopPropagation()}
               onClick={() => setShowAddMenu((v) => !v)}
-              className="no-drag w-12 h-12 flex-shrink-0 no-drag rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center cursor-pointer text-emerald-300 transition-all duration-300 hover:rounded-[14px] hover:shadow-[0_0_0_6px_rgba(16,185,129,0.16)] group"
+              className="no-drag w-12 h-12 flex-shrink-0 no-drag rounded-full bg-[color:var(--color-accent)]/10 hover:bg-[color:var(--color-accent-hover)]/20 border border-[color:var(--color-accent)]/30 flex items-center justify-center cursor-pointer text-text-muted transition-all duration-300 hover:rounded-[14px] hover:shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-accent)_16%,transparent)] group hover:text-accent"
               title="Server hinzufügen"
               aria-label="Server hinzufügen"
             >
-              <Plus size={22} className="group-hover:text-white" />
+              <Plus size={22} />
             </button>
 
             {showAddMenu && (
