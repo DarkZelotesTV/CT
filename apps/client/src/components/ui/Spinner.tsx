@@ -15,12 +15,12 @@ export const Spinner = ({ className, size = 18, label }: SpinnerProps) => {
     <div
       role="status"
       aria-live="polite"
-      className={classNames('flex items-center gap-2 text-[color:var(--color-text-muted)]', className)}
+      className={classNames('flex items-center gap-2 text-text-muted', className)}
     >
       <Loader2
         aria-hidden
         size={size}
-        className="animate-spin text-primary"
+        className="animate-spin text-accent"
       />
       {label ? <span className="text-sm">{label}</span> : <span className="sr-only">{accessibleLabel}</span>}
     </div>
