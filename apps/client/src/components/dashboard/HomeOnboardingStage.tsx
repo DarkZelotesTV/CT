@@ -63,8 +63,8 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
     <div className="min-h-full w-full flex flex-col bg-background relative overflow-hidden">
       <DecorationLayer enabled={decorationsEnabled} />
 
-      <div className="relative z-10 flex-1 grid grid-cols-12 gap-5 px-7 pt-9 pb-9 mx-auto max-w-full min-[900px]:max-w-[900px] min-[1200px]:max-w-[1000px] max-[899px]:px-4">
-        <div className="col-span-12 min-[900px]:col-span-7 flex flex-col gap-6">
+      <div className="relative z-10 flex-1 grid grid-cols-12 gap-6 mx-auto w-full max-w-[1120px] p-4 min-[640px]:p-6">
+        <div className="col-span-12 min-[960px]:col-span-7 flex flex-col gap-6">
           <div className="flex flex-col">
             <div className="flex flex-col gap-3">
               <div className="inline-flex h-6 items-center gap-2 px-2.5 py-1 rounded-full bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] text-[11px] font-semibold uppercase tracking-wide text-[color:var(--color-text)]">
@@ -86,14 +86,14 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
               <button
                 type="button"
                 onClick={onCreateServer}
-                className="h-10 px-4 bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-text rounded-xl shadow-lg shadow-[0_16px_28px_color-mix(in_srgb,var(--color-accent)_30%,transparent)] flex items-center gap-2.5 transition-colors max-[899px]:w-full max-[899px]:justify-center"
+                className="h-10 px-4 bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-text rounded-2xl shadow-lg shadow-[0_16px_28px_color-mix(in_srgb,var(--color-accent)_30%,transparent)] flex items-center gap-2.5 transition-colors max-[899px]:w-full max-[899px]:justify-center"
               >
                 <PlusCircle size={18} /> Server erstellen
               </button>
               <button
                 type="button"
                 onClick={onJoinServer}
-                className="h-10 px-4 bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 text-text rounded-xl border border-[color:var(--color-border)] flex items-center gap-2.5 transition-colors max-[899px]:w-full max-[899px]:justify-center"
+                className="h-10 px-4 bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 text-text rounded-2xl border border-[color:var(--color-border)] flex items-center gap-2.5 transition-colors max-[899px]:w-full max-[899px]:justify-center"
               >
                 <Compass size={18} /> Mit Einladung beitreten
               </button>
@@ -108,7 +108,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
               {suggestedServers.slice(0, 3).map((server) => (
                 <div
                   key={server.id}
-                  className="flex h-9 items-center gap-3 rounded-[10px] border border-[color:var(--color-border)]/70 bg-surface-2 px-3"
+                  className="flex h-10 items-center gap-3 rounded-2xl border border-[color:var(--color-border)]/70 bg-surface-2 px-4"
                 >
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-3 text-[color:var(--color-text)]">
                     <Server size={16} />
@@ -116,7 +116,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
                   <span className="text-[13px] font-medium text-text">{server.name}</span>
                   <button
                     type="button"
-                    className="ml-auto inline-flex h-7 items-center rounded-[8px] border border-[color:var(--color-border)] px-3 text-[12px] font-semibold text-[color:var(--color-text)] transition-colors hover:border-[color:var(--color-accent)]/40 hover:text-[color:var(--color-accent)]"
+                    className="ml-auto inline-flex h-10 items-center rounded-2xl border border-[color:var(--color-border)] px-4 text-[12px] font-semibold text-[color:var(--color-text)] transition-colors hover:border-[color:var(--color-accent)]/40 hover:text-[color:var(--color-accent)]"
                   >
                     Beitreten
                   </button>
@@ -129,7 +129,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
             {steps.map(({ title, body, icon: Icon }) => (
               <div
                 key={title}
-                className="bg-surface-2 hover:bg-surface-3 border border-[color:var(--color-border)]/70 rounded-2xl p-[14px] backdrop-blur-sm h-full flex flex-col gap-3 transition-colors"
+                className="bg-surface-2 hover:bg-surface-3 border border-[color:var(--color-border)]/70 rounded-2xl p-4 backdrop-blur-sm h-full flex flex-col gap-3 transition-colors"
               >
                 <div className="w-9 h-9 rounded-xl bg-surface-3 border border-[color:var(--color-border)] text-[color:var(--color-text)] flex items-center justify-center">
                   <Icon size={17} />
@@ -141,7 +141,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
           </div>
         </div>
 
-        <div className="col-span-12 min-[900px]:col-span-5 rounded-2xl border border-[color:var(--color-border)] bg-surface-2 hover:bg-surface-3 p-[16px] min-[900px]:p-[18px] shadow-2xl flex flex-col gap-4 transition-colors">
+        <div className="col-span-12 min-[960px]:col-span-5 rounded-2xl border border-[color:var(--color-border)] bg-surface-2 hover:bg-surface-3 p-4 shadow-2xl flex flex-col gap-4 transition-colors">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-2xl bg-surface-3 border border-[color:var(--color-border)] flex items-center justify-center text-[color:var(--color-text)]">
@@ -170,7 +170,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
                   aria-disabled={isDisabled}
                   tabIndex={isDisabled ? -1 : 0}
                   title={isDisabled ? tooltip : undefined}
-                  className={`group flex h-10 items-center gap-3 rounded-xl border border-[color:var(--color-border)]/70 px-3 text-left transition ${
+                  className={`group flex h-10 items-center gap-3 rounded-2xl border border-[color:var(--color-border)]/70 px-4 text-left transition ${
                     isDisabled
                       ? 'cursor-not-allowed bg-surface-2/30 text-text-muted/80'
                       : 'bg-surface-2 text-text hover:bg-surface-3 hover:border-[color:var(--color-accent)]/30 hover:ring-1 hover:ring-[color:var(--color-accent)]/15'
@@ -193,7 +193,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
               );
             })}
           </div>
-          <div className="rounded-2xl border border-[color:var(--color-border)] bg-surface-3/60 p-3">
+          <div className="rounded-2xl border border-[color:var(--color-border)] bg-surface-3/60 p-4">
             <div className="text-[11px] font-semibold uppercase tracking-wide text-text-muted mb-2">
               Bluesky
             </div>
