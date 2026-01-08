@@ -7,6 +7,7 @@ import { getServerUrl, setServerUrl } from '../../utils/apiConfig';
 import { readPinnedServers, removePinnedServer, normalizeInstanceUrl } from '../../utils/pinnedServers';
 import { storage } from '../../shared/config/storage';
 import { ErrorCard, Spinner } from '../ui';
+import { Button, IconButton } from '../ui/Button';
 import { useSocket } from '../../context/SocketContext';
 
 // Props erweitert: onCreateServer und onJoinServer hinzugefügt
@@ -379,12 +380,14 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
         {/* 1. SCROLLABLE BEREICH: Server Liste */}
         <div className="flex-1 w-full flex flex-col items-center gap-3.5 py-4 px-2 overflow-y-auto no-scrollbar">
           {/* HOME BUTTON */}
-          <button
+          <IconButton
             type="button"
             onClick={() => onSelectServer(null)}
+            size="lg"
+            variant="ghost"
             className={
               `
-              w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 group relative no-drag border border-[color:var(--color-border)]
+              w-12 h-12 flex-shrink-0 cursor-pointer transition-all duration-300 group relative no-drag border border-[color:var(--color-border)]
               ${selectedServerId === null
                 ? 'bg-[color:var(--color-accent)] text-accent rounded-[14px] shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-accent)_16%,transparent)]'
                 : 'bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 text-text-muted hover:text-accent rounded-full hover:rounded-[14px] hover:shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-accent-hover)_6%,transparent)]'}
@@ -393,7 +396,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
             aria-label="Home"
           >
             <Home size={22} />
-          </button>
+          </IconButton>
 
           <div className="w-10 h-px bg-[color:var(--color-surface-hover)]/80 rounded-full flex-shrink-0" />
 
@@ -418,13 +421,15 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
             const isPinned = pinnedLocalIds.includes(server.id);
 
             return (
-              <button
+              <Button
                 key={`local-${server.id}`}
                 type="button"
                 onClick={() => onSelectServer(server.id)}
+                size="icon"
+                variant="ghost"
                 className={
                   `
-                w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 relative group no-drag border border-[color:var(--color-border)]
+                w-12 h-12 flex-shrink-0 cursor-pointer transition-all duration-300 relative group no-drag border border-[color:var(--color-border)]
                 ${selectedServerId === server.id ? 'rounded-[14px]' : 'rounded-full hover:rounded-[14px]'}
                 bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 hover:shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-accent-hover)_5%,transparent)] ${selectedServerId === server.id ? 'shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-accent)_16%,transparent)]' : ''}
               `
@@ -473,7 +478,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                     {name.substring(0, 2).toUpperCase()}
                   </span>
                 )}
-              </button>
+              </Button>
             );
           })}
 
@@ -502,19 +507,21 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                     <Globe size={12} />
                   </div>
 
-                  <button
+                  <IconButton
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       removePinnedServer(p.instanceUrl, p.serverId);
                       setPinnedTick((x) => x + 1);
                     }}
-                    className="no-drag absolute -top-1 -left-1 w-5 h-5 rounded-full bg-[color:var(--color-surface)]/90 border border-[color:var(--color-border)] hidden group-hover:flex items-center justify-center text-text-muted hover:text-accent"
+                    size="sm"
+                    variant="ghost"
+                    className="no-drag absolute -top-1 -left-1 h-5 w-5 rounded-full bg-[color:var(--color-surface)]/90 border border-[color:var(--color-border)] hidden group-hover:flex text-text-muted hover:text-accent"
                     title="Entfernen"
                     aria-label="Server entfernen"
                   >
                     <X size={12} />
-                  </button>
+                  </IconButton>
 
                   {p.iconUrl ? (
                     <img
@@ -536,39 +543,45 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
         {/* 2. FIXIERTER FOOTER: Add Button + Menü */}
         <div className="flex-shrink-0 w-full flex flex-col items-center pb-4 relative z-50">
           <div className="relative" data-rail-add>
-            <button
+            <IconButton
               type="button"
               onMouseDown={(e) => e.stopPropagation()}
               onClick={() => setShowAddMenu((v) => !v)}
-              className="no-drag w-12 h-12 flex-shrink-0 no-drag rounded-full bg-[color:var(--color-accent)]/10 hover:bg-[color:var(--color-accent-hover)]/20 border border-[color:var(--color-accent)]/30 flex items-center justify-center cursor-pointer text-text-muted transition-all duration-300 hover:rounded-[14px] hover:shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-accent)_16%,transparent)] group hover:text-accent"
+              size="lg"
+              variant="ghost"
+              className="no-drag w-12 h-12 flex-shrink-0 rounded-full bg-[color:var(--color-accent)]/10 hover:bg-[color:var(--color-accent-hover)]/20 border border-[color:var(--color-accent)]/30 cursor-pointer text-text-muted transition-all duration-300 hover:rounded-[14px] hover:shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-accent)_16%,transparent)] group hover:text-accent"
               title="Server hinzufügen"
               aria-label="Server hinzufügen"
             >
               <Plus size={22} />
-            </button>
+            </IconButton>
 
             {showAddMenu && (
               <div className="absolute left-16 bottom-0 w-52 bg-[color:var(--color-surface)] border border-[color:var(--color-border)] rounded-[var(--radius-3)] shadow-2xl p-2 z-50 no-drag">
-                <button
+                <Button
                   type="button"
-                  className="w-full text-left px-3 py-2 rounded-[var(--radius-2)] hover:bg-[color:var(--color-surface-hover)] text-sm text-white"
+                  size="sm"
+                  variant="ghost"
+                  className="w-full justify-start rounded-[var(--radius-2)] text-sm text-white hover:bg-[color:var(--color-surface-hover)]"
                   onClick={() => {
                     setShowAddMenu(false);
                     onCreateServer(); // Ruft jetzt die Prop auf
                   }}
                 >
                   Server erstellen
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="w-full text-left px-3 py-2 rounded-[var(--radius-2)] hover:bg-[color:var(--color-surface-hover)] text-sm text-white"
+                  size="sm"
+                  variant="ghost"
+                  className="w-full justify-start rounded-[var(--radius-2)] text-sm text-white hover:bg-[color:var(--color-surface-hover)]"
                   onClick={() => {
                     setShowAddMenu(false);
                     onJoinServer(); // Ruft jetzt die Prop auf
                   }}
                 >
                   Server beitreten / hinzufügen
-                </button>
+                </Button>
                 <div className="text-[10px] text-[color:var(--color-text-muted)] px-3 pt-2 pb-1">Aktuelle Instanz: {currentInstance}</div>
               </div>
             )}
@@ -587,10 +600,12 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
             className="pointer-events-auto absolute min-w-[180px] bg-[color:var(--color-surface)] border border-[color:var(--color-border)] rounded-[var(--radius-3)] shadow-2xl p-2 text-sm text-white"
             style={{ left: contextMenu.x, top: contextMenu.y }}
           >
-            <button
+            <Button
               type="button"
               role="menuitem"
-              className="flex w-full items-center gap-2 px-3 py-2 rounded-[var(--radius-2)] hover:bg-[color:var(--color-surface-hover)] focus:bg-[color:var(--color-surface-hover)]/80 focus:outline-none"
+              size="sm"
+              variant="ghost"
+              className="w-full justify-start gap-2 rounded-[var(--radius-2)] hover:bg-[color:var(--color-surface-hover)] focus:bg-[color:var(--color-surface-hover)]/80 focus:outline-none"
               onClick={() => handleContextAction('rename')}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -601,13 +616,15 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
             >
               <Pencil size={16} />
               <span>{t('serverRail.context.rename')}</span>
-            </button>
+            </Button>
 
             {contextMenu.type === 'local' && (
-              <button
+              <Button
                 type="button"
                 role="menuitem"
-                className="flex w-full items-center gap-2 px-3 py-2 rounded-[var(--radius-2)] hover:bg-[color:var(--color-surface-hover)] focus:bg-[color:var(--color-surface-hover)]/80 focus:outline-none"
+                size="sm"
+                variant="ghost"
+                className="w-full justify-start gap-2 rounded-[var(--radius-2)] hover:bg-[color:var(--color-surface-hover)] focus:bg-[color:var(--color-surface-hover)]/80 focus:outline-none"
                 onClick={() => handleContextAction('pin-toggle')}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
@@ -622,14 +639,16 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                     ? t('serverRail.context.unpin')
                     : t('serverRail.context.pin')}
                 </span>
-              </button>
+              </Button>
             )}
 
             {contextMenu.type === 'remote' && (
-              <button
+              <Button
                 type="button"
                 role="menuitem"
-                className="flex w-full items-center gap-2 px-3 py-2 rounded-[var(--radius-2)] hover:bg-[color:var(--color-surface-hover)] focus:bg-[color:var(--color-surface-hover)]/80 focus:outline-none"
+                size="sm"
+                variant="ghost"
+                className="w-full justify-start gap-2 rounded-[var(--radius-2)] hover:bg-[color:var(--color-surface-hover)] focus:bg-[color:var(--color-surface-hover)]/80 focus:outline-none"
                 onClick={() => handleContextAction('remove')}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
@@ -640,7 +659,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
               >
                 <Trash2 size={16} />
                 <span>{t('serverRail.context.remove')}</span>
-              </button>
+              </Button>
             )}
           </div>
         </div>

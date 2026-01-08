@@ -15,6 +15,7 @@ import { resolveServerAssetUrl } from '../../utils/assetUrl';
 import { defaultServerTheme, deriveServerThemeFromSettings, type ServerTheme } from '../../theme/serverTheme';
 import { storage } from '../../shared/config/storage';
 import { ErrorCard, RoleTag, Skeleton, Spinner, StatusBadge, type StatusTone } from '../ui';
+import { Button, IconButton } from '../ui/Button';
 
 interface Channel { id: number; name: string; type: 'text' | 'voice' | 'web' | 'data-transfer' | 'spacer' | 'list'; custom_icon?: string; }
 interface Category { id: number; name: string; channels: Channel[]; }
@@ -368,42 +369,48 @@ export const ChannelSidebar = ({
 
             {isServerMenuOpen && (
                 <div className="absolute top-[50px] left-2 right-2 bg-[color:var(--color-surface)] rounded-md border border-border shadow-2xl z-50 overflow-hidden py-1 animate-in fade-in zoom-in-95 duration-100">
-                    <button
+                    <Button
                         onClick={() => {
                             if (isServerAdmin) onOpenServerSettings();
                             setIsServerMenuOpen(false);
                         }}
                         disabled={!isServerAdmin}
-                        className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors ${isServerAdmin ? 'text-text-muted hover:bg-[color:var(--color-surface-hover)] hover:text-accent' : 'text-neutral-600 cursor-not-allowed'}`}
+                        size="sm"
+                        variant="ghost"
+                        className={`w-full justify-start gap-2 text-sm ${isServerAdmin ? 'text-text-muted hover:bg-[color:var(--color-surface-hover)] hover:text-accent' : 'text-neutral-600 cursor-not-allowed'}`}
                     >
                         <Settings size={14} />
                         {t('channelSidebar.serverSettings') || 'Server Settings'}
-                    </button>
+                    </Button>
                     {isServerAdmin && (
-                        <button
+                        <Button
                             onClick={() => {
                                 setCreateType('text');
                                 setCreateCategoryId(null);
                                 setShowCreateModal(true);
                                 setIsServerMenuOpen(false);
                             }}
-                            className="w-full text-left px-3 py-2 text-sm text-text-muted hover:bg-[color:var(--color-surface-hover)] hover:text-accent flex items-center gap-2 transition-colors"
+                            size="sm"
+                            variant="ghost"
+                            className="w-full justify-start gap-2 text-sm text-text-muted hover:bg-[color:var(--color-surface-hover)] hover:text-accent"
                         >
                             <Plus size={14} />
                             {t('channelSidebar.createChannel')}
-                        </button>
+                        </Button>
                     )}
                     <div className="h-[1px] bg-surface-3 my-1 mx-2" />
-                    <button
+                    <Button
                         onClick={async () => {
                              if (!localUser?.id) return;
                              try { await apiFetch(`/api/servers/${serverId}/members/${localUser.id}`, { method: 'DELETE' }); window.location.reload(); } catch (e) { alert('Error leaving server'); }
                         }}
-                        className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 flex items-center gap-2 transition-colors"
+                        size="sm"
+                        variant="ghost"
+                        className="w-full justify-start gap-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300"
                     >
                         <LogOut size={14} />
                         {t('channelSidebar.leaveServer')}
-                    </button>
+                    </Button>
                 </div>
             )}
         </div>
@@ -430,13 +437,34 @@ export const ChannelSidebar = ({
                         <div className={dragMeta.isDragging ? 'opacity-80' : ''} ref={dragMeta.setNodeRef} style={dragMeta.style}>
                            <div className="t-cat group justify-between pr-2 no-drag">
                                <div className="flex items-center gap-2">
-                                  <button {...(dragMeta.isDisabled ? {} : dragMeta.handleProps)} className="flex h-7 w-7 items-center justify-center rounded-md text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] hover:bg-[color:var(--color-surface-hover)]"><GripVertical size={14} /></button>
-                                  <button onClick={() => toggleCategory(cat.id)} className="flex items-center gap-2 text-inherit hover:text-accent">
+                                  <IconButton
+                                    {...(dragMeta.isDisabled ? {} : dragMeta.handleProps)}
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 w-7 rounded-md text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] hover:bg-[color:var(--color-surface-hover)]"
+                                    aria-label={t('channelSidebar.dragCategory', { defaultValue: 'Kategorie verschieben' })}
+                                  >
+                                    <GripVertical size={14} />
+                                  </IconButton>
+                                  <Button
+                                    onClick={() => toggleCategory(cat.id)}
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-auto px-0 py-0 gap-2 text-inherit hover:text-accent"
+                                  >
                                     {collapsed[cat.id] ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
                                     <span className="truncate">{cat.name}</span>
-                                  </button>
+                                  </Button>
                                </div>
-                               <button className="no-drag opacity-0 group-hover:opacity-100 text-[color:var(--color-text-muted)] hover:text-accent" onClick={(e) => { e.stopPropagation(); setCreateType('text'); setCreateCategoryId(cat.id); setShowCreateModal(true); }}><Plus size={14} /></button>
+                               <IconButton
+                                 className="no-drag opacity-0 group-hover:opacity-100 h-7 w-7 rounded-md text-[color:var(--color-text-muted)] hover:text-accent"
+                                 size="sm"
+                                 variant="ghost"
+                                 aria-label={t('channelSidebar.createChannel', { defaultValue: 'Kanal erstellen' })}
+                                 onClick={(e) => { e.stopPropagation(); setCreateType('text'); setCreateCategoryId(cat.id); setShowCreateModal(true); }}
+                               >
+                                 <Plus size={14} />
+                               </IconButton>
                            </div>
                            {!collapsed[cat.id] && (
                                <SortableContext id={`${categoryKey(cat.id)}-context`} items={cat.channels.map((c) => channelKey(c.id, categoryKey(cat.id)))} strategy={verticalListSortingStrategy}>
@@ -459,10 +487,11 @@ export const ChannelSidebar = ({
 
       {connectionState === 'connected' && (
         <div className="relative z-10 pb-3">
-          <button
+          <Button
             type="button"
             onClick={handleJumpToVoice}
-            className="t-chan active w-full bg-transparent"
+            variant="ghost"
+            className="t-chan active w-full bg-transparent justify-start"
             title={activeChannelName || t('channelSidebar.inChannel')}
           >
             <span className="chan-icon">
@@ -472,34 +501,37 @@ export const ChannelSidebar = ({
               <span className="chan-name">{activeChannelName || t('channelSidebar.inChannel')}</span>
               <span className="chan-sub">{t('channelSidebar.connected')}</span>
             </div>
-          </button>
+          </Button>
           <div className="call-ctrl">
-            <button
+            <IconButton
               type="button"
               onClick={() => disconnect()}
+              variant="ghost"
               className="cc-btn danger"
               aria-label={t('channelSidebar.leaveVoice', { defaultValue: 'Voice verlassen' })}
             >
               <PhoneOff size={16} />
-            </button>
-            <button
+            </IconButton>
+            <IconButton
               type="button"
               onClick={() => toggleCamera()}
+              variant="ghost"
               className={`cc-btn ${isCameraEnabled ? 'active' : ''}`}
               aria-pressed={isCameraEnabled}
               aria-label={t('channelSidebar.toggleCamera', { defaultValue: 'Kamera umschalten' })}
             >
               <Camera size={16} />
-            </button>
-            <button
+            </IconButton>
+            <IconButton
               type="button"
               onClick={() => toggleScreenShare()}
+              variant="ghost"
               className={`cc-btn ${isScreenSharing ? 'active' : ''}`}
               aria-pressed={isScreenSharing}
               aria-label={t('channelSidebar.toggleScreenShare', { defaultValue: 'Bildschirm teilen' })}
             >
               <ScreenShare size={16} />
-            </button>
+            </IconButton>
           </div>
         </div>
       )}
