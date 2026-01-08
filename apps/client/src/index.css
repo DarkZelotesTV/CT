@@ -26,6 +26,7 @@
   --color-border-subtle: rgba(255, 255, 255, 0.08);
   --color-accent: #10b981;
   --color-accent-hover: #059669;
+  --color-on-accent: #0b1021;
   --color-focus: var(--color-accent);
   --color-overlay: rgba(6, 8, 16, 0.78);
   --color-shadow: #000000;
