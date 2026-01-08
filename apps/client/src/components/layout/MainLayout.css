@@ -29,6 +29,11 @@
 .main-layout.home-layout {
   grid-template-columns: var(--w-rail) 0 1fr 0;
   grid-template-rows: var(--h-header) 1fr 0;
+  --h-header: 0px;
+}
+
+.main-layout.home-layout .header-panel {
+  display: none;
 }
 
 body.mobile-scroll-lock {
