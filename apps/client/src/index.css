@@ -120,33 +120,34 @@
   --decor-orb-2-color: #60a5fa;
   --decor-orb-1-opacity: 0.5;
   --decor-orb-2-opacity: 0.4;
+
+  --color-text: #e5e7eb;
+  --color-text-muted: #cbd5e1;
   
   /* Helper for existing components relying on old vars */
-  --color-text-base: #eee;
-  --color-text-muted: #888;
-  --color-text-ghost: #777;
-  --color-text-secondary: #cbd5e1;
-  --color-text-tertiary: #a1a1aa;
-  --color-text-primary: #e5e7eb;
-  --color-text-subtle: #9ca3af;
-  --color-text-accent-soft: #a7f3d0;
-  --color-text-strong: #fff;
-  --color-text-quiet: #9aa4b5;
-  --color-text-log: #ccc;
-  --color-text-dim: #555;
-  --color-text-danger-soft: #f87171;
-  --color-text-placeholder: #8b93a7;
-  --color-text-section: #7a8191;
-  --color-text-warning-soft: #fcd34d;
-  --color-text-bright: #f3f4f6;
-  --color-text-danger: #ef4444;
-  --color-text-warning: #fbbf24;
-  --color-text-success: #22c55e;
-  --color-text-danger-light: #fecdd3;
-  --color-text-inverse: #0a0f16;
-  --color-text-danger-muted: #fca5a5;
-  --color-text-muted-strong: #94a3b8;
-  --color-text: var(--color-text-base);
+  --color-text-base: var(--color-text);
+  --color-text-ghost: color-mix(in srgb, var(--color-text-muted) 60%, transparent);
+  --color-text-secondary: var(--color-text-muted);
+  --color-text-tertiary: color-mix(in srgb, var(--color-text-muted) 75%, var(--color-text) 25%);
+  --color-text-primary: var(--color-text);
+  --color-text-subtle: color-mix(in srgb, var(--color-text-muted) 55%, var(--color-text) 45%);
+  --color-text-accent-soft: color-mix(in srgb, var(--color-accent) 45%, var(--color-text) 55%);
+  --color-text-strong: var(--color-text);
+  --color-text-quiet: color-mix(in srgb, var(--color-text-muted) 70%, transparent);
+  --color-text-log: color-mix(in srgb, var(--color-text) 80%, var(--color-text-muted) 20%);
+  --color-text-dim: color-mix(in srgb, var(--color-text-muted) 40%, transparent);
+  --color-text-danger-soft: color-mix(in srgb, var(--status-dnd) 65%, transparent);
+  --color-text-placeholder: color-mix(in srgb, var(--color-text-muted) 65%, transparent);
+  --color-text-section: color-mix(in srgb, var(--color-text-muted) 70%, transparent);
+  --color-text-warning-soft: color-mix(in srgb, var(--status-idle) 70%, transparent);
+  --color-text-bright: color-mix(in srgb, var(--color-text) 95%, var(--color-text-muted) 5%);
+  --color-text-danger: var(--status-dnd);
+  --color-text-warning: var(--status-idle);
+  --color-text-success: var(--status-online);
+  --color-text-danger-light: color-mix(in srgb, var(--status-dnd) 35%, var(--color-text) 65%);
+  --color-text-inverse: color-mix(in srgb, var(--color-text) 10%, var(--color-surface) 90%);
+  --color-text-danger-muted: color-mix(in srgb, var(--status-dnd) 60%, var(--color-text-muted) 40%);
+  --color-text-muted-strong: color-mix(in srgb, var(--color-text-muted) 85%, var(--color-text) 15%);
   --layout-border: var(--border-glass);
 }
 
