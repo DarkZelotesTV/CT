@@ -1,6 +1,7 @@
 import { ArrowRight, Compass, Home, Layers, MessageSquare, PlusCircle, Server, Settings, Users } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import { DecorationLayer } from '../layout/DecorationLayer';
+import { Button } from '../ui/Button';
 
 interface HomeOnboardingStageProps {
   onCreateServer: () => void;
@@ -83,27 +84,31 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
             </div>
 
             <div className="mt-4 flex flex-col min-[900px]:flex-row gap-3">
-              <button
+              <Button
                 type="button"
                 onClick={onCreateServer}
-                className="h-10 px-4 bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-text rounded-2xl shadow-lg shadow-[0_16px_28px_color-mix(in_srgb,var(--color-accent)_30%,transparent)] flex items-center gap-2.5 transition-colors max-[899px]:w-full max-[899px]:justify-center"
+                variant="primary"
+                className="h-10 px-4 rounded-2xl shadow-lg shadow-[0_16px_28px_color-mix(in_srgb,var(--color-accent)_30%,transparent)] gap-2.5 transition-colors max-[899px]:w-full max-[899px]:justify-center text-text"
               >
                 <PlusCircle size={18} /> Server erstellen
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={onJoinServer}
-                className="h-10 px-4 bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 text-text rounded-2xl border border-[color:var(--color-border)] flex items-center gap-2.5 transition-colors max-[899px]:w-full max-[899px]:justify-center"
+                variant="secondary"
+                className="h-10 px-4 rounded-2xl gap-2.5 transition-colors max-[899px]:w-full max-[899px]:justify-center"
               >
                 <Compass size={18} /> Mit Einladung beitreten
-              </button>
+              </Button>
             </div>
-            <button
+            <Button
               type="button"
-              className="mt-3 text-[13px] text-text-muted hover:text-[color:var(--color-accent)] transition-colors self-start"
+              variant="ghost"
+              size="sm"
+              className="mt-3 h-auto px-0 py-0 text-[13px] text-text-muted hover:text-[color:var(--color-accent)] self-start"
             >
               Demo-Server ansehen
-            </button>
+            </Button>
             <div className="mt-5 flex flex-col gap-2 max-w-[400px]">
               {suggestedServers.slice(0, 3).map((server) => (
                 <div
@@ -114,12 +119,14 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
                     <Server size={16} />
                   </span>
                   <span className="text-[13px] font-medium text-text">{server.name}</span>
-                  <button
+                  <Button
                     type="button"
-                    className="ml-auto inline-flex h-10 items-center rounded-2xl border border-[color:var(--color-border)] px-4 text-[12px] font-semibold text-[color:var(--color-text)] transition-colors hover:border-[color:var(--color-accent)]/40 hover:text-[color:var(--color-accent)]"
+                    size="sm"
+                    variant="secondary"
+                    className="ml-auto h-10 rounded-2xl px-4 text-[12px] font-semibold text-[color:var(--color-text)] hover:border-[color:var(--color-accent)]/40 hover:text-[color:var(--color-accent)]"
                   >
                     Beitreten
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>
@@ -163,14 +170,15 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
             {checklistItems.map(({ label, icon: Icon, action, disabled, tooltip }) => {
               const isDisabled = Boolean(disabled);
               return (
-                <button
+                <Button
                   key={label}
                   type="button"
                   onClick={isDisabled ? undefined : action}
                   aria-disabled={isDisabled}
                   tabIndex={isDisabled ? -1 : 0}
                   title={isDisabled ? tooltip : undefined}
-                  className={`group flex h-10 items-center gap-3 rounded-2xl border border-[color:var(--color-border)]/70 px-4 text-left transition ${
+                  variant="ghost"
+                  className={`group w-full h-10 items-center gap-3 rounded-2xl border border-[color:var(--color-border)]/70 px-4 text-left transition justify-start ${
                     isDisabled
                       ? 'cursor-not-allowed bg-surface-2/30 text-text-muted/80'
                       : 'bg-surface-2 text-text hover:bg-surface-3 hover:border-[color:var(--color-accent)]/30 hover:ring-1 hover:ring-[color:var(--color-accent)]/15'
@@ -189,7 +197,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
                   >
                     Los <ArrowRight size={14} />
                   </span>
-                </button>
+                </Button>
               );
             })}
           </div>

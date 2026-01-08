@@ -1,7 +1,7 @@
 import * as React from 'react';
 import classNames from 'classnames';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success' | 'warning';
 export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon';
 
 /**
@@ -23,7 +23,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           // base
           'inline-flex items-center justify-center gap-2 font-semibold',
           'rounded-xl transition active:scale-[0.98]',
-          'focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
           'disabled:pointer-events-none disabled:opacity-50',
           // sizing
           size === 'sm' && 'h-9 px-3 text-sm',
@@ -35,6 +35,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           variant === 'secondary' && 'bg-surface-alt text-text hover:bg-surface-hover border border-border',
           variant === 'ghost' && 'bg-transparent text-text hover:bg-surface-hover border border-transparent',
           variant === 'danger' && 'bg-red-500 text-white hover:bg-red-600',
+          variant === 'success' && 'bg-[color:var(--color-text-success)] text-white hover:brightness-110',
+          variant === 'warning' && 'bg-[color:var(--color-text-warning)] text-white hover:brightness-110',
           className,
         )}
         {...props}
