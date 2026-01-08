@@ -189,7 +189,7 @@ export const TitleBar = ({
       </div>
 
       {!isMac && (
-        <div className="flex items-center h-full border-l border-[color:var(--color-border)]/70">
+        <div className="flex items-center h-full">
           <button type="button" className={windowBtnBase} onClick={() => void controls.minimize()}>
             <Minus size={16} aria-hidden="true" />
           </button>
