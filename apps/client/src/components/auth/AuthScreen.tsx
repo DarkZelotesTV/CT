@@ -116,7 +116,7 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
         {/* SERVER SETTINGS TOGGLE (Oben Rechts) */}
         <button 
             onClick={() => setShowServerSettings(!showServerSettings)}
-            className="absolute top-4 right-4 p-2 text-[color:var(--color-text-muted)] hover:text-white hover:bg-[color:var(--color-surface-hover)]/80 rounded-lg transition-colors"
+            className="absolute top-4 right-4 p-2 text-[color:var(--color-text-muted)] hover:text-text hover:bg-[color:var(--color-surface-hover)]/80 rounded-lg transition-colors"
             title="Server Einstellungen"
         >
             <Server size={20} className={connectionStatus === 'error' ? 'text-red-500' : ''} />
@@ -125,9 +125,9 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
         {/* Header */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-green-400 to-emerald-600 shadow-lg mb-4 transform rotate-3 hover:rotate-6 transition-transform">
-            <Clover className="text-white" size={32} />
+            <Clover className="text-text" size={32} />
           </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">CloverTalk</h1>
+          <h1 className="text-3xl font-bold text-text tracking-tight">CloverTalk</h1>
           <p className="text-[color:var(--color-text-muted)] mt-2 text-sm">
             {isRegistering ? 'Erstelle deinen Zugang' : 'Willkommen zurück'}
           </p>
@@ -164,7 +164,7 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
                           setServerUrl(normalized);
                           checkServerConnection(normalized);
                         }}
-                        className="flex-1 bg-[color:var(--color-surface)]/50 border border-[color:var(--color-border)] rounded-lg px-3 py-2 text-sm text-white focus:border-green-500 outline-none"
+                        className="flex-1 bg-[color:var(--color-surface)]/50 border border-[color:var(--color-border)] rounded-lg px-3 py-2 text-sm text-text focus:border-[color:var(--color-focus)] outline-none"
                         placeholder="https://localhost:3001"
                     />
                 </div>
@@ -194,7 +194,7 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
                     value={serverPassword}
                     onChange={(e) => setServerPasswordState(e.target.value)}
                     onBlur={() => setServerPassword(serverPassword)}
-                    className="w-full bg-[color:var(--color-surface)]/50 border border-[color:var(--color-border)] rounded-lg px-3 py-2 text-sm text-white focus:border-green-500 outline-none"
+                    className="w-full bg-[color:var(--color-surface)]/50 border border-[color:var(--color-border)] rounded-lg px-3 py-2 text-sm text-text focus:border-[color:var(--color-focus)] outline-none"
                     placeholder="Leer lassen wenn keins"
                   />
                   <p className="text-[10px] text-[color:var(--color-text-muted)]">Für private Installationen kannst du hier das Server-Passwort hinterlegen.</p>
@@ -217,14 +217,14 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
               <label className="text-xs font-medium text-[color:var(--color-text)] ml-1">Benutzername</label>
               <div className="relative group">
                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="text-[color:var(--color-text-muted)] group-focus-within:text-green-400 transition-colors" size={18} />
+                    <User className="text-[color:var(--color-text-muted)] group-focus-within:text-[color:var(--color-accent)] transition-colors" size={18} />
                  </div>
                  <input 
                     type="text" 
                     required={isRegistering}
                     value={username}
                     onChange={e => setUsername(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-3 bg-[color:var(--color-surface)]/50 border border-[color:var(--color-border)] rounded-xl text-white placeholder:text-[color:var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-all sm:text-sm"
+                    className="block w-full pl-10 pr-3 py-3 bg-[color:var(--color-surface)]/50 border border-[color:var(--color-border)] rounded-xl text-text placeholder:text-[color:var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-focus)] focus:border-[color:var(--color-focus)] transition-all sm:text-sm"
                     placeholder="Dein Name"
                  />
               </div>
@@ -235,14 +235,14 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
             <label className="text-xs font-medium text-[color:var(--color-text)] ml-1">Email Adresse</label>
             <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="text-[color:var(--color-text-muted)] group-focus-within:text-green-400 transition-colors" size={18} />
+                  <Mail className="text-[color:var(--color-text-muted)] group-focus-within:text-[color:var(--color-accent)] transition-colors" size={18} />
                 </div>
                 <input 
                   type="email" 
                   required
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 bg-[color:var(--color-surface)]/50 border border-[color:var(--color-border)] rounded-xl text-white placeholder:text-[color:var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-all sm:text-sm"
+                  className="block w-full pl-10 pr-3 py-3 bg-[color:var(--color-surface)]/50 border border-[color:var(--color-border)] rounded-xl text-text placeholder:text-[color:var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-focus)] focus:border-[color:var(--color-focus)] transition-all sm:text-sm"
                   placeholder="name@beispiel.de"
                 />
             </div>
@@ -252,14 +252,14 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
             <label className="text-xs font-medium text-[color:var(--color-text)] ml-1">Passwort</label>
             <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="text-[color:var(--color-text-muted)] group-focus-within:text-green-400 transition-colors" size={18} />
+                  <Lock className="text-[color:var(--color-text-muted)] group-focus-within:text-[color:var(--color-accent)] transition-colors" size={18} />
                 </div>
                 <input 
                   type="password" 
                   required
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 bg-[color:var(--color-surface)]/50 border border-[color:var(--color-border)] rounded-xl text-white placeholder:text-[color:var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-all sm:text-sm"
+                  className="block w-full pl-10 pr-3 py-3 bg-[color:var(--color-surface)]/50 border border-[color:var(--color-border)] rounded-xl text-text placeholder:text-[color:var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-focus)] focus:border-[color:var(--color-focus)] transition-all sm:text-sm"
                   placeholder="••••••••"
                 />
             </div>
@@ -268,7 +268,7 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full relative overflow-hidden group bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-green-900/20 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full relative overflow-hidden group bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-text font-bold py-3.5 rounded-xl shadow-lg shadow-green-900/20 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
           >
             <div className="relative z-10 flex items-center justify-center gap-2">
                {loading ? <Loader2 className="animate-spin" /> : (isRegistering ? 'Starten' : 'Anmelden')}
