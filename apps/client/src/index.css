@@ -21,6 +21,8 @@
   --color-surface-header: rgba(15, 22, 37, 0.88);
   --color-border: #1f2a3a;
   --color-border-strong: #303a4e;
+  --color-accent: #10b981;
+  --color-accent-hover: #059669;
   --shadow-panel-inset: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
   --shadow-panel: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.02);
   --shadow-panel-strong: 0 -10px 40px rgba(0, 0, 0, 0.5);
@@ -37,7 +39,8 @@
   --bg-info: var(--color-surface-info);
   --bg-log: var(--color-surface-log);
   
-  --accent: #10b981;
+  --accent: var(--color-accent);
+  --accent-hover: var(--color-accent-hover);
   --layout-accent-dim: rgba(16, 185, 129, 0.15); /* maps to --accent-dim */
   --layout-accent-glow: 0 0 15px rgba(16, 185, 129, 0.4); /* maps to --accent-glow */
   --accent-dim: var(--layout-accent-dim);
