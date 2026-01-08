@@ -203,5 +203,15 @@
 }
 
 /* Utilities */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
 .no-drag { -webkit-app-region: no-drag; }
 .drag { -webkit-app-region: drag; }
