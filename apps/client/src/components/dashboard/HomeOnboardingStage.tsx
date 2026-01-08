@@ -53,7 +53,6 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
   const suggestedServers = [
     { id: 'design-lounge', name: 'Design Lounge' },
     { id: 'dev-collective', name: 'Dev Collective' },
-    { id: 'coffee-break', name: 'Coffee Break' },
   ];
 
   return (
@@ -191,6 +190,17 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
                 </button>
               );
             })}
+          </div>
+          <div className="rounded-2xl border border-[color:var(--color-border)] bg-surface-3/60 p-3">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-[color:var(--color-text-muted)] mb-2">
+              Bluesky
+            </div>
+            <iframe
+              title="Bluesky Embed"
+              src="https://bsky.app/profile/bsky.app/post/3l6nqav7jv22k"
+              className="w-full h-[220px] rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)]"
+              loading="lazy"
+            />
           </div>
         </div>
       </div>
