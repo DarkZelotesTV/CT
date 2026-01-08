@@ -68,13 +68,13 @@ const widgetSnippets: Record<string, string> = {
   media: `<div class="media-embed" data-widget="media">
   <iframe class="w-full aspect-video rounded-lg" src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="Embedded media" allowfullscreen></iframe>
 </div>`,
-  form: `<form class="bg-dark-200 p-4 rounded-lg space-y-3" data-widget="form">
-  <label class="block text-sm font-semibold">Kontakt</label>
-  <input class="w-full bg-dark-100 border border-dark-400 rounded px-3 py-2" placeholder="Ihre E-Mail" />
-  <textarea class="w-full bg-dark-100 border border-dark-400 rounded px-3 py-2" rows="3" placeholder="Nachricht"></textarea>
-  <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Senden</button>
+  form: `<form class="bg-surface-2 p-4 rounded-lg space-y-3" data-widget="form">
+  <label class="block text-sm font-semibold text-text">Kontakt</label>
+  <input class="w-full bg-surface border border-border rounded px-3 py-2 text-text" placeholder="Ihre E-Mail" />
+  <textarea class="w-full bg-surface border border-border rounded px-3 py-2 text-text" rows="3" placeholder="Nachricht"></textarea>
+  <button type="submit" class="bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded">Senden</button>
 </form>`,
-  file: `<a data-widget="file" href="/files/beispiel.pdf" class="flex items-center gap-2 text-blue-200 hover:text-blue-100 underline">
+  file: `<a data-widget="file" href="/files/beispiel.pdf" class="flex items-center gap-2 text-accent hover:text-accent-hover underline">
   📄 Datei herunterladen
 </a>`
 };
@@ -86,11 +86,11 @@ const templateOptions: { key: string; label: string; description: string; layout
     description: 'Hero-Headline mit CTA und Vorteilsliste',
     layout: 'stack',
     content: `<section class="space-y-6">
-  <div class="bg-dark-200 border border-dark-400 p-6 rounded-xl">
-    <p class="text-blue-300 text-sm font-semibold">Neu</p>
-    <h1 class="text-3xl font-bold">Willkommen in deinem Web-Channel</h1>
-    <p class="text-[color:var(--color-text)] mt-2">Füge Widgets hinzu, teile Medien und binde Formulare ein, ohne HTML per Hand zu schreiben.</p>
-    <button class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Loslegen</button>
+  <div class="bg-surface-2 border border-border p-6 rounded-xl">
+    <p class="text-accent text-sm font-semibold">Neu</p>
+    <h1 class="text-3xl font-bold text-text">Willkommen in deinem Web-Channel</h1>
+    <p class="text-text mt-2">Füge Widgets hinzu, teile Medien und binde Formulare ein, ohne HTML per Hand zu schreiben.</p>
+    <button class="mt-4 bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded">Loslegen</button>
   </div>
 </section>`
   },
@@ -153,33 +153,33 @@ const CodenamesStage = ({ initialUrl, channelId, isEditing }: { initialUrl: stri
     };
 
     return (
-        <div className="flex flex-col h-full w-full bg-dark-100">
+        <div className="flex flex-col h-full w-full bg-surface">
             {/* Sync Bar */}
-            <div className="bg-dark-200 border-b border-dark-400 p-2 flex items-center gap-3 shrink-0 shadow-sm z-10">
+            <div className="bg-surface-2 border-b border-border p-2 flex items-center gap-3 shrink-0 shadow-sm z-10">
                 <div className="flex items-center gap-2 text-yellow-500 px-2">
                     <Gamepad2 size={18} />
                     <span className="font-bold text-[color:var(--color-text)] text-sm hidden md:inline">Codenames</span>
                 </div>
-                <div className="h-6 w-px bg-dark-400 mx-1 hidden md:block"></div>
+                <div className="h-6 w-px bg-border mx-1 hidden md:block"></div>
                 <div className="flex-1 flex items-center gap-2 max-w-2xl">
                     <input 
                         type="text" 
                         value={inputUrl}
                         onChange={(e) => setInputUrl(e.target.value)}
-                        className="flex-1 bg-dark-300 text-[color:var(--color-text)] text-sm px-3 py-1.5 rounded border border-dark-400 focus:border-blue-500 focus:outline-none font-mono"
+                        className="flex-1 bg-surface-3 text-[color:var(--color-text)] text-sm px-3 py-1.5 rounded border border-border focus:border-accent focus:outline-none font-mono"
                         placeholder="Raum-Link hier einfügen..."
                     />
                     <button 
                         onClick={handleSync}
                         disabled={syncing}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm font-medium flex items-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-accent hover:bg-accent-hover text-white px-3 py-1.5 rounded text-sm font-medium flex items-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {syncing ? <RefreshCw size={14} className="animate-spin" /> : <RefreshCw size={14} />}
                         <span>Sync</span>
                     </button>
                 </div>
                 <div className="ml-auto text-xs text-[color:var(--color-text-muted)] hidden md:flex items-center gap-2">
-                   <span className="bg-dark-300 px-2 py-1 rounded border border-dark-400">Erstelle Raum &rarr; Kopiere Link &rarr; Sync</span>
+                   <span className="bg-surface-3 px-2 py-1 rounded border border-border">Erstelle Raum &rarr; Kopiere Link &rarr; Sync</span>
                 </div>
             </div>
 
@@ -193,7 +193,7 @@ const CodenamesStage = ({ initialUrl, channelId, isEditing }: { initialUrl: stri
                     title="Codenames Game"
                 />
                  {url === 'https://codenames.game/' && (
-                    <div className="absolute bottom-6 left-6 max-w-sm bg-dark-200/95 backdrop-blur border border-dark-400 p-4 rounded-xl shadow-2xl pointer-events-none">
+                    <div className="absolute bottom-6 left-6 max-w-sm bg-surface-2/95 backdrop-blur border border-border p-4 rounded-xl shadow-2xl pointer-events-none">
                          <h4 className="font-bold text-[color:var(--color-text)] mb-1 flex items-center gap-2"><Play size={16} className="text-blue-500"/> Los geht's</h4>
                          <p className="text-xs text-[color:var(--color-text)]">Erstelle einen Raum im Spiel, kopiere den Link oben in die Leiste und klicke auf Sync, damit deine Freunde beitreten können.</p>
                     </div>
@@ -448,7 +448,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
   };
 
   const layoutBadge = (
-    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${isEditing ? 'bg-blue-500/20 text-blue-200 border border-blue-500/50' : 'bg-dark-300 text-[color:var(--color-text)] border border-dark-400'}`}>
+    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${isEditing ? 'bg-accent/20 text-accent border border-accent/50' : 'bg-surface-3 text-[color:var(--color-text)] border border-border'}`}>
       {isEditing ? 'Edit Mode' : (layoutMode === 'codenames' ? 'Game Mode' : 'Read-only')}
     </span>
   );
@@ -475,7 +475,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
           className={`flex items-center gap-2 text-xs uppercase font-bold px-3 py-2 rounded border transition ${
             isEditing
               ? 'text-red-200 border-red-400/40 hover:border-red-300'
-              : 'text-[color:var(--color-text)] border-dark-400 hover:border-dark-200'
+              : 'text-[color:var(--color-text)] border-border hover:border-border'
           }`}
         >
           {isEditing ? <X size={16} /> : <Edit size={16} />}
@@ -496,13 +496,13 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
   // --- Render Codenames View if active and NOT editing ---
   if (layoutMode === 'codenames' && !isEditing) {
       return (
-          <div className="flex-1 flex flex-col bg-dark-100 relative z-0 h-full overflow-hidden">
+          <div className="flex-1 flex flex-col bg-surface relative z-0 h-full overflow-hidden">
                {/* Mobile Header if not desktop */}
                {!isDesktop && (
-                <div className="h-12 border-b border-dark-400 flex items-center px-4 shadow-sm bg-dark-100 flex-shrink-0 justify-between">
+                <div className="h-12 border-b border-border flex items-center px-4 shadow-sm bg-surface flex-shrink-0 justify-between">
                     <div className="flex items-center gap-3">
                     <Globe className="text-[color:var(--color-text-muted)]" size={20} />
-                    <span className="font-bold text-white mr-2">{channelName}</span>
+                    <span className="font-bold text-text mr-2">{channelName}</span>
                     {layoutBadge}
                     </div>
                     {/* Reuse the Desktop Right Controls logic for mobile button */}
@@ -512,7 +512,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                             if (!isEditing) setEditValue(contentBody || 'https://codenames.game/');
                             setIsEditing(!isEditing);
                             }}
-                            className="flex items-center gap-2 text-xs uppercase font-bold px-3 py-2 rounded border border-dark-400 text-[color:var(--color-text)]"
+                            className="flex items-center gap-2 text-xs uppercase font-bold px-3 py-2 rounded border border-border text-[color:var(--color-text)]"
                         >
                             <Edit size={16} /> Seite bearbeiten
                         </button>
@@ -527,13 +527,13 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
 
   // --- Render Default Editor/HTML View ---
   return (
-    <div className="flex-1 flex flex-col bg-dark-100 relative z-0 h-full overflow-hidden">
+    <div className="flex-1 flex flex-col bg-surface relative z-0 h-full overflow-hidden">
 
       {!isDesktop && (
-      <div className="h-12 border-b border-dark-400 flex items-center px-4 shadow-sm bg-dark-100 flex-shrink-0 justify-between">
+      <div className="h-12 border-b border-border flex items-center px-4 shadow-sm bg-surface flex-shrink-0 justify-between">
         <div className="flex items-center gap-3">
           <Globe className="text-[color:var(--color-text-muted)]" size={20} />
-          <span className="font-bold text-white mr-2">{channelName}</span>
+          <span className="font-bold text-text mr-2">{channelName}</span>
           {layoutBadge}
         </div>
         <div className="flex items-center gap-3">
@@ -552,7 +552,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
             className={`flex items-center gap-2 text-xs uppercase font-bold px-3 py-2 rounded border transition ${
               isEditing
                 ? 'text-red-200 border-red-400/40 hover:border-red-300'
-                : 'text-[color:var(--color-text)] border-dark-400 hover:border-dark-200'
+                : 'text-[color:var(--color-text)] border-border hover:border-border'
             }`}
           >
             {isEditing ? <X size={16} /> : <Edit size={16} />}
@@ -570,7 +570,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
       )}
 
       {statusMessage && isEditing && !error && (
-        <div className="bg-blue-900/40 text-blue-100 text-sm px-4 py-2 border-b border-blue-800 flex items-center gap-2">
+        <div className="bg-surface-3/60 text-text text-sm px-4 py-2 border-b border-border flex items-center gap-2">
           <Eye size={14} /> {statusMessage}
         </div>
       )}
@@ -580,7 +580,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
 
         {isEditing ? (
           <div className="flex flex-col h-full p-4 gap-4">
-            <div className="bg-dark-200 border border-dark-400 rounded-lg p-3 flex flex-col gap-3">
+            <div className="bg-surface-2 border border-border rounded-lg p-3 flex flex-col gap-3">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-[color:var(--color-text-muted)] font-semibold">Layout & Modus</p>
@@ -591,8 +591,8 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                           onClick={() => setLayoutMode(option.key)}
                           className={`flex items-center gap-2 px-3 py-2 rounded border text-sm transition ${
                             layoutMode === option.key
-                              ? 'bg-blue-600/20 border-blue-500 text-blue-100'
-                              : 'bg-dark-300 border-dark-400 text-[color:var(--color-text)] hover:border-dark-200'
+                              ? 'bg-accent/20 border-accent text-accent'
+                              : 'bg-surface-3 border-border text-[color:var(--color-text)] hover:border-border'
                           }`}
                         >
                           {option.icon}
@@ -610,7 +610,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                       <select
                         value={selectedTemplate}
                         onChange={(event) => setSelectedTemplate(event.target.value)}
-                        className="bg-dark-300 border border-dark-400 text-[color:var(--color-text)] text-sm rounded px-3 py-2 min-w-[180px]"
+                        className="bg-surface-3 border border-border text-[color:var(--color-text)] text-sm rounded px-3 py-2 min-w-[180px]"
                       >
                         <option value="">Vorlage wählen</option>
                         {templateOptions.map((template) => (
@@ -622,7 +622,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                       <button
                         onClick={handleTemplateApply}
                         disabled={!selectedTemplate}
-                        className="flex items-center gap-2 px-3 py-2 rounded border border-blue-500/50 text-sm text-blue-100 bg-blue-600/20 disabled:opacity-50"
+                        className="flex items-center gap-2 px-3 py-2 rounded border border-accent/50 text-sm text-accent bg-accent/20 disabled:opacity-50"
                       >
                         <Sparkles size={16} /> Vorlage laden
                       </button>
@@ -635,7 +635,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                             draggable
                             onClick={() => widgetSnippets.media && appendSnippet(widgetSnippets.media)}
                             onDragStart={(event) => handleWidgetDragStart(event, widgetSnippets.media)}
-                            className="border border-dark-400 rounded-lg p-3 bg-dark-300 text-left cursor-grab hover:border-dark-200 transition"
+                            className="border border-border rounded-lg p-3 bg-surface-3 text-left cursor-grab hover:border-border transition"
                         >
                             <div className="flex items-center gap-2 font-semibold text-[color:var(--color-text)]">
                             <Image size={16} /> Media
@@ -657,13 +657,13 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                   </div>
                   
                   {layoutMode === 'codenames' ? (
-                      <div className="flex-1 bg-dark-300 border border-dark-400 rounded-lg p-4 font-mono text-[color:var(--color-text)] flex flex-col gap-2">
+                      <div className="flex-1 bg-surface-3 border border-border rounded-lg p-4 font-mono text-[color:var(--color-text)] flex flex-col gap-2">
                           <label className="text-xs text-[color:var(--color-text-muted)] uppercase">Standard URL</label>
                           <input 
                             type="text" 
                             value={editValue} 
                             onChange={(e) => setEditValue(e.target.value)}
-                            className="w-full bg-dark-200 border border-dark-400 p-2 rounded text-blue-300"
+                            className="w-full bg-surface-2 border border-border p-2 rounded text-text"
                           />
                           <p className="text-sm text-[color:var(--color-text-muted)] mt-2">
                               Im Codenames-Modus wird dieser Link als Standard geladen. Spieler können zur Laufzeit Räume synchronisieren.
@@ -671,7 +671,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                       </div>
                   ) : (
                     <div
-                        className="flex-1 bg-dark-300 border border-dark-400 rounded-lg overflow-hidden"
+                        className="flex-1 bg-surface-3 border border-border rounded-lg overflow-hidden"
                         onDrop={handleWidgetDrop}
                         onDragOver={(event) => event.preventDefault()}
                     >
@@ -689,7 +689,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                         modules={quillModules}
                         formats={quillFormats}
                         placeholder="Inhalt hier..."
-                        className="h-full flex flex-col text-[color:var(--color-text)] [&_.ql-editor]:min-h-[280px] [&_.ql-editor]:bg-dark-300 [&_.ql-editor]:text-[color:var(--color-text)] [&_.ql-toolbar]:bg-dark-200 [&_.ql-toolbar]:border-dark-400 [&_.ql-container]:border-none"
+                        className="h-full flex flex-col text-[color:var(--color-text)] [&_.ql-editor]:min-h-[280px] [&_.ql-editor]:bg-surface-3 [&_.ql-editor]:text-[color:var(--color-text)] [&_.ql-toolbar]:bg-surface-2 [&_.ql-toolbar]:border-border [&_.ql-container]:border-none"
                         />
                     </div>
                   )}
@@ -708,7 +708,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                   </div>
                 </div>
 
-                <div className="h-full rounded-lg border border-dark-400 bg-dark-200 p-4 overflow-auto">
+                <div className="h-full rounded-lg border border-border bg-surface-2 p-4 overflow-auto">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2 text-[color:var(--color-text)]">
                       <Eye size={16} />
@@ -717,14 +717,14 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                     <span className="text-xs text-[color:var(--color-text-muted)]">Layout: {activeLayout?.label}</span>
                   </div>
                   {layoutMode === 'codenames' ? (
-                      <div className="h-[400px] border border-dark-400 rounded overflow-hidden relative">
-                          <div className="absolute inset-0 flex items-center justify-center bg-dark-300 text-[color:var(--color-text-muted)] flex-col gap-2">
+                      <div className="h-[400px] border border-border rounded overflow-hidden relative">
+                          <div className="absolute inset-0 flex items-center justify-center bg-surface-3 text-[color:var(--color-text-muted)] flex-col gap-2">
                              <Gamepad2 size={48} className="opacity-50"/>
                              <p>Vorschau der Spiel-Ansicht</p>
                           </div>
                       </div>
                   ) : (
-                    <div className="prose prose-invert max-w-none bg-dark-300/40 border border-dark-400 rounded-lg p-4">
+                    <div className="prose prose-invert max-w-none bg-surface-3/40 border border-border rounded-lg p-4">
                         <div dangerouslySetInnerHTML={{ __html: previewContent }} />
                     </div>
                   )}

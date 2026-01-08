@@ -139,43 +139,43 @@ export const FriendListStage = ({ onBackToHome }: FriendListStageProps) => {
   const filteredBlocked = blockedRelations.filter(rel => matchesSearch(rel.user?.username ?? ''));
 
   const renderStatusBadge = (status: 'online' | 'offline') => (
-    <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 border-[3px] border-dark-100 rounded-full ${status === 'online' ? 'bg-green-500' : 'bg-[color:var(--color-surface-hover)]'}`}></div>
+    <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 border-[3px] border-border rounded-full ${status === 'online' ? 'bg-green-500' : 'bg-[color:var(--color-surface-hover)]'}`}></div>
   );
 
   return (
-    <div className="flex flex-col h-full bg-dark-100">
+    <div className="flex flex-col h-full bg-surface">
 
       {/* Top Bar */}
-      <div className="h-12 border-b border-dark-400 flex items-center px-4 shadow-sm bg-dark-100 z-10 gap-2">
+      <div className="h-12 border-b border-border flex items-center px-4 shadow-sm bg-surface z-10 gap-2">
         {onBackToHome && (
           <button
             onClick={onBackToHome}
-            className="flex items-center gap-1 text-[color:var(--color-text-muted)] hover:text-white px-2 py-1 rounded hover:bg-dark-300 transition-colors"
+            className="flex items-center gap-1 text-[color:var(--color-text-muted)] hover:text-text px-2 py-1 rounded hover:bg-surface-3 transition-colors"
           >
             <ArrowLeft size={16} />
             <span className="text-sm">Home</span>
           </button>
         )}
 
-        <div className="flex items-center text-white font-bold mr-4 border-r border-[color:var(--color-border)] pr-4 gap-2">
+        <div className="flex items-center text-text font-bold mr-4 border-r border-border pr-4 gap-2">
            <span className="text-[color:var(--color-text-muted)]">Freunde</span>
         </div>
 
         <div className="flex items-center space-x-4 flex-1">
-           <button onClick={() => setActiveTab('online')} className={`hover:bg-dark-300 px-2 py-1 rounded text-sm font-medium ${activeTab === 'online' ? 'text-white bg-dark-300' : 'text-[color:var(--color-text-muted)]'}`}>Online</button>
-           <button onClick={() => setActiveTab('all')} className={`hover:bg-dark-300 px-2 py-1 rounded text-sm font-medium ${activeTab === 'all' ? 'text-white bg-dark-300' : 'text-[color:var(--color-text-muted)]'}`}>Alle</button>
-           <button onClick={() => setActiveTab('pending')} className={`hover:bg-dark-300 px-2 py-1 rounded text-sm font-medium ${activeTab === 'pending' ? 'text-white bg-dark-300' : 'text-[color:var(--color-text-muted)]'}`}>Ausstehend</button>
-           <button onClick={() => setActiveTab('blocked')} className={`hover:bg-dark-300 px-2 py-1 rounded text-sm font-medium ${activeTab === 'blocked' ? 'text-white bg-dark-300' : 'text-[color:var(--color-text-muted)]'}`}>Blockiert</button>
+           <button onClick={() => setActiveTab('online')} className={`hover:bg-surface-3 px-2 py-1 rounded text-sm font-medium ${activeTab === 'online' ? 'text-text bg-surface-3' : 'text-[color:var(--color-text-muted)]'}`}>Online</button>
+           <button onClick={() => setActiveTab('all')} className={`hover:bg-surface-3 px-2 py-1 rounded text-sm font-medium ${activeTab === 'all' ? 'text-text bg-surface-3' : 'text-[color:var(--color-text-muted)]'}`}>Alle</button>
+           <button onClick={() => setActiveTab('pending')} className={`hover:bg-surface-3 px-2 py-1 rounded text-sm font-medium ${activeTab === 'pending' ? 'text-text bg-surface-3' : 'text-[color:var(--color-text-muted)]'}`}>Ausstehend</button>
+           <button onClick={() => setActiveTab('blocked')} className={`hover:bg-surface-3 px-2 py-1 rounded text-sm font-medium ${activeTab === 'blocked' ? 'text-text bg-surface-3' : 'text-[color:var(--color-text-muted)]'}`}>Blockiert</button>
 
            <div className="ml-auto relative group">
              <button className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-sm font-medium flex items-center gap-1 transition-colors">
                <UserPlus size={16} /> Freund hinzufügen
              </button>
              {/* Kleines Popover zum Adden */}
-             <div className="absolute right-0 top-full mt-2 w-64 bg-dark-200 border border-dark-400 p-3 rounded-lg shadow-xl invisible group-focus-within:visible opacity-0 group-focus-within:opacity-100 transition-all z-50">
+             <div className="absolute right-0 top-full mt-2 w-64 bg-surface-2 border border-border p-3 rounded-lg shadow-xl invisible group-focus-within:visible opacity-0 group-focus-within:opacity-100 transition-all z-50">
                 <form onSubmit={handleAddFriend}>
                   <input
-                    className="w-full bg-[color:var(--color-surface)]/60 border border-dark-400 rounded p-2 text-white text-sm outline-none focus:border-green-500"
+                    className="w-full bg-surface/60 border border-border rounded p-2 text-text text-sm outline-none focus:border-green-500"
                     placeholder="Nutzername eingeben..."
                     value={addUsername}
                     onChange={e => setAddUsername(e.target.value)}
@@ -195,7 +195,7 @@ export const FriendListStage = ({ onBackToHome }: FriendListStageProps) => {
                <input
                  type="text"
                  placeholder="Suchen"
-                 className="w-full bg-dark-400 text-white p-2 pl-2 rounded border border-transparent focus:border-blue-500 outline-none transition-colors"
+                 className="w-full bg-surface-3 text-text p-2 pl-2 rounded border border-transparent focus:border-blue-500 outline-none transition-colors"
                  value={searchTerm}
                  onChange={e => setSearchTerm(e.target.value)}
                />
@@ -209,43 +209,43 @@ export const FriendListStage = ({ onBackToHome }: FriendListStageProps) => {
                {activeTab === 'blocked' && `Blockiert — ${filteredBlocked.length}`}
             </div>
 
-            <div className="space-y-2 border-t border-dark-400 pt-2">
+            <div className="space-y-2 border-t border-border pt-2">
                {loading && <div className="text-[color:var(--color-text-muted)] flex items-center gap-2"><Loader2 className="animate-spin" size={16}/>Lade Freunde...</div>}
 
                {!loading && activeTab !== 'pending' && activeTab !== 'blocked' && filteredFriends.map(friend => (
-                   <div key={friend.id} className="flex items-center justify-between group p-2.5 rounded hover:bg-dark-300/50 cursor-pointer border-t border-dark-400/30 first:border-none">
+                   <div key={friend.id} className="flex items-center justify-between group p-2.5 rounded hover:bg-surface-3/50 cursor-pointer border-t border-border/30 first:border-none">
                       <div className="flex items-center gap-3">
                          <div className="w-9 h-9 rounded-full bg-[color:var(--color-surface-hover)] relative flex items-center justify-center overflow-hidden">
                            {friend.avatar_url ? (
                              <img src={resolveServerAssetUrl(friend.avatar_url)} className="w-full h-full object-cover" />
                            ) : (
-                             <span className="text-white font-bold">{friend.username?.[0]?.toUpperCase() ?? ''}</span>
+                             <span className="text-text font-bold">{friend.username?.[0]?.toUpperCase() ?? ''}</span>
                            )}
                             {renderStatusBadge(friend.status)}
                          </div>
                          <div>
-                            <div className="font-bold text-white flex items-center gap-1">
+                            <div className="font-bold text-text flex items-center gap-1">
                                {friend.username}
                             </div>
                             <div className="text-xs text-[color:var(--color-text-muted)]">{friend.status === 'online' ? 'Online' : 'Offline'}</div>
                          </div>
                       </div>
-                      <div className="flex items-center gap-2 opacity-50 group-hover:opacity-100 bg-dark-400 p-1 rounded transition-opacity">
-                         <button className="p-2 bg-dark-300 rounded-full hover:text-white text-[color:var(--color-text-muted)]" title="Nachricht"><MessageSquare size={18} /></button>
-                         <button className="p-2 bg-dark-300 rounded-full hover:text-white text-[color:var(--color-text-muted)]" title="Mehr"><MoreVertical size={18} /></button>
+                      <div className="flex items-center gap-2 opacity-50 group-hover:opacity-100 bg-surface-3 p-1 rounded transition-opacity">
+                         <button className="p-2 bg-surface-2 rounded-full hover:text-text text-[color:var(--color-text-muted)]" title="Nachricht"><MessageSquare size={18} /></button>
+                         <button className="p-2 bg-surface-2 rounded-full hover:text-text text-[color:var(--color-text-muted)]" title="Mehr"><MoreVertical size={18} /></button>
                       </div>
                    </div>
                ))}
 
                {!loading && activeTab === 'pending' && filteredPending.map(request => (
-                   <div key={request.id} className="flex items-center justify-between group p-2.5 rounded hover:bg-dark-300/50 cursor-pointer border-t border-dark-400/30 first:border-none">
+                   <div key={request.id} className="flex items-center justify-between group p-2.5 rounded hover:bg-surface-3/50 cursor-pointer border-t border-border/30 first:border-none">
                       <div className="flex items-center gap-3">
                          <div className="w-9 h-9 rounded-full bg-[color:var(--color-surface-hover)] relative flex items-center justify-center overflow-hidden">
-                            {request.user?.avatar_url ? <img src={resolveServerAssetUrl(request.user.avatar_url)} className="w-full h-full object-cover" /> : <span className="text-white font-bold">{request.user?.username?.[0]?.toUpperCase()}</span>}
+                            {request.user?.avatar_url ? <img src={resolveServerAssetUrl(request.user.avatar_url)} className="w-full h-full object-cover" /> : <span className="text-text font-bold">{request.user?.username?.[0]?.toUpperCase()}</span>}
                             {request.user && renderStatusBadge(request.user.status)}
                          </div>
                          <div>
-                            <div className="font-bold text-white flex items-center gap-1">
+                            <div className="font-bold text-text flex items-center gap-1">
                                {request.user?.username}
                             </div>
                             <div className="text-xs text-[color:var(--color-text-muted)]">
@@ -253,11 +253,11 @@ export const FriendListStage = ({ onBackToHome }: FriendListStageProps) => {
                             </div>
                          </div>
                       </div>
-                      <div className="flex items-center gap-2 opacity-80 group-hover:opacity-100 bg-dark-400 p-1 rounded transition-opacity">
+                      <div className="flex items-center gap-2 opacity-80 group-hover:opacity-100 bg-surface-3 p-1 rounded transition-opacity">
                          {request.direction === 'incoming' && (
                            <>
                              <button onClick={() => handleAccept(request.id)} className="p-2 bg-green-700 rounded-full hover:text-white text-[color:var(--color-text)]" title="Annehmen"><Check size={18} /></button>
-                             <button onClick={() => handleDecline(request.id)} className="p-2 bg-dark-300 rounded-full hover:text-white text-[color:var(--color-text-muted)]" title="Ablehnen"><X size={18} /></button>
+                             <button onClick={() => handleDecline(request.id)} className="p-2 bg-surface-2 rounded-full hover:text-text text-[color:var(--color-text-muted)]" title="Ablehnen"><X size={18} /></button>
                            </>
                          )}
                          <button onClick={() => handleBlock(request.id)} className="p-2 bg-red-900/70 rounded-full hover:text-white text-[color:var(--color-text)]" title="Blockieren"><Ban size={18} /></button>
@@ -266,14 +266,14 @@ export const FriendListStage = ({ onBackToHome }: FriendListStageProps) => {
                ))}
 
                {!loading && activeTab === 'blocked' && filteredBlocked.map(entry => (
-                   <div key={entry.id} className="flex items-center justify-between group p-2.5 rounded hover:bg-dark-300/50 cursor-pointer border-t border-dark-400/30 first:border-none">
+                   <div key={entry.id} className="flex items-center justify-between group p-2.5 rounded hover:bg-surface-3/50 cursor-pointer border-t border-border/30 first:border-none">
                       <div className="flex items-center gap-3">
                          <div className="w-9 h-9 rounded-full bg-[color:var(--color-surface-hover)] relative flex items-center justify-center overflow-hidden">
-                            {entry.user?.avatar_url ? <img src={resolveServerAssetUrl(entry.user.avatar_url)} className="w-full h-full object-cover" /> : <span className="text-white font-bold">{entry.user?.username?.[0]?.toUpperCase()}</span>}
+                            {entry.user?.avatar_url ? <img src={resolveServerAssetUrl(entry.user.avatar_url)} className="w-full h-full object-cover" /> : <span className="text-text font-bold">{entry.user?.username?.[0]?.toUpperCase()}</span>}
                             {entry.user && renderStatusBadge(entry.user.status)}
                          </div>
                          <div>
-                            <div className="font-bold text-white flex items-center gap-1">
+                            <div className="font-bold text-text flex items-center gap-1">
                                {entry.user?.username}
                             </div>
                             <div className="text-xs text-[color:var(--color-text-muted)]">{entry.blockedByMe ? 'Du hast blockiert' : 'Dich blockiert'} · {entry.user?.status === 'online' ? 'Online' : 'Offline'}</div>
@@ -296,8 +296,8 @@ export const FriendListStage = ({ onBackToHome }: FriendListStageProps) => {
             </div>
          </div>
          {/* Rechte Seite: "Jetzt aktiv" */}
-         <div className="w-80 border-l border-dark-400 p-4 hidden xl:block">
-            <h3 className="text-xl font-bold text-white mb-4">Jetzt aktiv</h3>
+         <div className="w-80 border-l border-border p-4 hidden xl:block">
+            <h3 className="text-xl font-bold text-text mb-4">Jetzt aktiv</h3>
             <div className="text-center mt-10 text-[color:var(--color-text-muted)]">
                <div className="font-bold">Momentan ist alles ruhig.</div>
             </div>
