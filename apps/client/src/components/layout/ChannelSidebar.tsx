@@ -14,7 +14,7 @@ import { useSettings } from '../../context/SettingsContext';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
 import { defaultServerTheme, deriveServerThemeFromSettings, type ServerTheme } from '../../theme/serverTheme';
 import { storage } from '../../shared/config/storage';
-import { ErrorCard, RoleTag, Skeleton, Spinner, StatusBadge, type StatusTone } from '../ui';
+import { ErrorCard, Icon, RoleTag, Skeleton, Spinner, StatusBadge, type StatusTone } from '../ui';
 import { Button, IconButton } from '../ui/Button';
 
 interface Channel { id: number; name: string; type: 'text' | 'voice' | 'web' | 'data-transfer' | 'spacer' | 'list'; custom_icon?: string; }
@@ -262,7 +262,7 @@ export const ChannelSidebar = ({
     const isVoice = c.type === 'voice';
     const isVoiceActive = isVoice && voiceChannelId === c.id && connectionState === 'connected';
     const voiceUsers = isVoice ? channelPresence?.[c.id] ?? [] : [];
-    const Icon = c.type === 'web' ? Globe : isVoice ? Volume2 : c.type === 'data-transfer' ? Lock : c.type === 'list' ? ListChecks : Hash;
+    const ChannelIcon = c.type === 'web' ? Globe : isVoice ? Volume2 : c.type === 'data-transfer' ? Lock : c.type === 'list' ? ListChecks : Hash;
 
     const isHighlighted = isActive || isVoiceActive;
     const channelSubLabel = isVoice
@@ -291,7 +291,7 @@ export const ChannelSidebar = ({
           className={channelClasses}
         >
           <span className="chan-icon">
-            <Icon size={16} />
+            <Icon icon={ChannelIcon} size="md" className="text-inherit" hoverTone="none" />
           </span>
 
           <div className="chan-meta">
@@ -302,7 +302,7 @@ export const ChannelSidebar = ({
           {isVoiceActive && <span className="chan-pill">LIVE</span>}
           {isVoice && voiceUsers.length > 0 && (
             <span className="chan-pill">
-              <Users2 size={12} /> {voiceUsers.length}
+              <Icon icon={Users2} size="sm" className="text-inherit" hoverTone="none" /> {voiceUsers.length}
             </span>
           )}
         </div>
@@ -329,7 +329,7 @@ export const ChannelSidebar = ({
                   </div>
                   {tag && (
                     <RoleTag variant={tag.variant}>
-                      <tag.Icon size={12} /> {tag.label}
+                      <Icon icon={tag.Icon} size="sm" className="text-inherit" hoverTone="none" /> {tag.label}
                     </RoleTag>
                   )}
                   <span className="u-name">{user.username}</span>
@@ -364,7 +364,7 @@ export const ChannelSidebar = ({
                    )}
                    <h2 className="font-bold text-text text-[15px] truncate">{serverName || t('channelSidebar.defaultServerName')}</h2>
                 </div>
-                <ChevronDown size={16} className={`text-neutral-400 transition-transform duration-200 ${isServerMenuOpen ? 'rotate-180' : ''}`} />
+                <Icon icon={ChevronDown} size="md" className={`text-neutral-400 transition-transform duration-200 ${isServerMenuOpen ? 'rotate-180' : ''}`} hoverTone="none" />
             </div>
 
             {isServerMenuOpen && (
@@ -379,7 +379,7 @@ export const ChannelSidebar = ({
                         variant="ghost"
                         className={`w-full justify-start gap-2 text-sm ${isServerAdmin ? 'text-text-muted hover:bg-[color:var(--color-surface-hover)] hover:text-accent' : 'text-neutral-600 cursor-not-allowed'}`}
                     >
-                        <Settings size={14} />
+                        <Icon icon={Settings} size="sm" className="text-inherit" hoverTone="none" />
                         {t('channelSidebar.serverSettings') || 'Server Settings'}
                     </Button>
                     {isServerAdmin && (
@@ -394,7 +394,7 @@ export const ChannelSidebar = ({
                             variant="ghost"
                             className="w-full justify-start gap-2 text-sm text-text-muted hover:bg-[color:var(--color-surface-hover)] hover:text-accent"
                         >
-                            <Plus size={14} />
+                            <Icon icon={Plus} size="sm" className="text-inherit" hoverTone="none" />
                             {t('channelSidebar.createChannel')}
                         </Button>
                     )}
@@ -408,7 +408,7 @@ export const ChannelSidebar = ({
                         variant="ghost"
                         className="w-full justify-start gap-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300"
                     >
-                        <LogOut size={14} />
+                        <Icon icon={LogOut} size="sm" className="text-inherit" hoverTone="none" />
                         {t('channelSidebar.leaveServer')}
                     </Button>
                 </div>
@@ -444,7 +444,7 @@ export const ChannelSidebar = ({
                                     className="h-7 w-7 rounded-md text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] hover:bg-[color:var(--color-surface-hover)]"
                                     aria-label={t('channelSidebar.dragCategory', { defaultValue: 'Kategorie verschieben' })}
                                   >
-                                    <GripVertical size={14} />
+                                    <Icon icon={GripVertical} size="sm" className="text-inherit" hoverTone="none" />
                                   </IconButton>
                                   <Button
                                     onClick={() => toggleCategory(cat.id)}
@@ -452,7 +452,7 @@ export const ChannelSidebar = ({
                                     variant="ghost"
                                     className="h-auto px-0 py-0 gap-2 text-inherit hover:text-accent"
                                   >
-                                    {collapsed[cat.id] ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
+                                    {collapsed[cat.id] ? <Icon icon={ChevronRight} size="sm" className="text-inherit" hoverTone="none" /> : <Icon icon={ChevronDown} size="sm" className="text-inherit" hoverTone="none" />}
                                     <span className="truncate">{cat.name}</span>
                                   </Button>
                                </div>
@@ -463,7 +463,7 @@ export const ChannelSidebar = ({
                                  aria-label={t('channelSidebar.createChannel', { defaultValue: 'Kanal erstellen' })}
                                  onClick={(e) => { e.stopPropagation(); setCreateType('text'); setCreateCategoryId(cat.id); setShowCreateModal(true); }}
                                >
-                                 <Plus size={14} />
+                                 <Icon icon={Plus} size="sm" className="text-inherit" hoverTone="none" />
                                </IconButton>
                            </div>
                            {!collapsed[cat.id] && (
@@ -495,7 +495,7 @@ export const ChannelSidebar = ({
             title={activeChannelName || t('channelSidebar.inChannel')}
           >
             <span className="chan-icon">
-              <Volume2 size={16} />
+              <Icon icon={Volume2} size="md" className="text-inherit" hoverTone="none" />
             </span>
             <div className="chan-meta">
               <span className="chan-name">{activeChannelName || t('channelSidebar.inChannel')}</span>
@@ -510,7 +510,7 @@ export const ChannelSidebar = ({
               className="cc-btn danger"
               aria-label={t('channelSidebar.leaveVoice', { defaultValue: 'Voice verlassen' })}
             >
-              <PhoneOff size={16} />
+              <Icon icon={PhoneOff} size="md" className="text-inherit" hoverTone="none" />
             </IconButton>
             <IconButton
               type="button"
@@ -520,7 +520,7 @@ export const ChannelSidebar = ({
               aria-pressed={isCameraEnabled}
               aria-label={t('channelSidebar.toggleCamera', { defaultValue: 'Kamera umschalten' })}
             >
-              <Camera size={16} />
+              <Icon icon={Camera} size="md" className="text-inherit" hoverTone="none" />
             </IconButton>
             <IconButton
               type="button"
@@ -530,7 +530,7 @@ export const ChannelSidebar = ({
               aria-pressed={isScreenSharing}
               aria-label={t('channelSidebar.toggleScreenShare', { defaultValue: 'Bildschirm teilen' })}
             >
-              <ScreenShare size={16} />
+              <Icon icon={ScreenShare} size="md" className="text-inherit" hoverTone="none" />
             </IconButton>
           </div>
         </div>

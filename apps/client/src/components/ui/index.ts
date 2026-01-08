@@ -1,6 +1,7 @@
 export { ErrorCard } from './ErrorCard';
 export { Skeleton } from './Skeleton';
 export { Spinner } from './Spinner';
+export { Icon } from './Icon';
 export { Badge } from './Badge';
 export { Input } from './Input';
 export { Select } from './Select';
