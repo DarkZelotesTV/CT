@@ -1,4 +1,11 @@
 /* apps/client/src/components/layout/MainLayout.css */
+/*
+  Z-index scale:
+  - base: 0
+  - content: 10
+  - overlay: 50
+  - modal: 100
+*/
 
 /* --- GRID LAYOUT --- */
 .main-layout {
@@ -22,7 +29,7 @@
       "rail log    log    log";
   transition: grid-template-columns var(--layout-transition), grid-template-rows var(--layout-transition);
   position: relative;
-  z-index: 1;
+  z-index: 10;
   overflow: hidden;
 }
 
@@ -47,7 +54,7 @@ body.mobile-scroll-lock {
   background: var(--color-overlay);
   opacity: 0;
   pointer-events: none;
-  z-index: 180;
+  z-index: 50;
   transition: opacity 0.2s ease;
 }
 
@@ -73,7 +80,7 @@ body.mobile-scroll-lock {
   background: linear-gradient(180deg, rgba(13, 18, 28, 0.98) 0%, rgba(9, 13, 20, 0.94) 45%, rgba(8, 12, 18, 0.98) 100%);
   border-right: 1px solid color-mix(in srgb, var(--color-border-glass) 80%, transparent);
   display: flex; flex-direction: column; align-items: center;
-  padding: 16px 0; gap: 14px; z-index: 50;
+  padding: 16px 0; gap: 14px; z-index: 10;
   backdrop-filter: blur(30px);
   box-shadow: var(--shadow-panel-inset), inset -1px 0 0 rgba(255, 255, 255, 0.04);
   position: relative;
@@ -97,7 +104,7 @@ body.mobile-scroll-lock {
   border-bottom: 1px solid var(--color-border-glass); 
   display: flex; align-items: center; justify-content: space-between;
   padding: var(--safe-area-top) calc(24px + var(--safe-area-right)) 0 calc(24px + var(--safe-area-left));
-  z-index: 40; 
+  z-index: 10; 
   backdrop-filter: blur(20px);
   -webkit-app-region: drag; /* Electron Drag */
   position: relative;
@@ -331,7 +338,7 @@ body.mobile-scroll-lock {
   border: 1px solid var(--color-border-glass);
   color: var(--color-text-muted);
   cursor: pointer;
-  z-index: 60;
+  z-index: 50;
   border-radius: 4px;
   backdrop-filter: blur(5px);
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
@@ -369,7 +376,7 @@ body.mobile-scroll-lock {
   background: var(--color-surface-log); 
   border-top: 1px solid var(--color-border-glass);
   display: flex; flex-direction: column; 
-  box-shadow: var(--shadow-panel-strong); z-index: 100;
+  box-shadow: var(--shadow-panel-strong); z-index: 10;
   backdrop-filter: blur(40px);
   overflow: hidden;
   padding-bottom: var(--safe-area-bottom);
@@ -453,7 +460,7 @@ body.mobile-scroll-lock {
 
 /* Resizers */
 .resizer {
-  position: absolute; top: 0; bottom: 0; width: 6px; cursor: col-resize; z-index: 20;
+  position: absolute; top: 0; bottom: 0; width: 6px; cursor: col-resize; z-index: 50;
 }
 .resizer:hover { background: color-mix(in srgb, var(--color-surface) 85%, transparent); }
 .resizer-left { right: 0; }
@@ -487,7 +494,7 @@ body.mobile-scroll-lock {
     left: 0;
     width: var(--w-rail);
     background: var(--color-surface-rail);
-    z-index: 220;
+    z-index: 100;
   }
 
   .tree-panel {
@@ -495,7 +502,7 @@ body.mobile-scroll-lock {
     width: var(--mobile-tree-width, min(80vw, 320px));
     max-width: 90vw;
     background: var(--color-surface-tree);
-    z-index: 210;
+    z-index: 100;
     transform: translateX(calc(-100% - var(--w-rail)));
   }
 
@@ -536,7 +543,7 @@ body.mobile-scroll-lock {
     transition: transform 0.28s ease, opacity 0.28s ease;
     opacity: 0;
     pointer-events: none;
-    z-index: 240;
+    z-index: 100;
     box-shadow: -12px 0 40px color-mix(in srgb, var(--color-shadow) 55%, transparent);
     border-left: 1px solid var(--color-border-glass);
     border-top: none;
