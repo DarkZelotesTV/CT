@@ -1,44 +1,14 @@
 /**
  * TEMPNEW polish layer
- * Source: src/TEMPNEW/index.html (extracted + adapted for the React app)
+ * Source: docs/ARCHIVED_TEMPNEW_index.html (extracted + adapted for the React app)
  *
  * Goals:
- * - Provide palette + layout aliases (so the TEMPNEW token names work in-app)
- * - Provide shared "glass" utilities
  * - Provide a single, consistent modal shell (used by ModalLayout)
  */
 
-:root {
-  /* --- TEMPNEW token aliases (do not remove existing tokens) --- */
-  --bg-body: var(--layout-bg-body);
-  --bg-rail: var(--layout-bg-rail);
-  --bg-tree: var(--layout-bg-tree);
-  --bg-main: var(--layout-bg-main);
-  --bg-info: var(--layout-bg-info);
-  --bg-log: var(--layout-bg-log);
-  /* Accent tokens are defined in src/index.css */
-  --accent-dim: var(--layout-accent-dim);
-  --accent-glow: var(--layout-accent-glow);
-
-  /* Layout sizing aliases */
-  --w-rail: var(--layout-rail-width);
-  --w-tree: var(--layout-tree-width);
-  --w-info: var(--layout-info-width);
-  --h-header: var(--layout-header-height);
-  --h-log: var(--layout-log-height);
-
-  /* Runtime collapse values (MainLayout.tsx sets these inline) */
-  --curr-tree: var(--layout-tree-current, var(--w-tree));
-  --curr-info: var(--layout-info-current, var(--w-info));
-
-  --border-glass: var(--layout-border);
-  --border-shine: 1px solid color-mix(in srgb, var(--color-surface-tint) 15%, transparent);
-  --anim: var(--layout-transition);
-}
-
 /* --- TEMPNEW fold aliases (MainLayout already uses fold-tree/fold-info) --- */
-.main-layout.fold-left { --curr-tree: 0px; }
-.main-layout.fold-right { --curr-info: 0px; }
+.main-layout.fold-tree { --curr-tree: 0px; }
+.main-layout.fold-info { --curr-info: 0px; }
 
 /* --- Modal shell (ModalLayout) --- */
 .ct-modal-overlay {

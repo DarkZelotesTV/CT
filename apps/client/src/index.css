@@ -42,7 +42,7 @@
   
   --accent: var(--color-accent);
   --accent-hover: var(--color-accent-hover);
-  --layout-accent-dim: rgba(16, 185, 129, 0.15); /* maps to --accent-dim */
+  --layout-accent-dim: color-mix(in srgb, var(--color-accent) 15%, transparent); /* maps to --accent-dim */
   --layout-accent-glow: 0 0 15px color-mix(in srgb, var(--color-accent) 40%, transparent); /* maps to --accent-glow */
   --accent-dim: var(--layout-accent-dim);
   --accent-glow: var(--layout-accent-glow);
@@ -90,6 +90,9 @@
   --w-info: var(--layout-info-width);
   --h-header: var(--layout-header-height);
   --h-log: var(--layout-log-height); /* Standard Log Höhe */
+  --curr-tree: var(--layout-tree-current, var(--w-tree));
+  --curr-info: var(--layout-info-current, var(--w-info));
+  --anim: var(--layout-transition);
 
   --radius-1: 6px;
   --radius-2: 8px;
