@@ -139,7 +139,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
           </div>
         </div>
 
-        <div className="col-span-12 min-[900px]:col-span-5 self-start rounded-2xl border border-[color:var(--color-border)] bg-surface-2 hover:bg-surface-3 p-[16px] min-[900px]:p-[18px] shadow-2xl flex flex-col gap-4 transition-colors">
+        <div className="col-span-12 min-[900px]:col-span-5 rounded-2xl border border-[color:var(--color-border)] bg-surface-2 hover:bg-surface-3 p-[16px] min-[900px]:p-[18px] shadow-2xl flex flex-col gap-4 transition-colors">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-2xl bg-surface-3 border border-[color:var(--color-border)] flex items-center justify-center text-[color:var(--color-text)]">
