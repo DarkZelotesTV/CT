@@ -2,6 +2,7 @@ import { ArrowRight, Compass, Home, Layers, MessageSquare, PlusCircle, Server, S
 import { useSettings } from '../../context/SettingsContext';
 import { DecorationLayer } from '../layout/DecorationLayer';
 import { Button } from '../ui/Button';
+import { Icon } from '../ui';
 
 interface HomeOnboardingStageProps {
   onCreateServer: () => void;
@@ -69,7 +70,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
           <div className="flex flex-col">
             <div className="flex flex-col gap-3">
               <div className="inline-flex h-6 items-center gap-2 px-2.5 py-1 rounded-full bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] text-[11px] font-semibold uppercase tracking-wide text-[color:var(--color-text)]">
-                <Home size={14} />
+                <Icon icon={Home} size="sm" className="text-inherit" hoverTone="none" />
                 Willkommen
               </div>
 
@@ -90,7 +91,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
                 variant="primary"
                 className="h-10 px-4 rounded-2xl shadow-lg shadow-[0_16px_28px_color-mix(in_srgb,var(--color-accent)_30%,transparent)] gap-2.5 transition-colors max-[899px]:w-full max-[899px]:justify-center text-text"
               >
-                <PlusCircle size={18} /> Server erstellen
+                <Icon icon={PlusCircle} size="lg" className="text-inherit" hoverTone="none" /> Server erstellen
               </Button>
               <Button
                 type="button"
@@ -98,7 +99,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
                 variant="secondary"
                 className="h-10 px-4 rounded-2xl gap-2.5 transition-colors max-[899px]:w-full max-[899px]:justify-center"
               >
-                <Compass size={18} /> Mit Einladung beitreten
+                <Icon icon={Compass} size="lg" className="text-inherit" hoverTone="none" /> Mit Einladung beitreten
               </Button>
             </div>
             <Button
@@ -116,7 +117,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
                   className="flex h-10 items-center gap-3 rounded-2xl border border-[color:var(--color-border)]/70 bg-surface-2 px-4"
                 >
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-3 text-[color:var(--color-text)]">
-                    <Server size={16} />
+                    <Icon icon={Server} size="md" className="text-inherit" hoverTone="none" />
                   </span>
                   <span className="text-[13px] font-medium text-text">{server.name}</span>
                   <Button
@@ -133,13 +134,13 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
           </div>
 
           <div className="grid min-[600px]:grid-cols-3 gap-3">
-            {steps.map(({ title, body, icon: Icon }) => (
+            {steps.map(({ title, body, icon: StepIcon }) => (
               <div
                 key={title}
                 className="bg-surface-2 hover:bg-surface-3 border border-[color:var(--color-border)]/70 rounded-2xl p-4 backdrop-blur-sm h-full flex flex-col gap-3 transition-colors"
               >
                 <div className="w-9 h-9 rounded-xl bg-surface-3 border border-[color:var(--color-border)] text-[color:var(--color-text)] flex items-center justify-center">
-                  <Icon size={17} />
+                  <Icon icon={StepIcon} size="md" className="text-inherit" hoverTone="none" />
                 </div>
                 <div className="text-[13px] font-semibold text-text leading-snug">{title}</div>
                 <p className="text-[11px] text-text-muted leading-relaxed flex-1">{body}</p>
@@ -152,7 +153,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-2xl bg-surface-3 border border-[color:var(--color-border)] flex items-center justify-center text-[color:var(--color-text)]">
-                <MessageSquare size={18} />
+                <Icon icon={MessageSquare} size="lg" className="text-inherit" hoverTone="none" />
               </div>
               <div>
                 <div className="text-[15px] text-text font-semibold">Kein Server ausgewählt</div>
@@ -167,7 +168,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
           </div>
 
           <div className="flex flex-col gap-2">
-            {checklistItems.map(({ label, icon: Icon, action, disabled, tooltip }) => {
+            {checklistItems.map(({ label, icon: ItemIcon, action, disabled, tooltip }) => {
               const isDisabled = Boolean(disabled);
               return (
                 <Button
@@ -185,7 +186,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
                   }`}
                 >
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-surface-3 text-[color:var(--color-text)]">
-                    <Icon size={18} />
+                    <Icon icon={ItemIcon} size="lg" className="text-inherit" hoverTone="none" />
                   </span>
                   <span className="text-[13px] font-medium">{label}</span>
                   <span
@@ -195,7 +196,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
                         : 'border-transparent text-text-muted group-hover:border-[color:var(--color-accent)]/20 group-hover:text-[color:var(--color-accent)]'
                     }`}
                   >
-                    Los <ArrowRight size={14} />
+                    Los <Icon icon={ArrowRight} size="sm" className="text-inherit" hoverTone="none" />
                   </span>
                 </Button>
               );

@@ -6,7 +6,7 @@ import { apiFetch } from '../../api/http';
 import { getServerUrl, setServerUrl } from '../../utils/apiConfig';
 import { readPinnedServers, removePinnedServer, normalizeInstanceUrl } from '../../utils/pinnedServers';
 import { storage } from '../../shared/config/storage';
-import { ErrorCard, Spinner } from '../ui';
+import { ErrorCard, Icon, Spinner } from '../ui';
 import { Button, IconButton } from '../ui/Button';
 import { useSocket } from '../../context/SocketContext';
 
@@ -395,7 +395,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
             }
             aria-label="Home"
           >
-            <Home size={22} />
+            <Icon icon={Home} size="lg" className="text-inherit" hoverTone="none" />
           </IconButton>
 
           <div className="w-10 h-px bg-[color:var(--color-surface-hover)]/80 rounded-full flex-shrink-0" />
@@ -456,14 +456,14 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
 
                 {unread > 0 && (
                   <div className="absolute -top-1 -right-1 bg-rose-500 text-[10px] leading-none text-white rounded-full px-1.5 py-0.5 flex items-center gap-1 shadow-lg">
-                    <Bell size={10} />
+                    <Icon icon={Bell} size="sm" className="text-white" hoverTone="none" />
                     <span className="font-semibold">{unread > 99 ? '99+' : unread}</span>
                   </div>
                 )}
 
                 {isPinned && (
                   <div className="absolute -bottom-2 text-[10px] text-text-muted group-hover:text-accent" aria-hidden>
-                    <Pin size={12} />
+                    <Icon icon={Pin} size="sm" className="text-inherit" hoverTone="none" />
                   </div>
                 )}
 
@@ -504,7 +504,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                   onContextMenu={(e) => handleContextMenu(e, p.serverId, 'remote', p.instanceUrl)}
                 >
                   <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[color:var(--color-surface)]/90 border border-[color:var(--color-border)] flex items-center justify-center text-text-muted group-hover:text-accent">
-                    <Globe size={12} />
+                    <Icon icon={Globe} size="sm" className="text-inherit" hoverTone="none" />
                   </div>
 
                   <IconButton
@@ -520,7 +520,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                     title="Entfernen"
                     aria-label="Server entfernen"
                   >
-                    <X size={12} />
+                    <Icon icon={X} size="sm" className="text-inherit" hoverTone="none" />
                   </IconButton>
 
                   {p.iconUrl ? (
@@ -553,7 +553,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
               title="Server hinzufügen"
               aria-label="Server hinzufügen"
             >
-              <Plus size={22} />
+              <Icon icon={Plus} size="lg" className="text-inherit" hoverTone="none" />
             </IconButton>
 
             {showAddMenu && (
@@ -614,7 +614,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                 }
               }}
             >
-              <Pencil size={16} />
+              <Icon icon={Pencil} size="md" className="text-inherit" hoverTone="none" />
               <span>{t('serverRail.context.rename')}</span>
             </Button>
 
@@ -633,7 +633,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                   }
                 }}
               >
-                {pinnedLocalIds.includes(contextMenu.serverId) ? <PinOff size={16} /> : <Pin size={16} />}
+                {pinnedLocalIds.includes(contextMenu.serverId) ? <Icon icon={PinOff} size="md" className="text-inherit" hoverTone="none" /> : <Icon icon={Pin} size="md" className="text-inherit" hoverTone="none" />}
                 <span>
                   {pinnedLocalIds.includes(contextMenu.serverId)
                     ? t('serverRail.context.unpin')
@@ -657,7 +657,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                   }
                 }}
               >
-                <Trash2 size={16} />
+                <Icon icon={Trash2} size="md" className="text-inherit" hoverTone="none" />
                 <span>{t('serverRail.context.remove')}</span>
               </Button>
             )}

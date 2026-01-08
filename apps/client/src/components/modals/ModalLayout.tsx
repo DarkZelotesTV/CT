@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { getModalRoot } from './modalRoot';
 import { useTopBar } from '../window/TopBarContext';
+import { Icon } from '../ui';
 
 interface ModalLayoutProps {
   title: string;
@@ -144,7 +145,7 @@ export const ModalLayout = ({
             onClick={onClose}
             className="ct-modal-close no-drag"
           >
-            <X size={20} />
+            <Icon icon={X} size="lg" className="text-inherit" hoverTone="none" />
           </button>
         </div>
 
