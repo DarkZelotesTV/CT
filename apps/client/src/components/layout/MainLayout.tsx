@@ -168,6 +168,7 @@ export const MainLayout = () => {
   const [serverName, setServerName] = useState<string>('');
   const [serverIcon, setServerIcon] = useState<string | null>(null);
   const [titlebarHeight, setTitlebarHeight] = useState<number>(48);
+  const isWelcomeScreen = !selectedServerId;
 
   const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
   const [fallbackChannel, setFallbackChannel] = useState<Channel | null>(null);
@@ -1094,7 +1095,7 @@ export const MainLayout = () => {
           </div>
           
           {/* Mittlerer Bereich: Telemetry Bar (Neu) */}
-          {selectedServerId && (
+          {!isWelcomeScreen && selectedServerId && (
             <div className="telemetry-bar no-drag hidden md:flex gap-3">
               <div className="t-item">
                 <span className="t-label">PING</span>
