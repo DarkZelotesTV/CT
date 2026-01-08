@@ -374,10 +374,10 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
   return (
     <>
       {/* Container ohne overflow-hidden, damit das Menü sichtbar ist */}
-      <div className="w-full h-full flex flex-col relative no-drag bg-gradient-to-b from-black/20 via-[#0c0f15]/60 to-black/10">
+      <div className="w-full h-full flex flex-col relative no-drag bg-gradient-to-b from-[#0e131c]/85 via-[#0b0f17]/90 to-[#090c12] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
         
         {/* 1. SCROLLABLE BEREICH: Server Liste */}
-        <div className="flex-1 w-full flex flex-col items-center gap-3.5 py-5 px-2 overflow-y-auto no-scrollbar">
+        <div className="flex-1 w-full flex flex-col items-center gap-3.5 py-4 px-2 overflow-y-auto no-scrollbar">
           {/* HOME BUTTON */}
           <button
             type="button"
@@ -402,7 +402,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
           {lastError && (
             <ErrorCard
               size="compact"
-              className="w-full px-2"
+              className="w-[calc(100%-10px)]"
               message={lastError}
               retryLabel={t('serverRail.retry') ?? undefined}
               onRetry={fetchServers}
