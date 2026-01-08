@@ -351,30 +351,30 @@ export const ChannelSidebar = ({
         <div className="relative z-20" ref={serverMenuRef}>
             <div 
                 onClick={() => setIsServerMenuOpen(!isServerMenuOpen)}
-                className="h-[48px] border-b border-[#111] flex items-center px-4 hover:bg-neutral-800/50 cursor-pointer transition-colors shadow-sm select-none"
+                className="h-[48px] border-b border-border flex items-center px-4 hover:bg-surface-3/50 cursor-pointer transition-colors shadow-sm select-none"
             >
                 <div className="flex items-center gap-3 flex-1 overflow-hidden">
                    {serverIcon ? (
                      <img src={resolveServerAssetUrl(serverIcon)} alt="Server" className="w-6 h-6 rounded-full object-cover" />
                    ) : (
-                     <div className="w-6 h-6 rounded-full bg-neutral-700 flex items-center justify-center text-[10px] font-bold text-white">
+                     <div className="w-6 h-6 rounded-full bg-surface-2 flex items-center justify-center text-[10px] font-bold text-text">
                         {serverName ? serverName.substring(0, 1) : '?'}
                      </div>
                    )}
-                   <h2 className="font-bold text-white text-[15px] truncate">{serverName || t('channelSidebar.defaultServerName')}</h2>
+                   <h2 className="font-bold text-text text-[15px] truncate">{serverName || t('channelSidebar.defaultServerName')}</h2>
                 </div>
                 <ChevronDown size={16} className={`text-neutral-400 transition-transform duration-200 ${isServerMenuOpen ? 'rotate-180' : ''}`} />
             </div>
 
             {isServerMenuOpen && (
-                <div className="absolute top-[50px] left-2 right-2 bg-[color:var(--color-surface)] rounded-md border border-neutral-800 shadow-2xl z-50 overflow-hidden py-1 animate-in fade-in zoom-in-95 duration-100">
+                <div className="absolute top-[50px] left-2 right-2 bg-[color:var(--color-surface)] rounded-md border border-border shadow-2xl z-50 overflow-hidden py-1 animate-in fade-in zoom-in-95 duration-100">
                     <button
                         onClick={() => {
                             if (isServerAdmin) onOpenServerSettings();
                             setIsServerMenuOpen(false);
                         }}
                         disabled={!isServerAdmin}
-                        className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors ${isServerAdmin ? 'text-neutral-300 hover:bg-blue-600 hover:text-white' : 'text-neutral-600 cursor-not-allowed'}`}
+                        className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors ${isServerAdmin ? 'text-text-muted hover:bg-[color:var(--color-surface-hover)] hover:text-accent' : 'text-neutral-600 cursor-not-allowed'}`}
                     >
                         <Settings size={14} />
                         {t('channelSidebar.serverSettings') || 'Server Settings'}
@@ -387,13 +387,13 @@ export const ChannelSidebar = ({
                                 setShowCreateModal(true);
                                 setIsServerMenuOpen(false);
                             }}
-                            className="w-full text-left px-3 py-2 text-sm text-neutral-300 hover:bg-blue-600 hover:text-white flex items-center gap-2 transition-colors"
+                            className="w-full text-left px-3 py-2 text-sm text-text-muted hover:bg-[color:var(--color-surface-hover)] hover:text-accent flex items-center gap-2 transition-colors"
                         >
                             <Plus size={14} />
                             {t('channelSidebar.createChannel')}
                         </button>
                     )}
-                    <div className="h-[1px] bg-neutral-800 my-1 mx-2" />
+                    <div className="h-[1px] bg-surface-3 my-1 mx-2" />
                     <button
                         onClick={async () => {
                              if (!localUser?.id) return;
@@ -431,12 +431,12 @@ export const ChannelSidebar = ({
                            <div className="t-cat group justify-between pr-2 no-drag">
                                <div className="flex items-center gap-2">
                                   <button {...(dragMeta.isDisabled ? {} : dragMeta.handleProps)} className="flex h-7 w-7 items-center justify-center rounded-md text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] hover:bg-[color:var(--color-surface-hover)]"><GripVertical size={14} /></button>
-                                  <button onClick={() => toggleCategory(cat.id)} className="flex items-center gap-2 text-inherit hover:text-white">
+                                  <button onClick={() => toggleCategory(cat.id)} className="flex items-center gap-2 text-inherit hover:text-accent">
                                     {collapsed[cat.id] ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
                                     <span className="truncate">{cat.name}</span>
                                   </button>
                                </div>
-                               <button className="no-drag opacity-0 group-hover:opacity-100 text-[color:var(--color-text-muted)] hover:text-white" onClick={(e) => { e.stopPropagation(); setCreateType('text'); setCreateCategoryId(cat.id); setShowCreateModal(true); }}><Plus size={14} /></button>
+                               <button className="no-drag opacity-0 group-hover:opacity-100 text-[color:var(--color-text-muted)] hover:text-accent" onClick={(e) => { e.stopPropagation(); setCreateType('text'); setCreateCategoryId(cat.id); setShowCreateModal(true); }}><Plus size={14} /></button>
                            </div>
                            {!collapsed[cat.id] && (
                                <SortableContext id={`${categoryKey(cat.id)}-context`} items={cat.channels.map((c) => channelKey(c.id, categoryKey(cat.id)))} strategy={verticalListSortingStrategy}>
