@@ -352,17 +352,17 @@ export const ChannelSidebar = ({
         <div className="relative z-20" ref={serverMenuRef}>
             <div 
                 onClick={() => setIsServerMenuOpen(!isServerMenuOpen)}
-                className="h-[48px] border-b border-border flex items-center px-4 hover:bg-surface-3/50 cursor-pointer transition-colors shadow-sm select-none"
+                className="h-12 border-b border-border flex items-center px-4 hover:bg-surface-3/50 cursor-pointer transition-colors shadow-sm select-none"
             >
                 <div className="flex items-center gap-3 flex-1 overflow-hidden">
                    {serverIcon ? (
                      <img src={resolveServerAssetUrl(serverIcon)} alt="Server" className="w-6 h-6 rounded-full object-cover" />
                    ) : (
-                     <div className="w-6 h-6 rounded-full bg-surface-2 flex items-center justify-center text-[10px] font-bold text-text">
+                     <div className="w-6 h-6 rounded-full bg-surface-2 flex items-center justify-center text-[length:var(--font-size-xs)] leading-none font-bold text-text">
                         {serverName ? serverName.substring(0, 1) : '?'}
                      </div>
                    )}
-                   <h2 className="font-bold text-text text-[15px] truncate">{serverName || t('channelSidebar.defaultServerName')}</h2>
+                   <h2 className="font-bold text-text text-[length:var(--font-size-lg)] leading-[var(--line-height-sm)] truncate">{serverName || t('channelSidebar.defaultServerName')}</h2>
                 </div>
                 <Icon icon={ChevronDown} size="md" className={`text-neutral-400 transition-transform duration-200 ${isServerMenuOpen ? 'rotate-180' : ''}`} hoverTone="none" />
             </div>
@@ -398,7 +398,7 @@ export const ChannelSidebar = ({
                             {t('channelSidebar.createChannel')}
                         </Button>
                     )}
-                    <div className="h-[1px] bg-surface-3 my-1 mx-2" />
+                    <div className="h-px bg-surface-3 my-1 mx-2" />
                     <Button
                         onClick={async () => {
                              if (!localUser?.id) return;
