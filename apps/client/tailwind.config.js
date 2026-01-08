@@ -35,7 +35,7 @@ export default {
       },
       boxShadow: {
         'glass': '0 4px 30px rgba(0, 0, 0, 0.1)',
-        'neon': '0 0 20px rgba(99, 102, 241, 0.4)',
+        'neon': 'var(--accent-glow)',
       },
       backgroundImage: {
         'aurora': 'radial-gradient(circle at 50% 0%, rgba(99,102,241,0.15) 0%, transparent 50%), radial-gradient(circle at 0% 0%, rgba(16,185,129,0.1) 0%, transparent 30%)',
