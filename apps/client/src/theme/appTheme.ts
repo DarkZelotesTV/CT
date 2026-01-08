@@ -339,6 +339,8 @@ export const applyAppTheme = (theme: AppTheme) => {
     '--color-text-muted': theme.textMuted,
     '--color-accent': theme.accent,
     '--color-accent-hover': theme.accentHover,
+    '--accent': theme.accent,
+    '--accent-hover': theme.accentHover,
     '--color-focus': theme.focus,
     '--color-overlay': theme.overlay,
     '--color-shadow': theme.shadowColor,
