@@ -7,6 +7,6 @@ interface SkeletonProps {
 export const Skeleton = ({ className }: SkeletonProps) => (
   <div
     aria-hidden
-    className={classNames('animate-pulse rounded-md bg-[color:var(--color-surface-hover)]', className)}
+    className={classNames('animate-pulse rounded-md bg-surface-hover', className)}
   />
 );
