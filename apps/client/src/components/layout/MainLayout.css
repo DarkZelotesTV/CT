@@ -70,12 +70,24 @@ body.mobile-scroll-lock {
 /* 1. RAIL */
 .rail-panel {
   grid-area: rail; 
-  background: var(--color-surface-rail); 
-  border-right: 1px solid var(--color-border-glass);
+  background: linear-gradient(180deg, rgba(13, 18, 28, 0.98) 0%, rgba(9, 13, 20, 0.94) 45%, rgba(8, 12, 18, 0.98) 100%);
+  border-right: 1px solid color-mix(in srgb, var(--color-border-glass) 80%, transparent);
   display: flex; flex-direction: column; align-items: center;
   padding: 16px 0; gap: 14px; z-index: 50;
   backdrop-filter: blur(30px);
-  box-shadow: var(--shadow-panel-inset);
+  box-shadow: var(--shadow-panel-inset), inset -1px 0 0 rgba(255, 255, 255, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+.rail-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 30% 12%, rgba(16, 185, 129, 0.18), transparent 45%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 22%);
+  opacity: 0.85;
 }
 
 /* 2. HEADER */
