@@ -16,7 +16,7 @@
             --bg-info: rgba(22, 22, 25, 0.85);
             --bg-log: rgba(8, 8, 10, 0.9);
             
-            --accent: #10b981;
+            --color-accent: #10b981;
             --accent-dim: rgba(16, 185, 129, 0.15);
             --accent-glow: 0 0 15px rgba(16, 185, 129, 0.4);
             
@@ -119,10 +119,10 @@
             width: 48px; height: 48px; border-radius: 50%;
             background: rgba(255,255,255,0.03); cursor: pointer; position: relative;
             transition: 0.3s; display: flex; align-items: center; justify-content: center;
-            color: var(--accent); border: 1px solid rgba(255,255,255,0.05); font-size: 1.2rem;
+            color: var(--color-accent); border: 1px solid rgba(255,255,255,0.05); font-size: 1.2rem;
         }
         .blob img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; transition:0.3s; }
-        .blob:hover, .blob.active { border-radius: 14px; background: var(--accent); color: #fff; box-shadow: var(--accent-glow); }
+        .blob:hover, .blob.active { border-radius: 14px; background: var(--color-accent); color: #fff; box-shadow: var(--accent-glow); }
         .blob:hover img, .blob.active img { border-radius: 14px; }
         .sep { width: 32px; height: 1px; background: rgba(255,255,255,0.1); }
 
@@ -165,7 +165,7 @@
         }
         .t-chan i { font-size: 0.9rem; width: 20px; text-align: center; }
         .t-chan:hover { background: rgba(255,255,255,0.06); color: #fff; }
-        .t-chan.active { background: linear-gradient(90deg, rgba(16, 185, 129, 0.1), transparent); border-left: 2px solid var(--accent); color: #fff; }
+        .t-chan.active { background: linear-gradient(90deg, rgba(16, 185, 129, 0.1), transparent); border-left: 2px solid var(--color-accent); color: #fff; }
         
         .t-user {
             position: relative; padding: 4px 10px 4px 38px; display: flex; align-items: center; gap: 8px;
@@ -194,7 +194,7 @@
         .cc-btn:hover { background: rgba(255,255,255,0.15); }
         .cc-btn.danger { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
         .cc-btn.danger:hover { background: rgba(239, 68, 68, 0.4); color: #fff; }
-        .cc-btn.active { background: var(--accent); color: #fff; box-shadow: var(--accent-glow); }
+        .cc-btn.active { background: var(--color-accent); color: #fff; box-shadow: var(--accent-glow); }
 
         /* --- USER DECK (FIXED) --- */
         .u-deck {
@@ -232,7 +232,7 @@
             background: rgba(0,0,0,0.6); border: var(--border-glass);
             color: #888; cursor: pointer; z-index: 60; border-radius: 4px; backdrop-filter: blur(5px);
         }
-        .edge-toggle:hover { background: var(--accent); color: #fff; }
+        .edge-toggle:hover { background: var(--color-accent); color: #fff; }
         .edge-left { left: 4px; } .edge-right { right: 4px; }
 
         /* STREAM */
@@ -271,7 +271,7 @@
             position: relative; cursor: pointer; flex-shrink: 0; overflow: hidden; transition: 0.2s;
         }
         .stream-thumb:hover { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); }
-        .stream-thumb.active { border-color: var(--accent); box-shadow: 0 0 15px var(--accent-glow); }
+        .stream-thumb.active { border-color: var(--color-accent); box-shadow: 0 0 15px var(--accent-glow); }
         .thumb-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; }
         .stream-thumb:hover .thumb-img { opacity: 1; }
         
@@ -302,14 +302,14 @@
             line-height: 1.3;
         }
         .sp-title { font-weight: 700; color: #fff; font-size: 0.9rem; white-space: nowrap; }
-        .sp-sub { font-size: 0.75rem; color: var(--accent); font-family: var(--font-mono); }
+        .sp-sub { font-size: 0.75rem; color: var(--color-accent); font-family: var(--font-mono); }
         
         .sp-btn {
             width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
             background: rgba(255,255,255,0.05); color: #ccc; cursor: pointer; transition: 0.2s; margin-left: 8px; font-size: 1rem;
         }
         .sp-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
-        .sp-btn.active { background: var(--accent); color: #fff; box-shadow: var(--accent-glow); }
+        .sp-btn.active { background: var(--color-accent); color: #fff; box-shadow: var(--accent-glow); }
         .sp-btn.danger { color: #ef4444; border: 1px solid rgba(239,68,68,0.2); }
         .sp-btn.danger:hover { background: rgba(239,68,68,0.1); }
 
@@ -355,7 +355,7 @@
         }
         .ln { margin-bottom: 2px; }
         .ts { color: #555; margin-right: 8px; }
-        .sys { color: var(--accent); }
+        .sys { color: var(--color-accent); }
         .cmd {
             padding: 8px 16px; background: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.05);
             display: flex; gap: 8px; align-items: center;
@@ -381,7 +381,7 @@
         <div class="sep"></div>
         <div class="blob"><img src="https://picsum.photos/seed/clover/64/64"></div>
         <div class="blob"><img src="https://picsum.photos/seed/tech/64/64"></div>
-        <div class="blob" style="color:var(--accent); background:rgba(16,185,129,0.1);"><i class="fa-solid fa-plus"></i></div>
+        <div class="blob" style="color:var(--color-accent); background:rgba(16,185,129,0.1);"><i class="fa-solid fa-plus"></i></div>
     </nav>
 
     <!-- LEFT TREE -->
@@ -449,7 +449,7 @@
         </div>
         
         <div class="telemetry-bar">
-            <div class="t-item"><span class="t-label">PING</span><span class="t-val" style="color:var(--accent)">24ms</span></div>
+            <div class="t-item"><span class="t-label">PING</span><span class="t-val" style="color:var(--color-accent)">24ms</span></div>
             <div class="t-item"><span class="t-label">LOSS</span><span class="t-val">0%</span></div>
             <div class="t-item"><span class="t-label">UPTIME</span><span class="t-val" id="time">01:42</span></div>
         </div>
@@ -515,7 +515,7 @@
     <aside class="info-wrap" id="rightPanel">
         <div class="info-content scroll-y">
             <!-- GROUP: CONNECTED -->
-            <div class="grp-head" style="color:var(--accent);">Verbunden: Gaming Lounge — 2</div>
+            <div class="grp-head" style="color:var(--color-accent);">Verbunden: Gaming Lounge — 2</div>
             <div class="m-row" style="background:rgba(16,185,129,0.05); border-color:rgba(16,185,129,0.1);">
                 <img src="https://picsum.photos/seed/darkztv/48/48" class="m-av-lg on">
                 <div>
@@ -573,7 +573,7 @@
             <div class="ln"><span class="ts">[16:45]</span> <span class="sys">Stream gestartet:</span> "Visual Studio Code" (1080p60)</div>
         </div>
         <div class="cmd">
-            <span style="color:var(--accent); font-weight:700;">&gt;</span>
+            <span style="color:var(--color-accent); font-weight:700;">&gt;</span>
             <input type="text" placeholder="Befehl eingeben...">
         </div>
     </footer>
