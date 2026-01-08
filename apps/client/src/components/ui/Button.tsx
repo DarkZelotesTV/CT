@@ -31,7 +31,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           size === 'lg' && 'h-11 px-5 text-base',
           size === 'icon' && 'h-10 w-10 p-0',
           // variants
-          variant === 'primary' && 'bg-accent text-white hover:bg-accent-hover shadow-neon',
+          variant === 'primary' && 'bg-accent text-[color:var(--color-on-accent)] hover:bg-accent-hover shadow-neon',
           variant === 'secondary' && 'bg-surface-alt text-text hover:bg-surface-hover border border-border',
           variant === 'ghost' && 'bg-transparent text-text hover:bg-surface-hover border border-transparent',
           variant === 'danger' && 'bg-red-500 text-white hover:bg-red-600',
@@ -79,7 +79,9 @@ export const ToggleIconButton = React.forwardRef<HTMLButtonElement, ToggleIconBu
         aria-pressed={pressed}
         className={classNames(
           // pressed treatment
-          pressed ? 'bg-accent text-white hover:bg-accent-hover border-transparent shadow-neon' : null,
+          pressed
+            ? 'bg-accent text-[color:var(--color-on-accent)] hover:bg-accent-hover border-transparent shadow-neon'
+            : null,
           className,
         )}
         {...props}

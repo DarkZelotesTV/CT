@@ -31,6 +31,7 @@ export type AppTheme = {
   textMuted: string;
   accent: string;
   accentHover: string;
+  onAccent: string;
   focus: string;
   overlay: string;
 };
@@ -211,6 +212,12 @@ const computeAccentHover = (accent: string, surface: string, text: string, minCo
   return best?.color ?? fallback?.color ?? accent;
 };
 
+const computeOnAccent = (accent: string, text: string, background: string) => {
+  const textContrast = contrastRatio(accent, text);
+  const backgroundContrast = contrastRatio(accent, background);
+  return textContrast >= backgroundContrast ? text : background;
+};
+
 export const getThemeContrastTargets = (mode: ThemeMode) => {
   const base = mode === 'dark' ? darkBase : lightBase;
   return { surface: base.surface, text: base.text };
@@ -271,6 +278,7 @@ export const buildAppTheme = (mode: ThemeMode, accentColor: string): AppTheme =>
     ...base,
     accent,
     accentHover: computeAccentHover(accent, base.surface, base.text, MIN_ACCENT_CONTRAST),
+    onAccent: computeOnAccent(accent, base.text, base.background),
     focus: accent,
     surfaceBody,
     surfaceRail,
@@ -346,6 +354,7 @@ export const applyAppTheme = (theme: AppTheme) => {
     '--color-text-muted': theme.textMuted,
     '--color-accent': theme.accent,
     '--color-accent-hover': theme.accentHover,
+    '--color-on-accent': theme.onAccent,
     '--accent': theme.accent,
     '--accent-hover': theme.accentHover,
     '--color-focus': theme.focus,
