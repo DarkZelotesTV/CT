@@ -176,11 +176,11 @@ export const CreateChannelModal = ({
           <button
             type="submit"
             disabled={loading || !name}
-            className="px-6 py-2 rounded-[var(--radius-2)] font-bold shadow-lg disabled:opacity-50 flex items-center gap-2 transition-all active:scale-95 text-white text-sm bg-[var(--accent)] hover:bg-[var(--accent-hover)] active:bg-[var(--accent-hover)] focus-visible:bg-[var(--accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
+            className="px-6 py-2 rounded-[var(--radius-2)] font-bold shadow-lg disabled:opacity-50 flex items-center gap-2 transition-all active:scale-95 text-white text-sm bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] active:bg-[var(--color-accent-hover)] focus-visible:bg-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
             style={
               {
-                '--accent': palette.accent,
-                '--accent-hover': palette.accentHover,
+                '--color-accent': palette.accent,
+                '--color-accent-hover': palette.accentHover,
               } as React.CSSProperties
             }
           >
