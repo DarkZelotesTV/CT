@@ -40,18 +40,6 @@
 .main-layout.fold-left { --curr-tree: 0px; }
 .main-layout.fold-right { --curr-info: 0px; }
 
-/* --- Utilities --- */
-.glass {
-  backdrop-filter: blur(30px);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-surface-tint) 3%, transparent);
-}
-
-.scroll-y {
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #444 transparent;
-}
-
 /* --- Modal shell (ModalLayout) --- */
 .ct-modal-overlay {
   position: fixed;
@@ -95,28 +83,28 @@
   font-size: 18px;
   line-height: 1.2;
   font-weight: 800;
-  color: #fff;
+  color: var(--color-text);
   margin: 0;
 }
 
 .ct-modal-desc {
   margin-top: 8px;
   font-size: 13px;
-  color: color-mix(in srgb, var(--color-surface-tint) 65%, transparent);
+  color: var(--color-text-muted);
 }
 
 .ct-modal-close {
   appearance: none;
   border: 0;
   background: transparent;
-  color: color-mix(in srgb, var(--color-surface-tint) 60%, transparent);
+  color: var(--color-text-muted);
   padding: var(--space-2);
   border-radius: var(--radius-3);
   cursor: pointer;
 }
 .ct-modal-close:hover {
   background: color-mix(in srgb, var(--color-surface-tint) 6%, transparent);
-  color: color-mix(in srgb, var(--color-surface-tint) 92%, transparent);
+  color: var(--color-text);
 }
 
 .ct-modal-body {
