@@ -1,4 +1,6 @@
 import { ArrowRight, Compass, Home, Layers, MessageSquare, PlusCircle, Server, Settings, Users } from 'lucide-react';
+import { useSettings } from '../../context/SettingsContext';
+import { DecorationLayer } from '../layout/DecorationLayer';
 
 interface HomeOnboardingStageProps {
   onCreateServer: () => void;
@@ -8,6 +10,8 @@ interface HomeOnboardingStageProps {
 }
 
 export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettings, hasServers }: HomeOnboardingStageProps) => {
+  const { settings } = useSettings();
+  const decorationsEnabled = settings.theme.decorationsEnabled ?? true;
   const steps = [
     {
       title: '1. Server entdecken oder erstellen',
@@ -56,12 +60,10 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
   ];
 
   return (
-    <div className="min-h-full w-full flex flex-col bg-gradient-to-br from-[#0b0b0f] via-[#0e0f18] to-[#0b0c12] relative overflow-hidden">
-      <div className="absolute inset-0 opacity-[0.1]" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '22px 22px' }} />
-      <div className="absolute -right-32 -top-32 w-96 h-96 bg-indigo-600/12 blur-3xl rounded-full" />
-      <div className="absolute -left-24 bottom-0 w-80 h-80 bg-green-500/12 blur-3xl rounded-full" />
+    <div className="min-h-full w-full flex flex-col bg-background relative overflow-hidden">
+      <DecorationLayer enabled={decorationsEnabled} />
 
-      <div className="relative flex-1 grid grid-cols-12 gap-5 px-7 pt-9 pb-9 mx-auto max-w-full min-[900px]:max-w-[900px] min-[1200px]:max-w-[1000px] max-[899px]:px-4">
+      <div className="relative z-10 flex-1 grid grid-cols-12 gap-5 px-7 pt-9 pb-9 mx-auto max-w-full min-[900px]:max-w-[900px] min-[1200px]:max-w-[1000px] max-[899px]:px-4">
         <div className="col-span-12 min-[900px]:col-span-7 flex flex-col gap-6">
           <div className="flex flex-col">
             <div className="flex flex-col gap-3">
@@ -71,10 +73,10 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
               </div>
 
               <div className="space-y-3">
-                <h1 className="text-[30px] min-[900px]:text-[36px] min-[1200px]:text-[40px] font-extrabold text-white leading-[44px] min-[900px]:leading-[48px]">
+                <h1 className="text-[30px] min-[900px]:text-[36px] min-[1200px]:text-[40px] font-extrabold text-text leading-[44px] min-[900px]:leading-[48px]">
                   Starte in deine neue Homebase
                 </h1>
-                <p className="text-[14px] min-[900px]:text-[15px] text-[color:var(--color-text-muted)] leading-[21px] min-[900px]:leading-[23px] max-w-[50ch]">
+                <p className="text-[14px] min-[900px]:text-[15px] text-text-muted leading-[21px] min-[900px]:leading-[23px] max-w-[50ch]">
                   Erstelle Server, organisiere Kanäle und lade dein Team ein. Diese Oberfläche bleibt dein Startpunkt, solange kein Server ausgewählt ist.
                 </p>
               </div>
@@ -84,21 +86,21 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
               <button
                 type="button"
                 onClick={onCreateServer}
-                className="h-10 px-4 bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white rounded-xl shadow-lg shadow-[0_16px_28px_color-mix(in_srgb,var(--color-accent)_30%,transparent)] flex items-center gap-2.5 transition-colors max-[899px]:w-full max-[899px]:justify-center"
+                className="h-10 px-4 bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-text rounded-xl shadow-lg shadow-[0_16px_28px_color-mix(in_srgb,var(--color-accent)_30%,transparent)] flex items-center gap-2.5 transition-colors max-[899px]:w-full max-[899px]:justify-center"
               >
                 <PlusCircle size={18} /> Server erstellen
               </button>
               <button
                 type="button"
                 onClick={onJoinServer}
-                className="h-10 px-4 bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 text-white rounded-xl border border-[color:var(--color-border)] flex items-center gap-2.5 transition-colors max-[899px]:w-full max-[899px]:justify-center"
+                className="h-10 px-4 bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 text-text rounded-xl border border-[color:var(--color-border)] flex items-center gap-2.5 transition-colors max-[899px]:w-full max-[899px]:justify-center"
               >
                 <Compass size={18} /> Mit Einladung beitreten
               </button>
             </div>
             <button
               type="button"
-              className="mt-3 text-[13px] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-accent)] transition-colors self-start"
+              className="mt-3 text-[13px] text-text-muted hover:text-[color:var(--color-accent)] transition-colors self-start"
             >
               Demo-Server ansehen
             </button>
@@ -111,7 +113,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-3 text-[color:var(--color-text)]">
                     <Server size={16} />
                   </span>
-                  <span className="text-[13px] font-medium text-white">{server.name}</span>
+                  <span className="text-[13px] font-medium text-text">{server.name}</span>
                   <button
                     type="button"
                     className="ml-auto inline-flex h-7 items-center rounded-[8px] border border-[color:var(--color-border)] px-3 text-[12px] font-semibold text-[color:var(--color-text)] transition-colors hover:border-[color:var(--color-accent)]/40 hover:text-[color:var(--color-accent)]"
@@ -132,8 +134,8 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
                 <div className="w-9 h-9 rounded-xl bg-surface-3 border border-[color:var(--color-border)] text-[color:var(--color-text)] flex items-center justify-center">
                   <Icon size={17} />
                 </div>
-                <div className="text-[13px] font-semibold text-white leading-snug">{title}</div>
-                <p className="text-[11px] text-[color:var(--color-text-muted)] leading-relaxed flex-1">{body}</p>
+                <div className="text-[13px] font-semibold text-text leading-snug">{title}</div>
+                <p className="text-[11px] text-text-muted leading-relaxed flex-1">{body}</p>
               </div>
             ))}
           </div>
@@ -146,8 +148,8 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
                 <MessageSquare size={18} />
               </div>
               <div>
-                <div className="text-[15px] text-white font-semibold">Kein Server ausgewählt</div>
-                <div className="text-[12px] text-[color:var(--color-text-muted)]">
+                <div className="text-[15px] text-text font-semibold">Kein Server ausgewählt</div>
+                <div className="text-[12px] text-text-muted">
                   Starte mit einem Server, um Kanäle anzulegen und dein Profil zu personalisieren.
                 </div>
               </div>
@@ -170,8 +172,8 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
                   title={isDisabled ? tooltip : undefined}
                   className={`group flex h-10 items-center gap-3 rounded-xl border border-[color:var(--color-border)]/70 px-3 text-left transition ${
                     isDisabled
-                      ? 'cursor-not-allowed bg-surface-2/30 text-[color:var(--color-text-muted)]/80'
-                      : 'bg-surface-2 text-white hover:bg-surface-3 hover:border-[color:var(--color-accent)]/30 hover:ring-1 hover:ring-[color:var(--color-accent)]/15'
+                      ? 'cursor-not-allowed bg-surface-2/30 text-text-muted/80'
+                      : 'bg-surface-2 text-text hover:bg-surface-3 hover:border-[color:var(--color-accent)]/30 hover:ring-1 hover:ring-[color:var(--color-accent)]/15'
                   }`}
                 >
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-surface-3 text-[color:var(--color-text)]">
@@ -181,8 +183,8 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
                   <span
                     className={`ml-auto inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] transition ${
                       isDisabled
-                        ? 'border-transparent text-[color:var(--color-text-muted)]/70'
-                        : 'border-transparent text-[color:var(--color-text-muted)] group-hover:border-[color:var(--color-accent)]/20 group-hover:text-[color:var(--color-accent)]'
+                        ? 'border-transparent text-text-muted/70'
+                        : 'border-transparent text-text-muted group-hover:border-[color:var(--color-accent)]/20 group-hover:text-[color:var(--color-accent)]'
                     }`}
                   >
                     Los <ArrowRight size={14} />
@@ -192,7 +194,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
             })}
           </div>
           <div className="rounded-2xl border border-[color:var(--color-border)] bg-surface-3/60 p-3">
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-[color:var(--color-text-muted)] mb-2">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-text-muted mb-2">
               Bluesky
             </div>
             <iframe
