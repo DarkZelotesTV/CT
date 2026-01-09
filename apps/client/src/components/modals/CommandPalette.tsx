@@ -5,7 +5,7 @@ import classNames from 'classnames';
 import { apiFetch } from '../../api/http';
 import type { ApiFetchInit } from '../../api/http';
 import { ModalLayout } from './ModalLayout';
-import { Icon } from '../ui';
+import { Badge, Icon } from '../ui';
 import { Input } from '../ui/Input';
 
 interface PaletteServer {
@@ -343,9 +343,9 @@ export const CommandPalette = ({
                     <div className="text-xs text-[color:var(--color-text-muted)] truncate">{item.description}</div>
                   </div>
                   {item.badge && (
-                    <span className="text-[10px] uppercase tracking-wide text-[color:var(--color-text-muted)] border border-[color:var(--color-border)] rounded-full px-2 py-0.5">
+                    <Badge variant="info" className="text-[10px] uppercase tracking-wide">
                       {item.badge}
-                    </span>
+                    </Badge>
                   )}
                 </div>
               );

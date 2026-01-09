@@ -204,22 +204,6 @@ body.mobile-scroll-lock {
   color: var(--color-text-subtle);
 }
 
-.t-chan .chan-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: var(--font-size-xs);
-  line-height: var(--line-height-sm);
-  font-weight: 700;
-  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
-  color: var(--color-text-accent-soft);
-  border: 1px solid color-mix(in srgb, var(--color-accent) 25%, transparent);
-  box-shadow: 0 8px 20px color-mix(in srgb, var(--color-accent) 15%, transparent);
-  white-space: nowrap;
-}
-
 .t-chan:hover {
   background: var(--color-surface-hover);
   color: var(--color-text);

@@ -176,6 +176,7 @@
   --color-text-danger: var(--status-dnd);
   --color-text-warning: var(--status-idle);
   --color-text-success: var(--status-online);
+  --color-text-info: var(--color-accent);
   --color-text-danger-light: color-mix(in srgb, var(--status-dnd) 35%, var(--color-text) 65%);
   --color-text-inverse: color-mix(in srgb, var(--color-text) 10%, var(--color-surface) 90%);
   --color-text-danger-muted: color-mix(in srgb, var(--status-dnd) 60%, var(--color-text-muted) 40%);

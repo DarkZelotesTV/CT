@@ -14,7 +14,7 @@ import { useSettings } from '../../context/SettingsContext';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
 import { defaultServerTheme, deriveServerThemeFromSettings, type ServerTheme } from '../../theme/serverTheme';
 import { storage } from '../../shared/config/storage';
-import { ErrorCard, Icon, RoleTag, Skeleton, Spinner, StatusBadge, type StatusTone } from '../ui';
+import { Badge, ErrorCard, Icon, RoleTag, Skeleton, Spinner, StatusBadge, type StatusTone } from '../ui';
 import { Button, IconButton } from '../ui/Button';
 
 interface Channel { id: number; name: string; type: 'text' | 'voice' | 'web' | 'data-transfer' | 'spacer' | 'list'; custom_icon?: string; }
@@ -299,11 +299,11 @@ export const ChannelSidebar = ({
             <span className="chan-sub">{channelSubLabel}</span>
           </div>
 
-          {isVoiceActive && <span className="chan-pill">LIVE</span>}
+          {isVoiceActive && <Badge variant="danger">LIVE</Badge>}
           {isVoice && voiceUsers.length > 0 && (
-            <span className="chan-pill">
+            <Badge variant="info">
               <Icon icon={Users2} size="sm" className="text-inherit" hoverTone="none" /> {voiceUsers.length}
-            </span>
+            </Badge>
           )}
         </div>
 
