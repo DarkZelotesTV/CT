@@ -1,6 +1,7 @@
 import type { ThemeSettings } from '../context/SettingsContext';
 
 export type ThemeMode = ThemeSettings['mode'];
+export type ThemeDensity = ThemeSettings['density'];
 
 export type AppTheme = {
   mode: ThemeMode;
@@ -403,4 +404,17 @@ export const applyAppTheme = (theme: AppTheme) => {
 
   Object.entries(entries).forEach(([key, value]) => root.style.setProperty(key, value));
   root.dataset.themeMode = theme.mode;
+};
+
+const densityScales: Record<ThemeDensity, number> = {
+  comfortable: 1,
+  compact: 0.9,
+};
+
+export const applyDensitySettings = (density: ThemeDensity) => {
+  if (typeof document === 'undefined') return;
+  const root = document.documentElement;
+  const scale = densityScales[density] ?? densityScales.comfortable;
+  root.style.setProperty('--density-scale', String(scale));
+  root.dataset.density = density;
 };

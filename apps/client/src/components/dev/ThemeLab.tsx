@@ -5,13 +5,13 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Toggle } from '../ui/Toggle';
 import { useSettings } from '../../context/SettingsContext';
-import { applyAppTheme, buildAppTheme } from '../../theme/appTheme';
+import { applyAppTheme, applyDensitySettings, buildAppTheme } from '../../theme/appTheme';
 
 const isValidHex = (value: string) => /^#[0-9a-fA-F]{6}$/.test(value);
 
 export const ThemeLab = () => {
   const { settings, updateTheme } = useSettings();
-  const { mode, accentColor, decorationsEnabled } = settings.theme;
+  const { mode, accentColor, decorationsEnabled, density } = settings.theme;
   const [accentDraft, setAccentDraft] = useState(accentColor);
 
   useEffect(() => {
@@ -21,7 +21,8 @@ export const ThemeLab = () => {
   useEffect(() => {
     const theme = buildAppTheme(mode, accentColor);
     applyAppTheme(theme);
-  }, [mode, accentColor]);
+    applyDensitySettings(density);
+  }, [density, mode, accentColor]);
 
   const layoutSamples = useMemo(
     () => [

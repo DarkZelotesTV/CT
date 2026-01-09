@@ -29,7 +29,7 @@ import { useVoice, type VoiceContextType } from '../../features/voice';
 import { useOnboardingReplay, type OnboardingReplayKey } from '../../features/onboarding/useOnboardingReplay';
 import { storage } from '../../shared/config/storage';
 import { defaultHotkeySettings, useSettings } from '../../context/SettingsContext';
-import { applyAppTheme, buildAppTheme } from '../../theme/appTheme';
+import { applyAppTheme, applyDensitySettings, buildAppTheme } from '../../theme/appTheme';
 import { useDesktopNotifications } from '../../hooks/useDesktopNotifications';
 import { useLogStore } from '../../store/useLogStore';
 import { useSocket } from '../../context/SocketContext';
@@ -268,7 +268,8 @@ export const MainLayout = () => {
   useEffect(() => {
     const theme = buildAppTheme(settings.theme.mode, activeAccent);
     applyAppTheme(theme);
-  }, [activeAccent, settings.theme.mode]);
+    applyDensitySettings(settings.theme.density);
+  }, [activeAccent, settings.theme.density, settings.theme.mode]);
 
   const resolvedServerIcon = useMemo(
     () => (serverIcon ? resolveServerAssetUrl(serverIcon) : null),

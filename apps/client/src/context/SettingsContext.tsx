@@ -35,6 +35,7 @@ export type ThemeSettings = {
   accentColor: string;
   serverAccents: Record<number, string>;
   decorationsEnabled?: boolean;
+  density: 'comfortable' | 'compact';
 };
 
 export type TalkSettings = {
@@ -92,6 +93,7 @@ const defaultSettings: SettingsState = {
     accentColor: '#6366f1',
     serverAccents: {},
     decorationsEnabled: true,
+    density: 'comfortable',
   },
   talk: {
     muted: false,
