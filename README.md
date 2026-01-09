@@ -29,6 +29,40 @@ npm install
   - `VITE_TURN_URLS`, `VITE_TURN_USERNAME`, `VITE_TURN_PASSWORD` (oder `VITE_TURN_CREDENTIAL`): TURN-Endpunkte inkl. Zugangsdaten.
   - Falls gesetzt, haben gespeicherte Nutzereinstellungen (`settings.talk.iceServers`) Vorrang vor den Umgebungsvariablen.
 
+### TLS
+#### Dev (self-signed)
+1. Zertifikate erzeugen (im Repo-Root ausführen):
+   ```bash
+   mkdir -p apps/server/certs
+   openssl genrsa -out apps/server/certs/dev-ca-key.pem 4096
+   openssl req -x509 -new -nodes -key apps/server/certs/dev-ca-key.pem -sha256 -days 3650 -out apps/server/certs/dev-ca.pem -subj "/CN=CloverTalk Dev CA"
+   openssl genrsa -out apps/server/certs/dev-server-key.pem 2048
+   openssl req -new -key apps/server/certs/dev-server-key.pem -out apps/server/certs/dev-server.csr -subj "/CN=localhost"
+   printf "subjectAltName=DNS:localhost,IP:127.0.0.1\n" > apps/server/certs/dev-server.ext
+   openssl x509 -req -in apps/server/certs/dev-server.csr -CA apps/server/certs/dev-ca.pem -CAkey apps/server/certs/dev-ca-key.pem -CAcreateserial -out apps/server/certs/dev-server.pem -days 825 -sha256 -extfile apps/server/certs/dev-server.ext
+   ```
+2. `.env` setzen (Pfad relativ zu `apps/server`):
+   ```env
+   TLS_CERT_PATH=./certs/dev-server.pem
+   TLS_KEY_PATH=./certs/dev-server-key.pem
+   TLS_CA_PATH=./certs/dev-ca.pem
+   ```
+3. Dev-CA vertrauen:
+   - macOS: `sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain apps/server/certs/dev-ca.pem`
+   - Ubuntu/Debian: `sudo cp apps/server/certs/dev-ca.pem /usr/local/share/ca-certificates/clovertalk-dev-ca.crt && sudo update-ca-certificates`
+   - Windows: `certmgr.msc` → „Vertrauenswürdige Stammzertifizierungsstellen“ → Zertifikat importieren.
+
+#### Prod (Let’s Encrypt/fullchain)
+1. Zertifikate über Let’s Encrypt erzeugen (z. B. `certbot`) und `fullchain.pem` sowie `privkey.pem` bereitstellen.
+2. Zertifikate nach `apps/server/certs` kopieren oder dort mounten:
+   ```env
+   TLS_CERT_PATH=./certs/fullchain.pem
+   TLS_KEY_PATH=./certs/privkey.pem
+   TLS_REDIRECT_HTTP=true
+   TLS_HSTS_MAX_AGE=31536000
+   ```
+3. Server neu starten.
+
 ### Sequelize-Migrationen
 - CLI-Konfiguration liegt unter `apps/server/sequelize.config.cjs`, die Pfade werden über `.sequelizerc` gesetzt.
 - Migrationen liegen in `apps/server/src/migrations`.
