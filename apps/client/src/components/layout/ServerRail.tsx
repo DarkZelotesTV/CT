@@ -1,12 +1,12 @@
 import type React from 'react';
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { Home, Plus, Globe, X, Pin, PinOff, Pencil, Trash2, Bell } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../../api/http';
 import { getServerUrl, setServerUrl } from '../../utils/apiConfig';
 import { readPinnedServers, removePinnedServer, normalizeInstanceUrl } from '../../utils/pinnedServers';
 import { storage } from '../../shared/config/storage';
-import { ErrorCard, Icon, Spinner } from '../ui';
+import { ErrorCard, Icon, Spinner, Menu, MenuItem, Popover, PopoverContent, PopoverTrigger } from '../ui';
 import { Button, IconButton } from '../ui/Button';
 import { useSocket } from '../../context/SocketContext';
 
@@ -30,7 +30,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
   const { t } = useTranslation();
   const [servers, setServers] = useState<Server[]>([]);
   // Lokale Modals entfernt - werden jetzt von MainLayout gesteuert
-  const [showAddMenu, setShowAddMenu] = useState(false);
+  const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [pinnedTick, setPinnedTick] = useState(0);
   const [lastError, setLastError] = useState<string | null>(null);
@@ -44,6 +44,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
     x: number;
     y: number;
   } | null>(null);
+  const contextTriggerRef = useRef<HTMLElement | null>(null);
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const [unreadCounts, setUnreadCounts] = useState<Record<number, number>>({});
   const { socket } = useSocket();
@@ -157,6 +158,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
     instanceUrl?: string
   ) => {
     event.preventDefault();
+    contextTriggerRef.current = event.currentTarget as HTMLElement;
     // With `exactOptionalPropertyTypes`, optional props must be omitted (not set to `undefined`).
     setContextMenu({
       serverId,
@@ -176,6 +178,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
     if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
       event.preventDefault();
       const el = event.currentTarget as HTMLElement;
+      contextTriggerRef.current = el;
       const rect = el.getBoundingClientRect();
       const x = rect.left + rect.width / 2;
       const y = rect.top + rect.height / 2;
@@ -316,50 +319,6 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
       socket.off('server_unread_counts', handleUnread);
     };
   }, [socket]);
-
-  useEffect(() => {
-    if (!contextMenu) return;
-
-    const close = (event: MouseEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (target?.closest('[data-server-menu]')) return;
-      setContextMenu(null);
-    };
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setContextMenu(null);
-    };
-    const blurHandler = () => setContextMenu(null);
-    document.addEventListener('mousedown', close);
-    window.addEventListener('blur', blurHandler);
-    window.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', close);
-      window.removeEventListener('blur', blurHandler);
-      window.removeEventListener('keydown', onKeyDown);
-    };
-  }, [contextMenu]);
-
-  // Close the add menu on outside click / ESC
-  useEffect(() => {
-    if (!showAddMenu) return;
-
-    const onDocDown = (e: MouseEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (!target) return;
-      if (!target.closest('[data-rail-add]')) setShowAddMenu(false);
-    };
-
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setShowAddMenu(false);
-    };
-
-    document.addEventListener('mousedown', onDocDown);
-    window.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDocDown);
-      window.removeEventListener('keydown', onKey);
-    };
-  }, [showAddMenu]);
 
   const openPinned = (instanceUrl: string, serverId: number) => {
     const norm = normalizeInstanceUrl(instanceUrl);
@@ -542,127 +501,96 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
 
         {/* 2. FIXIERTER FOOTER: Add Button + Menü */}
         <div className="flex-shrink-0 w-full flex flex-col items-center pb-4 relative z-50">
-          <div className="relative" data-rail-add>
-            <IconButton
-              type="button"
-              onMouseDown={(e) => e.stopPropagation()}
-              onClick={() => setShowAddMenu((v) => !v)}
-              size="lg"
-              variant="ghost"
-              className="no-drag w-12 h-12 flex-shrink-0 rounded-full bg-[color:var(--color-accent)]/10 hover:bg-[color:var(--color-accent-hover)]/20 border border-[color:var(--color-accent)]/30 cursor-pointer text-text-muted transition-all duration-300 hover:rounded-[14px] hover:shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-accent)_16%,transparent)] group hover:text-accent"
-              title="Server hinzufügen"
-              aria-label="Server hinzufügen"
-            >
-              <Icon icon={Plus} size="lg" className="text-inherit" hoverTone="none" />
-            </IconButton>
-
-            {showAddMenu && (
-              <div className="absolute left-16 bottom-0 w-52 bg-[color:var(--color-surface)] border border-[color:var(--color-border)] rounded-[var(--radius-3)] shadow-2xl p-2 z-50 no-drag">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  className="w-full justify-start rounded-[var(--radius-2)] text-sm text-text hover:bg-[color:var(--color-surface-hover)]"
+          <Popover open={isAddMenuOpen} onOpenChange={setIsAddMenuOpen}>
+            <PopoverTrigger>
+              <IconButton
+                type="button"
+                onMouseDown={(e) => e.stopPropagation()}
+                size="lg"
+                variant="ghost"
+                className="no-drag w-12 h-12 flex-shrink-0 rounded-full bg-[color:var(--color-accent)]/10 hover:bg-[color:var(--color-accent-hover)]/20 border border-[color:var(--color-accent)]/30 cursor-pointer text-text-muted transition-all duration-300 hover:rounded-[14px] hover:shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-accent)_16%,transparent)] group hover:text-accent"
+                title="Server hinzufügen"
+                aria-label="Server hinzufügen"
+                aria-haspopup="menu"
+              >
+                <Icon icon={Plus} size="lg" className="text-inherit" hoverTone="none" />
+              </IconButton>
+            </PopoverTrigger>
+            <PopoverContent className="absolute left-16 bottom-0 w-52 bg-[color:var(--color-surface)] border border-[color:var(--color-border)] rounded-[var(--radius-3)] shadow-2xl p-2 z-50 no-drag">
+              <Menu className="flex flex-col gap-1" aria-label="Server hinzufügen">
+                <MenuItem
+                  className="w-full text-left rounded-[var(--radius-2)] text-sm text-text hover:bg-[color:var(--color-surface-hover)] px-3 py-1.5"
                   onClick={() => {
-                    setShowAddMenu(false);
-                    onCreateServer(); // Ruft jetzt die Prop auf
+                    setIsAddMenuOpen(false);
+                    onCreateServer();
                   }}
                 >
                   Server erstellen
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  className="w-full justify-start rounded-[var(--radius-2)] text-sm text-text hover:bg-[color:var(--color-surface-hover)]"
+                </MenuItem>
+                <MenuItem
+                  className="w-full text-left rounded-[var(--radius-2)] text-sm text-text hover:bg-[color:var(--color-surface-hover)] px-3 py-1.5"
                   onClick={() => {
-                    setShowAddMenu(false);
-                    onJoinServer(); // Ruft jetzt die Prop auf
+                    setIsAddMenuOpen(false);
+                    onJoinServer();
                   }}
                 >
                   Server beitreten / hinzufügen
-                </Button>
+                </MenuItem>
                 <div className="text-[10px] text-[color:var(--color-text-muted)] px-3 pt-2 pb-1">Aktuelle Instanz: {currentInstance}</div>
-              </div>
-            )}
-          </div>
+              </Menu>
+            </PopoverContent>
+          </Popover>
         </div>
 
       </div>
 
       {contextMenu && (
-        <div className="fixed inset-0 z-50 pointer-events-none">
-          <div
-            role="menu"
-            tabIndex={-1}
-            data-server-menu
-            aria-label={t('serverRail.contextMenuAria') ?? 'Server Menü'}
-            className="pointer-events-auto absolute min-w-[180px] bg-[color:var(--color-surface)] border border-[color:var(--color-border)] rounded-[var(--radius-3)] shadow-2xl p-2 text-sm text-text"
+        <Popover
+          open={Boolean(contextMenu)}
+          onOpenChange={(open) => {
+            if (!open) setContextMenu(null);
+          }}
+          triggerRef={contextTriggerRef}
+        >
+          <PopoverContent
+            className="fixed z-50 min-w-[180px] bg-[color:var(--color-surface)] border border-[color:var(--color-border)] rounded-[var(--radius-3)] shadow-2xl p-2 text-sm text-text"
             style={{ left: contextMenu.x, top: contextMenu.y }}
           >
-            <Button
-              type="button"
-              role="menuitem"
-              size="sm"
-              variant="ghost"
-              className="w-full justify-start gap-2 rounded-[var(--radius-2)] hover:bg-[color:var(--color-surface-hover)] focus:bg-[color:var(--color-surface-hover)]/80 focus:outline-none"
-              onClick={() => handleContextAction('rename')}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  handleContextAction('rename');
-                }
-              }}
-            >
-              <Icon icon={Pencil} size="md" className="text-inherit" hoverTone="none" />
-              <span>{t('serverRail.context.rename')}</span>
-            </Button>
-
-            {contextMenu.type === 'local' && (
-              <Button
-                type="button"
-                role="menuitem"
-                size="sm"
-                variant="ghost"
-                className="w-full justify-start gap-2 rounded-[var(--radius-2)] hover:bg-[color:var(--color-surface-hover)] focus:bg-[color:var(--color-surface-hover)]/80 focus:outline-none"
-                onClick={() => handleContextAction('pin-toggle')}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    handleContextAction('pin-toggle');
-                  }
-                }}
+            <Menu className="flex flex-col gap-1" aria-label={t('serverRail.contextMenuAria') ?? 'Server Menü'}>
+              <MenuItem
+                className="w-full flex items-center gap-2 rounded-[var(--radius-2)] hover:bg-[color:var(--color-surface-hover)] focus:bg-[color:var(--color-surface-hover)]/80 focus:outline-none px-2 py-1.5"
+                onClick={() => handleContextAction('rename')}
               >
-                {pinnedLocalIds.includes(contextMenu.serverId) ? <Icon icon={PinOff} size="md" className="text-inherit" hoverTone="none" /> : <Icon icon={Pin} size="md" className="text-inherit" hoverTone="none" />}
-                <span>
-                  {pinnedLocalIds.includes(contextMenu.serverId)
-                    ? t('serverRail.context.unpin')
-                    : t('serverRail.context.pin')}
-                </span>
-              </Button>
-            )}
+                <Icon icon={Pencil} size="md" className="text-inherit" hoverTone="none" />
+                <span>{t('serverRail.context.rename')}</span>
+              </MenuItem>
 
-            {contextMenu.type === 'remote' && (
-              <Button
-                type="button"
-                role="menuitem"
-                size="sm"
-                variant="ghost"
-                className="w-full justify-start gap-2 rounded-[var(--radius-2)] hover:bg-[color:var(--color-surface-hover)] focus:bg-[color:var(--color-surface-hover)]/80 focus:outline-none"
-                onClick={() => handleContextAction('remove')}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    handleContextAction('remove');
-                  }
-                }}
-              >
-                <Icon icon={Trash2} size="md" className="text-inherit" hoverTone="none" />
-                <span>{t('serverRail.context.remove')}</span>
-              </Button>
-            )}
-          </div>
-        </div>
+              {contextMenu.type === 'local' && (
+                <MenuItem
+                  className="w-full flex items-center gap-2 rounded-[var(--radius-2)] hover:bg-[color:var(--color-surface-hover)] focus:bg-[color:var(--color-surface-hover)]/80 focus:outline-none px-2 py-1.5"
+                  onClick={() => handleContextAction('pin-toggle')}
+                >
+                  {pinnedLocalIds.includes(contextMenu.serverId) ? <Icon icon={PinOff} size="md" className="text-inherit" hoverTone="none" /> : <Icon icon={Pin} size="md" className="text-inherit" hoverTone="none" />}
+                  <span>
+                    {pinnedLocalIds.includes(contextMenu.serverId)
+                      ? t('serverRail.context.unpin')
+                      : t('serverRail.context.pin')}
+                  </span>
+                </MenuItem>
+              )}
+
+              {contextMenu.type === 'remote' && (
+                <MenuItem
+                  className="w-full flex items-center gap-2 rounded-[var(--radius-2)] hover:bg-[color:var(--color-surface-hover)] focus:bg-[color:var(--color-surface-hover)]/80 focus:outline-none px-2 py-1.5"
+                  onClick={() => handleContextAction('remove')}
+                >
+                  <Icon icon={Trash2} size="md" className="text-inherit" hoverTone="none" />
+                  <span>{t('serverRail.context.remove')}</span>
+                </MenuItem>
+              )}
+            </Menu>
+          </PopoverContent>
+        </Popover>
       )}
 
       {/* Modals wurden hier entfernt und befinden sich nun in MainLayout */}
