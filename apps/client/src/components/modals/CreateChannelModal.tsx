@@ -78,7 +78,7 @@ export const CreateChannelModal = ({
               { key: 'list' as const, label: 'Liste', description: 'To-Do / Drag', Icon: ListChecks },
               { key: 'data-transfer' as const, label: 'Daten', description: 'Encrypted Safe', Icon: Lock },
               { key: 'spacer' as const, label: 'Trenner', description: 'Nur Visuell', Icon: GripHorizontal },
-            ].map(({ key, label, description, Icon }) => {
+            ].map(({ key, label, description, Icon: ChannelIcon }) => {
               const isActive = type === key;
               return (
                 <Button
@@ -92,7 +92,7 @@ export const CreateChannelModal = ({
                   )}
                   style={{ color: palette.text }}
                 >
-                  <Icon icon={Icon} size="lg" tone="muted" className="mr-3 flex-shrink-0" />
+                  <Icon icon={ChannelIcon} size="lg" tone="muted" className="mr-3 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="font-bold text-sm truncate">{label}</div>
                     <div className="text-[11px] text-[color:var(--color-text-muted)] truncate">{description}</div>

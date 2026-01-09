@@ -6,6 +6,7 @@ export { Spinner } from './Spinner';
 export { Icon } from './Icon';
 export { Badge } from './Badge';
 export { Input } from './Input';
+export { Button } from './Button';
 export { Select } from './Select';
 export { Toggle } from './Toggle';
 export { RoleTag } from './RoleTag';

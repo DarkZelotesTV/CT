@@ -1,5 +1,4 @@
-import { createContext, forwardRef, useContext, useEffect, useId, useRef } from 'react';
-import type React from 'react';
+import React, { createContext, forwardRef, useContext, useEffect, useId, useRef } from 'react';
 
 const focusableSelector =
   '[data-menu-item],[role="menuitem"],button:not([disabled]),[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
