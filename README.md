@@ -67,12 +67,15 @@ npm run dev:client   # Vite-Entwicklungssserver
 
 ## Code-Qualität & Tests
 - Linting: `npm run lint`
+- Banned color/classname check: `npm run lint:banned-colors`
 - Format-Check (Prettier): `npm run format`
 - Typprüfung: `npm run typecheck`
 - Tests (Platzhalter, solange keine Test-Suite existiert): `npm run test`
 - Kombinierter Pipeline-Lauf (CI-Äquivalent): `npm run ci`
 
 Die Root-Skripte nutzen die npm-Workspaces, um die entsprechenden Befehle in `apps/client` und `apps/server` automatisch auszuführen.
+
+Konfiguration für den Banned-Color-Check befindet sich in `scripts/banned-colors.json`. Zum expliziten Erlauben von Treffern die Zeile mit `// ct-allow-hardcoded-color` (oder `/* ct-allow-hardcoded-color */`) kommentieren.
 
 ## Fehlerbehebung
 - Prüfe, ob `docker compose ps` zeigt, dass MySQL/Redis laufen.
