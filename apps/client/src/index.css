@@ -112,6 +112,10 @@
   --radius-sm: var(--radius-1);
   --radius-md: var(--radius-2);
   --radius-lg: var(--radius-3);
+  --radius-button: var(--radius-3);
+  --radius-card: var(--radius-4);
+  --radius-modal: var(--radius-4);
+  --radius-input: var(--radius-3);
 
   --space-1: 4px;
   --space-2: 8px;

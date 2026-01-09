@@ -129,7 +129,7 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
             <button
               onClick={() => handleSubmit()}
               disabled={loading || !serverInput || !identity}
-              className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-[color:var(--color-on-accent)] px-6 py-2 rounded-[var(--radius-2)] font-bold disabled:opacity-50 flex items-center gap-2 transition-all active:scale-[0.98]"
+              className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-[color:var(--color-on-accent)] px-6 py-2 rounded-[var(--radius-3)] font-bold disabled:opacity-50 flex items-center gap-2 transition-all active:scale-[0.98]"
             >
               {loading && <Loader2 className="animate-spin" size={16} />}
               Beitreten

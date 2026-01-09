@@ -13,7 +13,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         type={type}
         className={classNames(
           'w-full border bg-[color:var(--color-surface)] text-[color:var(--color-text)]',
-          'border-[color:var(--color-border)] rounded-[var(--radius-md)]',
+          'border-[color:var(--color-border)] rounded-[var(--radius-3)]',
           'transition-colors outline-none',
           'placeholder:text-[color:var(--color-text-muted)]',
           'focus-visible:border-[color:var(--color-accent)]',

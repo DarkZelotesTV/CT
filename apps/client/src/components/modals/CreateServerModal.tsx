@@ -110,7 +110,7 @@ export const CreateServerModal = ({ onClose, onCreated }: CreateServerModalProps
             )}
           </div>
           {iconError && (
-            <div className="text-red-400 text-sm bg-red-500/10 border border-red-500/30 rounded-[var(--radius-2)] px-3 py-2 flex items-center gap-2">
+            <div className="text-red-400 text-sm bg-red-500/10 border border-red-500/30 rounded-[var(--radius-3)] px-3 py-2 flex items-center gap-2">
               <ImageIcon size={14} />
               <span>{iconError}</span>
             </div>

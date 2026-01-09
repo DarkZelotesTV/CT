@@ -22,7 +22,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         className={classNames(
           // base
           'inline-flex items-center justify-center gap-2 font-semibold',
-          'rounded-xl transition active:scale-[0.98]',
+          'rounded-[var(--radius-3)] transition active:scale-[0.98]',
           'focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
           'disabled:pointer-events-none disabled:opacity-50',
           // sizing
@@ -60,7 +60,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
         ref={ref}
         size="icon"
         variant={variant}
-        className={classNames('rounded-2xl', dim, className)}
+        className={classNames('rounded-[var(--radius-3)]', dim, className)}
         {...props}
       />
     );

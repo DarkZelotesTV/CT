@@ -209,7 +209,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
             <button
               type="button"
               onClick={onClose}
-              className="text-text-muted hover:text-text text-sm font-medium px-3 py-2 rounded-[var(--radius-2)] hover:bg-[color:var(--color-surface-hover)]"
+              className="text-text-muted hover:text-text text-sm font-medium px-3 py-2 rounded-[var(--radius-3)] hover:bg-[color:var(--color-surface-hover)]"
             >
               Abbrechen
             </button>
@@ -217,7 +217,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
               type="button"
               onClick={() => void handleSave()}
               disabled={isSaving}
-              className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-[color:var(--color-on-accent)] px-5 py-2 rounded-[var(--radius-2)] font-bold disabled:opacity-50 flex items-center gap-2 transition-all active:scale-[0.98]"
+              className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-[color:var(--color-on-accent)] px-5 py-2 rounded-[var(--radius-3)] font-bold disabled:opacity-50 flex items-center gap-2 transition-all active:scale-[0.98]"
             >
               {isSaving && <Loader2 className="animate-spin" size={16} />}
               Speichern
@@ -257,7 +257,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
               <div className="space-y-2">
                 <label className="text-xs font-bold text-[color:var(--color-text-muted)] uppercase ml-1">Server Icon</label>
                 <div className="flex flex-wrap gap-2 items-center">
-                  <label className="cursor-pointer inline-flex items-center gap-2 bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] px-3 py-2 rounded-[var(--radius-2)] text-sm font-semibold hover:border-[var(--color-accent-hover)] hover:text-[color:var(--color-accent-hover)] transition-colors">
+                  <label className="cursor-pointer inline-flex items-center gap-2 bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] px-3 py-2 rounded-[var(--radius-3)] text-sm font-semibold hover:border-[var(--color-accent-hover)] hover:text-[color:var(--color-accent-hover)] transition-colors">
                     <input type="file" accept="image/*" className="hidden" onChange={handleIconChange} />
                     <ImageIcon size={16} />
                     Icon auswählen
@@ -266,7 +266,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
                     type="button"
                     onClick={handleRemoveIcon}
                     disabled={isSaving || isUploadingIcon || (!iconUrl && !iconFile)}
-                    className="inline-flex items-center gap-2 px-3 py-2 rounded-[var(--radius-2)] text-sm font-semibold border border-[color:var(--color-border)] text-text-muted hover:text-text hover:border-red-400 hover:text-red-200 disabled:opacity-50"
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded-[var(--radius-3)] text-sm font-semibold border border-[color:var(--color-border)] text-text-muted hover:text-text hover:border-red-400 hover:text-red-200 disabled:opacity-50"
                   >
                     <Trash2 size={16} />
                     Icon entfernen
@@ -281,7 +281,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
                   Unterstützt PNG, JPG oder WebP bis 2 MB. Die Datei wird direkt auf den Server hochgeladen und sicher gespeichert.
                 </p>
                 {iconError && (
-                  <div className="text-red-400 text-sm bg-red-500/10 border border-red-500/30 rounded-[var(--radius-2)] p-2">{iconError}</div>
+                  <div className="text-red-400 text-sm bg-red-500/10 border border-red-500/30 rounded-[var(--radius-3)] p-2">{iconError}</div>
                 )}
               </div>
             </div>
@@ -344,7 +344,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
           </div>
 
           {actionError && (
-            <div className="text-red-400 text-sm bg-red-500/10 border border-red-500/30 rounded-[var(--radius-2)] p-3">{actionError}</div>
+            <div className="text-red-400 text-sm bg-red-500/10 border border-red-500/30 rounded-[var(--radius-3)] p-3">{actionError}</div>
           )}
 
           <div className="rounded-[var(--radius-4)] border border-[color:var(--color-border)] bg-white/[0.02] p-4 space-y-3">
@@ -356,7 +356,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
               Diese Aktion entfernt den Server unwiderruflich. Alle Kanäle und Daten gehen verloren.
             </p>
             {deleteError && (
-              <div className="flex items-center gap-2 text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-[var(--radius-2)] p-2">
+              <div className="flex items-center gap-2 text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-[var(--radius-3)] p-2">
                 <AlertTriangle size={14} />
                 <span>{deleteError}</span>
               </div>
@@ -365,7 +365,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
               type="button"
               onClick={handleDelete}
               disabled={isDeleting}
-              className="inline-flex items-center gap-2 bg-red-600/90 hover:bg-red-600 text-[color:var(--color-on-accent)] px-4 py-2 rounded-[var(--radius-2)] font-semibold shadow-lg shadow-red-900/30 disabled:opacity-60"
+              className="inline-flex items-center gap-2 bg-red-600/90 hover:bg-red-600 text-[color:var(--color-on-accent)] px-4 py-2 rounded-[var(--radius-3)] font-semibold shadow-lg shadow-red-900/30 disabled:opacity-60"
             >
               {isDeleting && <Loader2 className="animate-spin" size={16} />}
               Server löschen
