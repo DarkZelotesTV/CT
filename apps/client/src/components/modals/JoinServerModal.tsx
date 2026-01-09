@@ -7,6 +7,7 @@ import { addPinnedServer, normalizeInstanceUrl } from '../../utils/pinnedServers
 import { getServerUrl, setServerUrl } from '../../utils/apiConfig';
 import { ModalLayout } from './ModalLayout';
 import { storage } from '../../shared/config/storage';
+import { Icon } from '../ui';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 
@@ -134,7 +135,7 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
               variant="primary"
               className="px-6 py-2 font-bold disabled:opacity-50 flex items-center gap-2 transition-all active:scale-[0.98]"
             >
-              {loading && <Loader2 className="animate-spin" size={16} />}
+              {loading && <Icon icon={Loader2} size="md" tone="default" className="text-inherit animate-spin" />}
               Beitreten
             </Button>
           </div>
@@ -143,7 +144,7 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex justify-center">
             <div className="w-20 h-20 rounded-full bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] flex items-center justify-center text-[color:var(--color-accent)]">
-              <Compass size={32} />
+              <Icon icon={Compass} size={32} tone="accent" className="text-inherit" />
             </div>
           </div>
 
@@ -163,7 +164,7 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
 
           <div className="space-y-1">
             <label className="text-xs font-bold text-[color:var(--color-text-muted)] uppercase mb-1 block flex items-center gap-2">
-              <Globe size={14} />
+              <Icon icon={Globe} size="sm" tone="muted" className="text-inherit" />
               Instanz URL (optional)
             </label>
             <Input
@@ -178,7 +179,7 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
 
           <div className="rounded-[var(--radius-4)] border border-[color:var(--color-border)] bg-white/[0.02] p-4 flex items-start gap-3">
             <div className="p-2 rounded-full bg-[color:var(--color-surface-hover)] text-[color:var(--color-accent)]">
-              <Shield size={18} />
+              <Icon icon={Shield} size="lg" tone="accent" className="text-inherit" />
             </div>
             <div className="flex-1">
               <div className="text-sm font-medium text-text">Clover Identity</div>

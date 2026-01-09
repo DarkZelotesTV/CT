@@ -4,7 +4,7 @@ import { apiFetch } from '../../api/http';
 import classNames from 'classnames';
 import { ServerTheme, defaultServerTheme, resolveServerTheme } from '../../theme/serverTheme';
 import { ModalLayout } from './ModalLayout';
-import { Badge, Input } from '../ui';
+import { Badge, Icon, Input } from '../ui';
 import { Button } from '../ui/Button';
 
 interface CreateChannelModalProps {
@@ -91,7 +91,7 @@ export const CreateChannelModal = ({
                   )}
                   style={{ color: palette.text }}
                 >
-                  <Icon size={20} className="mr-3 text-[color:var(--color-text-muted)] flex-shrink-0" />
+                  <Icon icon={Icon} size="lg" tone="muted" className="mr-3 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="font-bold text-sm truncate">{label}</div>
                     <div className="text-[11px] text-[color:var(--color-text-muted)] truncate">{description}</div>
@@ -117,17 +117,17 @@ export const CreateChannelModal = ({
           <label className="text-xs font-bold uppercase mb-2 block text-[color:var(--color-text-muted)]">Kanalname</label>
           <div className="flex items-center px-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 focus-within:border-[var(--color-focus)] focus-within:ring-2 focus-within:ring-[color:var(--color-focus)] focus-within:ring-offset-2 focus-within:ring-offset-background text-text transition-colors">
             {type === 'text' ? (
-              <Hash size={16} className="mr-2 text-[color:var(--color-text-muted)]" />
+              <Icon icon={Hash} size="md" tone="muted" className="mr-2" />
             ) : type === 'voice' ? (
-              <Volume2 size={16} className="mr-2 text-[color:var(--color-text-muted)]" />
+              <Icon icon={Volume2} size="md" tone="muted" className="mr-2" />
             ) : type === 'web' ? (
-              <Globe size={16} className="mr-2 text-[color:var(--color-text-muted)]" />
+              <Icon icon={Globe} size="md" tone="muted" className="mr-2" />
             ) : type === 'data-transfer' ? (
-              <Lock size={16} className="mr-2 text-[color:var(--color-text-muted)]" />
+              <Icon icon={Lock} size="md" tone="muted" className="mr-2" />
             ) : type === 'list' ? (
-              <ListChecks size={16} className="mr-2 text-[color:var(--color-text-muted)]" />
+              <Icon icon={ListChecks} size="md" tone="muted" className="mr-2" />
             ) : (
-              <GripHorizontal size={16} className="mr-2 text-[color:var(--color-text-muted)]" />
+              <Icon icon={GripHorizontal} size="md" tone="muted" className="mr-2" />
             )}
             <Input
               autoFocus
@@ -188,7 +188,7 @@ export const CreateChannelModal = ({
               } as React.CSSProperties
             }
           >
-            {loading && <Loader2 className="animate-spin" size={16} />}
+            {loading && <Icon icon={Loader2} size="md" tone="default" className="text-inherit animate-spin" />}
             Kanal erstellen
           </Button>
         </div>

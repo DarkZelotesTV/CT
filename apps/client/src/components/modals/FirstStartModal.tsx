@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { ArrowRight, Check, Download, Upload } from "lucide-react";
 import { ModalLayout } from "./ModalLayout";
+import { Icon } from "../ui";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { computeFingerprint, createIdentity, formatFingerprint, loadIdentity, saveIdentity, type IdentityFile } from "../../auth/identity";
@@ -117,13 +118,13 @@ export function FirstStartModal({ onComplete }: Props) {
             variant="primary"
             className="px-4 py-3 transition flex items-center gap-2"
           >
-            <ArrowRight size={18} /> Identity erstellen
+            <Icon icon={ArrowRight} size="lg" tone="default" className="text-inherit" /> Identity erstellen
           </Button>
           <Button
             onClick={triggerFileSelect}
             className="px-4 py-3 bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition flex items-center gap-2"
           >
-            <Upload size={18} /> Identity importieren
+            <Icon icon={Upload} size="lg" tone="default" className="text-inherit" /> Identity importieren
           </Button>
           <Input
             ref={fileInputRef}
@@ -175,11 +176,11 @@ export function FirstStartModal({ onComplete }: Props) {
           disabled={!identity}
           className="px-4 py-3 bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 disabled:opacity-50 transition flex items-center gap-2"
         >
-          <Download size={18} /> Backup herunterladen
+          <Icon icon={Download} size="lg" tone="default" className="text-inherit" /> Backup herunterladen
         </Button>
 
         <div className="text-xs text-[color:var(--color-text-muted)] bg-[color:var(--color-surface-hover)] border border-[color:var(--color-accent)]/30 rounded-[var(--radius-4)] p-4 flex items-start gap-3">
-          <Check className="text-[color:var(--color-accent)] mt-0.5" size={16} />
+          <Icon icon={Check} size="md" tone="accent" className="mt-0.5" />
           <div>
             Bewahre dein Backup sicher auf. Ohne Backup kannst du deine Identität auf neuen Geräten nicht wiederherstellen.
           </div>

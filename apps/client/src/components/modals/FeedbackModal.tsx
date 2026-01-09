@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertCircle, CheckCircle2, ImagePlus, Loader2, Send } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ModalLayout } from './ModalLayout';
+import { Icon } from '../ui';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
@@ -80,12 +81,12 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
           <div className="text-left text-xs text-[color:var(--color-text-muted)]" aria-live="polite">
             {success && (
               <span className="flex items-center gap-1 text-emerald-400">
-                <CheckCircle2 size={16} /> {t('feedbackModal.success')}
+                <Icon icon={CheckCircle2} size="md" tone="default" className="text-inherit" /> {t('feedbackModal.success')}
               </span>
             )}
             {error && (
               <span className="flex items-center gap-1 text-red-400">
-                <AlertCircle size={16} /> {t('feedbackModal.error')}
+                <Icon icon={AlertCircle} size="md" tone="default" className="text-inherit" /> {t('feedbackModal.error')}
               </span>
             )}
           </div>
@@ -95,7 +96,11 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
             className="bg-cyan-600 text-[color:var(--color-on-accent)] text-sm hover:bg-cyan-500"
             disabled={submitting || message.trim().length === 0}
           >
-            {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+            {submitting ? (
+              <Icon icon={Loader2} size="md" tone="default" className="text-inherit animate-spin" />
+            ) : (
+              <Icon icon={Send} size="md" tone="default" className="text-inherit" />
+            )}
             {t('feedbackModal.submit')}
           </Button>
         </div>
@@ -145,7 +150,7 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
               htmlFor="feedback-screenshot"
               className="inline-flex items-center gap-2 px-3 py-2 rounded-[var(--radius-3)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 text-sm text-[color:var(--color-text)] cursor-pointer hover:border-[color:var(--color-border-strong)] focus-within:border-[color:var(--color-focus)] focus-within:ring-2 focus-within:ring-[color:var(--color-focus)] focus-within:ring-offset-2 focus-within:ring-offset-background"
             >
-              <ImagePlus size={16} />
+              <Icon icon={ImagePlus} size="md" tone="default" className="text-inherit" />
               <span className="truncate">{screenshotLabel}</span>
               <Input
                 id="feedback-screenshot"

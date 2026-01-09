@@ -4,6 +4,7 @@ import { ModalLayout } from './ModalLayout';
 import { clearIdentity, computeFingerprint, createIdentity, formatFingerprint, loadIdentity, saveIdentity, type IdentityFile } from '../../auth/identity';
 import { buildBackupPayload, getBackupFilename, parseIdentityBackup } from '../../auth/identityBackup';
 import { storage } from '../../shared/config/storage';
+import { Icon } from '../ui';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 
@@ -130,7 +131,7 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
               className="w-full px-4 py-3 bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-text font-medium"
               onClick={() => importInputRef.current?.click()}
             >
-              <Upload size={18} />
+              <Icon icon={Upload} size="lg" tone="default" className="text-inherit" />
               <span>Identity importieren</span>
             </Button>
             <Input
@@ -181,7 +182,7 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
               className="px-4 py-3 bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-text font-medium flex items-center justify-center gap-2"
               onClick={handleExport}
             >
-              <Download size={18} />
+              <Icon icon={Download} size="lg" tone="default" className="text-inherit" />
               Export / Backup
             </Button>
 
@@ -191,7 +192,7 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
                 className="w-full px-4 py-3 bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-text font-medium"
                 onClick={() => replaceInputRef.current?.click()}
               >
-                <Upload size={18} />
+                <Icon icon={Upload} size="lg" tone="default" className="text-inherit" />
                 <span>Import (ersetzen)</span>
               </Button>
               <Input
@@ -210,7 +211,7 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
               className="px-4 py-3 bg-red-500/20 hover:bg-red-500/30 transition text-red-100 font-medium flex items-center justify-center gap-2 sm:col-span-2"
               onClick={handleReset}
             >
-              <ShieldAlert size={18} />
+              <Icon icon={ShieldAlert} size="lg" tone="default" className="text-inherit" />
               Identity zurücksetzen
             </Button>
           </div>

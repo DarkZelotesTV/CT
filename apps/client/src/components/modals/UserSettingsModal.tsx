@@ -33,7 +33,7 @@ import { clearIdentity, computeFingerprint, createIdentity, formatFingerprint, l
 import { buildBackupPayload, getBackupFilename, parseIdentityBackup } from '../../auth/identityBackup';
 import { storage } from '../../shared/config/storage';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
-import { Badge, Card, Input, Select, Toggle } from '../ui';
+import { Badge, Card, Icon, Input, Select, Toggle } from '../ui';
 import { Button, IconButton } from '../ui/Button';
 import { MIN_ACCENT_CONTRAST, getAccentContrastReport, getThemeContrastTargets } from '../../theme/appTheme';
 
@@ -95,7 +95,7 @@ const HotkeyInput = ({
             className="px-3 py-2 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)] text-[color:var(--color-text)] hover:text-text hover:bg-[color:var(--color-surface-hover)]/80"
             aria-label="Clear hotkey"
           >
-            <X size={16} />
+            <Icon icon={X} size="md" tone="default" className="text-inherit" />
           </IconButton>
         )}
       </div>
@@ -131,7 +131,7 @@ export const UserSettingsModal = ({
       ...base,
       center: (
         <div className="flex items-center gap-2 text-[13px] text-[color:var(--color-text)] leading-tight min-w-0">
-          <Settings size={16} className="text-[color:var(--color-text)]" aria-hidden />
+          <Icon icon={Settings} size="md" tone="default" className="text-inherit" aria-hidden />
           <span className="truncate" title={modalTitle}>
             {modalTitle}
           </span>
@@ -743,7 +743,7 @@ export const UserSettingsModal = ({
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-border)] shrink-0">
           <div>
             <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] flex items-center gap-2">
-              <Settings size={14} /> Settings
+              <Icon icon={Settings} size="sm" tone="muted" className="text-inherit" /> Settings
             </div>
             <h2 className="text-2xl font-bold">{modalTitle}</h2>
           </div>
@@ -754,7 +754,7 @@ export const UserSettingsModal = ({
             className="p-2 rounded-full bg-[var(--color-surface-alt)] hover:bg-[var(--color-surface-hover)] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]"
             aria-label="Einstellungen schließen"
           >
-            <X size={18} />
+            <Icon icon={X} size="lg" tone="default" className="text-inherit" />
           </IconButton>
         </div>
 
@@ -781,11 +781,11 @@ export const UserSettingsModal = ({
       <div className="text-xs text-[color:var(--color-accent)]">Profil bearbeiten</div>
     </div>
 
-    <User size={16} className="text-[color:var(--color-text-muted)]" />
+    <Icon icon={User} size="md" tone="muted" />
   </Button>
 
   <div className="relative">
-    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--color-text-muted)]" />
+    <Icon icon={Search} size="md" tone="muted" className="absolute left-3 top-1/2 -translate-y-1/2" />
     <Input
       value={navQuery}
       onChange={(e) => setNavQuery(e.target.value)}
@@ -812,7 +812,7 @@ export const UserSettingsModal = ({
               : 'text-[color:var(--color-text-muted)] hover:bg-[color:var(--color-surface-hover)]'
           }`}
         >
-          <cat.icon size={16} />
+          <Icon icon={cat.icon} size="md" tone="muted" className="text-inherit" />
           <span className="truncate">{cat.label}</span>
         </Button>
       ))}
@@ -872,7 +872,11 @@ export const UserSettingsModal = ({
                                 disabled={avatarUploading || (!avatarFile && !avatarUrl)}
                                 className="px-4 py-2 rounded-[var(--radius-3)] bg-[var(--color-accent)]/80 hover:bg-[var(--color-accent)] text-sm font-semibold text-[color:var(--color-on-accent)] disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
                               >
-                                {avatarUploading ? <Loader2 className="animate-spin" size={16} /> : <Upload size={16} />}
+                                {avatarUploading ? (
+                                  <Icon icon={Loader2} size="md" tone="default" className="text-inherit animate-spin" />
+                                ) : (
+                                  <Icon icon={Upload} size="md" tone="default" className="text-inherit" />
+                                )}
                                 {avatarUploading ? 'Lade hoch...' : 'Avatar hochladen'}
                               </Button>
                             </div>
@@ -910,7 +914,7 @@ export const UserSettingsModal = ({
                       onClick={() => setThemeMode(themeMode === 'dark' ? 'light' : 'dark')}
                       className="flex items-center gap-2 px-4 py-2 rounded-[var(--radius-3)] border border-[var(--color-border)] text-[color:var(--color-text)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-hover)]"
                     >
-                      <SunMoon size={16} />
+                      <Icon icon={SunMoon} size="md" tone="default" className="text-inherit" />
                       <span>{themeMode === 'dark' ? 'Dark' : 'Light'}</span>
                     </Button>
                   </div>
@@ -1083,7 +1087,7 @@ export const UserSettingsModal = ({
                   </div>
 
                   <div className="text-xs text-[color:var(--color-text-muted)] bg-white/[0.04] border border-[var(--color-border)] rounded-[var(--radius-3)] p-3 flex items-center gap-2">
-                    <Bell size={14} />
+                    <Icon icon={Bell} size="sm" tone="muted" className="text-inherit" />
                     <div>
                       <div className="font-semibold flex items-center gap-2">
                         Status: <Badge>{permissionLabel}</Badge>
@@ -1175,7 +1179,7 @@ export const UserSettingsModal = ({
                             size="sm"
                             className="flex items-center gap-2 text-sm text-[color:var(--color-accent)] hover:text-[color:var(--color-accent-hover)]"
                           >
-                            <RefreshCw size={16} />
+                            <Icon icon={RefreshCw} size="md" tone="accent" className="text-inherit" />
                             Aktualisieren
                           </Button>
                         </div>
@@ -1185,7 +1189,7 @@ export const UserSettingsModal = ({
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <label className="space-y-2">
                             <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold flex items-center gap-2">
-                              <Mic size={14} /> Eingabegerät
+                              <Icon icon={Mic} size="sm" tone="muted" className="text-inherit" /> Eingabegerät
                             </div>
                             <Select
                               value={audioInputId}
@@ -1203,7 +1207,7 @@ export const UserSettingsModal = ({
 
                           <label className="space-y-2">
                             <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold flex items-center gap-2">
-                              <Headphones size={14} /> Ausgabegerät
+                              <Icon icon={Headphones} size="sm" tone="muted" className="text-inherit" /> Ausgabegerät
                             </div>
                             <Select
                               value={audioOutputId}
@@ -1357,7 +1361,7 @@ export const UserSettingsModal = ({
                         >
                           <div className="flex items-center justify-between">
                             <div className="text-sm font-semibold">{option.label}</div>
-                            {audioPreset === option.value && <Check size={16} />}
+                            {audioPreset === option.value && <Icon icon={Check} size="md" tone="accent" />}
                           </div>
                           <div className="text-xs text-[color:var(--color-text-muted)]">{option.description}</div>
                         </Button>
@@ -1378,7 +1382,7 @@ export const UserSettingsModal = ({
                                 : 'bg-transparent border-[var(--color-border)] text-[color:var(--color-text-muted)] hover:bg-[color:var(--color-surface-hover)]'
                             }`}
                           >
-                            <Headphones size={16} />
+                            <Icon icon={Headphones} size="md" tone="default" className="text-inherit" />
                             {locallyMuted ? 'Entstummen (Alle)' : 'Stumm (Alle)'}
                           </Button>
 
@@ -1391,7 +1395,7 @@ export const UserSettingsModal = ({
                                 : 'bg-transparent border-[var(--color-border)] text-[color:var(--color-text-muted)] hover:bg-[color:var(--color-surface-hover)]'
                             }`}
                           >
-                            <Mic size={16} />
+                            <Icon icon={Mic} size="md" tone="default" className="text-inherit" />
                             {locallyMicMuted ? 'Mikro an' : 'Mikro aus'}
                           </Button>
                         </div>
@@ -1446,7 +1450,7 @@ export const UserSettingsModal = ({
                           disabled={isTestingOutput}
                           className="px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 border border-[var(--color-border)] text-[color:var(--color-text)] flex items-center gap-2 disabled:opacity-60"
                         >
-                          <Play size={18} />
+                          <Icon icon={Play} size="lg" tone="default" className="text-inherit" />
                           {isTestingOutput ? 'Teste…' : 'Testton abspielen'}
                         </Button>
 
@@ -1461,7 +1465,7 @@ export const UserSettingsModal = ({
                         <div className="text-sm font-semibold">Kamera</div>
                         <label className="space-y-2">
                           <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold flex items-center gap-2">
-                            <Camera size={14} /> Kamera
+                            <Icon icon={Camera} size="sm" tone="muted" className="text-inherit" /> Kamera
                           </div>
                           <Select
                             value={videoInputId}
@@ -1478,7 +1482,7 @@ export const UserSettingsModal = ({
                         </label>
                         <label className="space-y-2">
                           <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold flex items-center gap-2">
-                            <Monitor size={14} /> Kameraqualität
+                            <Icon icon={Monitor} size="sm" tone="muted" className="text-inherit" /> Kameraqualität
                           </div>
                           <Select
                             value={cameraQuality}
@@ -1522,7 +1526,7 @@ export const UserSettingsModal = ({
                               >
                                 <div className="flex items-center justify-between">
                                   <div className="text-sm font-semibold">{option.label}</div>
-                                  {screenQuality === option.value && <Check size={16} />}
+                                  {screenQuality === option.value && <Icon icon={Check} size="md" tone="accent" />}
                                 </div>
                                 <div className="text-xs text-[color:var(--color-text-muted)]">{option.description}</div>
                               </Button>
@@ -1546,7 +1550,7 @@ export const UserSettingsModal = ({
                               >
                                 <div className="flex items-center justify-between">
                                   <div className="text-sm font-semibold">{option.label}</div>
-                                  {screenFrameRate === option.value && <Check size={16} />}
+                                  {screenFrameRate === option.value && <Icon icon={Check} size="md" tone="accent" />}
                                 </div>
                                 <div className="text-xs text-[color:var(--color-text-muted)]">{option.description}</div>
                               </Button>
@@ -1570,7 +1574,7 @@ export const UserSettingsModal = ({
                               >
                                 <div className="flex items-center justify-between">
                                   <div className="text-sm font-semibold">{option.label}</div>
-                                  {screenBitrateProfile === option.value && <Check size={16} />}
+                                  {screenBitrateProfile === option.value && <Icon icon={Check} size="md" tone="accent" />}
                                 </div>
                                 <div className="text-xs text-[color:var(--color-text-muted)]">{option.description}</div>
                               </Button>
@@ -1669,7 +1673,7 @@ export const UserSettingsModal = ({
                           className="w-full px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-center text-text font-medium"
                           onClick={() => identityImportInputRef.current?.click()}
                         >
-                          <Upload size={18} />
+                          <Icon icon={Upload} size="lg" tone="default" className="text-inherit" />
                           <span>Identity importieren</span>
                         </Button>
                         <Input
@@ -1716,7 +1720,7 @@ export const UserSettingsModal = ({
                           className="px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-text font-medium flex items-center justify-center gap-2"
                           onClick={handleExportIdentity}
                         >
-                          <Download size={18} />
+                          <Icon icon={Download} size="lg" tone="default" className="text-inherit" />
                           Export / Backup
                         </Button>
 
@@ -1726,7 +1730,7 @@ export const UserSettingsModal = ({
                             className="w-full px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-center text-text font-medium"
                             onClick={() => identityReplaceInputRef.current?.click()}
                           >
-                            <Upload size={18} />
+                            <Icon icon={Upload} size="lg" tone="default" className="text-inherit" />
                             <span>Import (ersetzen)</span>
                           </Button>
                           <Input
@@ -1746,7 +1750,7 @@ export const UserSettingsModal = ({
                           className="px-4 py-3 rounded-[var(--radius-3)] bg-red-500/20 hover:bg-red-500/30 transition text-red-100 font-medium flex items-center justify-center gap-2 sm:col-span-2"
                           onClick={handleResetIdentity}
                         >
-                          <ShieldAlert size={18} />
+                          <Icon icon={ShieldAlert} size="lg" tone="default" className="text-inherit" />
                           Identity zurücksetzen
                         </Button>
                       </div>
@@ -1777,7 +1781,7 @@ export const UserSettingsModal = ({
                   onClick={handleSave}
                   className="px-4 py-2 rounded-[var(--radius-3)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-[color:var(--color-on-accent)] flex items-center gap-2"
                 >
-                  <Save size={16} />
+                  <Icon icon={Save} size="md" tone="default" className="text-inherit" />
                   Änderungen speichern
                 </Button>
               </div>
@@ -1785,7 +1789,7 @@ export const UserSettingsModal = ({
           ) : (
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 text-xs text-[color:var(--color-text-muted)]">
-                <Check size={14} className="text-green-400" />
+                <Icon icon={Check} size="sm" tone="default" className="text-green-400" />
                 Änderungen werden lokal gespeichert.
               </div>
               <Button

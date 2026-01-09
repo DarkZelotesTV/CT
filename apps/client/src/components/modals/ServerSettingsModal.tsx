@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, ty
 import { AlertTriangle, Image as ImageIcon, Loader2, Shield, Trash2 } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { ModalLayout } from './ModalLayout';
-import { ErrorCard, Input, Select, Spinner } from '../ui';
+import { ErrorCard, Icon, Input, Select, Spinner } from '../ui';
 import { Button } from '../ui/Button';
 import { getServerUrl } from '../../utils/apiConfig';
 
@@ -244,7 +244,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
               {previewUrl ? (
                 <img src={previewUrl} alt="Server Icon" className="w-full h-full object-cover" />
               ) : (
-                <ImageIcon className="text-[color:var(--color-text-muted)]" />
+                <Icon icon={ImageIcon} size="lg" tone="muted" />
               )}
             </div>
             <div className="flex-1 space-y-3 min-w-[240px]">
@@ -267,7 +267,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
                     className="cursor-pointer inline-flex items-center gap-2 bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] px-3 py-2 rounded-[var(--radius-3)] text-sm font-semibold hover:border-[var(--color-accent-hover)] hover:text-[var(--color-accent-hover)] transition-colors"
                     onClick={() => iconInputRef.current?.click()}
                   >
-                    <ImageIcon size={16} />
+                    <Icon icon={ImageIcon} size="md" tone="default" className="text-inherit" />
                     Icon auswählen
                   </Button>
                   <Input ref={iconInputRef} type="file" accept="image/*" className="hidden" onChange={handleIconChange} />
@@ -279,7 +279,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
                     size="sm"
                     className="inline-flex items-center gap-2 px-3 py-2 rounded-[var(--radius-3)] text-sm font-semibold border border-[color:var(--color-border)] text-text-muted hover:text-text hover:border-red-400 hover:text-red-200 disabled:opacity-50"
                   >
-                    <Trash2 size={16} />
+                    <Icon icon={Trash2} size="md" tone="default" className="text-inherit" />
                     Icon entfernen
                   </Button>
                   {(iconFile || removeIcon) && (
@@ -300,7 +300,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
 
           <div className="space-y-2">
             <label className="text-xs font-bold text-[color:var(--color-text-muted)] uppercase ml-1 flex items-center gap-2">
-              <Shield size={14} />
+              <Icon icon={Shield} size="sm" tone="muted" className="text-inherit" />
               Fallback-Kanal
             </label>
             {channelOptions.length === 0 ? (
@@ -360,7 +360,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
 
           <div className="rounded-[var(--radius-4)] border border-[color:var(--color-border)] bg-white/[0.02] p-4 space-y-3">
             <div className="flex items-center gap-2 text-red-300">
-              <Trash2 size={16} />
+              <Icon icon={Trash2} size="md" tone="default" className="text-inherit" />
               <div className="text-sm font-semibold">Server dauerhaft löschen</div>
             </div>
             <p className="text-xs text-[color:var(--color-text-muted)]">
@@ -368,7 +368,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
             </p>
             {deleteError && (
               <div className="flex items-center gap-2 text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-[var(--radius-3)] p-2">
-                <AlertTriangle size={14} />
+                <Icon icon={AlertTriangle} size="sm" tone="default" className="text-inherit" />
                 <span>{deleteError}</span>
               </div>
             )}
@@ -378,7 +378,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
               disabled={isDeleting}
               className="inline-flex items-center gap-2 bg-red-600/90 hover:bg-red-600 text-[color:var(--color-on-accent)] px-4 py-2 rounded-[var(--radius-3)] font-semibold shadow-lg shadow-red-900/30 disabled:opacity-60"
             >
-              {isDeleting && <Loader2 className="animate-spin" size={16} />}
+              {isDeleting && <Icon icon={Loader2} size="md" tone="default" className="text-inherit animate-spin" />}
               Server löschen
             </Button>
           </div>
