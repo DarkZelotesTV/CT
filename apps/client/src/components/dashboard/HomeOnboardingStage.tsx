@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { ArrowRight, Compass, Home, Layers, MessageSquare, PlusCircle, Server, Settings, Users } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import { DecorationLayer } from '../layout/DecorationLayer';
@@ -12,8 +13,28 @@ interface HomeOnboardingStageProps {
 }
 
 export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettings, hasServers }: HomeOnboardingStageProps) => {
-  const { settings } = useSettings();
+  const { settings, updateOnboarding } = useSettings();
   const decorationsEnabled = settings.theme.decorationsEnabled ?? true;
+  const completedSteps = [
+    hasServers || settings.onboarding.serverCreated,
+    settings.onboarding.joinedServer,
+    settings.onboarding.profileSet,
+  ];
+  const completedCount = completedSteps.filter(Boolean).length;
+  const totalSteps = completedSteps.length;
+  const progressPercentage = Math.min(100, Math.round((completedCount / totalSteps) * 100));
+  const handleCreateServer = () => {
+    updateOnboarding({ serverCreated: true });
+    onCreateServer();
+  };
+  const handleJoinServer = () => {
+    updateOnboarding({ joinedServer: true });
+    onJoinServer();
+  };
+  const handleOpenSettings = () => {
+    updateOnboarding({ profileSet: true });
+    onOpenSettings();
+  };
   const steps = [
     {
       title: '1. Server entdecken oder erstellen',
@@ -35,17 +56,17 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
     {
       label: 'Server erstellen',
       icon: PlusCircle,
-      action: onCreateServer,
+      action: handleCreateServer,
     },
     {
       label: 'Einladung eingeben',
       icon: Compass,
-      action: onJoinServer,
+      action: handleJoinServer,
     },
     {
       label: 'Profil einrichten',
       icon: Settings,
-      action: onOpenSettings,
+      action: handleOpenSettings,
     },
     {
       label: 'Ersten Kanal erstellen',
@@ -60,6 +81,12 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
     { id: 'design-lounge', name: 'Design Lounge' },
     { id: 'dev-collective', name: 'Dev Collective' },
   ];
+
+  useEffect(() => {
+    if (hasServers && !settings.onboarding.serverCreated) {
+      updateOnboarding({ serverCreated: true });
+    }
+  }, [hasServers, settings.onboarding.serverCreated, updateOnboarding]);
 
   return (
     <div className="min-h-full w-full flex flex-col bg-background relative overflow-hidden">
@@ -87,7 +114,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
             <div className="mt-4 flex flex-col min-[900px]:flex-row gap-3">
               <Button
                 type="button"
-                onClick={onCreateServer}
+                onClick={handleCreateServer}
                 variant="primary"
                 className="h-10 px-4 rounded-[var(--radius-3)] shadow-lg shadow-[0_16px_28px_color-mix(in_srgb,var(--color-accent)_30%,transparent)] gap-2.5 transition-colors max-[899px]:w-full max-[899px]:justify-center text-text"
               >
@@ -95,7 +122,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
               </Button>
               <Button
                 type="button"
-                onClick={onJoinServer}
+                onClick={handleJoinServer}
                 variant="secondary"
                 className="h-10 px-4 rounded-[var(--radius-3)] gap-2.5 transition-colors max-[899px]:w-full max-[899px]:justify-center"
               >
@@ -167,7 +194,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
               </div>
             </div>
             <div className="h-1.5 rounded-full bg-surface-3/70">
-              <div className="h-full w-[28%] rounded-full bg-surface-3" />
+              <div className="h-full rounded-full bg-surface-3" style={{ width: `${progressPercentage}%` }} />
             </div>
           </div>
 
