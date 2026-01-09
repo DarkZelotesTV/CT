@@ -292,7 +292,7 @@ export const CommandPalette = ({
           className="flex-1 bg-transparent outline-none text-text placeholder:text-[color:var(--color-text-muted)]"
           aria-label="Command palette search"
         />
-        <div className="text-xs text-[color:var(--color-text-muted)] bg-[color:var(--color-surface-hover)] rounded-md px-2 py-1 border border-[color:var(--color-border)]" aria-hidden="true">
+        <div className="text-xs text-[color:var(--color-text-muted)] bg-[color:var(--color-surface-hover)] rounded-[var(--radius-3)] px-2 py-1 border border-[color:var(--color-border)]" aria-hidden="true">
           Ctrl/Cmd + K
         </div>
       </div>
@@ -326,7 +326,7 @@ export const CommandPalette = ({
                   onMouseEnter={() => setActiveIndex(index)}
                   onClick={() => selectItem(item)}
                 >
-                  <span className="w-8 h-8 rounded-[var(--radius-2)] bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] flex items-center justify-center text-[color:var(--color-text)]">
+                  <span className="w-8 h-8 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] flex items-center justify-center text-[color:var(--color-text)]">
                     {item.type === 'command' && <CommandIcon size={16} />}
                     {item.type === 'server' && <Server size={16} />}
                     {item.type === 'channel' && (item.badge === 'Voice' ? <Volume2 size={16} /> : <Hash size={16} />)}

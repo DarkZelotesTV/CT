@@ -89,7 +89,7 @@ const HotkeyInput = ({
         {displayValue && (
           <button
             onClick={() => onChange('')}
-            className="px-3 py-2 rounded-[var(--radius-2)] bg-[color:var(--color-surface-hover)] text-[color:var(--color-text)] hover:text-text hover:bg-[color:var(--color-surface-hover)]/80"
+            className="px-3 py-2 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)] text-[color:var(--color-text)] hover:text-text hover:bg-[color:var(--color-surface-hover)]/80"
           >
             <X size={16} />
           </button>
@@ -903,7 +903,7 @@ export const UserSettingsModal = ({
                           type="color"
                           value={accentColor}
                           onChange={(e) => setAccentColor(e.target.value)}
-                          className="h-10 w-16 rounded-[var(--radius-2)] border border-[var(--color-border)] bg-[var(--color-surface)]"
+                          className="h-10 w-16 rounded-[var(--radius-3)] border border-[var(--color-border)] bg-[var(--color-surface)]"
                         />
                         <input
                           type="text"
@@ -921,7 +921,7 @@ export const UserSettingsModal = ({
                           <button
                             type="button"
                             onClick={() => setAccentColor(accentContrastReport.adjustedAccent)}
-                            className="px-2 py-1 rounded-[var(--radius-2)] bg-amber-400/20 text-amber-100 hover:bg-amber-400/30"
+                            className="px-2 py-1 rounded-[var(--radius-3)] bg-amber-400/20 text-amber-100 hover:bg-amber-400/30"
                           >
                             Auto-anpassen
                           </button>
@@ -943,7 +943,7 @@ export const UserSettingsModal = ({
                           type="color"
                           value={serverAccentColor}
                           onChange={(e) => setServerAccentColor(e.target.value)}
-                          className="h-12 w-full rounded-[var(--radius-2)] border border-[var(--color-border)] bg-[var(--color-surface)]"
+                          className="h-12 w-full rounded-[var(--radius-3)] border border-[var(--color-border)] bg-[var(--color-surface)]"
                         />
                         <button
                           onClick={handleAddServerAccent}
@@ -962,7 +962,7 @@ export const UserSettingsModal = ({
                                 key={id}
                                 className="flex items-center gap-3 bg-[var(--color-surface-alt)] border border-[var(--color-border)] rounded-[var(--radius-3)] px-3 py-2"
                               >
-                                <div className="w-10 h-10 rounded-[var(--radius-2)] border border-[var(--color-border)]" style={{ background: color }} />
+                                <div className="w-10 h-10 rounded-[var(--radius-3)] border border-[var(--color-border)]" style={{ background: color }} />
                                 <div className="flex-1 text-sm text-[color:var(--color-text)]">Server {id}</div>
                                 <button
                                   onClick={() => handleRemoveServerAccent(Number(id))}
@@ -1225,7 +1225,7 @@ export const UserSettingsModal = ({
                                     <div
                                       key={i}
                                       style={{ height }}
-                                      className={`w-[3px] rounded-sm ${lit ? 'bg-[var(--color-accent)]' : 'bg-[color:var(--color-surface-hover)]/80'}`}
+                                    className={`w-[3px] rounded-[var(--radius-3)] ${lit ? 'bg-[var(--color-accent)]' : 'bg-[color:var(--color-surface-hover)]/80'}`}
                                     />
                                   );
                                 })}

@@ -89,7 +89,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
                 type="button"
                 onClick={onCreateServer}
                 variant="primary"
-                className="h-10 px-4 rounded-2xl shadow-lg shadow-[0_16px_28px_color-mix(in_srgb,var(--color-accent)_30%,transparent)] gap-2.5 transition-colors max-[899px]:w-full max-[899px]:justify-center text-text"
+                className="h-10 px-4 rounded-[var(--radius-3)] shadow-lg shadow-[0_16px_28px_color-mix(in_srgb,var(--color-accent)_30%,transparent)] gap-2.5 transition-colors max-[899px]:w-full max-[899px]:justify-center text-text"
               >
                 <Icon icon={PlusCircle} size="lg" className="text-inherit" hoverTone="none" /> Server erstellen
               </Button>
@@ -97,7 +97,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
                 type="button"
                 onClick={onJoinServer}
                 variant="secondary"
-                className="h-10 px-4 rounded-2xl gap-2.5 transition-colors max-[899px]:w-full max-[899px]:justify-center"
+                className="h-10 px-4 rounded-[var(--radius-3)] gap-2.5 transition-colors max-[899px]:w-full max-[899px]:justify-center"
               >
                 <Icon icon={Compass} size="lg" className="text-inherit" hoverTone="none" /> Mit Einladung beitreten
               </Button>
@@ -114,7 +114,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
               {suggestedServers.slice(0, 3).map((server) => (
                 <div
                   key={server.id}
-                  className="flex h-10 items-center gap-3 rounded-2xl border border-[color:var(--color-border)]/70 bg-surface-2 px-4"
+                  className="flex h-10 items-center gap-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)]/70 bg-surface-2 px-4"
                 >
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-3 text-[color:var(--color-text)]">
                     <Icon icon={Server} size="md" className="text-inherit" hoverTone="none" />
@@ -124,7 +124,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
                     type="button"
                     size="sm"
                     variant="secondary"
-                    className="ml-auto h-10 rounded-2xl px-4 text-[length:var(--font-size-xs)] leading-[var(--line-height-sm)] font-semibold text-[color:var(--color-text)] hover:border-[color:var(--color-accent)]/40 hover:text-[color:var(--color-accent)]"
+                    className="ml-auto h-10 rounded-[var(--radius-3)] px-4 text-[length:var(--font-size-xs)] leading-[var(--line-height-sm)] font-semibold text-[color:var(--color-text)] hover:border-[color:var(--color-accent)]/40 hover:text-[color:var(--color-accent)]"
                   >
                     Beitreten
                   </Button>
@@ -140,7 +140,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
                 variant="surface"
                 className="bg-surface-2 hover:bg-surface-3 p-4 h-full flex flex-col gap-3 transition-colors"
               >
-                <div className="w-9 h-9 rounded-xl bg-surface-3 border border-[color:var(--color-border)] text-[color:var(--color-text)] flex items-center justify-center">
+                <div className="w-9 h-9 rounded-[var(--radius-3)] bg-surface-3 border border-[color:var(--color-border)] text-[color:var(--color-text)] flex items-center justify-center">
                   <Icon icon={StepIcon} size="md" className="text-inherit" hoverTone="none" />
                 </div>
                 <div className="text-[length:var(--font-size-sm)] font-semibold text-text leading-snug">{title}</div>
@@ -156,7 +156,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
         >
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-2xl bg-surface-3 border border-[color:var(--color-border)] flex items-center justify-center text-[color:var(--color-text)]">
+              <div className="w-9 h-9 rounded-[var(--radius-3)] bg-surface-3 border border-[color:var(--color-border)] flex items-center justify-center text-[color:var(--color-text)]">
                 <Icon icon={MessageSquare} size="lg" className="text-inherit" hoverTone="none" />
               </div>
               <div>
@@ -183,7 +183,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
                   tabIndex={isDisabled ? -1 : 0}
                   title={isDisabled ? tooltip : undefined}
                   variant="ghost"
-                  className={`group w-full h-10 items-center gap-3 rounded-2xl border border-[color:var(--color-border)]/70 px-4 text-left transition justify-start ${
+                  className={`group w-full h-10 items-center gap-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)]/70 px-4 text-left transition justify-start ${
                     isDisabled
                       ? 'cursor-not-allowed bg-surface-2/30 text-text-muted/80'
                       : 'bg-surface-2 text-text hover:bg-surface-3 hover:border-[color:var(--color-accent)]/30 hover:ring-1 hover:ring-[color:var(--color-accent)]/15'
@@ -213,7 +213,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
             <iframe
               title="Bluesky Embed"
               src="https://bsky.app/profile/bsky.app/post/3l6nqav7jv22k"
-              className="w-full h-56 rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)]"
+              className="w-full h-56 rounded-[var(--radius-4)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)]"
               loading="lazy"
             />
           </Card>

@@ -96,7 +96,7 @@ export const OnboardingModal = ({ onClose, initialStep = 0, onStepAction }: Prop
       bodyClassName="grid lg:grid-cols-[1.1fr,0.9fr] gap-6 lg:gap-10 p-0"
     >
       <div className="flex flex-col gap-6 p-6 lg:p-8">
-        <div className="relative overflow-hidden rounded-[var(--radius-5)] border border-[color:var(--color-border)]/70 bg-gradient-to-br from-white/[0.04] to-white/[0.02] p-6 lg:p-7 shadow-xl">
+        <div className="relative overflow-hidden rounded-[var(--radius-4)] border border-[color:var(--color-border)]/70 bg-gradient-to-br from-white/[0.04] to-white/[0.02] p-6 lg:p-7 shadow-xl">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(125,211,252,0.12),transparent_30%),radial-gradient(circle_at_80%_0%,rgba(129,140,248,0.2),transparent_30%)]" />
           <div className="relative flex flex-col gap-4">
             <div className="flex items-start justify-between gap-4">
@@ -245,7 +245,7 @@ export const OnboardingModal = ({ onClose, initialStep = 0, onStepAction }: Prop
               <span>{t(current.titleKey)}</span>
             </div>
           </div>
-          <div className="relative overflow-hidden rounded-[var(--radius-5)] border border-[color:var(--color-border)]/70 shadow-2xl bg-gradient-to-br from-white/5 to-white/[0.02]">
+          <div className="relative overflow-hidden rounded-[var(--radius-4)] border border-[color:var(--color-border)]/70 shadow-2xl bg-gradient-to-br from-white/5 to-white/[0.02]">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.08),transparent_40%),radial-gradient(circle_at_80%_0%,rgba(99,102,241,0.2),transparent_35%)]" />
             <img
               src={current.visual}
