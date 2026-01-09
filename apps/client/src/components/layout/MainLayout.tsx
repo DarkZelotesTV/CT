@@ -299,9 +299,9 @@ export const MainLayout = () => {
 
   const lossTone = useMemo(() => {
     if (lossValue === null) return 'text-text';
-    if (lossValue < 1) return 'text-emerald-300';
-    if (lossValue < 3) return 'text-amber-200';
-    return 'text-rose-300';
+    if (lossValue < 1) return 'text-[color:var(--color-text-success)]';
+    if (lossValue < 3) return 'text-[color:var(--color-text-warning)]';
+    return 'text-[color:var(--color-text-danger)]';
   }, [lossValue]);
 
   const pingDisplay = useMemo(() => {
