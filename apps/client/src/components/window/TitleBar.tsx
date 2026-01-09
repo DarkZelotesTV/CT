@@ -19,6 +19,8 @@ import { FeedbackModal } from '../modals/FeedbackModal';
 import { ModalLayout } from '../modals/ModalLayout';
 import { useTopBar } from './TopBarContext';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
+import { IconButton } from '../ui/Button';
+import { Select } from '../ui/Select';
 
 type WindowState = {
   isMaximized: boolean;
@@ -152,7 +154,7 @@ export const TitleBar = ({
     <div className="flex items-center h-full">
       {slots.right}
       <div className="flex items-center h-full">
-        <button
+        <IconButton
           type="button"
           className={iconButtonBase}
           aria-label={t('titlebar.settings', { defaultValue: 'Einstellungen' })}
@@ -160,45 +162,47 @@ export const TitleBar = ({
           onClick={onOpenUserSettings} 
         >
           <Settings size={16} aria-hidden="true" />
-        </button>
+        </IconButton>
 
         <div className="relative group h-full flex items-center">
-            <button className={iconButtonBase}><Globe size={16} /></button>
-             <select
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer no-drag"
+            <IconButton className={iconButtonBase} aria-label={t('titlebar.locale', { defaultValue: 'Sprache' })}>
+              <Globe size={16} />
+            </IconButton>
+             <Select
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer no-drag border-0 bg-transparent px-0"
                 value={settings.locale}
                 onChange={(e) => updateLocale(e.target.value)}
               >
                 <option value="en">EN</option>
                 <option value="de">DE</option>
-              </select>
+              </Select>
         </div>
 
-        <button type="button" className={iconButtonBase} onClick={() => setShowFeedback(true)} title="Feedback">
+        <IconButton type="button" className={iconButtonBase} onClick={() => setShowFeedback(true)} title="Feedback" aria-label="Feedback">
           <MessageSquare size={16} aria-hidden="true" />
-        </button>
-        <button type="button" className={iconButtonBase} onClick={() => setShowNotifications(true)}>
+        </IconButton>
+        <IconButton type="button" className={iconButtonBase} onClick={() => setShowNotifications(true)} aria-label={t('titlebar.notifications', { defaultValue: 'Benachrichtigungen' })}>
           <Bell size={16} aria-hidden="true" />
-        </button>
-        <button type="button" className={iconButtonBase} onClick={() => setShowInbox(true)}>
+        </IconButton>
+        <IconButton type="button" className={iconButtonBase} onClick={() => setShowInbox(true)} aria-label={t('titlebar.inbox', { defaultValue: 'Posteingang' })}>
           <Inbox size={16} aria-hidden="true" />
-        </button>
-        <button type="button" className={iconButtonBase} onClick={() => setShowHelp(true)}>
+        </IconButton>
+        <IconButton type="button" className={iconButtonBase} onClick={() => setShowHelp(true)} aria-label={t('titlebar.help', { defaultValue: 'Hilfe' })}>
           <HelpCircle size={16} aria-hidden="true" />
-        </button>
+        </IconButton>
       </div>
 
       {!isMac && (
         <div className="flex items-center h-full">
-          <button type="button" className={windowBtnBase} onClick={() => void controls.minimize()}>
+          <IconButton type="button" className={windowBtnBase} onClick={() => void controls.minimize()} aria-label={t('titlebar.minimize', { defaultValue: 'Minimieren' })}>
             <Minus size={16} aria-hidden="true" />
-          </button>
-          <button type="button" className={windowBtnBase} onClick={() => void controls.toggleMaximize()}>
+          </IconButton>
+          <IconButton type="button" className={windowBtnBase} onClick={() => void controls.toggleMaximize()} aria-label={t('titlebar.maximize', { defaultValue: 'Maximieren' })}>
             {state.isMaximized ? <Minimize2 size={16} aria-hidden="true" /> : <Maximize2 size={16} aria-hidden="true" />}
-          </button>
-          <button type="button" className={windowBtnBase} onClick={() => void controls.close()}>
+          </IconButton>
+          <IconButton type="button" className={windowBtnBase} onClick={() => void controls.close()} aria-label={t('titlebar.close', { defaultValue: 'Schließen' })}>
             <X size={16} aria-hidden="true" />
-          </button>
+          </IconButton>
         </div>
       )}
     </div>

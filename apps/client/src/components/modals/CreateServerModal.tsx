@@ -2,6 +2,8 @@ import { useState, type ChangeEvent } from 'react';
 import { Image as ImageIcon, Loader2, Trash2, Upload } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { ModalLayout } from './ModalLayout';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
 
 interface CreateServerModalProps {
   onClose: () => void;
@@ -81,8 +83,8 @@ export const CreateServerModal = ({ onClose, onCreated }: CreateServerModalProps
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="flex flex-col items-center gap-2">
-          <label className="w-24 h-24 rounded-full bg-[color:var(--color-surface-hover)] border-2 border-dashed border-[color:var(--color-border-strong)] flex flex-col items-center justify-center text-[color:var(--color-text-muted)] hover:border-[var(--color-accent-hover)] hover:text-[color:var(--color-accent)] cursor-pointer transition-all group overflow-hidden">
-            <input type="file" accept="image/*" className="hidden" onChange={handleIconChange} />
+          <label className="w-24 h-24 rounded-full bg-[color:var(--color-surface-hover)] border-2 border-dashed border-[color:var(--color-border-strong)] flex flex-col items-center justify-center text-[color:var(--color-text-muted)] hover:border-[var(--color-accent-hover)] hover:text-[var(--color-accent)] cursor-pointer transition-all group overflow-hidden focus-within:ring-2 focus-within:ring-[color:var(--color-focus)] focus-within:ring-offset-2 focus-within:ring-offset-background">
+            <Input type="file" accept="image/*" className="hidden" onChange={handleIconChange} />
             {iconPreview ? (
               <img src={iconPreview} alt="Server Icon" className="w-full h-full object-cover" />
             ) : (
@@ -95,8 +97,10 @@ export const CreateServerModal = ({ onClose, onCreated }: CreateServerModalProps
           <div className="flex items-center gap-2 text-xs text-[color:var(--color-text-muted)]">
             <span>{iconFile ? iconFile.name : 'PNG, JPG oder WebP bis 2 MB'}</span>
             {iconFile && (
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setIconFile(null);
                   setIconPreview(null);
@@ -106,7 +110,7 @@ export const CreateServerModal = ({ onClose, onCreated }: CreateServerModalProps
               >
                 <Trash2 size={14} />
                 Entfernen
-              </button>
+              </Button>
             )}
           </div>
           {iconError && (
@@ -119,23 +123,24 @@ export const CreateServerModal = ({ onClose, onCreated }: CreateServerModalProps
 
         <div className="space-y-2">
           <label className="text-xs font-bold text-[color:var(--color-text-muted)] uppercase ml-1">Server Name</label>
-          <input
+          <Input
             autoFocus
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Mein epischer Server"
-            className="w-full bg-[color:var(--color-surface)]/60 text-text p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none transition-all placeholder:text-[color:var(--color-text-muted)] font-medium"
+            className="bg-[color:var(--color-surface)]/60 text-text p-3 placeholder:text-[color:var(--color-text-muted)] font-medium"
           />
         </div>
 
-        <button
+        <Button
           type="submit"
           disabled={loading || !name.trim()}
-          className="w-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-[color:var(--color-on-accent)] py-3 rounded-[var(--radius-3)] font-bold shadow-lg shadow-[0_12px_24px_color-mix(in_srgb,var(--color-accent)_25%,transparent)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+          variant="primary"
+          className="w-full py-3 font-bold shadow-lg shadow-[0_12px_24px_color-mix(in_srgb,var(--color-accent)_25%,transparent)] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? <Loader2 className="animate-spin" size={18} /> : 'Server erstellen'}
-        </button>
+        </Button>
       </form>
     </ModalLayout>
   );

@@ -2,6 +2,9 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertCircle, CheckCircle2, ImagePlus, Loader2, Send } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ModalLayout } from './ModalLayout';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { Select } from '../ui/Select';
 import { FeedbackCategory, sendFeedback } from '../../services/feedback';
 
 interface FeedbackModalProps {
@@ -86,15 +89,15 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
               </span>
             )}
           </div>
-          <button
+          <Button
             type="submit"
             form="feedback-form"
-            className="px-4 py-2 rounded-[var(--radius-3)] bg-cyan-600 text-[color:var(--color-on-accent)] text-sm font-semibold flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="bg-cyan-600 text-[color:var(--color-on-accent)] text-sm hover:bg-cyan-500"
             disabled={submitting || message.trim().length === 0}
           >
             {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
             {t('feedbackModal.submit')}
-          </button>
+          </Button>
         </div>
       }
     >
@@ -103,9 +106,9 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
           <label htmlFor="feedback-category" className="text-sm font-semibold text-text">
             {t('feedbackModal.categoryLabel')}
           </label>
-          <select
+          <Select
             id="feedback-category"
-            className="w-full rounded-[var(--radius-3)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 px-3 py-2 text-sm text-[color:var(--color-text)] focus:border-cyan-500 focus:outline-none"
+            className="bg-[color:var(--color-surface)]/60 text-sm"
             value={category}
             onChange={(event) => setCategory(event.target.value as FeedbackCategory)}
           >
@@ -114,7 +117,7 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
                 {t(`feedbackModal.categories.${option}` as const)}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
 
         <div className="space-y-2">
@@ -124,7 +127,7 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
           <textarea
             id="feedback-message"
             ref={textareaRef}
-            className="w-full min-h-[140px] rounded-[var(--radius-3)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 px-3 py-2 text-sm text-[color:var(--color-text)] focus:border-cyan-500 focus:outline-none"
+            className="w-full min-h-[140px] rounded-[var(--radius-3)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 px-3 py-2 text-sm text-[color:var(--color-text)] focus-visible:border-[color:var(--color-focus)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             placeholder={t('feedbackModal.messagePlaceholder')}
             value={message}
             onChange={(event) => setMessage(event.target.value)}
@@ -140,11 +143,11 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
           <div className="flex items-center gap-2">
             <label
               htmlFor="feedback-screenshot"
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-[var(--radius-3)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 text-sm text-[color:var(--color-text)] cursor-pointer hover:border-cyan-500 focus-within:border-cyan-500"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-[var(--radius-3)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 text-sm text-[color:var(--color-text)] cursor-pointer hover:border-[color:var(--color-border-strong)] focus-within:border-[color:var(--color-focus)] focus-within:ring-2 focus-within:ring-[color:var(--color-focus)] focus-within:ring-offset-2 focus-within:ring-offset-background"
             >
               <ImagePlus size={16} />
               <span className="truncate">{screenshotLabel}</span>
-              <input
+              <Input
                 id="feedback-screenshot"
                 type="file"
                 accept="image/*"
@@ -153,13 +156,15 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
               />
             </label>
             {screenshotFile && (
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 className="text-xs text-[color:var(--color-text-muted)] underline hover:text-text"
                 onClick={() => setScreenshotFile(null)}
               >
                 {t('feedbackModal.removeScreenshot')}
-              </button>
+              </Button>
             )}
           </div>
           <p className="text-xs text-[color:var(--color-text-muted)]">{t('feedbackModal.screenshotHelp')}</p>

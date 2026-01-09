@@ -3,7 +3,8 @@ import { Shield, Crown, UserCheck, UserX } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../../api/http';
 import { useSocket } from '../../context/SocketContext';
-import { ErrorCard, RoleTag, Skeleton, Spinner } from '../ui';
+import { ErrorCard, Input, RoleTag, Select, Skeleton, Spinner } from '../ui';
+import { Button } from '../ui/Button';
 import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
 
@@ -606,7 +607,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
   return (
     <div className="member-sidebar overflow-hidden">
       <div className="member-sidebar__header">
-        <input
+        <Input
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -685,29 +686,31 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
           >
             <div className="text-[11px] text-[color:var(--color-text-muted)] uppercase tracking-wide px-2 pb-1">{contextMenu.username}</div>
             {canActOnVoice ? (
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)]"
                 onClick={() => performModeration('mute', { userId: contextMenu.userId, channelId: contextMenu.channelId })}
               >
                 {t('memberSidebar.mute')}
-              </button>
+              </Button>
             ) : null}
             {canActOnVoice ? (
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)]"
                 onClick={() => performModeration('remove', { userId: contextMenu.userId, channelId: contextMenu.channelId })}
               >
                 {t('memberSidebar.removeFromTalk')}
-              </button>
+              </Button>
             ) : null}
             {canActOnVoice && voiceChannels.length > 1 ? (
               <div className="px-2 py-1 space-y-1">
                 <div className="text-[11px] text-[color:var(--color-text-muted)]">{t('memberSidebar.moveToTalk')}</div>
                 <div className="flex items-center gap-2">
-                  <select
-                    className="flex-1 bg-[var(--color-surface-alt)] border border-[var(--color-border)] rounded px-2 py-1 text-sm text-[color:var(--color-text)]"
+                  <Select
+                    className="flex-1 bg-[var(--color-surface-alt)] text-sm text-[color:var(--color-text)]"
                     value={contextMenu.moveTargetId || ''}
                     onChange={(e) => setContextMenu((prev) => (prev ? { ...prev, moveTargetId: Number(e.target.value) } : prev))}
                   >
@@ -716,8 +719,8 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
                       .map((vc) => (
                         <option key={vc.id} value={vc.id}>{vc.name}</option>
                       ))}
-                  </select>
-                  <button
+                  </Select>
+                  <Button
                     type="button"
                     className="px-2 py-1 rounded bg-[var(--color-accent)]/15 text-[color:var(--color-text)] text-sm hover:bg-[var(--color-accent)]/25"
                     disabled={!contextMenu.moveTargetId}
@@ -730,26 +733,28 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
                     }
                   >
                     {t('memberSidebar.move')}
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : null}
             {canModerateMember ? (
               <>
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)]"
                   onClick={() => performModeration('ban', { userId: contextMenu.userId })}
                 >
                   {t('memberSidebar.ban')}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="ghost"
                   className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)]"
                   onClick={() => performModeration('kick', { userId: contextMenu.userId })}
                 >
                   {t('memberSidebar.kick')}
-                </button>
+                </Button>
               </>
             ) : null}
             {!hasContextActions && (

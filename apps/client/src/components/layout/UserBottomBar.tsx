@@ -7,6 +7,7 @@ import { resolveServerAssetUrl } from '../../utils/assetUrl';
 import { useVoice } from '../../features/voice';
 import { storage } from '../../shared/config/storage';
 import { StatusBadge, type StatusTone } from '../ui';
+import { IconButton } from '../ui/Button';
 
 export const UserBottomBar = ({ onOpenUserSettings }: { onOpenUserSettings?: () => void }) => {
   const { settings } = useSettings();
@@ -69,7 +70,7 @@ export const UserBottomBar = ({ onOpenUserSettings }: { onOpenUserSettings?: () 
           </div>
 
           <div className="flex items-center gap-2">
-            <button
+            <IconButton
               className={`h-10 w-10 rounded-[var(--radius-3)] border flex items-center justify-center transition-colors ${
                 micMuted
                   ? 'bg-rose-500/15 border-rose-400/40 text-rose-100'
@@ -77,12 +78,13 @@ export const UserBottomBar = ({ onOpenUserSettings }: { onOpenUserSettings?: () 
               }`}
               onClick={toggleMic}
               aria-pressed={micMuted}
+              aria-label={micMuted ? t('userBottomBar.unmuteMic') : t('userBottomBar.muteMic')}
               title={micMuted ? t('userBottomBar.unmuteMic') : t('userBottomBar.muteMic')}
             >
               {micMuted ? <MicOff size={16} /> : <Mic size={16} />}
-            </button>
+            </IconButton>
 
-            <button
+            <IconButton
               className={`h-10 w-10 rounded-[var(--radius-3)] border flex items-center justify-center transition-colors ${
                 muted
                   ? 'bg-rose-500/15 border-rose-400/40 text-rose-100'
@@ -90,18 +92,20 @@ export const UserBottomBar = ({ onOpenUserSettings }: { onOpenUserSettings?: () 
               }`}
               onClick={toggleMuted}
               aria-pressed={muted}
+              aria-label={muted ? t('userBottomBar.unmuteAll') : t('userBottomBar.muteAll')}
               title={muted ? t('userBottomBar.unmuteAll') : t('userBottomBar.muteAll')}
             >
               {muted ? <HeadphoneOff size={16} /> : <Headphones size={16} />}
-            </button>
+            </IconButton>
 
-            <button
+            <IconButton
               className="h-10 w-10 rounded-[var(--radius-3)] border border-[color:var(--color-border)] bg-[color:var(--color-surface-hover)] text-[color:var(--color-text)] hover:border-[color:var(--color-border-strong)] transition-colors flex items-center justify-center"
               onClick={handleSettings}
+              aria-label={t('userBottomBar.settings')}
               title={t('userBottomBar.settings')}
             >
               <Settings size={16} />
-            </button>
+            </IconButton>
           </div>
         </div>
       </div>

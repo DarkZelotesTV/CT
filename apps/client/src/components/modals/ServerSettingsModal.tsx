@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { AlertTriangle, Image as ImageIcon, Loader2, Shield, Trash2 } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { ModalLayout } from './ModalLayout';
-import { ErrorCard, Spinner } from '../ui';
+import { ErrorCard, Input, Select, Spinner } from '../ui';
+import { Button } from '../ui/Button';
 import { getServerUrl } from '../../utils/apiConfig';
 
 interface Channel {
@@ -38,6 +39,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
   const [iconError, setIconError] = useState<string | null>(null);
   const [removeIcon, setRemoveIcon] = useState(false);
   const [fallbackChannelId, setFallbackChannelId] = useState<number | null>(null);
+  const iconInputRef = useRef<HTMLInputElement | null>(null);
   const [channels, setChannels] = useState<Channel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -206,22 +208,25 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
       footer={
         !isLoading && !error ? (
           <div className="flex justify-between items-center gap-3">
-            <button
+            <Button
               type="button"
               onClick={onClose}
+              variant="ghost"
+              size="sm"
               className="text-text-muted hover:text-text text-sm font-medium px-3 py-2 rounded-[var(--radius-3)] hover:bg-[color:var(--color-surface-hover)]"
             >
               Abbrechen
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               onClick={() => void handleSave()}
               disabled={isSaving}
-              className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-[color:var(--color-on-accent)] px-5 py-2 rounded-[var(--radius-3)] font-bold disabled:opacity-50 flex items-center gap-2 transition-all active:scale-[0.98]"
+              variant="primary"
+              className="px-5 py-2 font-bold disabled:opacity-50 flex items-center gap-2 transition-all active:scale-[0.98]"
             >
               {isSaving && <Loader2 className="animate-spin" size={16} />}
               Speichern
-            </button>
+            </Button>
           </div>
         ) : undefined
       }
@@ -245,32 +250,38 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
             <div className="flex-1 space-y-3 min-w-[240px]">
               <div className="space-y-1">
                 <label className="text-xs font-bold text-[color:var(--color-text-muted)] uppercase ml-1">Server Name</label>
-                <input
+                <Input
                   autoFocus
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Mein Server"
-                  className="w-full bg-[color:var(--color-surface)]/60 text-text p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none transition-all placeholder:text-[color:var(--color-text-muted)] font-medium"
+                  className="bg-[color:var(--color-surface)]/60 text-text p-3 placeholder:text-[color:var(--color-text-muted)] font-medium"
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold text-[color:var(--color-text-muted)] uppercase ml-1">Server Icon</label>
                 <div className="flex flex-wrap gap-2 items-center">
-                  <label className="cursor-pointer inline-flex items-center gap-2 bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] px-3 py-2 rounded-[var(--radius-3)] text-sm font-semibold hover:border-[var(--color-accent-hover)] hover:text-[color:var(--color-accent-hover)] transition-colors">
-                    <input type="file" accept="image/*" className="hidden" onChange={handleIconChange} />
+                  <Button
+                    type="button"
+                    className="cursor-pointer inline-flex items-center gap-2 bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] px-3 py-2 rounded-[var(--radius-3)] text-sm font-semibold hover:border-[var(--color-accent-hover)] hover:text-[var(--color-accent-hover)] transition-colors"
+                    onClick={() => iconInputRef.current?.click()}
+                  >
                     <ImageIcon size={16} />
                     Icon auswählen
-                  </label>
-                  <button
+                  </Button>
+                  <Input ref={iconInputRef} type="file" accept="image/*" className="hidden" onChange={handleIconChange} />
+                  <Button
                     type="button"
                     onClick={handleRemoveIcon}
                     disabled={isSaving || isUploadingIcon || (!iconUrl && !iconFile)}
+                    variant="ghost"
+                    size="sm"
                     className="inline-flex items-center gap-2 px-3 py-2 rounded-[var(--radius-3)] text-sm font-semibold border border-[color:var(--color-border)] text-text-muted hover:text-text hover:border-red-400 hover:text-red-200 disabled:opacity-50"
                   >
                     <Trash2 size={16} />
                     Icon entfernen
-                  </button>
+                  </Button>
                   {(iconFile || removeIcon) && (
                     <span className="text-xs text-[color:var(--color-accent)] bg-[color:var(--color-accent)]/10 border border-[color:var(--color-accent)]/30 rounded-full px-2 py-1">
                       {iconFile ? `Ausgewählt: ${iconFile.name}` : 'Icon wird entfernt'}
@@ -297,10 +308,10 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
                 Keine Text- oder Web-Kanäle verfügbar.
               </div>
             ) : (
-              <select
+              <Select
                 value={fallbackChannelId ?? ''}
                 onChange={(e) => setFallbackChannelId(e.target.value ? Number(e.target.value) : null)}
-                className="w-full bg-[color:var(--color-surface)]/60 text-text p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
+                className="w-full bg-[color:var(--color-surface)]/60 text-text p-3"
               >
                 <option value="">Kein Fallback</option>
                 {channelOptions.map((channel) => (
@@ -308,7 +319,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
                     {channel.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             )}
             <p className="text-[11px] text-[color:var(--color-text-muted)]">
               Der Fallback-Kanal wird geöffnet, wenn kein spezifischer Kanal ausgewählt ist.
@@ -323,7 +334,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
               </p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer select-none">
-              <input
+              <Input
                 type="checkbox"
                 className="sr-only"
                 checked={dragAndDropEnabled}
@@ -361,7 +372,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
                 <span>{deleteError}</span>
               </div>
             )}
-            <button
+            <Button
               type="button"
               onClick={handleDelete}
               disabled={isDeleting}
@@ -369,7 +380,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
             >
               {isDeleting && <Loader2 className="animate-spin" size={16} />}
               Server löschen
-            </button>
+            </Button>
           </div>
         </form>
       )}

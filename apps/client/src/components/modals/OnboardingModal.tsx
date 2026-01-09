@@ -3,6 +3,7 @@ import { Shield, Plus, Volume2, Users, Check, ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { storage } from '../../shared/config/storage';
 import { ModalLayout } from './ModalLayout';
+import { Button } from '../ui/Button';
 
 interface Props {
   onClose: () => void;
@@ -157,9 +158,10 @@ export const OnboardingModal = ({ onClose, initialStep = 0, onStepAction }: Prop
             const StatusIcon = isDone ? Check : item.icon;
 
             return (
-              <button
+              <Button
                 key={item.key}
                 onClick={() => setStep(i)}
+                aria-pressed={isActive}
                 className={`group flex w-full items-start gap-4 rounded-[var(--radius-4)] border px-4 py-4 transition-all text-left ${
                   isActive
                     ? 'border-[color:var(--color-border-strong)]/60 bg-[color:var(--color-surface-hover)]/80 shadow-lg shadow-[0_18px_30px_color-mix(in_srgb,var(--color-accent)_30%,transparent)]'
@@ -203,32 +205,38 @@ export const OnboardingModal = ({ onClose, initialStep = 0, onStepAction }: Prop
                     />
                   </div>
                 </div>
-              </button>
+              </Button>
             );
           })}
 
           <div className="flex flex-wrap items-center gap-3 pt-2">
-            <button className="px-4 py-2 rounded-[var(--radius-3)] border border-[color:var(--color-border)] bg-white/[0.04] text-text text-sm font-medium hover:border-[color:var(--color-border-strong)] hover:bg-white/[0.08]" onClick={finish}>
+            <Button
+              variant="ghost"
+              className="text-text text-sm font-medium border border-[color:var(--color-border)] bg-white/[0.04] hover:border-[color:var(--color-border-strong)] hover:bg-white/[0.08]"
+              onClick={finish}
+            >
               {t('onboarding.skip')}
-            </button>
-            <button
-              className="px-4 py-2 rounded-[var(--radius-3)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-[color:var(--color-on-accent)] text-sm font-semibold shadow-lg shadow-[0_16px_28px_color-mix(in_srgb,var(--color-accent)_30%,transparent)]"
+            </Button>
+            <Button
+              variant="primary"
+              className="text-sm font-semibold shadow-lg shadow-[0_16px_28px_color-mix(in_srgb,var(--color-accent)_30%,transparent)]"
               onClick={() => {
                 if (step >= steps.length - 1) finish();
                 else setStep((s) => s + 1);
               }}
             >
               {step >= steps.length - 1 ? t('onboarding.finish') : t('onboarding.next')}
-            </button>
-            <button
-              className="px-4 py-2 rounded-[var(--radius-3)] border border-[color:var(--color-border)] bg-white/[0.03] text-text text-sm font-medium hover:border-[color:var(--color-border-strong)] hover:bg-white/[0.07]"
+            </Button>
+            <Button
+              variant="ghost"
+              className="text-text text-sm font-medium border border-[color:var(--color-border)] bg-white/[0.03] hover:border-[color:var(--color-border-strong)] hover:bg-white/[0.07]"
               onClick={() => {
                 onStepAction?.(current.key);
                 finish();
               }}
             >
               {t(`onboarding.actions.${current.key}`)}
-            </button>
+            </Button>
             <span className="text-xs text-text-muted">{t('onboarding.footerHint')}</span>
           </div>
         </div>

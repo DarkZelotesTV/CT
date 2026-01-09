@@ -5,6 +5,7 @@ import classNames from 'classnames';
 import { apiFetch } from '../../api/http';
 import type { ApiFetchInit } from '../../api/http';
 import { ModalLayout } from './ModalLayout';
+import { Input } from '../ui/Input';
 
 interface PaletteServer {
   id: number;
@@ -283,13 +284,13 @@ export const CommandPalette = ({
     >
       <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-surface-alt)]">
         <Search size={18} className="text-[color:var(--color-text-muted)]" aria-hidden="true" />
-        <input
+        <Input
           ref={inputRef}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyNavigation}
           placeholder="Search servers, channels, members, commands..."
-          className="flex-1 bg-transparent outline-none text-text placeholder:text-[color:var(--color-text-muted)]"
+          className="flex-1 border-0 bg-transparent px-0 text-text placeholder:text-[color:var(--color-text-muted)]"
           aria-label="Command palette search"
         />
         <div className="text-xs text-[color:var(--color-text-muted)] bg-[color:var(--color-surface-hover)] rounded-[var(--radius-3)] px-2 py-1 border border-[color:var(--color-border)]" aria-hidden="true">

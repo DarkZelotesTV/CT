@@ -3,7 +3,8 @@ import { ArrowLeft, MessageSquare, MoreVertical, Search, UserPlus, Check, X, Loa
 import { apiFetch } from '../../api/http';
 import { useSocket } from '../../context/SocketContext';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
-import { Button, Popover, PopoverContent, PopoverTrigger, StatusBadge } from '../ui';
+import { Button, Input, Popover, PopoverContent, PopoverTrigger, StatusBadge } from '../ui';
+import { IconButton } from '../ui/Button';
 
 interface FriendListStageProps {
   onBackToHome?: () => void;
@@ -156,13 +157,15 @@ export const FriendListStage = ({ onBackToHome }: FriendListStageProps) => {
       {/* Top Bar */}
       <div className="h-12 border-b border-border flex items-center px-4 shadow-sm bg-surface z-10 gap-2">
         {onBackToHome && (
-          <button
+          <Button
             onClick={onBackToHome}
+            variant="ghost"
+            size="sm"
             className="flex items-center gap-1 text-[color:var(--color-text-muted)] hover:text-text px-2 py-1 rounded hover:bg-surface-3 transition-colors"
           >
             <ArrowLeft size={16} />
             <span className="text-sm">Home</span>
-          </button>
+          </Button>
         )}
 
         <div className="flex items-center text-text font-bold mr-4 border-r border-border pr-4 gap-2">
@@ -170,10 +173,10 @@ export const FriendListStage = ({ onBackToHome }: FriendListStageProps) => {
         </div>
 
         <div className="flex items-center space-x-4 flex-1">
-           <button onClick={() => setActiveTab('online')} className={`hover:bg-surface-3 px-2 py-1 rounded text-sm font-medium ${activeTab === 'online' ? 'text-text bg-surface-3' : 'text-[color:var(--color-text-muted)]'}`}>Online</button>
-           <button onClick={() => setActiveTab('all')} className={`hover:bg-surface-3 px-2 py-1 rounded text-sm font-medium ${activeTab === 'all' ? 'text-text bg-surface-3' : 'text-[color:var(--color-text-muted)]'}`}>Alle</button>
-           <button onClick={() => setActiveTab('pending')} className={`hover:bg-surface-3 px-2 py-1 rounded text-sm font-medium ${activeTab === 'pending' ? 'text-text bg-surface-3' : 'text-[color:var(--color-text-muted)]'}`}>Ausstehend</button>
-           <button onClick={() => setActiveTab('blocked')} className={`hover:bg-surface-3 px-2 py-1 rounded text-sm font-medium ${activeTab === 'blocked' ? 'text-text bg-surface-3' : 'text-[color:var(--color-text-muted)]'}`}>Blockiert</button>
+           <Button onClick={() => setActiveTab('online')} variant="ghost" size="sm" className={`px-2 py-1 text-sm font-medium ${activeTab === 'online' ? 'text-text bg-surface-3' : 'text-[color:var(--color-text-muted)]'} hover:bg-surface-3`}>Online</Button>
+           <Button onClick={() => setActiveTab('all')} variant="ghost" size="sm" className={`px-2 py-1 text-sm font-medium ${activeTab === 'all' ? 'text-text bg-surface-3' : 'text-[color:var(--color-text-muted)]'} hover:bg-surface-3`}>Alle</Button>
+           <Button onClick={() => setActiveTab('pending')} variant="ghost" size="sm" className={`px-2 py-1 text-sm font-medium ${activeTab === 'pending' ? 'text-text bg-surface-3' : 'text-[color:var(--color-text-muted)]'} hover:bg-surface-3`}>Ausstehend</Button>
+           <Button onClick={() => setActiveTab('blocked')} variant="ghost" size="sm" className={`px-2 py-1 text-sm font-medium ${activeTab === 'blocked' ? 'text-text bg-surface-3' : 'text-[color:var(--color-text-muted)]'} hover:bg-surface-3`}>Blockiert</Button>
 
            <div className="ml-auto relative">
              <Popover open={isAddPopoverOpen} onOpenChange={setIsAddPopoverOpen}>
@@ -187,9 +190,9 @@ export const FriendListStage = ({ onBackToHome }: FriendListStageProps) => {
                  initialFocusRef={addInputRef}
                >
                  <form onSubmit={handleAddFriend}>
-                   <input
+                   <Input
                      ref={addInputRef}
-                     className="w-full bg-surface/60 border border-border rounded p-2 text-text text-sm outline-none focus:border-[color:var(--color-focus)]"
+                     className="bg-surface/60 text-text text-sm"
                      placeholder="Nutzername eingeben..."
                      value={addUsername}
                      onChange={e => setAddUsername(e.target.value)}
@@ -207,10 +210,10 @@ export const FriendListStage = ({ onBackToHome }: FriendListStageProps) => {
          <div className="flex-1 p-6 overflow-y-auto">
             {/* Suche */}
             <div className="mb-6 relative">
-               <input
+               <Input
                  type="text"
                  placeholder="Suchen"
-                 className="w-full bg-surface-3 text-text p-2 pl-2 rounded border border-transparent focus:border-[color:var(--color-focus)] outline-none transition-colors"
+                 className="bg-surface-3 text-text p-2 pl-2 rounded border border-transparent"
                  value={searchTerm}
                  onChange={e => setSearchTerm(e.target.value)}
                />
@@ -246,8 +249,24 @@ export const FriendListStage = ({ onBackToHome }: FriendListStageProps) => {
                          </div>
                       </div>
                       <div className="flex items-center gap-2 opacity-50 group-hover:opacity-100 bg-surface-3 p-1 rounded transition-opacity">
-                         <button className="p-2 bg-surface-2 rounded-full hover:text-text text-[color:var(--color-text-muted)]" title="Nachricht"><MessageSquare size={18} /></button>
-                         <button className="p-2 bg-surface-2 rounded-full hover:text-text text-[color:var(--color-text-muted)]" title="Mehr"><MoreVertical size={18} /></button>
+                         <IconButton
+                           aria-label="Nachricht"
+                           size="sm"
+                           variant="ghost"
+                           className="p-2 bg-surface-2 rounded-full hover:text-text text-[color:var(--color-text-muted)]"
+                           title="Nachricht"
+                         >
+                           <MessageSquare size={18} />
+                         </IconButton>
+                         <IconButton
+                           aria-label="Mehr"
+                           size="sm"
+                           variant="ghost"
+                           className="p-2 bg-surface-2 rounded-full hover:text-text text-[color:var(--color-text-muted)]"
+                           title="Mehr"
+                         >
+                           <MoreVertical size={18} />
+                         </IconButton>
                       </div>
                    </div>
                ))}
@@ -271,11 +290,36 @@ export const FriendListStage = ({ onBackToHome }: FriendListStageProps) => {
                       <div className="flex items-center gap-2 opacity-80 group-hover:opacity-100 bg-surface-3 p-1 rounded transition-opacity">
                          {request.direction === 'incoming' && (
                            <>
-                             <button onClick={() => handleAccept(request.id)} className="p-2 bg-[color:var(--color-text-success)] rounded-full hover:text-[color:var(--color-on-accent)] text-[color:var(--color-text)]" title="Annehmen"><Check size={18} /></button>
-                             <button onClick={() => handleDecline(request.id)} className="p-2 bg-surface-2 rounded-full hover:text-text text-[color:var(--color-text-muted)]" title="Ablehnen"><X size={18} /></button>
+                             <IconButton
+                               onClick={() => handleAccept(request.id)}
+                               aria-label="Annehmen"
+                               size="sm"
+                               className="p-2 bg-[color:var(--color-text-success)] rounded-full hover:text-[color:var(--color-on-accent)] text-[color:var(--color-text)]"
+                               title="Annehmen"
+                             >
+                               <Check size={18} />
+                             </IconButton>
+                             <IconButton
+                               onClick={() => handleDecline(request.id)}
+                               aria-label="Ablehnen"
+                               size="sm"
+                               variant="ghost"
+                               className="p-2 bg-surface-2 rounded-full hover:text-text text-[color:var(--color-text-muted)]"
+                               title="Ablehnen"
+                             >
+                               <X size={18} />
+                             </IconButton>
                            </>
                          )}
-                         <button onClick={() => handleBlock(request.id)} className="p-2 bg-[color:var(--color-text-danger)] rounded-full hover:text-[color:var(--color-on-accent)] text-[color:var(--color-text)]" title="Blockieren"><Ban size={18} /></button>
+                         <IconButton
+                           onClick={() => handleBlock(request.id)}
+                           aria-label="Blockieren"
+                           size="sm"
+                           className="p-2 bg-[color:var(--color-text-danger)] rounded-full hover:text-[color:var(--color-on-accent)] text-[color:var(--color-text)]"
+                           title="Blockieren"
+                         >
+                           <Ban size={18} />
+                         </IconButton>
                       </div>
                    </div>
                ))}

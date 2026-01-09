@@ -451,6 +451,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                   role="button"
                   tabIndex={0}
                   onClick={() => openPinned(p.instanceUrl, p.serverId)}
+                  aria-label={`${p.name ?? `Server ${p.serverId}`} (${p.instanceUrl})`}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       openPinned(p.instanceUrl, p.serverId);
