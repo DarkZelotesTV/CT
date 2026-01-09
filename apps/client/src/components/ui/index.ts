@@ -1,4 +1,5 @@
 export { ErrorCard } from './ErrorCard';
+export { Card } from './Card';
 export { Skeleton } from './Skeleton';
 export { Spinner } from './Spinner';
 export { Icon } from './Icon';
@@ -10,3 +11,4 @@ export { RoleTag } from './RoleTag';
 export { StatusBadge } from './StatusBadge';
 export type { RoleTagVariant } from './RoleTag';
 export type { StatusBadgeProps, StatusBadgeSize, StatusBadgeVariant, StatusTone } from './StatusBadge';
+export type { CardVariant, CardProps } from './Card';

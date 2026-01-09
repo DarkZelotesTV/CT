@@ -33,7 +33,7 @@ import { clearIdentity, computeFingerprint, createIdentity, formatFingerprint, l
 import { buildBackupPayload, getBackupFilename, parseIdentityBackup } from '../../auth/identityBackup';
 import { storage } from '../../shared/config/storage';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
-import { Badge, Select, Toggle } from '../ui';
+import { Badge, Card, Select, Toggle } from '../ui';
 import { MIN_ACCENT_CONTRAST, getAccentContrastReport, getThemeContrastTargets } from '../../theme/appTheme';
 
 const modifierKeys = ['Control', 'Shift', 'Alt', 'Meta'];
@@ -728,7 +728,7 @@ export const UserSettingsModal = ({
 		    className="fixed left-0 right-0 bottom-0 top-[var(--ct-titlebar-height)] bg-[color:var(--color-surface)]/95 backdrop-blur-sm flex items-center justify-center p-4"
 		    style={{ zIndex: 9999, transform: 'translateZ(0)', willChange: 'transform' }}
 		  >
-      <div className="bg-[var(--color-surface)] w-11/12 max-w-5xl h-[85vh] rounded-[var(--radius-5)] border border-[var(--color-border)] shadow-2xl overflow-hidden flex flex-col text-[color:var(--color-text)]">
+      <Card variant="elevated" className="w-11/12 max-w-5xl h-[85vh] overflow-hidden flex flex-col text-[color:var(--color-text)]">
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-border)] shrink-0">
           <div>
             <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] flex items-center gap-2">
@@ -1726,7 +1726,7 @@ export const UserSettingsModal = ({
             </div>
           )}
         </div>
-      </div>
+      </Card>
     </div>,
     target
   );
