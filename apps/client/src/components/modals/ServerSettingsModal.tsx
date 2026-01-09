@@ -209,7 +209,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
             <button
               type="button"
               onClick={onClose}
-              className="text-white/80 hover:text-white text-sm font-medium px-3 py-2 rounded-[var(--radius-2)] hover:bg-[color:var(--color-surface-hover)]"
+              className="text-text-muted hover:text-text text-sm font-medium px-3 py-2 rounded-[var(--radius-2)] hover:bg-[color:var(--color-surface-hover)]"
             >
               Abbrechen
             </button>
@@ -217,7 +217,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
               type="button"
               onClick={() => void handleSave()}
               disabled={isSaving}
-              className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white px-5 py-2 rounded-[var(--radius-2)] font-bold disabled:opacity-50 flex items-center gap-2 transition-all active:scale-[0.98]"
+              className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-[color:var(--color-on-accent)] px-5 py-2 rounded-[var(--radius-2)] font-bold disabled:opacity-50 flex items-center gap-2 transition-all active:scale-[0.98]"
             >
               {isSaving && <Loader2 className="animate-spin" size={16} />}
               Speichern
@@ -251,7 +251,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Mein Server"
-                  className="w-full bg-[color:var(--color-surface)]/60 text-white p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none transition-all placeholder:text-[color:var(--color-text-muted)] font-medium"
+                  className="w-full bg-[color:var(--color-surface)]/60 text-text p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none transition-all placeholder:text-[color:var(--color-text-muted)] font-medium"
                 />
               </div>
               <div className="space-y-2">
@@ -266,7 +266,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
                     type="button"
                     onClick={handleRemoveIcon}
                     disabled={isSaving || isUploadingIcon || (!iconUrl && !iconFile)}
-                    className="inline-flex items-center gap-2 px-3 py-2 rounded-[var(--radius-2)] text-sm font-semibold border border-[color:var(--color-border)] text-white/80 hover:text-white hover:border-red-400 hover:text-red-200 disabled:opacity-50"
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded-[var(--radius-2)] text-sm font-semibold border border-[color:var(--color-border)] text-text-muted hover:text-text hover:border-red-400 hover:text-red-200 disabled:opacity-50"
                   >
                     <Trash2 size={16} />
                     Icon entfernen
@@ -300,7 +300,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
               <select
                 value={fallbackChannelId ?? ''}
                 onChange={(e) => setFallbackChannelId(e.target.value ? Number(e.target.value) : null)}
-                className="w-full bg-[color:var(--color-surface)]/60 text-white p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
+                className="w-full bg-[color:var(--color-surface)]/60 text-text p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
               >
                 <option value="">Kein Fallback</option>
                 {channelOptions.map((channel) => (
@@ -317,7 +317,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
 
           <div className="rounded-[var(--radius-4)] border border-[color:var(--color-border)] bg-white/[0.02] p-4 flex items-center justify-between gap-4">
             <div className="space-y-1">
-              <div className="text-sm font-semibold text-white">Drag & Drop zum Sortieren</div>
+              <div className="text-sm font-semibold text-text">Drag & Drop zum Sortieren</div>
               <p className="text-xs text-[color:var(--color-text-muted)]">
                 Wenn deaktiviert, können nur Administratoren die Reihenfolge von Kategorien und Kanälen anpassen.
               </p>
@@ -365,7 +365,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
               type="button"
               onClick={handleDelete}
               disabled={isDeleting}
-              className="inline-flex items-center gap-2 bg-red-600/90 hover:bg-red-600 text-white px-4 py-2 rounded-[var(--radius-2)] font-semibold shadow-lg shadow-red-900/30 disabled:opacity-60"
+              className="inline-flex items-center gap-2 bg-red-600/90 hover:bg-red-600 text-[color:var(--color-on-accent)] px-4 py-2 rounded-[var(--radius-2)] font-semibold shadow-lg shadow-red-900/30 disabled:opacity-60"
             >
               {isDeleting && <Loader2 className="animate-spin" size={16} />}
               Server löschen

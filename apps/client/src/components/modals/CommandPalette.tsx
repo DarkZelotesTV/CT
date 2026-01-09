@@ -289,7 +289,7 @@ export const CommandPalette = ({
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyNavigation}
           placeholder="Search servers, channels, members, commands..."
-          className="flex-1 bg-transparent outline-none text-white placeholder:text-[color:var(--color-text-muted)]"
+          className="flex-1 bg-transparent outline-none text-text placeholder:text-[color:var(--color-text-muted)]"
           aria-label="Command palette search"
         />
         <div className="text-xs text-[color:var(--color-text-muted)] bg-[color:var(--color-surface-hover)] rounded-md px-2 py-1 border border-[color:var(--color-border)]" aria-hidden="true">
@@ -319,7 +319,9 @@ export const CommandPalette = ({
                   }}
                   className={classNames(
                     'px-4 py-3 cursor-pointer flex items-center gap-3 transition-colors',
-                    isActive ? 'bg-[color:var(--color-surface-hover)]/80 text-white' : 'hover:bg-[color:var(--color-surface-hover)] text-[color:var(--color-text)]'
+                    isActive
+                      ? 'bg-[color:var(--color-surface-hover)]/80 text-text'
+                      : 'hover:bg-[color:var(--color-surface-hover)] text-[color:var(--color-text)]'
                   )}
                   onMouseEnter={() => setActiveIndex(index)}
                   onClick={() => selectItem(item)}

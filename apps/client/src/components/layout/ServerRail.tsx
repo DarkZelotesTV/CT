@@ -455,8 +455,8 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                 />
 
                 {unread > 0 && (
-                  <div className="absolute -top-1 -right-1 bg-rose-500 text-[10px] leading-none text-white rounded-full px-1.5 py-0.5 flex items-center gap-1 shadow-lg">
-                    <Icon icon={Bell} size="sm" className="text-white" hoverTone="none" />
+                  <div className="absolute -top-1 -right-1 bg-rose-500 text-[10px] leading-none text-[color:var(--color-on-accent)] rounded-full px-1.5 py-0.5 flex items-center gap-1 shadow-lg">
+                    <Icon icon={Bell} size="sm" className="text-[color:var(--color-on-accent)]" hoverTone="none" />
                     <span className="font-semibold">{unread > 99 ? '99+' : unread}</span>
                   </div>
                 )}
@@ -562,7 +562,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                   type="button"
                   size="sm"
                   variant="ghost"
-                  className="w-full justify-start rounded-[var(--radius-2)] text-sm text-white hover:bg-[color:var(--color-surface-hover)]"
+                  className="w-full justify-start rounded-[var(--radius-2)] text-sm text-text hover:bg-[color:var(--color-surface-hover)]"
                   onClick={() => {
                     setShowAddMenu(false);
                     onCreateServer(); // Ruft jetzt die Prop auf
@@ -574,7 +574,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                   type="button"
                   size="sm"
                   variant="ghost"
-                  className="w-full justify-start rounded-[var(--radius-2)] text-sm text-white hover:bg-[color:var(--color-surface-hover)]"
+                  className="w-full justify-start rounded-[var(--radius-2)] text-sm text-text hover:bg-[color:var(--color-surface-hover)]"
                   onClick={() => {
                     setShowAddMenu(false);
                     onJoinServer(); // Ruft jetzt die Prop auf
@@ -597,7 +597,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
             tabIndex={-1}
             data-server-menu
             aria-label={t('serverRail.contextMenuAria') ?? 'Server Menü'}
-            className="pointer-events-auto absolute min-w-[180px] bg-[color:var(--color-surface)] border border-[color:var(--color-border)] rounded-[var(--radius-3)] shadow-2xl p-2 text-sm text-white"
+            className="pointer-events-auto absolute min-w-[180px] bg-[color:var(--color-surface)] border border-[color:var(--color-border)] rounded-[var(--radius-3)] shadow-2xl p-2 text-sm text-text"
             style={{ left: contextMenu.x, top: contextMenu.y }}
           >
             <Button

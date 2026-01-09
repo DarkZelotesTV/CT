@@ -168,7 +168,7 @@ export const FriendListStage = ({ onBackToHome }: FriendListStageProps) => {
            <button onClick={() => setActiveTab('blocked')} className={`hover:bg-surface-3 px-2 py-1 rounded text-sm font-medium ${activeTab === 'blocked' ? 'text-text bg-surface-3' : 'text-[color:var(--color-text-muted)]'}`}>Blockiert</button>
 
            <div className="ml-auto relative group">
-             <button className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-sm font-medium flex items-center gap-1 transition-colors">
+             <button className="bg-green-600 hover:bg-green-700 text-[color:var(--color-on-accent)] px-2 py-1 rounded text-sm font-medium flex items-center gap-1 transition-colors">
                <UserPlus size={16} /> Freund hinzufügen
              </button>
              {/* Kleines Popover zum Adden */}
@@ -256,11 +256,11 @@ export const FriendListStage = ({ onBackToHome }: FriendListStageProps) => {
                       <div className="flex items-center gap-2 opacity-80 group-hover:opacity-100 bg-surface-3 p-1 rounded transition-opacity">
                          {request.direction === 'incoming' && (
                            <>
-                             <button onClick={() => handleAccept(request.id)} className="p-2 bg-green-700 rounded-full hover:text-white text-[color:var(--color-text)]" title="Annehmen"><Check size={18} /></button>
+                             <button onClick={() => handleAccept(request.id)} className="p-2 bg-green-700 rounded-full hover:text-[color:var(--color-on-accent)] text-[color:var(--color-text)]" title="Annehmen"><Check size={18} /></button>
                              <button onClick={() => handleDecline(request.id)} className="p-2 bg-surface-2 rounded-full hover:text-text text-[color:var(--color-text-muted)]" title="Ablehnen"><X size={18} /></button>
                            </>
                          )}
-                         <button onClick={() => handleBlock(request.id)} className="p-2 bg-red-900/70 rounded-full hover:text-white text-[color:var(--color-text)]" title="Blockieren"><Ban size={18} /></button>
+                         <button onClick={() => handleBlock(request.id)} className="p-2 bg-red-900/70 rounded-full hover:text-[color:var(--color-on-accent)] text-[color:var(--color-text)]" title="Blockieren"><Ban size={18} /></button>
                       </div>
                    </div>
                ))}
