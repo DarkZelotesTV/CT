@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet'; // <--- WICHTIG: Import hinzugefügt
 import { createServer as createHttpServer } from 'http';
 import { createServer as createHttpsServer } from 'https';
+import type { ServerOptions as HttpsServerOptions } from 'https';
 import { Server } from 'socket.io';
 import { sequelize } from './config/database';
 import path from 'path';
@@ -62,6 +63,12 @@ const TLS_KEY_PATH = process.env.TLS_KEY_PATH || process.env.HTTPS_KEY_PATH;
 const TLS_CA_PATH = process.env.TLS_CA_PATH;
 const TLS_PASSPHRASE = process.env.TLS_PASSPHRASE;
 const TLS_DHPARAM_PATH = process.env.TLS_DHPARAM_PATH;
+const TLS_CIPHERS = process.env.TLS_CIPHERS;
+const TLS_MIN_VERSION = process.env.TLS_MIN_VERSION || 'TLSv1.2';
+const tlsHstsMaxAge = (() => {
+  const configuredMaxAge = Number.parseInt(process.env.TLS_HSTS_MAX_AGE || '15552000', 10);
+  return Number.isFinite(configuredMaxAge) ? configuredMaxAge : 15552000;
+})();
 const configuredCorsOrigins = (process.env.CORS_ALLOWED_ORIGINS || process.env.ALLOWED_ORIGINS || '')
   .split(',')
   .map((origin) => origin.trim())
@@ -181,17 +188,20 @@ const loadTlsCredentials = (): TlsCredentials | null => {
 
 const app = express();
 const tlsCredentials = loadTlsCredentials();
-const httpServer = tlsCredentials
-  ? createHttpsServer(
-    {
-      key: tlsCredentials.key,
-      cert: tlsCredentials.cert,
-      ca: tlsCredentials.ca,
-      dhparam: tlsCredentials.dhparam,
-      passphrase: tlsCredentials.passphrase,
-    },
-    app,
-  )
+const httpsServerOptions: HttpsServerOptions | null = tlsCredentials
+  ? {
+    key: tlsCredentials.key,
+    cert: tlsCredentials.cert,
+    ca: tlsCredentials.ca,
+    passphrase: tlsCredentials.passphrase,
+    minVersion: TLS_MIN_VERSION,
+    honorCipherOrder: true,
+    ...(tlsCredentials.dhparam ? { dhparam: tlsCredentials.dhparam } : {}),
+    ...(TLS_CIPHERS ? { ciphers: TLS_CIPHERS } : {}),
+  }
+  : null;
+const httpServer = httpsServerOptions
+  ? createHttpsServer(httpsServerOptions, app)
   : createHttpServer(app);
 const serverProtocol = tlsCredentials ? 'https' : 'http';
 const websocketProtocol = tlsCredentials ? 'wss' : 'ws';
@@ -393,6 +403,12 @@ app.use(
     crossOriginEmbedderPolicy: false,
     // Erlaubt Laden von Ressourcen über Origins hinweg (hilfreich im Dev-Mode)
     crossOriginResourcePolicy: { policy: "cross-origin" },
+    hsts: tlsCredentials
+      ? {
+        maxAge: tlsHstsMaxAge,
+        includeSubDomains: true,
+      }
+      : false,
   })
 );
 
