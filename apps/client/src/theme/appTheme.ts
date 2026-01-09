@@ -144,6 +144,20 @@ const hexToRgba = (hex: string, alpha: number) => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
+const hexToRgbValues = (hex: string) => {
+  if (!hex.startsWith('#') || (hex.length !== 7 && hex.length !== 4)) return null;
+
+  const normalized = hex.length === 4
+    ? `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}`
+    : hex;
+
+  const r = parseInt(normalized.slice(1, 3), 16);
+  const g = parseInt(normalized.slice(3, 5), 16);
+  const b = parseInt(normalized.slice(5, 7), 16);
+
+  return `${r} ${g} ${b}`;
+};
+
 const getAccentMetrics = (accent: string, surface: string, text: string) => {
   const surfaceContrast = contrastRatio(accent, surface);
   const textContrast = contrastRatio(accent, text);
@@ -310,6 +324,9 @@ export const applyAppTheme = (theme: AppTheme) => {
   const derivedSurfaceInfo = `color-mix(in srgb, ${theme.surface} 86%, ${theme.background} 14%)`;
   const derivedSurfaceLog = `color-mix(in srgb, ${theme.surface} 94%, ${theme.background} 6%)`;
   const derivedSurfaceHeader = `color-mix(in srgb, ${theme.surface} 88%, ${theme.background} 12%)`;
+  const orb2Color = theme.mode === 'dark' ? '#60a5fa' : '#2563eb';
+  const orb1Rgb = hexToRgbValues(theme.accent) ?? '16 185 129';
+  const orb2Rgb = hexToRgbValues(orb2Color) ?? '96 165 250';
   const decorationVars =
     theme.mode === 'dark'
       ? {
@@ -317,18 +334,22 @@ export const applyAppTheme = (theme: AppTheme) => {
           '--decor-grid-opacity': '0.04',
           '--decor-grid-color': '#ffffff',
           '--decor-orb-1-color': theme.accent,
-          '--decor-orb-2-color': '#60a5fa',
+          '--decor-orb-2-color': orb2Color,
           '--decor-orb-1-opacity': '0.5',
           '--decor-orb-2-opacity': '0.4',
+          '--decor-orb-1-rgb': orb1Rgb,
+          '--decor-orb-2-rgb': orb2Rgb,
         }
       : {
           '--decor-noise-opacity': '0.035',
           '--decor-grid-opacity': '0.025',
           '--decor-grid-color': '#0f172a',
           '--decor-orb-1-color': theme.accent,
-          '--decor-orb-2-color': '#2563eb',
+          '--decor-orb-2-color': orb2Color,
           '--decor-orb-1-opacity': '0.25',
           '--decor-orb-2-opacity': '0.2',
+          '--decor-orb-1-rgb': orb1Rgb,
+          '--decor-orb-2-rgb': orb2Rgb,
         };
   const entries: Record<string, string> = {
     '--color-background': theme.background,

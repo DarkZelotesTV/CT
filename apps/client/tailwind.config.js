@@ -38,7 +38,7 @@ export default {
         'neon': 'var(--accent-glow)',
       },
       backgroundImage: {
-        'aurora': 'radial-gradient(circle at 50% 0%, rgba(99,102,241,0.15) 0%, transparent 50%), radial-gradient(circle at 0% 0%, rgba(16,185,129,0.1) 0%, transparent 30%)',
+        'aurora': 'radial-gradient(circle at 50% 0%, rgb(var(--decor-orb-1-rgb) / var(--decor-orb-1-opacity)) 0%, transparent 50%), radial-gradient(circle at 0% 0%, rgb(var(--decor-orb-2-rgb) / var(--decor-orb-2-opacity)) 0%, transparent 30%)',
       }
     },
   },
