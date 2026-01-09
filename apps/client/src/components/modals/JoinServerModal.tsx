@@ -52,6 +52,8 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
   const [error, setError] = useState('');
   const [identity, setIdentity] = useState<IdentityFile | null>(() => loadIdentity());
   const [showIdentityModal, setShowIdentityModal] = useState(!identity);
+  const labelClassName = 'text-xs font-semibold uppercase tracking-wide text-[color:var(--color-text-muted)]';
+  const helperClassName = 'text-xs text-[color:var(--color-text-muted)]';
 
   const fingerprint = useMemo(() => (identity ? computeFingerprint(identity) : null), [identity]);
 
@@ -126,14 +128,14 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
         bodyClassName="p-6 pt-0 space-y-4"
         footer={
           <div className="flex justify-between items-center">
-            <Button variant="ghost" size="sm" onClick={onClose} className="text-text hover:underline text-sm font-medium px-4">
+            <Button variant="ghost" size="sm" onClick={onClose} className="font-medium">
               Abbrechen
             </Button>
             <Button
               onClick={() => handleSubmit()}
               disabled={loading || !serverInput || !identity}
               variant="primary"
-              className="px-6 py-2 font-bold disabled:opacity-50 flex items-center gap-2 transition-all active:scale-[0.98]"
+              className="font-semibold disabled:opacity-50 flex items-center gap-2 transition-all active:scale-[0.98]"
             >
               {loading && <Icon icon={Loader2} size="md" tone="default" className="text-inherit animate-spin" />}
               Beitreten
@@ -151,19 +153,20 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
           {error && <div className="text-red-400 text-sm text-center bg-red-500/10 p-2 rounded">{error}</div>}
 
           <div className="space-y-1">
-            <label className="text-xs font-bold text-[color:var(--color-text-muted)] uppercase mb-1 block">Invite / Server ID</label>
+            <label className={`mb-1 block ${labelClassName}`}>Invite / Server ID</label>
             <Input
               autoFocus
               type="text"
               value={serverInput}
               onChange={(e) => setServerInput(e.target.value)}
               placeholder="z.B. 1 oder https://example.com/invite/1"
-              className="bg-[color:var(--color-surface)]/60 text-text p-3 placeholder:text-[color:var(--color-text-muted)] font-medium"
+              inputSize="lg"
+              className="font-medium"
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-bold text-[color:var(--color-text-muted)] uppercase mb-1 block flex items-center gap-2">
+            <label className={`mb-1 block flex items-center gap-2 ${labelClassName}`}>
               <Icon icon={Globe} size="sm" tone="muted" className="text-inherit" />
               Instanz URL (optional)
             </label>
@@ -172,9 +175,10 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
               value={instanceUrl}
               onChange={(e) => setInstanceUrlState(e.target.value)}
               placeholder="z.B. https://mein-server.tld"
-              className="bg-[color:var(--color-surface)]/60 text-text p-3 placeholder:text-[color:var(--color-text-muted)] font-medium"
+              inputSize="lg"
+              className="font-medium"
             />
-            <p className="text-[10px] text-[color:var(--color-text-muted)] mt-1">Leer lassen, um die aktuelle Instanz zu nutzen.</p>
+            <p className={`${helperClassName} mt-1`}>Leer lassen, um die aktuelle Instanz zu nutzen.</p>
           </div>
 
           <div className="rounded-[var(--radius-4)] border border-[color:var(--color-border)] bg-white/[0.02] p-4 flex items-start gap-3">
@@ -184,9 +188,9 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
             <div className="flex-1">
               <div className="text-sm font-medium text-text">Clover Identity</div>
               {identity && fingerprint ? (
-                <p className="text-xs text-[color:var(--color-text-muted)] mt-1 break-all">Fingerprint: {formatFingerprint(fingerprint)}</p>
+                <p className={`${helperClassName} mt-1 break-all`}>Fingerprint: {formatFingerprint(fingerprint)}</p>
               ) : (
-                <p className="text-xs text-yellow-300 mt-1">Du benötigst eine Identity, um einem Server beizutreten.</p>
+                <p className={`${helperClassName} mt-1`}>Du benötigst eine Identity, um einem Server beizutreten.</p>
               )}
               <Button
                 type="button"

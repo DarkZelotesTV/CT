@@ -31,6 +31,8 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const labelClassName = 'text-xs font-semibold uppercase tracking-wide text-[color:var(--color-text-muted)]';
+  const helperClassName = 'text-xs text-[color:var(--color-text-muted)]';
 
   const screenshotLabel = useMemo(
     () => screenshotFile?.name ?? t('feedbackModal.screenshotPlaceholder'),
@@ -93,7 +95,8 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
           <Button
             type="submit"
             form="feedback-form"
-            className="bg-cyan-600 text-[color:var(--color-on-accent)] text-sm hover:bg-cyan-500"
+            variant="primary"
+            size="sm"
             disabled={submitting || message.trim().length === 0}
           >
             {submitting ? (
@@ -108,12 +111,13 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
     >
       <form id="feedback-form" className="space-y-4" onSubmit={handleSubmit}>
         <div className="space-y-2">
-          <label htmlFor="feedback-category" className="text-sm font-semibold text-text">
+          <label htmlFor="feedback-category" className={labelClassName}>
             {t('feedbackModal.categoryLabel')}
           </label>
           <Select
             id="feedback-category"
-            className="bg-[color:var(--color-surface)]/60 text-sm"
+            selectSize="md"
+            className="bg-[color:var(--color-surface)]/60"
             value={category}
             onChange={(event) => setCategory(event.target.value as FeedbackCategory)}
           >
@@ -126,7 +130,7 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="feedback-message" className="text-sm font-semibold text-text">
+          <label htmlFor="feedback-message" className={labelClassName}>
             {t('feedbackModal.messageLabel')}
           </label>
           <textarea
@@ -138,11 +142,11 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
             onChange={(event) => setMessage(event.target.value)}
             required
           />
-          <p className="text-xs text-[color:var(--color-text-muted)]">{t('feedbackModal.messageHelp')}</p>
+          <p className={helperClassName}>{t('feedbackModal.messageHelp')}</p>
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-text" htmlFor="feedback-screenshot">
+          <label className={labelClassName} htmlFor="feedback-screenshot">
             {t('feedbackModal.screenshotLabel')}
           </label>
           <div className="flex items-center gap-2">
@@ -165,14 +169,14 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="text-xs text-[color:var(--color-text-muted)] underline hover:text-text"
+                className="text-xs underline"
                 onClick={() => setScreenshotFile(null)}
               >
                 {t('feedbackModal.removeScreenshot')}
               </Button>
             )}
           </div>
-          <p className="text-xs text-[color:var(--color-text-muted)]">{t('feedbackModal.screenshotHelp')}</p>
+          <p className={helperClassName}>{t('feedbackModal.screenshotHelp')}</p>
         </div>
       </form>
     </ModalLayout>
