@@ -400,6 +400,12 @@ export const UserSettingsModal = ({
     if (notificationPermission === 'unsupported') return 'Nicht unterstützt';
     return 'Unbestätigt';
   }, [notificationPermission]);
+  const permissionVariant = useMemo(() => {
+    if (notificationPermission === 'granted') return 'success';
+    if (notificationPermission === 'denied') return 'danger';
+    if (notificationPermission === 'unsupported') return 'warning';
+    return 'info';
+  }, [notificationPermission]);
 
 
   const isDirty = useMemo(() => {
@@ -1088,9 +1094,9 @@ export const UserSettingsModal = ({
 
                   <div className="text-xs text-[color:var(--color-text-muted)] bg-white/[0.04] border border-[var(--color-border)] rounded-[var(--radius-3)] p-3 flex items-center gap-2">
                     <Icon icon={Bell} size="sm" tone="muted" className="text-inherit" />
-                    <div>
+                      <div>
                       <div className="font-semibold flex items-center gap-2">
-                        Status: <Badge>{permissionLabel}</Badge>
+                        Status: <Badge variant={permissionVariant}>{permissionLabel}</Badge>
                       </div>
                       <div className="text-[11px] text-[color:var(--color-text-muted)]">
                         Browser-Entscheidungen werden gespeichert, damit CT weiß, ob Benachrichtigungen ausgeliefert werden dürfen.
