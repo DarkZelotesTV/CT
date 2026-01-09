@@ -3,7 +3,7 @@ import { Shield, Crown, UserCheck, UserX } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../../api/http';
 import { useSocket } from '../../context/SocketContext';
-import { ErrorCard, Input, RoleTag, Select, Skeleton, Spinner } from '../ui';
+import { ErrorCard, Icon, Input, RoleTag, Select, Skeleton, Spinner } from '../ui';
 import { Button } from '../ui/Button';
 import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
@@ -587,14 +587,15 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
           <div className="m-roles">
             {roleBadges.length === 0 && (
               <RoleTag variant="neutral">
-                <UserX size={12} /> {t('memberSidebar.noRoles', { defaultValue: 'Keine Rollen' })}
+                <Icon icon={UserX} size="sm" tone="default" className="text-inherit" />{' '}
+                {t('memberSidebar.noRoles', { defaultValue: 'Keine Rollen' })}
               </RoleTag>
             )}
             {roleBadges.map((badge) => {
-              const Icon = badge.icon;
+              const BadgeIcon = badge.icon;
               return (
                 <RoleTag key={`${m.userId}-${badge.label}`} variant={badge.variant}>
-                  <Icon size={11} /> {badge.label}
+                  <Icon icon={BadgeIcon} size="sm" tone="default" className="text-inherit" /> {badge.label}
                 </RoleTag>
               );
             })}

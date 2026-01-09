@@ -6,7 +6,7 @@ import { UserSettingsModal } from '../modals/UserSettingsModal';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
 import { useVoice } from '../../features/voice';
 import { storage } from '../../shared/config/storage';
-import { StatusBadge, type StatusTone } from '../ui';
+import { Icon, StatusBadge, type StatusTone } from '../ui';
 import { IconButton } from '../ui/Button';
 
 export const UserBottomBar = ({ onOpenUserSettings }: { onOpenUserSettings?: () => void }) => {
@@ -81,7 +81,11 @@ export const UserBottomBar = ({ onOpenUserSettings }: { onOpenUserSettings?: () 
               aria-label={micMuted ? t('userBottomBar.unmuteMic') : t('userBottomBar.muteMic')}
               title={micMuted ? t('userBottomBar.unmuteMic') : t('userBottomBar.muteMic')}
             >
-              {micMuted ? <MicOff size={16} /> : <Mic size={16} />}
+              {micMuted ? (
+                <Icon icon={MicOff} size="md" tone="default" className="text-inherit" />
+              ) : (
+                <Icon icon={Mic} size="md" tone="default" className="text-inherit" />
+              )}
             </IconButton>
 
             <IconButton
@@ -95,7 +99,11 @@ export const UserBottomBar = ({ onOpenUserSettings }: { onOpenUserSettings?: () 
               aria-label={muted ? t('userBottomBar.unmuteAll') : t('userBottomBar.muteAll')}
               title={muted ? t('userBottomBar.unmuteAll') : t('userBottomBar.muteAll')}
             >
-              {muted ? <HeadphoneOff size={16} /> : <Headphones size={16} />}
+              {muted ? (
+                <Icon icon={HeadphoneOff} size="md" tone="default" className="text-inherit" />
+              ) : (
+                <Icon icon={Headphones} size="md" tone="default" className="text-inherit" />
+              )}
             </IconButton>
 
             <IconButton
@@ -104,7 +112,7 @@ export const UserBottomBar = ({ onOpenUserSettings }: { onOpenUserSettings?: () 
               aria-label={t('userBottomBar.settings')}
               title={t('userBottomBar.settings')}
             >
-              <Settings size={16} />
+              <Icon icon={Settings} size="md" tone="default" className="text-inherit" />
             </IconButton>
           </div>
         </div>

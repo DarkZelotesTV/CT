@@ -3,6 +3,7 @@ import { Shield, Plus, Volume2, Users, Check, ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { storage } from '../../shared/config/storage';
 import { ModalLayout } from './ModalLayout';
+import { Icon as UiIcon } from '../ui';
 import { Button } from '../ui/Button';
 
 interface Props {
@@ -73,7 +74,7 @@ export const OnboardingModal = ({ onClose, initialStep = 0, onStepAction }: Prop
   if (!steps.length) return null;
 
   const current = steps[Math.min(step, steps.length - 1)]!;
-  const Icon = current.icon;
+  const CurrentIcon = current.icon;
   const welcomeLabel = user?.username ? t('onboarding.welcomeUser', { username: user.username }) : t('onboarding.welcome');
   const progress = Math.round(((step + 1) / steps.length) * 100);
 
@@ -109,7 +110,7 @@ export const OnboardingModal = ({ onClose, initialStep = 0, onStepAction }: Prop
               <div className="flex flex-col items-end gap-2">
                 <div className="flex items-center gap-2 rounded-full border border-[color:var(--color-border)] bg-white/[0.04] px-3 py-1 text-xs text-text-muted">
                   <div className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-3)] bg-gradient-to-br from-white/10 to-white/0 border border-[color:var(--color-border)] text-[color:var(--color-accent)]">
-                    <Icon size={18} />
+                    <UiIcon icon={CurrentIcon} size="lg" tone="accent" className="text-inherit" />
                   </div>
                   <span className="font-semibold text-text">{progress}%</span>
                 </div>
@@ -177,7 +178,7 @@ export const OnboardingModal = ({ onClose, initialStep = 0, onStepAction }: Prop
                       : 'border-[color:var(--color-border)] bg-[color:var(--color-surface-hover)] text-text-muted'
                   }`}
                 >
-                  <StatusIcon size={22} />
+                  <UiIcon icon={StatusIcon} size="lg" tone={isDone ? 'accent' : 'muted'} className="text-inherit" />
                 </div>
                 <div className="flex-1 space-y-1.5">
                   <div className="flex flex-wrap items-center gap-3">
@@ -197,8 +198,10 @@ export const OnboardingModal = ({ onClose, initialStep = 0, onStepAction }: Prop
                   <div className="text-sm text-text leading-relaxed">{t(item.bodyKey)}</div>
                   <div className="flex items-center gap-2 text-xs text-text-muted">
                     <span>{t('onboarding.progressLabel', { index: i + 1, total: steps.length })}</span>
-                    <ArrowRight
-                      size={14}
+                    <UiIcon
+                      icon={ArrowRight}
+                      size="sm"
+                      tone={isActive ? 'accent' : 'muted'}
                       className={`transition-transform ${
                         isActive ? 'translate-x-1 text-[color:var(--color-accent)]' : 'group-hover:translate-x-1 text-text-muted'
                       }`}
@@ -249,7 +252,7 @@ export const OnboardingModal = ({ onClose, initialStep = 0, onStepAction }: Prop
           <div className="flex items-center justify-between text-sm text-text-muted">
             <span className="font-semibold">{t('onboarding.progressLabel', { index: step + 1, total: steps.length })}</span>
             <div className="flex items-center gap-2 text-text-muted">
-              <Icon size={16} />
+              <UiIcon icon={CurrentIcon} size="md" tone="muted" className="text-inherit" />
               <span>{t(current.titleKey)}</span>
             </div>
           </div>

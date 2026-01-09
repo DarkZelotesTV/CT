@@ -1,7 +1,7 @@
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
-import { ChevronDown, ChevronLeft, ChevronRight, Users, Menu, X } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Users, Menu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { ServerRail } from './ServerRail';
@@ -34,7 +34,7 @@ import { useDesktopNotifications } from '../../hooks/useDesktopNotifications';
 import { useLogStore } from '../../store/useLogStore';
 import { useSocket } from '../../context/SocketContext';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
-import { Card } from '../ui';
+import { Card, Icon } from '../ui';
 import { Button, IconButton } from '../ui/Button';
 import { Input } from '../ui/Input';
 
@@ -1074,7 +1074,7 @@ export const MainLayout = () => {
                   onClick={() => setShowMobileNav(true)}
                   ref={mobileNavButtonRef}
                 >
-                  <Menu size={18} />
+                  <Icon icon={Menu} size="md" tone="default" className="text-inherit" />
                 </IconButton>
               )}
             {selectedServerId && (
@@ -1127,7 +1127,12 @@ export const MainLayout = () => {
                     onClick={() => setShowLogPanel(!showLogPanel)}
                     title={showLogPanel ? t('layout.hideLog') : t('layout.showLog')}
                  >
-                    <ChevronDown size={14} className={showLogPanel ? "" : "rotate-180"} />
+                    <Icon
+                      icon={ChevronDown}
+                      size="sm"
+                      tone="default"
+                      className={classNames('text-inherit', showLogPanel ? '' : 'rotate-180')}
+                    />
                  </Button>
                 {isMobileLayout && (
                   <Button
@@ -1138,7 +1143,7 @@ export const MainLayout = () => {
                     aria-controls="member-drawer"
                     title={showRightSidebar ? t('layout.hideMembers') : t('layout.showMembers')}
                   >
-                    <Users size={14} />
+                    <Icon icon={Users} size="sm" tone="default" className="text-inherit" />
                     <span className="mobile-info-label">{t('layout.showMembers', { defaultValue: 'Mitglieder' })}</span>
                   </Button>
                 )}
@@ -1185,7 +1190,7 @@ export const MainLayout = () => {
                 onClick={() => setShowLeftSidebar((prev) => !prev)}
                 aria-label={showLeftSidebar ? t('layout.hideChannels', { defaultValue: 'Kanäle ausblenden' }) : t('layout.showChannels', { defaultValue: 'Kanäle einblenden' })}
               >
-                <ChevronLeft size={16} />
+                <Icon icon={ChevronLeft} size="md" tone="default" className="text-inherit" />
               </IconButton>
               {selectedServerId && (
                 <IconButton
@@ -1194,7 +1199,7 @@ export const MainLayout = () => {
                   onClick={() => setShowRightSidebar((prev) => !prev)}
                   aria-label={showRightSidebar ? t('layout.hideMembers', { defaultValue: 'Mitglieder ausblenden' }) : t('layout.showMembers', { defaultValue: 'Mitglieder einblenden' })}
                 >
-                  <ChevronRight size={16} />
+                  <Icon icon={ChevronRight} size="md" tone="default" className="text-inherit" />
                 </IconButton>
               )}
             </>

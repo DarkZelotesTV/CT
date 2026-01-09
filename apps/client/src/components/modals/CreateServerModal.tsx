@@ -4,6 +4,7 @@ import { apiFetch } from '../../api/http';
 import { ModalLayout } from './ModalLayout';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { Icon } from '../ui';
 
 interface CreateServerModalProps {
   onClose: () => void;
@@ -89,7 +90,12 @@ export const CreateServerModal = ({ onClose, onCreated }: CreateServerModalProps
               <img src={iconPreview} alt="Server Icon" className="w-full h-full object-cover" />
             ) : (
               <>
-                <Upload size={24} className="group-hover:scale-110 transition-transform mb-1" />
+                <Icon
+                  icon={Upload}
+                  size="lg"
+                  tone="default"
+                  className="text-inherit group-hover:scale-110 transition-transform mb-1"
+                />
                 <span className="text-[10px] font-bold uppercase tracking-wider">Icon</span>
               </>
             )}
@@ -108,14 +114,14 @@ export const CreateServerModal = ({ onClose, onCreated }: CreateServerModalProps
                 }}
                 className="inline-flex items-center gap-1 text-red-300 hover:text-red-200"
               >
-                <Trash2 size={14} />
+                <Icon icon={Trash2} size="sm" tone="default" className="text-inherit" />
                 Entfernen
               </Button>
             )}
           </div>
           {iconError && (
             <div className="text-red-400 text-sm bg-red-500/10 border border-red-500/30 rounded-[var(--radius-3)] px-3 py-2 flex items-center gap-2">
-              <ImageIcon size={14} />
+              <Icon icon={ImageIcon} size="sm" tone="default" className="text-inherit" />
               <span>{iconError}</span>
             </div>
           )}
@@ -139,7 +145,7 @@ export const CreateServerModal = ({ onClose, onCreated }: CreateServerModalProps
           variant="primary"
           className="w-full py-3 font-bold shadow-lg shadow-[0_12px_24px_color-mix(in_srgb,var(--color-accent)_25%,transparent)] disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? <Loader2 className="animate-spin" size={18} /> : 'Server erstellen'}
+          {loading ? <Icon icon={Loader2} size="lg" tone="default" className="text-inherit animate-spin" /> : 'Server erstellen'}
         </Button>
       </form>
     </ModalLayout>

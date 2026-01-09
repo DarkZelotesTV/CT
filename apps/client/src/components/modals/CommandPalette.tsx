@@ -5,6 +5,7 @@ import classNames from 'classnames';
 import { apiFetch } from '../../api/http';
 import type { ApiFetchInit } from '../../api/http';
 import { ModalLayout } from './ModalLayout';
+import { Icon } from '../ui';
 import { Input } from '../ui/Input';
 
 interface PaletteServer {
@@ -283,7 +284,7 @@ export const CommandPalette = ({
       bodyClassName="p-0"
     >
       <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-surface-alt)]">
-        <Search size={18} className="text-[color:var(--color-text-muted)]" aria-hidden="true" />
+        <Icon icon={Search} size="lg" tone="muted" aria-hidden="true" />
         <Input
           ref={inputRef}
           value={query}
@@ -328,10 +329,14 @@ export const CommandPalette = ({
                   onClick={() => selectItem(item)}
                 >
                   <span className="w-8 h-8 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] flex items-center justify-center text-[color:var(--color-text)]">
-                    {item.type === 'command' && <CommandIcon size={16} />}
-                    {item.type === 'server' && <Server size={16} />}
-                    {item.type === 'channel' && (item.badge === 'Voice' ? <Volume2 size={16} /> : <Hash size={16} />)}
-                    {item.type === 'member' && <Users size={16} />}
+                    {item.type === 'command' && <Icon icon={CommandIcon} size="md" tone="default" className="text-inherit" />}
+                    {item.type === 'server' && <Icon icon={Server} size="md" tone="default" className="text-inherit" />}
+                    {item.type === 'channel' && (item.badge === 'Voice' ? (
+                      <Icon icon={Volume2} size="md" tone="default" className="text-inherit" />
+                    ) : (
+                      <Icon icon={Hash} size="md" tone="default" className="text-inherit" />
+                    ))}
+                    {item.type === 'member' && <Icon icon={Users} size="md" tone="default" className="text-inherit" />}
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold truncate">{item.label}</div>
