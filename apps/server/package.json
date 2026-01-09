@@ -12,7 +12,10 @@
     "db:migrate": "sequelize-cli db:migrate",
     "db:migrate:undo": "sequelize-cli db:migrate:undo",
     "db:migrate:undo:all": "sequelize-cli db:migrate:undo:all",
-    "db:migrate:status": "sequelize-cli db:migrate:status"
+    "db:migrate:status": "sequelize-cli db:migrate:status",
+    "tls:dev": "bash ./scripts/tls/generate-dev-cert.sh",
+    "tls:dhparam": "bash ./scripts/tls/generate-dhparam.sh",
+    "tls:check": "bash ./scripts/tls/check-cert.sh"
   },
   "dependencies": {
     "@discord-clone/shared": "*",
