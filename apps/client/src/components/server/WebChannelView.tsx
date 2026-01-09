@@ -10,6 +10,7 @@ import { useChatStore } from '../../store/useChatStore';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
+import { EmptyState, Icon } from '../ui';
 
 interface WebChannelViewProps {
   channelId: number;
@@ -105,9 +106,6 @@ const templateOptions: { key: string; label: string; description: string; layout
     content: 'https://codenames.game/'
   }
 ];
-
-const placeholderHtml =
-  '<div class="text-center text-[color:var(--color-text-muted)] mt-10"><h1>Willkommen</h1><p>Diese Seite ist noch leer.</p></div>';
 
 // --- Codenames Stage Component ---
 const CodenamesStage = ({ initialUrl, channelId, isEditing }: { initialUrl: string, channelId: number, isEditing: boolean }) => {
@@ -245,7 +243,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
       .filter(Boolean)
       .join(' ');
     const sanitizedBody = sanitizeContent(body || '');
-    const safeBody = sanitizedBody?.trim() ? sanitizedBody : placeholderHtml;
+    const safeBody = sanitizedBody?.trim() ? sanitizedBody : '';
     const layoutWrapperPattern = /<[^>]*data-layout=/;
 
     if (layoutWrapperPattern.test(sanitizedBody)) {
@@ -294,6 +292,8 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
     () => buildDocument(editValue, layoutMode, layoutExtras),
     [editValue, layoutMode, layoutExtras]
   );
+  const isContentEmpty = useMemo(() => !contentBody?.trim(), [contentBody]);
+  const isPreviewEmpty = useMemo(() => !editValue?.trim(), [editValue]);
 
   const quillModules = useMemo(
     () => ({
@@ -742,14 +742,34 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                              <p>Vorschau der Spiel-Ansicht</p>
                           </div>
                       </div>
+                  ) : isPreviewEmpty ? (
+                    <div className="flex items-center justify-center bg-surface-3/40 border border-border rounded-lg p-4">
+                      <EmptyState
+                        icon={<Icon icon={Globe} size="lg" tone="muted" />}
+                        title="Vorschau"
+                        body="Hier erscheint eine Live-Vorschau, sobald Inhalte hinzugefügt wurden."
+                        variant="surface"
+                        className="max-w-md w-full"
+                      />
+                    </div>
                   ) : (
                     <div className="prose prose-invert max-w-none bg-surface-3/40 border border-border rounded-lg p-4">
-                        <div dangerouslySetInnerHTML={{ __html: previewContent }} />
+                      <div dangerouslySetInnerHTML={{ __html: previewContent }} />
                     </div>
                   )}
                 </div>
               </div>
             </div>
+            ) : isContentEmpty && layoutMode !== 'codenames' ? (
+              <div className="flex items-center justify-center p-8">
+                <EmptyState
+                  icon={<Icon icon={Globe} size="lg" tone="muted" />}
+                  title="Willkommen"
+                  body="Diese Seite ist noch leer. Füge Inhalte hinzu, um deinen Web-Channel zu gestalten."
+                  variant="surface"
+                  className="max-w-lg w-full"
+                />
+              </div>
             ) : (
               /* HTML RENDERER (Fallback if logic above misses) */
               <div className="relative h-full">
