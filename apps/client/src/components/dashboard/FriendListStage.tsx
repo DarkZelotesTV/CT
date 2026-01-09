@@ -3,6 +3,7 @@ import { ArrowLeft, MessageSquare, MoreVertical, Search, UserPlus, Check, X, Loa
 import { apiFetch } from '../../api/http';
 import { useSocket } from '../../context/SocketContext';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
+import { Button, StatusBadge } from '../ui';
 
 interface FriendListStageProps {
   onBackToHome?: () => void;
@@ -139,7 +140,12 @@ export const FriendListStage = ({ onBackToHome }: FriendListStageProps) => {
   const filteredBlocked = blockedRelations.filter(rel => matchesSearch(rel.user?.username ?? ''));
 
   const renderStatusBadge = (status: 'online' | 'offline') => (
-    <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 border-[3px] border-border rounded-full ${status === 'online' ? 'bg-green-500' : 'bg-[color:var(--color-surface-hover)]'}`}></div>
+    <StatusBadge
+      variant="dot"
+      size="md"
+      status={status}
+      className="absolute -right-0.5 -bottom-0.5"
+    />
   );
 
   return (
@@ -168,14 +174,14 @@ export const FriendListStage = ({ onBackToHome }: FriendListStageProps) => {
            <button onClick={() => setActiveTab('blocked')} className={`hover:bg-surface-3 px-2 py-1 rounded text-sm font-medium ${activeTab === 'blocked' ? 'text-text bg-surface-3' : 'text-[color:var(--color-text-muted)]'}`}>Blockiert</button>
 
            <div className="ml-auto relative group">
-             <button className="bg-green-600 hover:bg-green-700 text-[color:var(--color-on-accent)] px-2 py-1 rounded text-sm font-medium flex items-center gap-1 transition-colors">
+             <Button variant="success" size="sm">
                <UserPlus size={16} /> Freund hinzufügen
-             </button>
+             </Button>
              {/* Kleines Popover zum Adden */}
              <div className="absolute right-0 top-full mt-2 w-64 bg-surface-2 border border-border p-3 rounded-lg shadow-xl invisible group-focus-within:visible opacity-0 group-focus-within:opacity-100 transition-all z-50">
                 <form onSubmit={handleAddFriend}>
                   <input
-                    className="w-full bg-surface/60 border border-border rounded p-2 text-text text-sm outline-none focus:border-green-500"
+                    className="w-full bg-surface/60 border border-border rounded p-2 text-text text-sm outline-none focus:border-[color:var(--color-focus)]"
                     placeholder="Nutzername eingeben..."
                     value={addUsername}
                     onChange={e => setAddUsername(e.target.value)}
@@ -195,7 +201,7 @@ export const FriendListStage = ({ onBackToHome }: FriendListStageProps) => {
                <input
                  type="text"
                  placeholder="Suchen"
-                 className="w-full bg-surface-3 text-text p-2 pl-2 rounded border border-transparent focus:border-blue-500 outline-none transition-colors"
+                 className="w-full bg-surface-3 text-text p-2 pl-2 rounded border border-transparent focus:border-[color:var(--color-focus)] outline-none transition-colors"
                  value={searchTerm}
                  onChange={e => setSearchTerm(e.target.value)}
                />
@@ -256,11 +262,11 @@ export const FriendListStage = ({ onBackToHome }: FriendListStageProps) => {
                       <div className="flex items-center gap-2 opacity-80 group-hover:opacity-100 bg-surface-3 p-1 rounded transition-opacity">
                          {request.direction === 'incoming' && (
                            <>
-                             <button onClick={() => handleAccept(request.id)} className="p-2 bg-green-700 rounded-full hover:text-[color:var(--color-on-accent)] text-[color:var(--color-text)]" title="Annehmen"><Check size={18} /></button>
+                             <button onClick={() => handleAccept(request.id)} className="p-2 bg-[color:var(--color-text-success)] rounded-full hover:text-[color:var(--color-on-accent)] text-[color:var(--color-text)]" title="Annehmen"><Check size={18} /></button>
                              <button onClick={() => handleDecline(request.id)} className="p-2 bg-surface-2 rounded-full hover:text-text text-[color:var(--color-text-muted)]" title="Ablehnen"><X size={18} /></button>
                            </>
                          )}
-                         <button onClick={() => handleBlock(request.id)} className="p-2 bg-red-900/70 rounded-full hover:text-[color:var(--color-on-accent)] text-[color:var(--color-text)]" title="Blockieren"><Ban size={18} /></button>
+                         <button onClick={() => handleBlock(request.id)} className="p-2 bg-[color:var(--color-text-danger)] rounded-full hover:text-[color:var(--color-on-accent)] text-[color:var(--color-text)]" title="Blockieren"><Ban size={18} /></button>
                       </div>
                    </div>
                ))}
