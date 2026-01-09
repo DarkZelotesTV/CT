@@ -84,12 +84,12 @@ const HotkeyInput = ({
           onKeyDown={handleKeyDown}
           readOnly
           placeholder="Press keys"
-          className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
+          className="w-full bg-[color:var(--color-surface)]/70 text-text p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
         />
         {displayValue && (
           <button
             onClick={() => onChange('')}
-            className="px-3 py-2 rounded-[var(--radius-2)] bg-[color:var(--color-surface-hover)] text-[color:var(--color-text)] hover:text-white hover:bg-[color:var(--color-surface-hover)]/80"
+            className="px-3 py-2 rounded-[var(--radius-2)] bg-[color:var(--color-surface-hover)] text-[color:var(--color-text)] hover:text-text hover:bg-[color:var(--color-surface-hover)]/80"
           >
             <X size={16} />
           </button>
@@ -823,7 +823,7 @@ export const UserSettingsModal = ({
                             value={displayName}
                             onChange={(e) => setDisplayName(e.target.value)}
                             placeholder="Dein Name"
-                            className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
+                            className="w-full bg-[color:var(--color-surface)]/70 text-text p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
                           />
                         </div>
                         <div className="space-y-2">
@@ -851,7 +851,7 @@ export const UserSettingsModal = ({
                               <button
                                 onClick={handleAvatarUpload}
                                 disabled={avatarUploading || (!avatarFile && !avatarUrl)}
-                                className="px-4 py-2 rounded-[var(--radius-3)] bg-[var(--color-accent)]/80 hover:bg-[var(--color-accent)] text-sm font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
+                                className="px-4 py-2 rounded-[var(--radius-3)] bg-[var(--color-accent)]/80 hover:bg-[var(--color-accent)] text-sm font-semibold text-[color:var(--color-on-accent)] disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
                               >
                                 {avatarUploading ? <Loader2 className="animate-spin" size={16} /> : <Upload size={16} />}
                                 {avatarUploading ? 'Lade hoch...' : 'Avatar hochladen'}
@@ -909,7 +909,7 @@ export const UserSettingsModal = ({
                           type="text"
                           value={accentColor}
                           onChange={(e) => setAccentColor(e.target.value)}
-                          className="flex-1 bg-[color:var(--color-surface)]/60 text-white p-3 rounded-[var(--radius-3)] border border-[var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
+                          className="flex-1 bg-[color:var(--color-surface)]/60 text-text p-3 rounded-[var(--radius-3)] border border-[var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
                         />
                       </div>
                       {!accentContrastReport.meetsContrast && (
@@ -937,7 +937,7 @@ export const UserSettingsModal = ({
                           value={serverAccentTarget}
                           onChange={(e) => setServerAccentTarget(e.target.value)}
                           placeholder="Server ID"
-                          className="bg-[color:var(--color-surface)]/60 text-white p-3 rounded-[var(--radius-3)] border border-[var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
+                          className="bg-[color:var(--color-surface)]/60 text-text p-3 rounded-[var(--radius-3)] border border-[var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
                         />
                         <input
                           type="color"
@@ -947,7 +947,7 @@ export const UserSettingsModal = ({
                         />
                         <button
                           onClick={handleAddServerAccent}
-                          className="px-3 py-2 rounded-[var(--radius-3)] bg-[var(--color-accent)] text-white font-semibold hover:bg-[var(--color-accent-hover)]"
+                          className="px-3 py-2 rounded-[var(--radius-3)] bg-[var(--color-accent)] text-[color:var(--color-on-accent)] font-semibold hover:bg-[var(--color-accent-hover)]"
                         >
                           Speichern
                         </button>
@@ -1210,7 +1210,7 @@ export const UserSettingsModal = ({
                           <div className="flex items-center justify-between gap-4">
                             <button
                               onClick={() => setMicTestNonce((v) => v + 1)}
-                              className="px-4 py-2 rounded-[var(--radius-3)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white text-sm font-semibold"
+                              className="px-4 py-2 rounded-[var(--radius-3)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-[color:var(--color-on-accent)] text-sm font-semibold"
                             >
                               Schauen wir mal
                             </button>
@@ -1578,7 +1578,7 @@ export const UserSettingsModal = ({
                         value={identityName}
                         onChange={(e) => setIdentityName(e.target.value)}
                         placeholder="z.B. jusbe"
-                        className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
+                        className="w-full bg-[color:var(--color-surface)]/70 text-text p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
                       />
                       <button
                         className="text-sm text-[color:var(--color-accent)] hover:text-[color:var(--color-accent-hover)]"
@@ -1600,13 +1600,13 @@ export const UserSettingsModal = ({
                   {!identity ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <button
-                        className="px-4 py-3 rounded-[var(--radius-3)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] transition text-white font-medium"
+                        className="px-4 py-3 rounded-[var(--radius-3)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] transition text-[color:var(--color-on-accent)] font-medium"
                         onClick={handleCreateIdentity}
                       >
                         Identity erstellen
                       </button>
 
-                      <label className="px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition cursor-pointer text-center text-white font-medium">
+                      <label className="px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition cursor-pointer text-center text-text font-medium">
                         <div className="flex items-center justify-center gap-2">
                           <Upload size={18} />
                           <span>Identity importieren</span>
@@ -1643,21 +1643,21 @@ export const UserSettingsModal = ({
                           value={backupPassphrase}
                           onChange={(e) => setBackupPassphrase(e.target.value)}
                           placeholder="Leer lassen für Klartext-Export"
-                          className="w-full bg-[color:var(--color-surface)]/70 text-white p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
+                          className="w-full bg-[color:var(--color-surface)]/70 text-text p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
                         />
                         <p className="text-[11px] text-[color:var(--color-text-muted)] mt-1">Wenn gesetzt, wird dein Backup AES-GCM verschlüsselt (PBKDF2).</p>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <button
-                          className="px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-white font-medium flex items-center justify-center gap-2"
+                          className="px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-text font-medium flex items-center justify-center gap-2"
                           onClick={handleExportIdentity}
                         >
                           <Download size={18} />
                           Export / Backup
                         </button>
 
-                        <label className="px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition cursor-pointer text-center text-white font-medium">
+                        <label className="px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition cursor-pointer text-center text-text font-medium">
                           <div className="flex items-center justify-center gap-2">
                             <Upload size={18} />
                             <span>Import (ersetzen)</span>
@@ -1704,7 +1704,7 @@ export const UserSettingsModal = ({
                 </button>
                 <button
                   onClick={handleSave}
-                  className="px-4 py-2 rounded-[var(--radius-3)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white flex items-center gap-2"
+                  className="px-4 py-2 rounded-[var(--radius-3)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-[color:var(--color-on-accent)] flex items-center gap-2"
                 >
                   <Save size={16} />
                   Änderungen speichern

@@ -72,7 +72,7 @@ const widgetSnippets: Record<string, string> = {
   <label class="block text-sm font-semibold text-text">Kontakt</label>
   <input class="w-full bg-surface border border-border rounded px-3 py-2 text-text" placeholder="Ihre E-Mail" />
   <textarea class="w-full bg-surface border border-border rounded px-3 py-2 text-text" rows="3" placeholder="Nachricht"></textarea>
-  <button type="submit" class="bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded">Senden</button>
+  <button type="submit" class="bg-accent hover:bg-accent-hover text-[color:var(--color-on-accent)] px-4 py-2 rounded">Senden</button>
 </form>`,
   file: `<a data-widget="file" href="/files/beispiel.pdf" class="flex items-center gap-2 text-accent hover:text-accent-hover underline">
   📄 Datei herunterladen
@@ -90,7 +90,7 @@ const templateOptions: { key: string; label: string; description: string; layout
     <p class="text-accent text-sm font-semibold">Neu</p>
     <h1 class="text-3xl font-bold text-text">Willkommen in deinem Web-Channel</h1>
     <p class="text-text mt-2">Füge Widgets hinzu, teile Medien und binde Formulare ein, ohne HTML per Hand zu schreiben.</p>
-    <button class="mt-4 bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded">Loslegen</button>
+    <button class="mt-4 bg-accent hover:bg-accent-hover text-[color:var(--color-on-accent)] px-4 py-2 rounded">Loslegen</button>
   </div>
 </section>`
   },
@@ -172,7 +172,7 @@ const CodenamesStage = ({ initialUrl, channelId, isEditing }: { initialUrl: stri
                     <button 
                         onClick={handleSync}
                         disabled={syncing}
-                        className="bg-accent hover:bg-accent-hover text-white px-3 py-1.5 rounded text-sm font-medium flex items-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-accent hover:bg-accent-hover text-[color:var(--color-on-accent)] px-3 py-1.5 rounded text-sm font-medium flex items-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {syncing ? <RefreshCw size={14} className="animate-spin" /> : <RefreshCw size={14} />}
                         <span>Sync</span>
@@ -700,7 +700,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                     </span>
                     <button
                       onClick={handleSave}
-                      className="bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-white px-6 py-2 rounded flex items-center gap-2 font-bold"
+                      className="bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-[color:var(--color-on-accent)] px-6 py-2 rounded flex items-center gap-2 font-bold"
                       disabled={loading}
                     >
                       <Save size={18} /> {loading ? 'Speichert...' : 'Speichern'}

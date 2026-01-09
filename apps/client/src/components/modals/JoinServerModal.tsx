@@ -123,13 +123,13 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
         bodyClassName="p-6 pt-0 space-y-4"
         footer={
           <div className="flex justify-between items-center">
-            <button onClick={onClose} className="text-white hover:underline text-sm font-medium px-4">
+            <button onClick={onClose} className="text-text hover:underline text-sm font-medium px-4">
               Abbrechen
             </button>
             <button
               onClick={() => handleSubmit()}
               disabled={loading || !serverInput || !identity}
-              className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white px-6 py-2 rounded-[var(--radius-2)] font-bold disabled:opacity-50 flex items-center gap-2 transition-all active:scale-[0.98]"
+              className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-[color:var(--color-on-accent)] px-6 py-2 rounded-[var(--radius-2)] font-bold disabled:opacity-50 flex items-center gap-2 transition-all active:scale-[0.98]"
             >
               {loading && <Loader2 className="animate-spin" size={16} />}
               Beitreten
@@ -154,7 +154,7 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
               value={serverInput}
               onChange={(e) => setServerInput(e.target.value)}
               placeholder="z.B. 1 oder https://example.com/invite/1"
-              className="w-full bg-[color:var(--color-surface)]/60 text-white p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none transition-all placeholder:text-[color:var(--color-text-muted)] font-medium"
+              className="w-full bg-[color:var(--color-surface)]/60 text-text p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none transition-all placeholder:text-[color:var(--color-text-muted)] font-medium"
             />
           </div>
 
@@ -168,7 +168,7 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
               value={instanceUrl}
               onChange={(e) => setInstanceUrlState(e.target.value)}
               placeholder="z.B. https://mein-server.tld"
-              className="w-full bg-[color:var(--color-surface)]/60 text-white p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none transition-all placeholder:text-[color:var(--color-text-muted)] font-medium"
+              className="w-full bg-[color:var(--color-surface)]/60 text-text p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none transition-all placeholder:text-[color:var(--color-text-muted)] font-medium"
             />
             <p className="text-[10px] text-[color:var(--color-text-muted)] mt-1">Leer lassen, um die aktuelle Instanz zu nutzen.</p>
           </div>
@@ -178,7 +178,7 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
               <Shield size={18} />
             </div>
             <div className="flex-1">
-              <div className="text-sm font-medium text-white">Clover Identity</div>
+              <div className="text-sm font-medium text-text">Clover Identity</div>
               {identity && fingerprint ? (
                 <p className="text-xs text-[color:var(--color-text-muted)] mt-1 break-all">Fingerprint: {formatFingerprint(fingerprint)}</p>
               ) : (

@@ -34,9 +34,11 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           variant === 'primary' && 'bg-accent text-[color:var(--color-on-accent)] hover:bg-accent-hover shadow-neon',
           variant === 'secondary' && 'bg-surface-alt text-text hover:bg-surface-hover border border-border',
           variant === 'ghost' && 'bg-transparent text-text hover:bg-surface-hover border border-transparent',
-          variant === 'danger' && 'bg-red-500 text-white hover:bg-red-600',
-          variant === 'success' && 'bg-[color:var(--color-text-success)] text-white hover:brightness-110',
-          variant === 'warning' && 'bg-[color:var(--color-text-warning)] text-white hover:brightness-110',
+          variant === 'danger' && 'bg-red-500 text-[color:var(--color-on-accent)] hover:bg-red-600',
+          variant === 'success' &&
+            'bg-[color:var(--color-text-success)] text-[color:var(--color-on-accent)] hover:brightness-110',
+          variant === 'warning' &&
+            'bg-[color:var(--color-text-warning)] text-[color:var(--color-on-accent)] hover:brightness-110',
           className,
         )}
         {...props}

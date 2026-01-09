@@ -53,7 +53,7 @@ export const UserBottomBar = ({ onOpenUserSettings }: { onOpenUserSettings?: () 
       <div className="px-3 pb-4">
         <div className="flex items-center gap-3 rounded-[var(--radius-4)] border border-[color:var(--color-border)] bg-gradient-to-r from-black/40 via-[#0c0f14]/70 to-black/30 shadow-[0_10px_30px_rgba(0,0,0,0.35)] p-3">
           <div className="relative">
-            <div className="h-12 w-12 rounded-[var(--radius-4)] overflow-hidden bg-[color:var(--color-surface-hover)]/80 flex items-center justify-center text-lg font-bold text-white">
+            <div className="h-12 w-12 rounded-[var(--radius-4)] overflow-hidden bg-[color:var(--color-surface-hover)]/80 flex items-center justify-center text-lg font-bold text-text">
               {avatarSrc ? (
                 <img src={avatarSrc} className="w-full h-full object-cover" alt={`${displayName} Avatar`} />
               ) : (
@@ -64,7 +64,7 @@ export const UserBottomBar = ({ onOpenUserSettings }: { onOpenUserSettings?: () 
           </div>
 
           <div className="min-w-0 flex-1">
-            <div className="text-sm text-white font-semibold truncate">{displayName}</div>
+            <div className="text-sm text-text font-semibold truncate">{displayName}</div>
             <StatusBadge status={statusTone}>{statusLabel}</StatusBadge>
           </div>
 

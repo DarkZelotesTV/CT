@@ -298,7 +298,7 @@ export const MainLayout = () => {
   }, [lossValue]);
 
   const lossTone = useMemo(() => {
-    if (lossValue === null) return 'text-white';
+    if (lossValue === null) return 'text-text';
     if (lossValue < 1) return 'text-emerald-300';
     if (lossValue < 3) return 'text-amber-200';
     return 'text-rose-300';
@@ -802,7 +802,7 @@ export const MainLayout = () => {
       return (
         <div className="flex-1 flex items-center justify-center relative h-full">
           <div className="text-center p-10 bg-white/[0.02] rounded-[var(--radius-5)] border border-[color:var(--color-border)]/70 backdrop-blur-sm">
-            <h2 className="text-xl font-bold text-white mb-2">{t('layout.textChannelSelected')}</h2>
+            <h2 className="text-xl font-bold text-text mb-2">{t('layout.textChannelSelected')}</h2>
             <p className="text-[color:var(--color-text-muted)] text-sm max-w-md">{t('layout.textChannelUnsupported')}</p>
           </div>
         </div>
@@ -832,7 +832,7 @@ export const MainLayout = () => {
     return (
       <div className="flex-1 flex items-center justify-center relative h-full">
         <div className="text-center p-12 bg-white/[0.02] rounded-[var(--radius-5)] border border-[color:var(--color-border)]/70 backdrop-blur-sm">
-          <h2 className="text-2xl font-bold text-white mb-2">{t('layout.stageAreaTitle')}</h2>
+          <h2 className="text-2xl font-bold text-text mb-2">{t('layout.stageAreaTitle')}</h2>
           <p className="text-[color:var(--color-text-muted)] text-sm">{t('layout.stageAreaDescription')}</p>
         </div>
       </div>
@@ -1085,7 +1085,7 @@ export const MainLayout = () => {
                   <div className="h-server-icon w-7 h-7 rounded-[var(--radius-2)] bg-[color:var(--color-surface-hover)]/50 border border-[color:var(--color-border)]" />
                 )}
                 <div className="flex flex-col leading-tight">
-                  <span className="text-[0.95rem] font-bold text-white tracking-wide drop-shadow-sm">
+                  <span className="text-[0.95rem] font-bold text-text tracking-wide drop-shadow-sm">
                     {serverName || 'ZIMPLY'}
                   </span>
                 </div>
@@ -1106,7 +1106,7 @@ export const MainLayout = () => {
               </div>
               <div className="t-item">
                 <span className="t-label">UPTIME</span>
-                <span className="t-val text-white" id="time">
+                <span className="t-val text-text" id="time">
                   {uptimeDisplay}
                 </span>
               </div>
@@ -1273,7 +1273,7 @@ export const MainLayout = () => {
                 <form className="log-cmd bg-[color:var(--color-surface)]/50 border-t border-[color:var(--color-border)]/70 p-2 px-4 flex items-center gap-2" onSubmit={handleLogCommand}>
                   <span className="text-emerald-500 font-bold">&gt;</span>
                   <input
-                    className="bg-transparent border-none text-white w-full font-mono text-[13px] focus:outline-none placeholder:text-[color:var(--color-text-muted)]"
+                    className="bg-transparent border-none text-text w-full font-mono text-[13px] focus:outline-none placeholder:text-[color:var(--color-text-muted)]"
                     value={logInput}
                     onChange={(event) => setLogInput(event.target.value)}
                     placeholder={t('layout.log.commandPlaceholder', { defaultValue: 'Befehl eingeben...' }) ?? ''}

@@ -89,7 +89,7 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
           <button
             type="submit"
             form="feedback-form"
-            className="px-4 py-2 rounded-[var(--radius-2)] bg-cyan-600 text-white text-sm font-semibold flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="px-4 py-2 rounded-[var(--radius-2)] bg-cyan-600 text-[color:var(--color-on-accent)] text-sm font-semibold flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
             disabled={submitting || message.trim().length === 0}
           >
             {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
@@ -100,7 +100,7 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
     >
       <form id="feedback-form" className="space-y-4" onSubmit={handleSubmit}>
         <div className="space-y-2">
-          <label htmlFor="feedback-category" className="text-sm font-semibold text-white">
+          <label htmlFor="feedback-category" className="text-sm font-semibold text-text">
             {t('feedbackModal.categoryLabel')}
           </label>
           <select
@@ -118,7 +118,7 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="feedback-message" className="text-sm font-semibold text-white">
+          <label htmlFor="feedback-message" className="text-sm font-semibold text-text">
             {t('feedbackModal.messageLabel')}
           </label>
           <textarea
@@ -134,7 +134,7 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-white" htmlFor="feedback-screenshot">
+          <label className="text-sm font-semibold text-text" htmlFor="feedback-screenshot">
             {t('feedbackModal.screenshotLabel')}
           </label>
           <div className="flex items-center gap-2">
@@ -155,7 +155,7 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
             {screenshotFile && (
               <button
                 type="button"
-                className="text-xs text-[color:var(--color-text-muted)] underline hover:text-white"
+                className="text-xs text-[color:var(--color-text-muted)] underline hover:text-text"
                 onClick={() => setScreenshotFile(null)}
               >
                 {t('feedbackModal.removeScreenshot')}

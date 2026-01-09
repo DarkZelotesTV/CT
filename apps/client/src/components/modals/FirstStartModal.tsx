@@ -96,7 +96,7 @@ export function FirstStartModal({ onComplete }: Props) {
             <span className="font-bold">1</span>
           </div>
           <div>
-            <div className="text-white font-semibold">Identity erstellen oder importieren</div>
+            <div className="text-text font-semibold">Identity erstellen oder importieren</div>
             <p className="text-[color:var(--color-text-muted)] text-xs">Ohne Identity kannst du dich nicht mit einem Server verbinden.</p>
           </div>
         </div>
@@ -106,13 +106,13 @@ export function FirstStartModal({ onComplete }: Props) {
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           placeholder="z.B. jusbe"
-          className="w-full rounded-[var(--radius-3)] bg-[color:var(--color-surface)]/70 border border-[color:var(--color-border)] p-3 text-white outline-none focus:border-[var(--color-focus)]"
+          className="w-full rounded-[var(--radius-3)] bg-[color:var(--color-surface)]/70 border border-[color:var(--color-border)] p-3 text-text outline-none focus:border-[var(--color-focus)]"
         />
 
         <div className="flex flex-wrap gap-3">
           <button
             onClick={handleCreate}
-            className="px-4 py-3 rounded-[var(--radius-3)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white transition flex items-center gap-2"
+            className="px-4 py-3 rounded-[var(--radius-3)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-[color:var(--color-on-accent)] transition flex items-center gap-2"
           >
             <ArrowRight size={18} /> Identity erstellen
           </button>
@@ -136,7 +136,7 @@ export function FirstStartModal({ onComplete }: Props) {
         </div>
 
         <div className="text-sm text-[color:var(--color-text-muted)] bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] rounded-[var(--radius-4)] p-4">
-          <div className="text-white font-semibold">Aktuelle Identity</div>
+          <div className="text-text font-semibold">Aktuelle Identity</div>
           {identity ? (
             <div className="mt-2 font-mono break-all text-[color:var(--color-accent)]">{formatFingerprint(fp!)}</div>
           ) : (
@@ -154,7 +154,7 @@ export function FirstStartModal({ onComplete }: Props) {
             <span className="font-bold">2</span>
           </div>
           <div>
-            <div className="text-white font-semibold">Backup speichern</div>
+            <div className="text-text font-semibold">Backup speichern</div>
             <p className="text-[color:var(--color-text-muted)] text-xs">Sichere deine Identity als Datei. Optional mit Passphrase verschlüsselt.</p>
           </div>
         </div>
@@ -164,7 +164,7 @@ export function FirstStartModal({ onComplete }: Props) {
           value={backupPassphrase}
           onChange={(e) => setBackupPassphrase(e.target.value)}
           placeholder="Leer lassen für unverschlüsselt"
-          className="w-full rounded-[var(--radius-3)] bg-[color:var(--color-surface)]/70 border border-[color:var(--color-border)] p-3 text-white outline-none focus:border-[var(--color-focus)]"
+          className="w-full rounded-[var(--radius-3)] bg-[color:var(--color-surface)]/70 border border-[color:var(--color-border)] p-3 text-text outline-none focus:border-[var(--color-focus)]"
         />
 
         <button
@@ -184,7 +184,7 @@ export function FirstStartModal({ onComplete }: Props) {
 
         <button
           onClick={finish}
-          className="w-full py-3 rounded-[var(--radius-3)] bg-green-600 hover:bg-green-500 transition text-white font-semibold text-center"
+          className="w-full py-3 rounded-[var(--radius-3)] bg-green-600 hover:bg-green-500 transition text-[color:var(--color-on-accent)] font-semibold text-center"
         >
           Weiter zum Login
         </button>
