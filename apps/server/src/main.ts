@@ -59,6 +59,9 @@ import type { ZodTypeAny } from 'zod';
 const PORT = Number(process.env.PORT || 3001);
 const TLS_CERT_PATH = process.env.TLS_CERT_PATH || process.env.HTTPS_CERT_PATH;
 const TLS_KEY_PATH = process.env.TLS_KEY_PATH || process.env.HTTPS_KEY_PATH;
+const TLS_CA_PATH = process.env.TLS_CA_PATH;
+const TLS_PASSPHRASE = process.env.TLS_PASSPHRASE;
+const TLS_DHPARAM_PATH = process.env.TLS_DHPARAM_PATH;
 const configuredCorsOrigins = (process.env.CORS_ALLOWED_ORIGINS || process.env.ALLOWED_ORIGINS || '')
   .split(',')
   .map((origin) => origin.trim())
@@ -86,54 +89,109 @@ const allowOrigin = (origin: string | undefined, allowed: string[]) => {
   return allowed.some((allowedOrigin) => origin === allowedOrigin);
 };
 
-const resolvePathIfExists = (maybePath?: string | null) => {
-  if (!maybePath) return null;
-  const resolved = path.resolve(maybePath);
-  if (!fs.existsSync(resolved)) {
-    console.warn(`⚠️ TLS asset not found at ${resolved}`);
-    return null;
-  }
-  return resolved;
-};
-
 type TlsCredentials = {
   key: Buffer;
   cert: Buffer;
   keyPath: string;
   certPath: string;
+  passphrase?: string;
+  ca?: Buffer;
+  caPath?: string;
+  dhparam?: Buffer;
+  dhparamPath?: string;
+};
+
+const readTlsFile = (envName: string, filePath: string) => {
+  const resolved = path.resolve(filePath);
+  if (!fs.existsSync(resolved)) {
+    console.warn(`⚠️ ${envName} is misconfigured: file not found at ${resolved}.`);
+    return null;
+  }
+
+  try {
+    return { path: resolved, contents: fs.readFileSync(resolved) };
+  } catch (err) {
+    console.warn(`⚠️ ${envName} is misconfigured: unable to read file at ${resolved}.`, err);
+    return null;
+  }
 };
 
 const loadTlsCredentials = (): TlsCredentials | null => {
-  const resolvedCertPath = resolvePathIfExists(TLS_CERT_PATH);
-  const resolvedKeyPath = resolvePathIfExists(TLS_KEY_PATH);
+  const hasAnyTlsConfig = Boolean(TLS_CERT_PATH || TLS_KEY_PATH || TLS_CA_PATH || TLS_DHPARAM_PATH || TLS_PASSPHRASE);
 
-  if (resolvedCertPath && resolvedKeyPath) {
-    try {
-      return {
-        cert: fs.readFileSync(resolvedCertPath),
-        key: fs.readFileSync(resolvedKeyPath),
-        certPath: resolvedCertPath,
-        keyPath: resolvedKeyPath,
-      };
-    } catch (err) {
-      console.warn('⚠️ Unable to read TLS credentials. Falling back to HTTP.', err);
+  if (!TLS_CERT_PATH && !TLS_KEY_PATH) {
+    if (hasAnyTlsConfig) {
+      if (!TLS_CERT_PATH) {
+        console.warn('⚠️ TLS_CERT_PATH is required but not set. Configure TLS_CERT_PATH alongside TLS_KEY_PATH.');
+      }
+      if (!TLS_KEY_PATH) {
+        console.warn('⚠️ TLS_KEY_PATH is required but not set. Configure TLS_KEY_PATH alongside TLS_CERT_PATH.');
+      }
+    } else {
+      console.warn('ℹ️ No TLS certificate/key configured. Set TLS_CERT_PATH and TLS_KEY_PATH to enable HTTPS.');
+    }
+    return null;
+  }
+
+  if (!TLS_CERT_PATH || !TLS_KEY_PATH) {
+    if (!TLS_CERT_PATH) {
+      console.warn('⚠️ TLS_CERT_PATH is required but not set. Configure TLS_CERT_PATH alongside TLS_KEY_PATH.');
+    }
+    if (!TLS_KEY_PATH) {
+      console.warn('⚠️ TLS_KEY_PATH is required but not set. Configure TLS_KEY_PATH alongside TLS_CERT_PATH.');
+    }
+    return null;
+  }
+
+  const certFile = readTlsFile('TLS_CERT_PATH', TLS_CERT_PATH);
+  const keyFile = readTlsFile('TLS_KEY_PATH', TLS_KEY_PATH);
+
+  if (!certFile || !keyFile) {
+    return null;
+  }
+
+  let caFile: ReturnType<typeof readTlsFile> | null = null;
+  if (TLS_CA_PATH) {
+    caFile = readTlsFile('TLS_CA_PATH', TLS_CA_PATH);
+    if (!caFile) {
       return null;
     }
   }
 
-  if (TLS_CERT_PATH || TLS_KEY_PATH) {
-    console.warn('⚠️ TLS configuration incomplete. Provide both TLS_CERT_PATH and TLS_KEY_PATH to enable HTTPS.');
-  } else {
-    console.warn('ℹ️ No TLS certificate/key configured. Set TLS_CERT_PATH and TLS_KEY_PATH to enable HTTPS.');
+  let dhparamFile: ReturnType<typeof readTlsFile> | null = null;
+  if (TLS_DHPARAM_PATH) {
+    dhparamFile = readTlsFile('TLS_DHPARAM_PATH', TLS_DHPARAM_PATH);
+    if (!dhparamFile) {
+      return null;
+    }
   }
 
-  return null;
+  return {
+    cert: certFile.contents,
+    key: keyFile.contents,
+    certPath: certFile.path,
+    keyPath: keyFile.path,
+    passphrase: TLS_PASSPHRASE || undefined,
+    ca: caFile?.contents,
+    caPath: caFile?.path,
+    dhparam: dhparamFile?.contents,
+    dhparamPath: dhparamFile?.path,
+  };
 };
 
 const app = express();
 const tlsCredentials = loadTlsCredentials();
 const httpServer = tlsCredentials
-  ? createHttpsServer({ key: tlsCredentials.key, cert: tlsCredentials.cert }, app)
+  ? createHttpsServer(
+    {
+      key: tlsCredentials.key,
+      cert: tlsCredentials.cert,
+      ca: tlsCredentials.ca,
+      dhparam: tlsCredentials.dhparam,
+      passphrase: tlsCredentials.passphrase,
+    },
+    app,
+  )
   : createHttpServer(app);
 const serverProtocol = tlsCredentials ? 'https' : 'http';
 const websocketProtocol = tlsCredentials ? 'wss' : 'ws';
@@ -142,6 +200,12 @@ if (tlsCredentials) {
   console.log('🔒 TLS enabled. Using HTTPS server.');
   console.log(`   - Certificate: ${tlsCredentials.certPath}`);
   console.log(`   - Key:         ${tlsCredentials.keyPath}`);
+  if (tlsCredentials.caPath) {
+    console.log(`   - CA bundle:   ${tlsCredentials.caPath}`);
+  }
+  if (tlsCredentials.dhparamPath) {
+    console.log(`   - DH params:   ${tlsCredentials.dhparamPath}`);
+  }
 } else {
   console.warn('⚠️ Running without TLS. HTTPS/WebSocket secure endpoints will not be available.');
 }
