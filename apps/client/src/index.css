@@ -73,6 +73,8 @@
   --font-ui: "Segoe UI Variable", "Inter", sans-serif;
   --font-mono: "JetBrains Mono", "Consolas", monospace;
 
+  --density-scale: 1;
+
   /* Type scale (font-size + line-height)
      Use for app UI text to avoid ad-hoc sizes:
      xs = helper/labels, sm = secondary text, base = body/UI, lg/xl = headers. */
@@ -88,11 +90,16 @@
   --line-height-xl: 1.75;
 
   /* --- LAYOUT DIMENSIONS --- */
-  --layout-rail-width: 72px; /* maps to --w-rail */
-  --layout-tree-width: 280px; /* maps to --w-tree */
-  --layout-info-width: 300px; /* maps to --w-info */
-  --layout-header-height: 64px; /* maps to --h-header */
-  --layout-log-height: 160px; /* maps to --h-log */
+  --layout-rail-width-base: 72px;
+  --layout-tree-width-base: 280px;
+  --layout-info-width-base: 300px;
+  --layout-header-height-base: 64px;
+  --layout-log-height-base: 160px;
+  --layout-rail-width: calc(var(--layout-rail-width-base) * var(--density-scale)); /* maps to --w-rail */
+  --layout-tree-width: calc(var(--layout-tree-width-base) * var(--density-scale)); /* maps to --w-tree */
+  --layout-info-width: calc(var(--layout-info-width-base) * var(--density-scale)); /* maps to --w-info */
+  --layout-header-height: calc(var(--layout-header-height-base) * var(--density-scale)); /* maps to --h-header */
+  --layout-log-height: calc(var(--layout-log-height-base) * var(--density-scale)); /* maps to --h-log */
   --w-rail: var(--layout-rail-width);
   --w-tree: var(--layout-tree-width);
   --w-info: var(--layout-info-width);
@@ -117,14 +124,22 @@
   --radius-modal: var(--radius-4);
   --radius-input: var(--radius-3);
 
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-7: 32px;
-  --space-8: 40px;
+  --space-1-base: 4px;
+  --space-2-base: 8px;
+  --space-3-base: 12px;
+  --space-4-base: 16px;
+  --space-5-base: 20px;
+  --space-6-base: 24px;
+  --space-7-base: 32px;
+  --space-8-base: 40px;
+  --space-1: calc(var(--space-1-base) * var(--density-scale));
+  --space-2: calc(var(--space-2-base) * var(--density-scale));
+  --space-3: calc(var(--space-3-base) * var(--density-scale));
+  --space-4: calc(var(--space-4-base) * var(--density-scale));
+  --space-5: calc(var(--space-5-base) * var(--density-scale));
+  --space-6: calc(var(--space-6-base) * var(--density-scale));
+  --space-7: calc(var(--space-7-base) * var(--density-scale));
+  --space-8: calc(var(--space-8-base) * var(--density-scale));
   --layout-transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 
   --decor-grid-size: 24px;

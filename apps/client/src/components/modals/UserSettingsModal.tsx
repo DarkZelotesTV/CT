@@ -201,6 +201,7 @@ export const UserSettingsModal = ({
   const [themeMode, setThemeMode] = useState(settings.theme.mode);
   const [accentColor, setAccentColor] = useState(settings.theme.accentColor);
   const [decorationsEnabled, setDecorationsEnabled] = useState(settings.theme.decorationsEnabled ?? true);
+  const [density, setDensity] = useState(settings.theme.density);
   const [serverAccentDraft, setServerAccentDraft] = useState<Record<number, string>>(settings.theme.serverAccents || {});
   const [serverAccentTarget, setServerAccentTarget] = useState('');
   const [serverAccentColor, setServerAccentColor] = useState(settings.theme.accentColor);
@@ -416,6 +417,7 @@ export const UserSettingsModal = ({
     if (themeMode !== settings.theme.mode) return true;
     if (accentColor !== settings.theme.accentColor) return true;
     if (decorationsEnabled !== (settings.theme.decorationsEnabled ?? true)) return true;
+    if (density !== settings.theme.density) return true;
     if (JSON.stringify(serverAccentDraft) !== JSON.stringify(settings.theme.serverAccents || {})) return true;
 
     if (notificationPermission !== settings.notifications.permission) return true;
@@ -448,6 +450,7 @@ export const UserSettingsModal = ({
     themeMode,
     accentColor,
     decorationsEnabled,
+    density,
     serverAccentDraft,
     notificationPermission,
     notifyMentions,
@@ -489,6 +492,7 @@ export const UserSettingsModal = ({
     setThemeMode(settings.theme.mode);
     setAccentColor(settings.theme.accentColor);
     setDecorationsEnabled(settings.theme.decorationsEnabled ?? true);
+    setDensity(settings.theme.density);
     setServerAccentDraft(settings.theme.serverAccents || {});
 
     setNotificationPermission(settings.notifications.permission);
@@ -697,6 +701,7 @@ export const UserSettingsModal = ({
       accentColor: accentToSave,
       serverAccents: serverAccentDraft,
       decorationsEnabled,
+      density,
     });
     updateNotifications({
       permission: notificationPermission,
@@ -988,6 +993,18 @@ export const UserSettingsModal = ({
                         <div className="text-sm font-medium">Dekorationen</div>
                         <div className="text-xs text-[color:var(--color-text-muted)]">
                           Hintergrundeffekte wie Rauschen, Punktgitter und Lichtkugeln.
+                        </div>
+                      </div>
+                    </label>
+                    <label className="flex items-center gap-3 p-3 rounded-[var(--radius-3)] border border-[var(--color-border)] bg-[var(--color-surface-alt)]">
+                      <Toggle
+                        checked={density === 'compact'}
+                        onChange={(e) => setDensity(e.target.checked ? 'compact' : 'comfortable')}
+                      />
+                      <div>
+                        <div className="text-sm font-medium">Kompakte Dichte</div>
+                        <div className="text-xs text-[color:var(--color-text-muted)]">
+                          Reduziert Abstände und Layout-Größen für mehr Inhalt.
                         </div>
                       </div>
                     </label>
