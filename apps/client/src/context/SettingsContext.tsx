@@ -62,6 +62,12 @@ export type NotificationSettings = {
   invites: boolean;
 };
 
+export type OnboardingSettings = {
+  serverCreated: boolean;
+  joinedServer: boolean;
+  profileSet: boolean;
+};
+
 export type SettingsState = {
   profile: ProfileSettings;
   devices: DeviceSettings;
@@ -70,6 +76,7 @@ export type SettingsState = {
   talk: TalkSettings;
   locale: string;
   notifications: NotificationSettings;
+  onboarding: OnboardingSettings;
 };
 
 const resolveInitialPermission = (): NotificationSettings['permission'] => {
@@ -118,6 +125,11 @@ const defaultSettings: SettingsState = {
     directMessages: true,
     invites: true,
   },
+  onboarding: {
+    serverCreated: false,
+    joinedServer: false,
+    profileSet: false,
+  },
 };
 
 const createDefaultSettings = (): SettingsState => ({
@@ -128,6 +140,7 @@ const createDefaultSettings = (): SettingsState => ({
   talk: { ...defaultSettings.talk },
   locale: defaultSettings.locale,
   notifications: { ...defaultSettings.notifications },
+  onboarding: { ...defaultSettings.onboarding },
 });
 
 const SettingsContext = createContext<{
@@ -139,6 +152,7 @@ const SettingsContext = createContext<{
   updateTalk: (nextTalk: Partial<TalkSettings>) => void;
   updateLocale: (nextLocale: string) => void;
   updateNotifications: (nextNotifications: Partial<NotificationSettings>) => void;
+  updateOnboarding: (nextOnboarding: Partial<OnboardingSettings>) => void;
   resetSettings: () => void;
 } | null>(null);
 
@@ -154,6 +168,7 @@ const loadInitialSettings = (): SettingsState => {
         talk: { ...defaultSettings.talk, ...stored.talk },
         locale: stored.locale || defaultSettings.locale,
         notifications: { ...defaultSettings.notifications, ...stored.notifications },
+        onboarding: { ...defaultSettings.onboarding, ...stored.onboarding },
       };
     } catch (err) {
       console.warn('Could not parse stored settings', err);
@@ -171,6 +186,7 @@ const loadInitialSettings = (): SettingsState => {
           displayName: parsedUser.username || '',
         },
         locale: defaultSettings.locale,
+        onboarding: { ...defaultSettings.onboarding, profileSet: Boolean(parsedUser.username) },
       };
     } catch (err) {
       console.warn('Could not parse clover_user', err);
@@ -197,6 +213,16 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
     setSettings((prev) => ({
       ...prev,
       profile: { ...prev.profile, ...nextProfile },
+      onboarding: {
+        ...prev.onboarding,
+        profileSet:
+          prev.onboarding.profileSet ||
+          Boolean(
+            (nextProfile.displayName ?? prev.profile.displayName)?.trim() ||
+              (nextProfile.avatarUrl ?? prev.profile.avatarUrl)?.trim() ||
+              (nextProfile.status ?? prev.profile.status)?.trim()
+          ),
+      },
     }));
   };
 
@@ -246,6 +272,13 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
     }));
   };
 
+  const updateOnboarding = (nextOnboarding: Partial<OnboardingSettings>) => {
+    setSettings((prev) => ({
+      ...prev,
+      onboarding: { ...prev.onboarding, ...nextOnboarding },
+    }));
+  };
+
   const resetSettings = () => setSettings(createDefaultSettings());
 
   const value = useMemo(
@@ -258,6 +291,7 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
       updateTalk,
       updateLocale,
       updateNotifications,
+      updateOnboarding,
       resetSettings,
     }),
     [settings]
