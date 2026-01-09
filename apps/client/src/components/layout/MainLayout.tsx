@@ -1,7 +1,7 @@
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
-import { ChevronDown, ChevronLeft, ChevronRight, Users, Menu } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Users, Menu, MessageSquare, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { ServerRail } from './ServerRail';
@@ -34,7 +34,7 @@ import { useDesktopNotifications } from '../../hooks/useDesktopNotifications';
 import { useLogStore } from '../../store/useLogStore';
 import { useSocket } from '../../context/SocketContext';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
-import { Card, Icon } from '../ui';
+import { EmptyState, Icon } from '../ui';
 import { Button, IconButton } from '../ui/Button';
 import { Input } from '../ui/Input';
 
@@ -805,10 +805,13 @@ export const MainLayout = () => {
     if (activeChannel?.type === 'text') {
       return (
         <div className="flex-1 flex items-center justify-center relative h-full">
-          <Card variant="glass" className="text-center p-10">
-            <h2 className="text-xl font-bold text-text mb-2">{t('layout.textChannelSelected')}</h2>
-            <p className="text-[color:var(--color-text-muted)] text-sm max-w-md">{t('layout.textChannelUnsupported')}</p>
-          </Card>
+          <EmptyState
+            variant="glass"
+            icon={<Icon icon={MessageSquare} size="lg" tone="muted" />}
+            title={t('layout.textChannelSelected')}
+            body={t('layout.textChannelUnsupported')}
+            className="max-w-lg"
+          />
         </div>
       );
     }
@@ -835,10 +838,13 @@ export const MainLayout = () => {
     }
     return (
       <div className="flex-1 flex items-center justify-center relative h-full">
-        <Card variant="glass" className="text-center p-10">
-          <h2 className="text-2xl font-bold text-text mb-2">{t('layout.stageAreaTitle')}</h2>
-          <p className="text-[color:var(--color-text-muted)] text-sm">{t('layout.stageAreaDescription')}</p>
-        </Card>
+        <EmptyState
+          variant="glass"
+          icon={<Icon icon={Sparkles} size="lg" tone="muted" />}
+          title={t('layout.stageAreaTitle')}
+          body={t('layout.stageAreaDescription')}
+          className="max-w-lg"
+        />
       </div>
     );
   };
