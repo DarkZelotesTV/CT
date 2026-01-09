@@ -11,7 +11,6 @@ import path from 'path';
  *
  * We anchor all paths to process.cwd(), which is stable because:
  * - local dev scripts run inside apps/server
- * - docker WORKDIR is /app/apps/server
  * - npm start is executed from apps/server
  */
 export const SERVER_CWD = process.cwd();

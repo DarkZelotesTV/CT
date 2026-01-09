@@ -1,26 +1,15 @@
 # CloverTalk Monorepo
 
-Dieses Repository enthält den Backend-Server (Express/Sequelize) und den Desktop-Client (Vite + Electron). Der Client/Consumer kann ohne Docker betrieben werden; der Server kann wahlweise gegen lokal verfügbare Dienste laufen oder diese per Docker starten.
+Dieses Repository enthält den Backend-Server (Express/Sequelize) und den Desktop-Client (Vite + Electron). Der Client/Consumer kann ohne Container-Setup betrieben werden; der Server läuft gegen lokal verfügbare Dienste.
 
 ## Voraussetzungen
 - Node.js 20+
 - npm 10+
-- (Optional für Server-Infrastruktur) Docker & Docker Compose für MySQL/Redis
-
 ## Installation
 Alle Abhängigkeiten werden einmalig im Repo-Wurzelverzeichnis installiert:
 
 ```bash
 npm install
-```
-
-## Infrastruktur (optional für den Server)
-Wenn MySQL/Redis nicht lokal vorhanden sind, können sie aus dem `docker-compose.yml` gestartet werden:
-
-```bash
-docker compose up -d mysql redis
-
-# (Optional) phpMyAdmin öffnen: http://localhost:8080
 ```
 
 ## Server (apps/server)
@@ -50,16 +39,16 @@ docker compose up -d mysql redis
   - Status prüfen: `npm run db:migrate:status --workspace apps/server`
 
 ## Desktop-Client (apps/client)
-1. Build & Typprüfung (ohne Docker): `npm run build --workspace apps/client`
+1. Build & Typprüfung: `npm run build --workspace apps/client`
    - Renderer-Bundle landet unter `apps/client/dist`, Electron-Hauptprozess unter `apps/client/dist-electron`.
 2. Installer/ZIP erzeugen: `npm run package --workspace apps/client`
    - Electron-Builder legt die Artefakte unter `apps/client/release` ab (NSIS/ZIP auf Windows, DMG/ZIP auf macOS, AppImage/ZIP auf Linux).
-3. Während der Entwicklung (ohne Docker): `npm run dev --workspace apps/client`
+3. Während der Entwicklung: `npm run dev --workspace apps/client`
    - Der Electron-Mainprozess lädt automatisch das Vite-Dev-Server-Bundle.
 - Ist der P2P-Voice-Provider aktiv, versucht der Client zunächst eine Direktverbindung und schwenkt bei einem Fehler automatisch auf den SFU/mediasoup-Fallback um (falls konfiguriert).
 
 ## Full-Stack-Start (dev)
-Optionaler paralleler Start von Client & Server (Server ggf. mit den oben gestarteten Docker-Diensten):
+Optionaler paralleler Start von Client & Server:
 ```bash
 npm run dev:server   # Backend mit ts-node-dev
 npm run dev:client   # Vite-Entwicklungssserver
@@ -76,7 +65,3 @@ npm run dev:client   # Vite-Entwicklungssserver
 Die Root-Skripte nutzen die npm-Workspaces, um die entsprechenden Befehle in `apps/client` und `apps/server` automatisch auszuführen.
 
 Konfiguration für den Banned-Color-Check befindet sich in `scripts/banned-colors.json`. Zum expliziten Erlauben von Treffern die Zeile mit `// ct-allow-hardcoded-color` (oder `/* ct-allow-hardcoded-color */`) kommentieren.
-
-## Fehlerbehebung
-- Prüfe, ob `docker compose ps` zeigt, dass MySQL/Redis laufen.
-- Stelle sicher, dass `apps/server/.env` mit den MySQL-Zugangsdaten aus `docker-compose.yml` übereinstimmt.

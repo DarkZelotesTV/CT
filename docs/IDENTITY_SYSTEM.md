@@ -14,19 +14,13 @@ This project now uses a TeamSpeak-like identity login (local Ed25519 keypair + c
 
 ## Run locally
 
-1) Start infrastructure (Redis + MySQL):
-
-```bash
-docker compose up -d mysql redis
-```
-
-2) Install dependencies (workspace):
+1) Install dependencies (workspace):
 
 ```bash
 npm install
 ```
 
-3) Start dev:
+2) Start dev:
 
 ```bash
 npm run dev
