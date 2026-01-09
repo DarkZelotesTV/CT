@@ -65,6 +65,8 @@ const TLS_PASSPHRASE = process.env.TLS_PASSPHRASE;
 const TLS_DHPARAM_PATH = process.env.TLS_DHPARAM_PATH;
 const TLS_CIPHERS = process.env.TLS_CIPHERS;
 const TLS_MIN_VERSION = process.env.TLS_MIN_VERSION || 'TLSv1.2';
+const TLS_REDIRECT_HTTP = process.env.TLS_REDIRECT_HTTP === '1';
+const PUBLIC_ORIGIN = process.env.PUBLIC_ORIGIN?.trim();
 const tlsHstsMaxAge = (() => {
   const configuredMaxAge = Number.parseInt(process.env.TLS_HSTS_MAX_AGE || '15552000', 10);
   return Number.isFinite(configuredMaxAge) ? configuredMaxAge : 15552000;
@@ -73,6 +75,10 @@ const configuredCorsOrigins = (process.env.CORS_ALLOWED_ORIGINS || process.env.A
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
+if (PUBLIC_ORIGIN) {
+  configuredCorsOrigins.push(PUBLIC_ORIGIN);
+}
+const uniqueConfiguredCorsOrigins = Array.from(new Set(configuredCorsOrigins));
 
 const defaultCorsOrigins = [
   'https://localhost:5173',
@@ -81,7 +87,9 @@ const defaultCorsOrigins = [
   'http://127.0.0.1:5173',
 ];
 
-const allowedHttpOrigins = configuredCorsOrigins.length ? configuredCorsOrigins : defaultCorsOrigins;
+const allowedHttpOrigins = uniqueConfiguredCorsOrigins.length
+  ? uniqueConfiguredCorsOrigins
+  : Array.from(new Set([...defaultCorsOrigins, ...(PUBLIC_ORIGIN ? [PUBLIC_ORIGIN] : [])]));
 const allowedSocketOrigins = Array.from(
   new Set([
     ...allowedHttpOrigins,
@@ -378,6 +386,22 @@ const consumeTokenOrThrow = (socket: any) => {
 // ==========================================
 // 1. CORS & MIDDLEWARE (Sicherheit lockern)
 // ==========================================
+
+if (tlsCredentials && TLS_REDIRECT_HTTP) {
+  app.set('trust proxy', true);
+  app.use((req, res, next) => {
+    const forwardedProto = req.header('x-forwarded-proto');
+    const protocol = forwardedProto ? forwardedProto.split(',')[0].trim() : req.protocol;
+    if (protocol === 'https') {
+      return next();
+    }
+    const host = req.headers.host;
+    if (!host) {
+      return res.status(400).send('Bad Request');
+    }
+    return res.redirect(308, `https://${host}${req.originalUrl}`);
+  });
+}
 
 app.use(
   helmet({
