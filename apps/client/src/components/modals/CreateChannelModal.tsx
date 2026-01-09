@@ -5,6 +5,7 @@ import classNames from 'classnames';
 import { ServerTheme, defaultServerTheme, resolveServerTheme } from '../../theme/serverTheme';
 import { ModalLayout } from './ModalLayout';
 import { Badge, Input } from '../ui';
+import { Button } from '../ui/Button';
 
 interface CreateChannelModalProps {
   serverId: number;
@@ -79,8 +80,9 @@ export const CreateChannelModal = ({
             ].map(({ key, label, description, Icon }) => {
               const isActive = type === key;
               return (
-                <div
+                <Button
                   key={key}
+                  type="button"
                   onClick={() => setType(key)}
                   className={classNames(
                     'flex items-center p-3 rounded-[var(--radius-3)] cursor-pointer border transition-all bg-[color:var(--color-surface-hover)] border-[color:var(--color-border)] hover:border-[var(--color-accent-hover)] hover:bg-white/[0.08] text-text',
@@ -104,7 +106,7 @@ export const CreateChannelModal = ({
                   >
                     {isActive && <div className="w-2 h-2 rounded-full bg-[color:var(--color-accent)]" />}
                   </div>
-                </div>
+                </Button>
               );
             })}
           </div>
@@ -113,7 +115,7 @@ export const CreateChannelModal = ({
         {/* Name Input */}
         <div>
           <label className="text-xs font-bold uppercase mb-2 block text-[color:var(--color-text-muted)]">Kanalname</label>
-          <div className="flex items-center px-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 focus-within:border-[var(--color-focus)] text-text transition-colors">
+          <div className="flex items-center px-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 focus-within:border-[var(--color-focus)] focus-within:ring-2 focus-within:ring-[color:var(--color-focus)] focus-within:ring-offset-2 focus-within:ring-offset-background text-text transition-colors">
             {type === 'text' ? (
               <Hash size={16} className="mr-2 text-[color:var(--color-text-muted)]" />
             ) : type === 'voice' ? (
@@ -127,13 +129,13 @@ export const CreateChannelModal = ({
             ) : (
               <GripHorizontal size={16} className="mr-2 text-[color:var(--color-text-muted)]" />
             )}
-            <input
+            <Input
               autoFocus
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
               placeholder="neuer-kanal"
-              className="w-full bg-transparent py-2.5 outline-none font-medium no-drag placeholder:text-[color:var(--color-text-muted)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)] focus-visible:rounded-[var(--radius-3)]"
+              className="w-full border-0 bg-transparent py-2.5 font-medium no-drag placeholder:text-[color:var(--color-text-muted)] focus-visible:ring-0 focus-visible:border-transparent focus-visible:ring-offset-0"
             />
           </div>
         </div>
@@ -146,7 +148,7 @@ export const CreateChannelModal = ({
               type="text"
               value={defaultPassword}
               onChange={(e) => setDefaultPassword(e.target.value)}
-              className="bg-[color:var(--color-surface)]/60 text-text focus-visible:border-[color:var(--color-focus)] focus-visible:ring-[color:var(--color-focus)]/50"
+              className="bg-[color:var(--color-surface)]/60 text-text"
               placeholder={type === 'spacer' ? 'Nicht nötig' : 'Optional'}
               disabled={type === 'spacer'}
             />
@@ -157,7 +159,7 @@ export const CreateChannelModal = ({
               type="text"
               value={joinPassword}
               onChange={(e) => setJoinPassword(e.target.value)}
-              className="bg-[color:var(--color-surface)]/60 text-text focus-visible:border-[color:var(--color-focus)] focus-visible:ring-[color:var(--color-focus)]/50"
+              className="bg-[color:var(--color-surface)]/60 text-text"
               placeholder={type === 'spacer' ? 'Nicht nötig' : 'Optional'}
               disabled={type === 'spacer'}
             />
@@ -166,17 +168,19 @@ export const CreateChannelModal = ({
 
         {/* Footer */}
         <div className="flex justify-end items-center pt-2 gap-2">
-          <button
+          <Button
             type="button"
             onClick={onClose}
+            variant="ghost"
             className="text-sm font-medium px-4 py-2 rounded hover:bg-[color:var(--color-surface-hover)] transition-colors text-[color:var(--color-text)] hover:text-text"
           >
             Abbrechen
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
             disabled={loading || !name}
-            className="px-6 py-2 rounded-[var(--radius-3)] font-bold shadow-lg disabled:opacity-50 flex items-center gap-2 transition-all active:scale-95 text-[color:var(--color-on-accent)] text-sm bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] active:bg-[var(--color-accent-hover)] focus-visible:bg-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
+            variant="primary"
+            className="px-6 py-2 font-bold shadow-lg disabled:opacity-50 flex items-center gap-2 transition-all active:scale-95 text-sm"
             style={
               {
                 '--color-accent': palette.accent,
@@ -186,7 +190,7 @@ export const CreateChannelModal = ({
           >
             {loading && <Loader2 className="animate-spin" size={16} />}
             Kanal erstellen
-          </button>
+          </Button>
         </div>
       </form>
     </ModalLayout>

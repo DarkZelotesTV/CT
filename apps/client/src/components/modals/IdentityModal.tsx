@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Upload, ShieldAlert, Download } from 'lucide-react';
 import { ModalLayout } from './ModalLayout';
 import { clearIdentity, computeFingerprint, createIdentity, formatFingerprint, loadIdentity, saveIdentity, type IdentityFile } from '../../auth/identity';
 import { buildBackupPayload, getBackupFilename, parseIdentityBackup } from '../../auth/identityBackup';
 import { storage } from '../../shared/config/storage';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
 
 interface IdentityModalProps {
   onClose: () => void;
@@ -15,6 +17,8 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
   const [displayName, setDisplayName] = useState(identity?.displayName ?? '');
   const [backupPassphrase, setBackupPassphrase] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
+  const replaceInputRef = useRef<HTMLInputElement | null>(null);
 
   const fingerprint = useMemo(() => (identity ? computeFingerprint(identity) : null), [identity]);
 
@@ -92,37 +96,45 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
     >
       <div>
         <label className="text-xs uppercase font-bold text-[color:var(--color-text-muted)] block mb-1">Anzeigename (optional)</label>
-        <input
+        <Input
           type="text"
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           placeholder="z.B. jusbe"
-          className="w-full bg-[color:var(--color-surface)]/70 text-text p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
+          className="bg-[color:var(--color-surface)]/70 text-text p-3"
         />
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           className="mt-2 text-sm text-[color:var(--color-accent)] hover:text-[color:var(--color-accent-hover)]"
           onClick={handleSaveDisplayName}
           disabled={!identity}
         >
           Anzeigename speichern
-        </button>
+        </Button>
       </div>
 
       {!identity ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <button
-            className="px-4 py-3 rounded-[var(--radius-3)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] transition text-[color:var(--color-on-accent)] font-medium"
+          <Button
+            variant="primary"
+            className="px-4 py-3 font-medium"
             onClick={handleCreate}
           >
             Identity erstellen
-          </button>
+          </Button>
 
-          <label className="px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition cursor-pointer text-center text-text font-medium">
-            <div className="flex items-center justify-center gap-2">
+          <div>
+            <Button
+              type="button"
+              className="w-full px-4 py-3 bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-text font-medium"
+              onClick={() => importInputRef.current?.click()}
+            >
               <Upload size={18} />
               <span>Identity importieren</span>
-            </div>
-            <input
+            </Button>
+            <Input
+              ref={importInputRef}
               type="file"
               accept="application/json"
               className="hidden"
@@ -131,7 +143,7 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
                 if (f) handleImport(f);
               }}
             />
-          </label>
+          </div>
         </div>
       ) : (
         <>
@@ -154,31 +166,36 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
 
           <div>
             <label className="text-xs uppercase font-bold text-[color:var(--color-text-muted)] block mb-1">Backup-Passphrase (optional)</label>
-            <input
+            <Input
               type="password"
               value={backupPassphrase}
               onChange={(e) => setBackupPassphrase(e.target.value)}
               placeholder="Leer lassen für Klartext-Export"
-              className="w-full bg-[color:var(--color-surface)]/70 text-text p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
+              className="bg-[color:var(--color-surface)]/70 text-text p-3"
             />
             <p className="text-[11px] text-[color:var(--color-text-muted)] mt-1">Wenn gesetzt, wird dein Backup AES-GCM verschlüsselt (PBKDF2).</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <button
-              className="px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-text font-medium flex items-center justify-center gap-2"
+            <Button
+              className="px-4 py-3 bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-text font-medium flex items-center justify-center gap-2"
               onClick={handleExport}
             >
               <Download size={18} />
               Export / Backup
-            </button>
+            </Button>
 
-            <label className="px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition cursor-pointer text-center text-text font-medium">
-              <div className="flex items-center justify-center gap-2">
+            <div>
+              <Button
+                type="button"
+                className="w-full px-4 py-3 bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-text font-medium"
+                onClick={() => replaceInputRef.current?.click()}
+              >
                 <Upload size={18} />
                 <span>Import (ersetzen)</span>
-              </div>
-              <input
+              </Button>
+              <Input
+                ref={replaceInputRef}
                 type="file"
                 accept="application/json"
                 className="hidden"
@@ -187,15 +204,15 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
                   if (f) handleImport(f);
                 }}
               />
-            </label>
+            </div>
 
-            <button
-              className="px-4 py-3 rounded-[var(--radius-3)] bg-red-500/20 hover:bg-red-500/30 transition text-red-100 font-medium flex items-center justify-center gap-2 sm:col-span-2"
+            <Button
+              className="px-4 py-3 bg-red-500/20 hover:bg-red-500/30 transition text-red-100 font-medium flex items-center justify-center gap-2 sm:col-span-2"
               onClick={handleReset}
             >
               <ShieldAlert size={18} />
               Identity zurücksetzen
-            </button>
+            </Button>
           </div>
         </>
       )}

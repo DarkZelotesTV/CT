@@ -7,6 +7,9 @@ import { Globe, Edit, Save, X, LayoutGrid, Columns, Image, FileInput, Eye, Spark
 import { apiFetch } from '../../api/http';
 import { useTopBar } from '../window/TopBarContext';
 import { useChatStore } from '../../store/useChatStore';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { Select } from '../ui/Select';
 
 interface WebChannelViewProps {
   channelId: number;
@@ -162,21 +165,23 @@ const CodenamesStage = ({ initialUrl, channelId, isEditing }: { initialUrl: stri
                 </div>
                 <div className="h-6 w-px bg-border mx-1 hidden md:block"></div>
                 <div className="flex-1 flex items-center gap-2 max-w-2xl">
-                    <input 
+                    <Input 
                         type="text" 
                         value={inputUrl}
                         onChange={(e) => setInputUrl(e.target.value)}
-                        className="flex-1 bg-surface-3 text-[color:var(--color-text)] text-sm px-3 py-1.5 rounded border border-border focus:border-accent focus:outline-none font-mono"
+                        className="flex-1 bg-surface-3 text-[color:var(--color-text)] text-sm px-3 py-1.5 rounded border border-border font-mono"
                         placeholder="Raum-Link hier einfügen..."
                     />
-                    <button 
+                    <Button 
+                        type="button"
                         onClick={handleSync}
                         disabled={syncing}
-                        className="bg-accent hover:bg-accent-hover text-[color:var(--color-on-accent)] px-3 py-1.5 rounded text-sm font-medium flex items-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        variant="primary"
+                        className="px-3 py-1.5 text-sm font-medium flex items-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {syncing ? <RefreshCw size={14} className="animate-spin" /> : <RefreshCw size={14} />}
                         <span>Sync</span>
-                    </button>
+                    </Button>
                 </div>
                 <div className="ml-auto text-xs text-[color:var(--color-text-muted)] hidden md:flex items-center gap-2">
                    <span className="bg-surface-3 px-2 py-1 rounded border border-border">Erstelle Raum &rarr; Kopiere Link &rarr; Sync</span>
@@ -464,7 +469,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
             {statusMessage}
           </span>
         )}
-        <button
+        <Button
           type="button"
           onClick={() => {
             if (!isEditing) setEditValue(contentBody || '<h1>Willkommen!</h1><p>Bearbeite mich...</p>');
@@ -480,7 +485,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
         >
           {isEditing ? <X size={16} /> : <Edit size={16} />}
           {isEditing ? 'Abbrechen' : 'Seite bearbeiten'}
-        </button>
+        </Button>
       </div>
     ),
     [layoutBadge, statusMessage, isEditing, contentBody],
@@ -507,7 +512,8 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                     </div>
                     {/* Reuse the Desktop Right Controls logic for mobile button */}
                     <div className="flex items-center gap-3">
-                         <button
+                         <Button
+                            type="button"
                             onClick={() => {
                             if (!isEditing) setEditValue(contentBody || 'https://codenames.game/');
                             setIsEditing(!isEditing);
@@ -515,7 +521,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                             className="flex items-center gap-2 text-xs uppercase font-bold px-3 py-2 rounded border border-border text-[color:var(--color-text)]"
                         >
                             <Edit size={16} /> Seite bearbeiten
-                        </button>
+                        </Button>
                     </div>
                 </div>
                )}
@@ -542,7 +548,8 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
               {statusMessage}
             </span>
           )}
-          <button
+          <Button
+            type="button"
             onClick={() => {
               if (!isEditing) setEditValue(contentBody || '<h1>Willkommen!</h1><p>Bearbeite mich...</p>');
               setIsEditing(!isEditing);
@@ -557,7 +564,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
           >
             {isEditing ? <X size={16} /> : <Edit size={16} />}
             {isEditing ? 'Abbrechen' : 'Seite bearbeiten'}
-          </button>
+          </Button>
         </div>
       </div>
       )}
@@ -586,8 +593,9 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                     <p className="text-xs uppercase tracking-wide text-[color:var(--color-text-muted)] font-semibold">Layout & Modus</p>
                     <div className="flex flex-wrap gap-2 mt-2">
                       {layoutOptions.map((option) => (
-                        <button
+                        <Button
                           key={option.key}
+                          type="button"
                           onClick={() => setLayoutMode(option.key)}
                           className={`flex items-center gap-2 px-3 py-2 rounded border text-sm transition ${
                             layoutMode === option.key
@@ -600,17 +608,17 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                             <div className="font-semibold leading-4">{option.label}</div>
                             <div className="text-[11px] text-[color:var(--color-text-muted)] leading-4">{option.description}</div>
                           </div>
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   </div>
                   <div className="flex flex-col gap-3 min-w-[260px]">
                     <p className="text-xs uppercase tracking-wide text-[color:var(--color-text-muted)] font-semibold">Vorlagen & Widgets</p>
                     <div className="flex flex-wrap gap-2 items-center">
-                      <select
+                      <Select
                         value={selectedTemplate}
                         onChange={(event) => setSelectedTemplate(event.target.value)}
-                        className="bg-surface-3 border border-border text-[color:var(--color-text)] text-sm rounded px-3 py-2 min-w-[180px]"
+                        className="bg-surface-3 text-[color:var(--color-text)] text-sm rounded px-3 py-2 min-w-[180px]"
                       >
                         <option value="">Vorlage wählen</option>
                         {templateOptions.map((template) => (
@@ -618,14 +626,15 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                             {template.label}
                           </option>
                         ))}
-                      </select>
-                      <button
+                      </Select>
+                      <Button
+                        type="button"
                         onClick={handleTemplateApply}
                         disabled={!selectedTemplate}
                         className="flex items-center gap-2 px-3 py-2 rounded border border-accent/50 text-sm text-accent bg-accent/20 disabled:opacity-50"
                       >
                         <Sparkles size={16} /> Vorlage laden
-                      </button>
+                      </Button>
                     </div>
                     {/* Widgets only if not codenames mode */}
                     {layoutMode !== 'codenames' && (
@@ -635,6 +644,15 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                             draggable
                             onClick={() => widgetSnippets.media && appendSnippet(widgetSnippets.media)}
                             onDragStart={(event) => handleWidgetDragStart(event, widgetSnippets.media)}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                if (widgetSnippets.media) appendSnippet(widgetSnippets.media);
+                              }
+                            }}
+                            role="button"
+                            tabIndex={0}
+                            aria-label="Media widget einfügen"
                             className="border border-border rounded-lg p-3 bg-surface-3 text-left cursor-grab hover:border-border transition"
                         >
                             <div className="flex items-center gap-2 font-semibold text-[color:var(--color-text)]">
@@ -659,7 +677,7 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                   {layoutMode === 'codenames' ? (
                       <div className="flex-1 bg-surface-3 border border-border rounded-lg p-4 font-mono text-[color:var(--color-text)] flex flex-col gap-2">
                           <label className="text-xs text-[color:var(--color-text-muted)] uppercase">Standard URL</label>
-                          <input 
+                          <Input 
                             type="text" 
                             value={editValue} 
                             onChange={(e) => setEditValue(e.target.value)}
@@ -698,13 +716,14 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                     <span className="text-xs text-[color:var(--color-text-muted)]">
                       Aktives Layout: <strong className="text-[color:var(--color-text)]">{activeLayout?.label}</strong>
                     </span>
-                    <button
+                    <Button
+                      type="button"
                       onClick={handleSave}
                       className="bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-[color:var(--color-on-accent)] px-6 py-2 rounded flex items-center gap-2 font-bold"
                       disabled={loading}
                     >
                       <Save size={18} /> {loading ? 'Speichert...' : 'Speichern'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
 

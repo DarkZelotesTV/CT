@@ -33,7 +33,8 @@ import { clearIdentity, computeFingerprint, createIdentity, formatFingerprint, l
 import { buildBackupPayload, getBackupFilename, parseIdentityBackup } from '../../auth/identityBackup';
 import { storage } from '../../shared/config/storage';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
-import { Badge, Card, Select, Toggle } from '../ui';
+import { Badge, Card, Input, Select, Toggle } from '../ui';
+import { Button, IconButton } from '../ui/Button';
 import { MIN_ACCENT_CONTRAST, getAccentContrastReport, getThemeContrastTargets } from '../../theme/appTheme';
 
 const modifierKeys = ['Control', 'Shift', 'Alt', 'Meta'];
@@ -78,21 +79,24 @@ const HotkeyInput = ({
         {displayValue && <span className="text-[10px] text-[color:var(--color-accent)]">Press Backspace/Esc to clear</span>}
       </div>
       <div className="flex gap-2 items-center">
-        <input
+        <Input
           type="text"
           value={displayValue}
           onKeyDown={handleKeyDown}
           readOnly
           placeholder="Press keys"
-          className="w-full bg-[color:var(--color-surface)]/70 text-text p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
+          className="bg-[color:var(--color-surface)]/70 text-text p-3"
         />
         {displayValue && (
-          <button
+          <IconButton
             onClick={() => onChange('')}
+            variant="ghost"
+            size="sm"
             className="px-3 py-2 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)] text-[color:var(--color-text)] hover:text-text hover:bg-[color:var(--color-surface-hover)]/80"
+            aria-label="Clear hotkey"
           >
             <X size={16} />
-          </button>
+          </IconButton>
         )}
       </div>
     </div>
@@ -210,6 +214,8 @@ export const UserSettingsModal = ({
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
+  const identityImportInputRef = useRef<HTMLInputElement | null>(null);
+  const identityReplaceInputRef = useRef<HTMLInputElement | null>(null);
   const accentContrastReport = useMemo(() => {
     const { surface, text } = getThemeContrastTargets(themeMode);
     return getAccentContrastReport(accentColor, surface, text, MIN_ACCENT_CONTRAST);
@@ -741,20 +747,24 @@ export const UserSettingsModal = ({
             </div>
             <h2 className="text-2xl font-bold">{modalTitle}</h2>
           </div>
-          <button
+          <IconButton
             onClick={onClose}
+            variant="ghost"
+            size="sm"
             className="p-2 rounded-full bg-[var(--color-surface-alt)] hover:bg-[var(--color-surface-hover)] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]"
+            aria-label="Einstellungen schließen"
           >
             <X size={18} />
-          </button>
+          </IconButton>
         </div>
 
         <div className="flex-1 overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-[240px,1fr] gap-0 h-full">
             <nav className="bg-[var(--color-surface-alt)] border-r border-[var(--color-border)] p-4 flex flex-col gap-3 overflow-hidden">
-  <button
+  <Button
+    type="button"
     onClick={() => setActiveCategory('profile')}
-          className="w-full flex items-center gap-3 p-3 rounded-[var(--radius-4)] bg-[var(--color-surface)] border border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] transition text-left"
+    className="w-full flex items-center gap-3 p-3 rounded-[var(--radius-4)] bg-[var(--color-surface)] border border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] transition text-left"
   >
     <div className="w-10 h-10 rounded-full overflow-hidden bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] flex items-center justify-center shrink-0">
       {avatarPreview ? (
@@ -772,15 +782,15 @@ export const UserSettingsModal = ({
     </div>
 
     <User size={16} className="text-[color:var(--color-text-muted)]" />
-  </button>
+  </Button>
 
   <div className="relative">
     <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--color-text-muted)]" />
-    <input
+    <Input
       value={navQuery}
       onChange={(e) => setNavQuery(e.target.value)}
       placeholder="Suche"
-      className="w-full pl-10 pr-3 py-2.5 rounded-[var(--radius-3)] bg-[var(--color-surface)] border border-[var(--color-border)] text-sm text-[color:var(--color-text)] placeholder:text-[color:var(--color-text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-focus)] focus:border-[var(--color-focus)]"
+      className="w-full pl-10 pr-3 py-2.5 rounded-[var(--radius-3)] bg-[var(--color-surface)] text-sm text-[color:var(--color-text)] placeholder:text-[color:var(--color-text-muted)]"
     />
   </div>
 
@@ -791,8 +801,10 @@ export const UserSettingsModal = ({
 
     <div className="flex flex-col gap-1">
       {filteredCategories.map((cat) => (
-        <button
+        <Button
           key={cat.id}
+          type="button"
+          variant="ghost"
           onClick={() => setActiveCategory(cat.id)}
           className={`w-full flex items-center gap-3 px-3 py-2 rounded-[var(--radius-3)] text-sm font-medium text-left transition ${
             activeCategory === cat.id
@@ -802,7 +814,7 @@ export const UserSettingsModal = ({
         >
           <cat.icon size={16} />
           <span className="truncate">{cat.label}</span>
-        </button>
+        </Button>
       ))}
       {filteredCategories.length === 0 && (
         <div className="px-3 py-2 text-sm text-[color:var(--color-text-muted)]">Keine Treffer.</div>
@@ -824,16 +836,16 @@ export const UserSettingsModal = ({
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1">
                           <label className="text-xs text-[color:var(--color-text-muted)] uppercase font-semibold">Anzeigename</label>
-                          <input
+                          <Input
                             value={displayName}
                             onChange={(e) => setDisplayName(e.target.value)}
                             placeholder="Dein Name"
-                            className="w-full bg-[color:var(--color-surface)]/70 text-text p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
+                            className="bg-[color:var(--color-surface)]/70 text-text p-3"
                           />
                         </div>
                         <div className="space-y-2">
                           <label className="text-xs text-[color:var(--color-text-muted)] uppercase font-semibold">Avatar</label>
-                          <input
+                          <Input
                             ref={avatarInputRef}
                             type="file"
                             accept="image/*"
@@ -842,25 +854,27 @@ export const UserSettingsModal = ({
                           />
                           <div className="flex flex-col gap-2">
                             <div className="flex flex-wrap items-center gap-2">
-                              <button
+                              <Button
+                                type="button"
                                 onClick={() => avatarInputRef.current?.click()}
                                 className="px-4 py-2 rounded-[var(--radius-3)] border border-[color:var(--color-border)] bg-[color:var(--color-surface-hover)] text-sm text-[color:var(--color-text)] hover:bg-[color:var(--color-surface-hover)]/80"
                               >
                                 Datei wählen
-                              </button>
+                              </Button>
                               {avatarFile && (
                                 <span className="text-xs text-[color:var(--color-text)] truncate max-w-[160px]" title={avatarFile.name}>
                                   {avatarFile.name}
                                 </span>
                               )}
-                              <button
+                              <Button
+                                type="button"
                                 onClick={handleAvatarUpload}
                                 disabled={avatarUploading || (!avatarFile && !avatarUrl)}
                                 className="px-4 py-2 rounded-[var(--radius-3)] bg-[var(--color-accent)]/80 hover:bg-[var(--color-accent)] text-sm font-semibold text-[color:var(--color-on-accent)] disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
                               >
                                 {avatarUploading ? <Loader2 className="animate-spin" size={16} /> : <Upload size={16} />}
                                 {avatarUploading ? 'Lade hoch...' : 'Avatar hochladen'}
-                              </button>
+                              </Button>
                             </div>
                             <p className="text-xs text-[color:var(--color-text-muted)]">
                               Unterstützt Bilddateien bis 3 MB. Bereits gesetzte Avatar-Links bleiben bestehen, bis ein neuer Upload erfolgt.
@@ -891,30 +905,31 @@ export const UserSettingsModal = ({
                       <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold">Theme</div>
                       <p className="text-sm text-[color:var(--color-text-muted)]">Schalte zwischen Light/Dark um und passe die Farben an.</p>
                     </div>
-                    <button
+                    <Button
+                      type="button"
                       onClick={() => setThemeMode(themeMode === 'dark' ? 'light' : 'dark')}
                       className="flex items-center gap-2 px-4 py-2 rounded-[var(--radius-3)] border border-[var(--color-border)] text-[color:var(--color-text)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-hover)]"
                     >
                       <SunMoon size={16} />
                       <span>{themeMode === 'dark' ? 'Dark' : 'Light'}</span>
-                    </button>
+                    </Button>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-xs uppercase font-bold text-[color:var(--color-text-muted)] block">Akzentfarbe</label>
                       <div className="flex items-center gap-3">
-                        <input
+                        <Input
                           type="color"
                           value={accentColor}
                           onChange={(e) => setAccentColor(e.target.value)}
-                          className="h-10 w-16 rounded-[var(--radius-3)] border border-[var(--color-border)] bg-[var(--color-surface)]"
+                          className="h-10 w-16 rounded-[var(--radius-3)] border border-[var(--color-border)] bg-[var(--color-surface)] p-0"
                         />
-                        <input
+                        <Input
                           type="text"
                           value={accentColor}
                           onChange={(e) => setAccentColor(e.target.value)}
-                          className="flex-1 bg-[color:var(--color-surface)]/60 text-text p-3 rounded-[var(--radius-3)] border border-[var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
+                          className="flex-1 bg-[color:var(--color-surface)]/60 text-text p-3"
                         />
                       </div>
                       {!accentContrastReport.meetsContrast && (
@@ -923,13 +938,13 @@ export const UserSettingsModal = ({
                             Kontrast ist zu niedrig. Empfohlen: {accentContrastReport.adjustedAccent.toUpperCase()} (min.
                             {MIN_ACCENT_CONTRAST}:1 gegen Oberfläche/Text).
                           </span>
-                          <button
+                          <Button
                             type="button"
                             onClick={() => setAccentColor(accentContrastReport.adjustedAccent)}
                             className="px-2 py-1 rounded-[var(--radius-3)] bg-amber-400/20 text-amber-100 hover:bg-amber-400/30"
                           >
                             Auto-anpassen
-                          </button>
+                          </Button>
                         </div>
                       )}
                     </div>
@@ -937,25 +952,26 @@ export const UserSettingsModal = ({
                     <div className="space-y-2">
                       <label className="text-xs uppercase font-bold text-[color:var(--color-text-muted)] block">Server Akzentfarbe</label>
                       <div className="grid grid-cols-[1fr,110px,auto] gap-2 items-center">
-                        <input
+                        <Input
                           type="number"
                           value={serverAccentTarget}
                           onChange={(e) => setServerAccentTarget(e.target.value)}
                           placeholder="Server ID"
-                          className="bg-[color:var(--color-surface)]/60 text-text p-3 rounded-[var(--radius-3)] border border-[var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
+                          className="bg-[color:var(--color-surface)]/60 text-text p-3"
                         />
-                        <input
+                        <Input
                           type="color"
                           value={serverAccentColor}
                           onChange={(e) => setServerAccentColor(e.target.value)}
-                          className="h-12 w-full rounded-[var(--radius-3)] border border-[var(--color-border)] bg-[var(--color-surface)]"
+                          className="h-12 w-full rounded-[var(--radius-3)] border border-[var(--color-border)] bg-[var(--color-surface)] p-0"
                         />
-                        <button
+                        <Button
+                          type="button"
                           onClick={handleAddServerAccent}
                           className="px-3 py-2 rounded-[var(--radius-3)] bg-[var(--color-accent)] text-[color:var(--color-on-accent)] font-semibold hover:bg-[var(--color-accent-hover)]"
                         >
                           Speichern
-                        </button>
+                        </Button>
                       </div>
                       <div className="space-y-2">
                         {Object.keys(serverAccentDraft).length === 0 ? (
@@ -969,12 +985,15 @@ export const UserSettingsModal = ({
                               >
                                 <div className="w-10 h-10 rounded-[var(--radius-3)] border border-[var(--color-border)]" style={{ background: color }} />
                                 <div className="flex-1 text-sm text-[color:var(--color-text)]">Server {id}</div>
-                                <button
+                                <Button
+                                  type="button"
                                   onClick={() => handleRemoveServerAccent(Number(id))}
+                                  variant="ghost"
+                                  size="sm"
                                   className="text-xs text-red-300 hover:text-red-200"
                                 >
                                   Entfernen
-                                </button>
+                                </Button>
                               </div>
                             ))}
                           </div>
@@ -1019,12 +1038,13 @@ export const UserSettingsModal = ({
                       <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold">Desktop-Status</div>
                       <p className="text-[color:var(--color-text-muted)] text-sm">Steuert, wann CT Desktop-Benachrichtigungen zeigt.</p>
                     </div>
-                    <button
+                    <Button
+                      type="button"
                       onClick={handleRequestPermission}
                       className="px-4 py-2 rounded-[var(--radius-3)] border border-[var(--color-border)] text-[color:var(--color-text)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-hover)]"
                     >
                       Berechtigung anfragen
-                    </button>
+                    </Button>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1081,7 +1101,8 @@ export const UserSettingsModal = ({
                 <div className="space-y-6 animate-in fade-in zoom-in-95 duration-200">
                   <div className="border-b border-[var(--color-border)]">
                     <div className="flex gap-6 text-sm font-semibold">
-                      <button
+                      <Button
+                        type="button"
                         onClick={() => setDevicesTab('voice')}
                         className={`pb-3 -mb-px border-b-2 transition ${
                           devicesTab === 'voice'
@@ -1090,8 +1111,9 @@ export const UserSettingsModal = ({
                         }`}
                       >
                         Sprachchat
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        type="button"
                         onClick={() => setDevicesTab('video')}
                         className={`pb-3 -mb-px border-b-2 transition ${
                           devicesTab === 'video'
@@ -1100,8 +1122,9 @@ export const UserSettingsModal = ({
                         }`}
                       >
                         Video
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        type="button"
                         onClick={() => setDevicesTab('stream')}
                         className={`pb-3 -mb-px border-b-2 transition ${
                           devicesTab === 'stream'
@@ -1110,7 +1133,7 @@ export const UserSettingsModal = ({
                         }`}
                       >
                         Stream
-                      </button>
+                      </Button>
                     </div>
                   </div>
 
@@ -1125,11 +1148,9 @@ export const UserSettingsModal = ({
                             </p>
                           </div>
                           <label className="flex items-center gap-2 text-sm">
-                            <input
-                              type="checkbox"
+                            <Toggle
                               checked={showVoicePreJoin}
                               onChange={(e) => setShowVoicePreJoin(e.target.checked)}
-                              className="form-checkbox h-4 w-4"
                             />
                             <span className="text-[color:var(--color-text)]">
                               {showVoicePreJoin ? 'Aktiviert' : 'Deaktiviert'}
@@ -1147,13 +1168,16 @@ export const UserSettingsModal = ({
                               Wähle dein Eingabe- und Ausgabegerät.
                             </p>
                           </div>
-                          <button
+                          <Button
+                            type="button"
                             onClick={refreshDevices}
+                            variant="ghost"
+                            size="sm"
                             className="flex items-center gap-2 text-sm text-[color:var(--color-accent)] hover:text-[color:var(--color-accent-hover)]"
                           >
                             <RefreshCw size={16} />
                             Aktualisieren
-                          </button>
+                          </Button>
                         </div>
 
                         {deviceError && <div className="text-red-400 text-sm">{deviceError}</div>}
@@ -1208,14 +1232,14 @@ export const UserSettingsModal = ({
                             </div>
                             <div className="text-xs text-[color:var(--color-text-muted)]">{Math.round(sensitivity)}%</div>
                           </div>
-                          <input
+                          <Input
                             type="range"
                             min="0"
                             max="100"
                             step="1"
                             value={sensitivity}
                             onChange={(e) => setSensitivity(Number(e.target.value))}
-                            className="w-full accent-[var(--color-accent)]"
+                            className="w-full accent-[var(--color-accent)] border-0 bg-transparent px-0"
                           />
                         </div>
 
@@ -1225,12 +1249,13 @@ export const UserSettingsModal = ({
                           </div>
 
                           <div className="flex items-center justify-between gap-4">
-                            <button
+                            <Button
+                              type="button"
                               onClick={() => setMicTestNonce((v) => v + 1)}
                               className="px-4 py-2 rounded-[var(--radius-3)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-[color:var(--color-on-accent)] text-sm font-semibold"
                             >
                               Schauen wir mal
-                            </button>
+                            </Button>
 
                             <div className="flex-1">
                               <div className="flex items-end gap-[2px] h-7">
@@ -1265,7 +1290,8 @@ export const UserSettingsModal = ({
                         <div className="text-sm font-semibold">Eingabemodus</div>
 
                         <div className="space-y-2">
-                          <button
+                          <Button
+                            type="button"
                             onClick={() => setPushToTalkEnabled(false)}
                             className={`w-full p-4 rounded-[var(--radius-4)] border text-left transition ${
                               !pushToTalkEnabled
@@ -1282,9 +1308,10 @@ export const UserSettingsModal = ({
                               </div>
                               <div className={`w-4 h-4 rounded-full border ${!pushToTalkEnabled ? 'border-[var(--color-accent)] bg-[var(--color-accent)]' : 'border-[var(--color-border-strong)]'}`} />
                             </div>
-                          </button>
+                          </Button>
 
-                          <button
+                          <Button
+                            type="button"
                             onClick={() => setPushToTalkEnabled(true)}
                             className={`w-full p-4 rounded-[var(--radius-4)] border text-left transition ${
                               pushToTalkEnabled
@@ -1301,7 +1328,7 @@ export const UserSettingsModal = ({
                               </div>
                               <div className={`w-4 h-4 rounded-full border ${pushToTalkEnabled ? 'border-[var(--color-accent)] bg-[var(--color-accent)]' : 'border-[var(--color-border-strong)]'}`} />
                       </div>
-                      </button>
+                      </Button>
                     </div>
                   </div>
 
@@ -1318,7 +1345,8 @@ export const UserSettingsModal = ({
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       {audioPresetOptions.map((option) => (
-                        <button
+                        <Button
+                          type="button"
                           key={option.value}
                           onClick={() => setAudioPreset(option.value)}
                           className={`p-4 rounded-[var(--radius-3)] border text-left transition ${
@@ -1332,7 +1360,7 @@ export const UserSettingsModal = ({
                             {audioPreset === option.value && <Check size={16} />}
                           </div>
                           <div className="text-xs text-[color:var(--color-text-muted)]">{option.description}</div>
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   </div>
@@ -1341,7 +1369,8 @@ export const UserSettingsModal = ({
                   <div className="rounded-[var(--radius-4)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-3">
                     <div className="text-sm font-semibold">Audio-Steuerung</div>
                     <div className="flex flex-col sm:flex-row gap-2">
-                          <button
+                          <Button
+                            type="button"
                             onClick={() => setLocallyMuted((v) => !v)}
                             className={`flex-1 px-4 py-3 rounded-[var(--radius-3)] border transition flex items-center justify-center gap-2 ${
                               locallyMuted
@@ -1351,9 +1380,10 @@ export const UserSettingsModal = ({
                           >
                             <Headphones size={16} />
                             {locallyMuted ? 'Entstummen (Alle)' : 'Stumm (Alle)'}
-                          </button>
+                          </Button>
 
-                          <button
+                          <Button
+                            type="button"
                             onClick={() => setLocallyMicMuted((v) => !v)}
                             className={`flex-1 px-4 py-3 rounded-[var(--radius-3)] border transition flex items-center justify-center gap-2 ${
                               locallyMicMuted
@@ -1363,7 +1393,7 @@ export const UserSettingsModal = ({
                           >
                             <Mic size={16} />
                             {locallyMicMuted ? 'Mikro an' : 'Mikro aus'}
-                          </button>
+                          </Button>
                         </div>
                       </div>
 
@@ -1378,7 +1408,8 @@ export const UserSettingsModal = ({
                         )}
                         {rnnoiseError && <div className="text-xs text-red-400">{rnnoiseError}</div>}
 
-                        <button
+                        <Button
+                          type="button"
                           disabled={!rnnoiseAvailable}
                           onClick={() => setUseRnnoise((v) => !v)}
                           className={`w-full px-4 py-3 rounded-[var(--radius-3)] border transition flex items-center justify-between ${
@@ -1402,21 +1433,22 @@ export const UserSettingsModal = ({
                               }`}
                             />
                           </div>
-                        </button>
+                        </Button>
                       </div>
 
                       {/* Ausgabegerät testen */}
                       <div className="rounded-[var(--radius-4)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 space-y-3">
                         <div className="text-sm font-semibold">Ausgabe testen</div>
 
-                        <button
+                        <Button
+                          type="button"
                           onClick={handleTestOutput}
                           disabled={isTestingOutput}
                           className="px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 border border-[var(--color-border)] text-[color:var(--color-text)] flex items-center gap-2 disabled:opacity-60"
                         >
                           <Play size={18} />
                           {isTestingOutput ? 'Teste…' : 'Testton abspielen'}
-                        </button>
+                        </Button>
 
                         {outputError && <div className="text-xs text-red-400">{outputError}</div>}
                       </div>
@@ -1431,10 +1463,10 @@ export const UserSettingsModal = ({
                           <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold flex items-center gap-2">
                             <Camera size={14} /> Kamera
                           </div>
-                          <select
+                          <Select
                             value={videoInputId}
                             onChange={(e) => setVideoInputId(e.target.value)}
-                            className="w-full bg-[var(--color-surface-alt)] text-[color:var(--color-text)] p-3 rounded-[var(--radius-3)] border border-[var(--color-border)] focus:outline-none focus:ring-1 focus:ring-[var(--color-focus)] focus:border-[var(--color-focus)]"
+                            className="w-full bg-[var(--color-surface-alt)] text-[color:var(--color-text)] p-3"
                           >
                             <option value="">System-Standard</option>
                             {deviceLists.videoInputs.map((d) => (
@@ -1442,21 +1474,21 @@ export const UserSettingsModal = ({
                                 {d.label || `Kamera (${d.deviceId.slice(0, 6)})`}
                               </option>
                             ))}
-                          </select>
+                          </Select>
                         </label>
                         <label className="space-y-2">
                           <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold flex items-center gap-2">
                             <Monitor size={14} /> Kameraqualität
                           </div>
-                          <select
+                          <Select
                             value={cameraQuality}
                             onChange={(e) => setCameraQuality(e.target.value as typeof cameraQuality)}
-                            className="w-full bg-[var(--color-surface-alt)] text-[color:var(--color-text)] p-3 rounded-[var(--radius-3)] border border-[var(--color-border)] focus:outline-none focus:ring-1 focus:ring-[var(--color-focus)] focus:border-[var(--color-focus)]"
+                            className="w-full bg-[var(--color-surface-alt)] text-[color:var(--color-text)] p-3"
                           >
                             <option value="low">Niedrig</option>
                             <option value="medium">Mittel</option>
                             <option value="high">Hoch</option>
-                          </select>
+                          </Select>
                           <p className="text-xs text-[color:var(--color-text-muted)]">Beeinflusst die Standardqualität deiner Kameraübertragung.</p>
                         </label>
                         <div className="h-48 rounded-[var(--radius-4)] bg-[color:var(--color-surface)]/50 border border-[var(--color-border)] flex items-center justify-center text-sm text-[color:var(--color-text-muted)]">
@@ -1478,7 +1510,8 @@ export const UserSettingsModal = ({
                           <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold">Auflösung</div>
                           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                             {screenResolutionOptions.map((option) => (
-                              <button
+                              <Button
+                                type="button"
                                 key={option.value}
                                 onClick={() => setScreenQuality(option.value)}
                                 className={`p-4 rounded-[var(--radius-3)] border text-left transition ${
@@ -1492,7 +1525,7 @@ export const UserSettingsModal = ({
                                   {screenQuality === option.value && <Check size={16} />}
                                 </div>
                                 <div className="text-xs text-[color:var(--color-text-muted)]">{option.description}</div>
-                              </button>
+                              </Button>
                             ))}
                           </div>
                         </div>
@@ -1501,7 +1534,8 @@ export const UserSettingsModal = ({
                           <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold">Bildrate</div>
                           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                             {screenFrameRateOptions.map((option) => (
-                              <button
+                              <Button
+                                type="button"
                                 key={option.value}
                                 onClick={() => setScreenFrameRate(option.value)}
                                 className={`p-4 rounded-[var(--radius-3)] border text-left transition ${
@@ -1515,7 +1549,7 @@ export const UserSettingsModal = ({
                                   {screenFrameRate === option.value && <Check size={16} />}
                                 </div>
                                 <div className="text-xs text-[color:var(--color-text-muted)]">{option.description}</div>
-                              </button>
+                              </Button>
                             ))}
                           </div>
                         </div>
@@ -1524,7 +1558,8 @@ export const UserSettingsModal = ({
                           <div className="text-xs uppercase tracking-widest text-[color:var(--color-text-muted)] font-bold">Bitrate</div>
                           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                             {screenBitrateOptions.map((option) => (
-                              <button
+                              <Button
+                                type="button"
                                 key={option.value}
                                 onClick={() => setScreenBitrateProfile(option.value)}
                                 className={`p-4 rounded-[var(--radius-3)] border text-left transition ${
@@ -1538,7 +1573,7 @@ export const UserSettingsModal = ({
                                   {screenBitrateProfile === option.value && <Check size={16} />}
                                 </div>
                                 <div className="text-xs text-[color:var(--color-text-muted)]">{option.description}</div>
-                              </button>
+                              </Button>
                             ))}
                           </div>
                         </div>
@@ -1590,20 +1625,23 @@ export const UserSettingsModal = ({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-xs uppercase font-bold text-[color:var(--color-text-muted)] block">Anzeigename (optional)</label>
-                      <input
+                      <Input
                         type="text"
                         value={identityName}
                         onChange={(e) => setIdentityName(e.target.value)}
                         placeholder="z.B. jusbe"
-                        className="w-full bg-[color:var(--color-surface)]/70 text-text p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
+                        className="bg-[color:var(--color-surface)]/70 text-text p-3"
                       />
-                      <button
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
                         className="text-sm text-[color:var(--color-accent)] hover:text-[color:var(--color-accent-hover)]"
                         onClick={handleSaveIdentityName}
                         disabled={!identity}
                       >
                         Anzeigename speichern
-                      </button>
+                      </Button>
                     </div>
 
                     <div className="flex flex-col gap-2 p-4 rounded-[var(--radius-4)] bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)]">
@@ -1616,19 +1654,26 @@ export const UserSettingsModal = ({
 
                   {!identity ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <button
+                      <Button
+                        type="button"
+                        variant="primary"
                         className="px-4 py-3 rounded-[var(--radius-3)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] transition text-[color:var(--color-on-accent)] font-medium"
                         onClick={handleCreateIdentity}
                       >
                         Identity erstellen
-                      </button>
+                      </Button>
 
-                      <label className="px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition cursor-pointer text-center text-text font-medium">
-                        <div className="flex items-center justify-center gap-2">
+                      <div>
+                        <Button
+                          type="button"
+                          className="w-full px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-center text-text font-medium"
+                          onClick={() => identityImportInputRef.current?.click()}
+                        >
                           <Upload size={18} />
                           <span>Identity importieren</span>
-                        </div>
-                        <input
+                        </Button>
+                        <Input
+                          ref={identityImportInputRef}
                           type="file"
                           accept="application/json"
                           className="hidden"
@@ -1637,7 +1682,7 @@ export const UserSettingsModal = ({
                             if (f) handleImportIdentity(f);
                           }}
                         />
-                      </label>
+                      </div>
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -1655,31 +1700,37 @@ export const UserSettingsModal = ({
 
                       <div>
                         <label className="text-xs uppercase font-bold text-[color:var(--color-text-muted)] block mb-1">Backup-Passphrase (optional)</label>
-                        <input
+                        <Input
                           type="password"
                           value={backupPassphrase}
                           onChange={(e) => setBackupPassphrase(e.target.value)}
                           placeholder="Leer lassen für Klartext-Export"
-                          className="w-full bg-[color:var(--color-surface)]/70 text-text p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none"
+                          className="bg-[color:var(--color-surface)]/70 text-text p-3"
                         />
                         <p className="text-[11px] text-[color:var(--color-text-muted)] mt-1">Wenn gesetzt, wird dein Backup AES-GCM verschlüsselt (PBKDF2).</p>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <button
+                        <Button
+                          type="button"
                           className="px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-text font-medium flex items-center justify-center gap-2"
                           onClick={handleExportIdentity}
                         >
                           <Download size={18} />
                           Export / Backup
-                        </button>
+                        </Button>
 
-                        <label className="px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition cursor-pointer text-center text-text font-medium">
-                          <div className="flex items-center justify-center gap-2">
+                        <div>
+                          <Button
+                            type="button"
+                            className="w-full px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-center text-text font-medium"
+                            onClick={() => identityReplaceInputRef.current?.click()}
+                          >
                             <Upload size={18} />
                             <span>Import (ersetzen)</span>
-                          </div>
-                          <input
+                          </Button>
+                          <Input
+                            ref={identityReplaceInputRef}
                             type="file"
                             accept="application/json"
                             className="hidden"
@@ -1688,15 +1739,16 @@ export const UserSettingsModal = ({
                               if (f) handleImportIdentity(f);
                             }}
                           />
-                        </label>
+                        </div>
 
-                        <button
+                        <Button
+                          type="button"
                           className="px-4 py-3 rounded-[var(--radius-3)] bg-red-500/20 hover:bg-red-500/30 transition text-red-100 font-medium flex items-center justify-center gap-2 sm:col-span-2"
                           onClick={handleResetIdentity}
                         >
                           <ShieldAlert size={18} />
                           Identity zurücksetzen
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   )}
@@ -1713,19 +1765,21 @@ export const UserSettingsModal = ({
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm text-[color:var(--color-text-muted)]">Du hast ungespeicherte Änderungen.</div>
               <div className="flex gap-2">
-                <button
+                <Button
+                  type="button"
                   onClick={resetDraft}
                   className="px-4 py-2 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 border border-[var(--color-border)] text-[color:var(--color-text)]"
                 >
                   Zurücksetzen
-                </button>
-                <button
+                </Button>
+                <Button
+                  type="button"
                   onClick={handleSave}
                   className="px-4 py-2 rounded-[var(--radius-3)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-[color:var(--color-on-accent)] flex items-center gap-2"
                 >
                   <Save size={16} />
                   Änderungen speichern
-                </button>
+                </Button>
               </div>
             </div>
           ) : (
@@ -1734,12 +1788,13 @@ export const UserSettingsModal = ({
                 <Check size={14} className="text-green-400" />
                 Änderungen werden lokal gespeichert.
               </div>
-              <button
+              <Button
+                type="button"
                 onClick={onClose}
                 className="px-4 py-2 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 border border-[var(--color-border)] text-[color:var(--color-text)]"
               >
                 Schließen
-              </button>
+              </Button>
             </div>
           )}
         </div>

@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { getModalRoot } from './modalRoot';
 import { useTopBar } from '../window/TopBarContext';
 import { Card, Icon } from '../ui';
+import { IconButton } from '../ui/Button';
 
 interface ModalLayoutProps {
   title: string;
@@ -142,12 +143,14 @@ export const ModalLayout = ({
             <h2 className="ct-modal-title">{title}</h2>
             {description && <p className="ct-modal-desc">{description}</p>}
           </div>
-          <button
+          <IconButton
             onClick={onClose}
+            variant="ghost"
+            size="sm"
             className="ct-modal-close no-drag"
           >
             <Icon icon={X} size="lg" className="text-inherit" hoverTone="none" />
-          </button>
+          </IconButton>
         </div>
 
         {/* Body */}

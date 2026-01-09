@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Mail, Lock, User, Loader2, ArrowRight, Clover, Server, CheckCircle2, RefreshCw } from 'lucide-react';
 import { getAllowInsecureHttp, getDefaultServerUrl, getServerPassword, getServerUrl, normalizeServerUrlString, resetServerSettings, setAllowInsecureHttp, setServerPassword, setServerUrl } from '../../utils/apiConfig';
+import { Button, IconButton } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { Toggle } from '../ui/Toggle';
 
 interface AuthScreenProps {
   onLoginSuccess: (token: string, userData: any) => void;
@@ -114,13 +117,14 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
       <div className="relative z-10 w-full max-w-md bg-[color:var(--color-surface-hover)] backdrop-blur-xl border border-[color:var(--color-border)] rounded-2xl shadow-2xl p-8 animate-in fade-in zoom-in duration-500 transition-all">
         
         {/* SERVER SETTINGS TOGGLE (Oben Rechts) */}
-        <button 
+        <IconButton 
             onClick={() => setShowServerSettings(!showServerSettings)}
+            variant="ghost"
             className="absolute top-4 right-4 p-2 text-[color:var(--color-text-muted)] hover:text-text hover:bg-[color:var(--color-surface-hover)]/80 rounded-lg transition-colors"
             title="Server Einstellungen"
         >
             <Server size={20} className={connectionStatus === 'error' ? 'text-red-500' : ''} />
-        </button>
+        </IconButton>
 
         {/* Header */}
         <div className="text-center mb-6">
@@ -144,17 +148,19 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
                   <div className="flex items-center gap-2 text-xs">
                     {connectionStatus === 'ok' && <span className="text-green-400 flex items-center gap-1"><CheckCircle2 size={12}/> Online</span>}
                     {connectionStatus === 'error' && <span className="text-red-400">Offline</span>}
-                    <button
+                    <Button
                       type="button"
                       onClick={handleRestoreServerSettings}
+                      variant="ghost"
+                      size="sm"
                       className="flex items-center gap-1 px-2 py-1 rounded-lg bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 text-[color:var(--color-text)]"
                     >
                       <RefreshCw size={12} /> Zurücksetzen
-                    </button>
+                    </Button>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                    <input
+                    <Input
                         type="text"
                         value={serverAddress}
                         onChange={(e) => setServerAddress(e.target.value)}
@@ -164,15 +170,15 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
                           setServerUrl(normalized);
                           checkServerConnection(normalized);
                         }}
-                        className="flex-1 bg-[color:var(--color-surface)]/50 border border-[color:var(--color-border)] rounded-lg px-3 py-2 text-sm text-text focus:border-[color:var(--color-focus)] outline-none"
+                        className="flex-1 bg-[color:var(--color-surface)]/50 rounded-lg px-3 py-2 text-sm text-text"
                         placeholder="https://localhost:3001"
                     />
                 </div>
                 <div className="flex items-center gap-2 text-[11px] text-[color:var(--color-text-muted)]">
-                  <input
+                  <Toggle
                     id="allow-http-auth"
-                    type="checkbox"
-                    className="rounded border-[color:var(--color-border-strong)] bg-[color:var(--color-surface)]/70"
+                    size="sm"
+                    className="bg-[color:var(--color-surface)]/70"
                     checked={allowInsecureHttp}
                     onChange={(e) => {
                       const allow = e.target.checked;
@@ -189,12 +195,12 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-[color:var(--color-text-muted)] uppercase block">Server Passwort (optional)</label>
-                  <input
+                  <Input
                     type="password"
                     value={serverPassword}
                     onChange={(e) => setServerPasswordState(e.target.value)}
                     onBlur={() => setServerPassword(serverPassword)}
-                    className="w-full bg-[color:var(--color-surface)]/50 border border-[color:var(--color-border)] rounded-lg px-3 py-2 text-sm text-text focus:border-[color:var(--color-focus)] outline-none"
+                    className="w-full bg-[color:var(--color-surface)]/50 rounded-lg px-3 py-2 text-sm text-text"
                     placeholder="Leer lassen wenn keins"
                   />
                   <p className="text-[10px] text-[color:var(--color-text-muted)]">Für private Installationen kannst du hier das Server-Passwort hinterlegen.</p>
@@ -219,12 +225,12 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <User className="text-[color:var(--color-text-muted)] group-focus-within:text-[color:var(--color-accent)] transition-colors" size={18} />
                  </div>
-                 <input 
+                 <Input 
                     type="text" 
                     required={isRegistering}
                     value={username}
                     onChange={e => setUsername(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-3 bg-[color:var(--color-surface)]/50 border border-[color:var(--color-border)] rounded-xl text-text placeholder:text-[color:var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-focus)] focus:border-[color:var(--color-focus)] transition-all sm:text-sm"
+                    className="block w-full pl-10 pr-3 py-3 bg-[color:var(--color-surface)]/50 rounded-xl text-text placeholder:text-[color:var(--color-text-muted)] transition-all sm:text-sm"
                     placeholder="Dein Name"
                  />
               </div>
@@ -237,12 +243,12 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Mail className="text-[color:var(--color-text-muted)] group-focus-within:text-[color:var(--color-accent)] transition-colors" size={18} />
                 </div>
-                <input 
+                <Input 
                   type="email" 
                   required
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 bg-[color:var(--color-surface)]/50 border border-[color:var(--color-border)] rounded-xl text-text placeholder:text-[color:var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-focus)] focus:border-[color:var(--color-focus)] transition-all sm:text-sm"
+                  className="block w-full pl-10 pr-3 py-3 bg-[color:var(--color-surface)]/50 rounded-xl text-text placeholder:text-[color:var(--color-text-muted)] transition-all sm:text-sm"
                   placeholder="name@beispiel.de"
                 />
             </div>
@@ -254,18 +260,18 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Lock className="text-[color:var(--color-text-muted)] group-focus-within:text-[color:var(--color-accent)] transition-colors" size={18} />
                 </div>
-                <input 
+                <Input 
                   type="password" 
                   required
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 bg-[color:var(--color-surface)]/50 border border-[color:var(--color-border)] rounded-xl text-text placeholder:text-[color:var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-focus)] focus:border-[color:var(--color-focus)] transition-all sm:text-sm"
+                  className="block w-full pl-10 pr-3 py-3 bg-[color:var(--color-surface)]/50 rounded-xl text-text placeholder:text-[color:var(--color-text-muted)] transition-all sm:text-sm"
                   placeholder="••••••••"
                 />
             </div>
           </div>
 
-          <button 
+          <Button 
             type="submit" 
             disabled={loading}
             className="w-full relative overflow-hidden group bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-text font-bold py-3.5 rounded-xl shadow-lg shadow-green-900/20 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
@@ -275,19 +281,21 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
                {!loading && <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />}
             </div>
             <div className="absolute inset-0 h-full w-full scale-0 rounded-xl transition-all duration-300 group-hover:scale-100 group-hover:bg-[color:var(--color-surface-hover)]/80"></div>
-          </button>
+          </Button>
         </form>
 
         <div className="mt-8 pt-6 border-t border-[color:var(--color-border)] text-center">
           <p className="text-sm text-[color:var(--color-text-muted)]">
             {isRegistering ? 'Bereits registriert?' : 'Noch keinen Account?'}
           </p>
-          <button 
+          <Button 
             onClick={() => { setIsRegistering(!isRegistering); setError(''); }}
+            variant="ghost"
+            size="sm"
             className="mt-2 text-green-400 hover:text-green-300 font-medium text-sm transition-colors hover:underline"
           >
             {isRegistering ? 'Hier anmelden' : 'Kostenlos registrieren'}
-          </button>
+          </Button>
         </div>
 
       </div>

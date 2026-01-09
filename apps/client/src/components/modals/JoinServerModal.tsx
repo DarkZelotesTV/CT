@@ -7,6 +7,8 @@ import { addPinnedServer, normalizeInstanceUrl } from '../../utils/pinnedServers
 import { getServerUrl, setServerUrl } from '../../utils/apiConfig';
 import { ModalLayout } from './ModalLayout';
 import { storage } from '../../shared/config/storage';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
 
 interface JoinServerModalProps {
   onClose: () => void;
@@ -123,17 +125,18 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
         bodyClassName="p-6 pt-0 space-y-4"
         footer={
           <div className="flex justify-between items-center">
-            <button onClick={onClose} className="text-text hover:underline text-sm font-medium px-4">
+            <Button variant="ghost" size="sm" onClick={onClose} className="text-text hover:underline text-sm font-medium px-4">
               Abbrechen
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={() => handleSubmit()}
               disabled={loading || !serverInput || !identity}
-              className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-[color:var(--color-on-accent)] px-6 py-2 rounded-[var(--radius-3)] font-bold disabled:opacity-50 flex items-center gap-2 transition-all active:scale-[0.98]"
+              variant="primary"
+              className="px-6 py-2 font-bold disabled:opacity-50 flex items-center gap-2 transition-all active:scale-[0.98]"
             >
               {loading && <Loader2 className="animate-spin" size={16} />}
               Beitreten
-            </button>
+            </Button>
           </div>
         }
       >
@@ -148,13 +151,13 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
 
           <div className="space-y-1">
             <label className="text-xs font-bold text-[color:var(--color-text-muted)] uppercase mb-1 block">Invite / Server ID</label>
-            <input
+            <Input
               autoFocus
               type="text"
               value={serverInput}
               onChange={(e) => setServerInput(e.target.value)}
               placeholder="z.B. 1 oder https://example.com/invite/1"
-              className="w-full bg-[color:var(--color-surface)]/60 text-text p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none transition-all placeholder:text-[color:var(--color-text-muted)] font-medium"
+              className="bg-[color:var(--color-surface)]/60 text-text p-3 placeholder:text-[color:var(--color-text-muted)] font-medium"
             />
           </div>
 
@@ -163,12 +166,12 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
               <Globe size={14} />
               Instanz URL (optional)
             </label>
-            <input
+            <Input
               type="text"
               value={instanceUrl}
               onChange={(e) => setInstanceUrlState(e.target.value)}
               placeholder="z.B. https://mein-server.tld"
-              className="w-full bg-[color:var(--color-surface)]/60 text-text p-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] focus:border-[var(--color-focus)] focus:ring-1 focus:ring-[var(--color-focus)] outline-none transition-all placeholder:text-[color:var(--color-text-muted)] font-medium"
+              className="bg-[color:var(--color-surface)]/60 text-text p-3 placeholder:text-[color:var(--color-text-muted)] font-medium"
             />
             <p className="text-[10px] text-[color:var(--color-text-muted)] mt-1">Leer lassen, um die aktuelle Instanz zu nutzen.</p>
           </div>
@@ -184,13 +187,15 @@ export const JoinServerModal = ({ onClose, onJoined }: JoinServerModalProps) => 
               ) : (
                 <p className="text-xs text-yellow-300 mt-1">Du benötigst eine Identity, um einem Server beizutreten.</p>
               )}
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 className="mt-2 text-sm text-[color:var(--color-accent)] hover:text-[color:var(--color-accent-hover)]"
                 onClick={() => setShowIdentityModal(true)}
               >
                 Identity verwalten
-              </button>
+              </Button>
             </div>
           </div>
         </form>

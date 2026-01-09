@@ -80,12 +80,12 @@ export const ThemeLab = () => {
                 <Sparkles size={16} /> Accent Color
               </div>
               <div className="flex items-center gap-3">
-                <input
+                <Input
                   type="color"
                   value={isValidHex(accentDraft) ? accentDraft : accentColor}
                   onChange={(event) => handleAccentInput(event.target.value)}
                   aria-label="Accent color"
-                  className="h-10 w-12 rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)]"
+                  className="h-10 w-12 rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-0"
                 />
                 <Input
                   value={accentDraft}

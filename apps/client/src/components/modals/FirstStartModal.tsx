@@ -1,6 +1,8 @@
 import { useMemo, useRef, useState } from "react";
 import { ArrowRight, Check, Download, Upload } from "lucide-react";
 import { ModalLayout } from "./ModalLayout";
+import { Button } from "../ui/Button";
+import { Input } from "../ui/Input";
 import { computeFingerprint, createIdentity, formatFingerprint, loadIdentity, saveIdentity, type IdentityFile } from "../../auth/identity";
 import { buildBackupPayload, getBackupFilename, parseIdentityBackup } from "../../auth/identityBackup";
 import { storage } from "../../shared/config/storage";
@@ -102,27 +104,28 @@ export function FirstStartModal({ onComplete }: Props) {
         </div>
 
         <label className="text-xs uppercase font-semibold text-[color:var(--color-text-muted)] block">Anzeigename (optional)</label>
-        <input
+        <Input
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           placeholder="z.B. jusbe"
-          className="w-full rounded-[var(--radius-3)] bg-[color:var(--color-surface)]/70 border border-[color:var(--color-border)] p-3 text-text outline-none focus:border-[var(--color-focus)]"
+          className="bg-[color:var(--color-surface)]/70 p-3 text-text"
         />
 
         <div className="flex flex-wrap gap-3">
-          <button
+          <Button
             onClick={handleCreate}
-            className="px-4 py-3 rounded-[var(--radius-3)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-[color:var(--color-on-accent)] transition flex items-center gap-2"
+            variant="primary"
+            className="px-4 py-3 transition flex items-center gap-2"
           >
             <ArrowRight size={18} /> Identity erstellen
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={triggerFileSelect}
-            className="px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition flex items-center gap-2"
+            className="px-4 py-3 bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition flex items-center gap-2"
           >
             <Upload size={18} /> Identity importieren
-          </button>
-          <input
+          </Button>
+          <Input
             ref={fileInputRef}
             type="file"
             accept="application/json"
@@ -160,20 +163,20 @@ export function FirstStartModal({ onComplete }: Props) {
         </div>
 
         <label className="text-xs uppercase font-semibold text-[color:var(--color-text-muted)] block">Passphrase fürs Backup (optional)</label>
-        <input
+        <Input
           value={backupPassphrase}
           onChange={(e) => setBackupPassphrase(e.target.value)}
           placeholder="Leer lassen für unverschlüsselt"
-          className="w-full rounded-[var(--radius-3)] bg-[color:var(--color-surface)]/70 border border-[color:var(--color-border)] p-3 text-text outline-none focus:border-[var(--color-focus)]"
+          className="bg-[color:var(--color-surface)]/70 p-3 text-text"
         />
 
-        <button
+        <Button
           onClick={handleExport}
           disabled={!identity}
-          className="px-4 py-3 rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 disabled:opacity-50 transition flex items-center gap-2"
+          className="px-4 py-3 bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 disabled:opacity-50 transition flex items-center gap-2"
         >
           <Download size={18} /> Backup herunterladen
-        </button>
+        </Button>
 
         <div className="text-xs text-[color:var(--color-text-muted)] bg-[color:var(--color-surface-hover)] border border-[color:var(--color-accent)]/30 rounded-[var(--radius-4)] p-4 flex items-start gap-3">
           <Check className="text-[color:var(--color-accent)] mt-0.5" size={16} />
@@ -182,12 +185,12 @@ export function FirstStartModal({ onComplete }: Props) {
           </div>
         </div>
 
-        <button
+        <Button
           onClick={finish}
-          className="w-full py-3 rounded-[var(--radius-3)] bg-green-600 hover:bg-green-500 transition text-[color:var(--color-on-accent)] font-semibold text-center"
+          className="w-full py-3 bg-green-600 hover:bg-green-500 transition text-[color:var(--color-on-accent)] font-semibold text-center"
         >
           Weiter zum Login
-        </button>
+        </Button>
 
         {error && <div className="text-red-400 text-sm">{error}</div>}
       </div>

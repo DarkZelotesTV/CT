@@ -35,6 +35,8 @@ import { useLogStore } from '../../store/useLogStore';
 import { useSocket } from '../../context/SocketContext';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
 import { Card } from '../ui';
+import { Button, IconButton } from '../ui/Button';
+import { Input } from '../ui/Input';
 
 // Standardbreiten angepasst an das Design (Tree: 280px, Info: 300px)
 const defaultChannelWidth = 280;
@@ -1067,13 +1069,13 @@ export const MainLayout = () => {
           {/* Linker Bereich: Pfad / Icon */}
           <div className="h-path no-drag flex items-center gap-3">
              {isMobileLayout && (
-                <button
+                <IconButton
                   className="icon-button mr-2"
                   onClick={() => setShowMobileNav(true)}
                   ref={mobileNavButtonRef}
                 >
                   <Menu size={18} />
-                </button>
+                </IconButton>
               )}
             {selectedServerId && (
               <>
@@ -1119,15 +1121,17 @@ export const MainLayout = () => {
           <div className="flex items-center gap-2 no-drag">
             {selectedServerId && (
               <>
-                 <button 
+                 <Button 
+                    type="button"
                     className={classNames("pill", {active: showLogPanel})}
                     onClick={() => setShowLogPanel(!showLogPanel)}
                     title={showLogPanel ? t('layout.hideLog') : t('layout.showLog')}
                  >
                     <ChevronDown size={14} className={showLogPanel ? "" : "rotate-180"} />
-                 </button>
+                 </Button>
                 {isMobileLayout && (
-                  <button
+                  <Button
+                    type="button"
                     className={classNames('pill mobile-info-toggle', { active: showRightSidebar })}
                     onClick={() => setShowRightSidebar(!showRightSidebar)}
                     aria-expanded={showRightSidebar}
@@ -1136,7 +1140,7 @@ export const MainLayout = () => {
                   >
                     <Users size={14} />
                     <span className="mobile-info-label">{t('layout.showMembers', { defaultValue: 'Mitglieder' })}</span>
-                  </button>
+                  </Button>
                 )}
               </>
             )}
@@ -1175,23 +1179,23 @@ export const MainLayout = () => {
         <main ref={mainContentRef} id="main-content" tabIndex={-1} className="main-panel no-drag relative flex flex-col">
           {!isMobileLayout && selectedServerId && (
             <>
-              <button
+              <IconButton
                 type="button"
                 className="edge-toggle edge-left"
                 onClick={() => setShowLeftSidebar((prev) => !prev)}
                 aria-label={showLeftSidebar ? t('layout.hideChannels', { defaultValue: 'Kanäle ausblenden' }) : t('layout.showChannels', { defaultValue: 'Kanäle einblenden' })}
               >
                 <ChevronLeft size={16} />
-              </button>
+              </IconButton>
               {selectedServerId && (
-                <button
+                <IconButton
                   type="button"
                   className="edge-toggle edge-right"
                   onClick={() => setShowRightSidebar((prev) => !prev)}
                   aria-label={showRightSidebar ? t('layout.hideMembers', { defaultValue: 'Mitglieder ausblenden' }) : t('layout.showMembers', { defaultValue: 'Mitglieder einblenden' })}
                 >
                   <ChevronRight size={16} />
-                </button>
+                </IconButton>
               )}
             </>
           )}
@@ -1230,22 +1234,26 @@ export const MainLayout = () => {
             {/* Log Header */}
             <div className="log-head h-9 bg-[color:var(--color-surface-hover)] border-b border-[color:var(--color-border)]/70 flex items-center px-3 gap-2">
               {logTabs.map((tab) => (
-                <div
+                <Button
                     key={tab.id}
+                    type="button"
+                    variant="ghost"
                     className={classNames("pill", { active: logFilter === tab.id })}
                     onClick={() => setLogFilter(tab.id as any)}
                 >
                     {tab.label}
-                </div>
+                </Button>
               ))}
               <div style={{flex:1}} className="drag-handle h-full" />
-              <div 
+              <Button 
+                type="button"
+                variant="ghost"
                 className="pill hover:bg-[color:var(--color-surface-hover)] cursor-pointer text-xs px-4 py-1 rounded-full text-[color:var(--color-text-muted)] transition-colors" 
                 onClick={() => clearLogEntries()}
                 title={t('layout.log.clear')}
               >
                 Clear
-              </div>
+              </Button>
             </div>
 
             {/* Log Body */}
@@ -1274,8 +1282,8 @@ export const MainLayout = () => {
                 {/* Log Command Input */}
                 <form className="log-cmd bg-[color:var(--color-surface)]/50 border-t border-[color:var(--color-border)]/70 p-2 px-4 flex items-center gap-2" onSubmit={handleLogCommand}>
                   <span className="text-emerald-500 font-bold">&gt;</span>
-                  <input
-                    className="bg-transparent border-none text-text w-full font-mono text-[13px] focus:outline-none placeholder:text-[color:var(--color-text-muted)]"
+                  <Input
+                    className="bg-transparent border-0 text-text w-full font-mono text-[13px] placeholder:text-[color:var(--color-text-muted)]"
                     value={logInput}
                     onChange={(event) => setLogInput(event.target.value)}
                     placeholder={t('layout.log.commandPlaceholder', { defaultValue: 'Befehl eingeben...' }) ?? ''}
