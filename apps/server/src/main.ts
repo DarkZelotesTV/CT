@@ -9,6 +9,7 @@ import { sequelize } from './config/database';
 import path from 'path';
 import fs from 'fs';
 import { UPLOADS_DIR } from './utils/paths';
+import { runTlsDiagnostics, type TlsDiagnosticsStatus } from './utils/tlsDiagnostics';
 
 // Routen Importe
 import authRoutes from './routes/auth';
@@ -66,6 +67,7 @@ const TLS_DHPARAM_PATH = process.env.TLS_DHPARAM_PATH;
 const TLS_CIPHERS = process.env.TLS_CIPHERS;
 const TLS_MIN_VERSION = process.env.TLS_MIN_VERSION || 'TLSv1.2';
 const TLS_REDIRECT_HTTP = process.env.TLS_REDIRECT_HTTP === '1';
+const ALLOW_EXPIRED_TLS = process.env.ALLOW_EXPIRED_TLS === '1';
 const PUBLIC_ORIGIN = process.env.PUBLIC_ORIGIN?.trim();
 const tlsHstsMaxAge = (() => {
   const configuredMaxAge = Number.parseInt(process.env.TLS_HSTS_MAX_AGE || '15552000', 10);
@@ -196,6 +198,9 @@ const loadTlsCredentials = (): TlsCredentials | null => {
 
 const app = express();
 const tlsCredentials = loadTlsCredentials();
+const tlsDiagnostics: TlsDiagnosticsStatus = tlsCredentials
+  ? runTlsDiagnostics({ cert: tlsCredentials.cert, certPath: tlsCredentials.certPath }, ALLOW_EXPIRED_TLS)
+  : { enabled: false, expiresAt: null, daysLeft: null };
 const httpsServerOptions: HttpsServerOptions | null = tlsCredentials
   ? {
     key: tlsCredentials.key,
@@ -452,6 +457,9 @@ app.use(express.json());
 const uploadRoot = UPLOADS_DIR;
 fs.promises.mkdir(uploadRoot, { recursive: true }).catch(() => {});
 app.use('/uploads', express.static(uploadRoot));
+app.get('/api/health', (_req, res) => {
+  res.json({ status: 'ok', tls: tlsDiagnostics });
+});
 
 // ==========================================
 // 2. SOCKET.IO SETUP
