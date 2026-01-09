@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { getModalRoot } from './modalRoot';
 import { useTopBar } from '../window/TopBarContext';
-import { Icon } from '../ui';
+import { Card, Icon } from '../ui';
 
 interface ModalLayoutProps {
   title: string;
@@ -130,10 +130,11 @@ export const ModalLayout = ({
         if (e.target === e.currentTarget) onOverlayClick?.();
       }}
     >
-      <div
+      <Card
         ref={modalRef}
         tabIndex={-1}
-        className="ct-modal glass animate-in fade-in zoom-in-95 duration-200"
+        variant="glass"
+        className="ct-modal animate-in fade-in zoom-in-95 duration-200"
       >
         {/* Header */}
         <div className="ct-modal-header">
@@ -160,7 +161,7 @@ export const ModalLayout = ({
             {footer}
           </div>
         )}
-      </div>
+      </Card>
     </div>,
     target
   );

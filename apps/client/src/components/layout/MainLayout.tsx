@@ -34,6 +34,7 @@ import { useDesktopNotifications } from '../../hooks/useDesktopNotifications';
 import { useLogStore } from '../../store/useLogStore';
 import { useSocket } from '../../context/SocketContext';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
+import { Card } from '../ui';
 
 // Standardbreiten angepasst an das Design (Tree: 280px, Info: 300px)
 const defaultChannelWidth = 280;
@@ -801,10 +802,10 @@ export const MainLayout = () => {
     if (activeChannel?.type === 'text') {
       return (
         <div className="flex-1 flex items-center justify-center relative h-full">
-          <div className="text-center p-10 bg-white/[0.02] rounded-[var(--radius-5)] border border-[color:var(--color-border)]/70 backdrop-blur-sm">
+          <Card variant="glass" className="text-center p-10">
             <h2 className="text-xl font-bold text-text mb-2">{t('layout.textChannelSelected')}</h2>
             <p className="text-[color:var(--color-text-muted)] text-sm max-w-md">{t('layout.textChannelUnsupported')}</p>
-          </div>
+          </Card>
         </div>
       );
     }
@@ -831,10 +832,10 @@ export const MainLayout = () => {
     }
     return (
       <div className="flex-1 flex items-center justify-center relative h-full">
-        <div className="text-center p-12 bg-white/[0.02] rounded-[var(--radius-5)] border border-[color:var(--color-border)]/70 backdrop-blur-sm">
+        <Card variant="glass" className="text-center p-10">
           <h2 className="text-2xl font-bold text-text mb-2">{t('layout.stageAreaTitle')}</h2>
           <p className="text-[color:var(--color-text-muted)] text-sm">{t('layout.stageAreaDescription')}</p>
-        </div>
+        </Card>
       </div>
     );
   };

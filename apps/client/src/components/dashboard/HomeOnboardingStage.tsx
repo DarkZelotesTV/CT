@@ -2,7 +2,7 @@ import { ArrowRight, Compass, Home, Layers, MessageSquare, PlusCircle, Server, S
 import { useSettings } from '../../context/SettingsContext';
 import { DecorationLayer } from '../layout/DecorationLayer';
 import { Button } from '../ui/Button';
-import { Icon } from '../ui';
+import { Card, Icon } from '../ui';
 
 interface HomeOnboardingStageProps {
   onCreateServer: () => void;
@@ -135,21 +135,25 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
 
           <div className="grid min-[600px]:grid-cols-3 gap-3">
             {steps.map(({ title, body, icon: StepIcon }) => (
-              <div
+              <Card
                 key={title}
-                className="bg-surface-2 hover:bg-surface-3 border border-[color:var(--color-border)]/70 rounded-2xl p-4 backdrop-blur-sm h-full flex flex-col gap-3 transition-colors"
+                variant="surface"
+                className="bg-surface-2 hover:bg-surface-3 p-4 h-full flex flex-col gap-3 transition-colors"
               >
                 <div className="w-9 h-9 rounded-xl bg-surface-3 border border-[color:var(--color-border)] text-[color:var(--color-text)] flex items-center justify-center">
                   <Icon icon={StepIcon} size="md" className="text-inherit" hoverTone="none" />
                 </div>
                 <div className="text-[length:var(--font-size-sm)] font-semibold text-text leading-snug">{title}</div>
                 <p className="text-[length:var(--font-size-xs)] text-text-muted leading-[var(--line-height-base)] flex-1">{body}</p>
-              </div>
+              </Card>
             ))}
           </div>
         </div>
 
-        <div className="col-span-12 min-[960px]:col-span-5 rounded-2xl border border-[color:var(--color-border)] bg-surface-2 hover:bg-surface-3 p-4 shadow-2xl flex flex-col gap-4 transition-colors">
+        <Card
+          variant="elevated"
+          className="col-span-12 min-[960px]:col-span-5 bg-surface-2 hover:bg-surface-3 p-4 flex flex-col gap-4 transition-colors"
+        >
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-2xl bg-surface-3 border border-[color:var(--color-border)] flex items-center justify-center text-[color:var(--color-text)]">
@@ -202,7 +206,7 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
               );
             })}
           </div>
-          <div className="rounded-2xl border border-[color:var(--color-border)] bg-surface-3/60 p-4">
+          <Card variant="surface" className="bg-surface-3/60 p-4">
             <div className="text-[length:var(--font-size-xs)] leading-[var(--line-height-sm)] font-semibold uppercase tracking-wide text-text-muted mb-2">
               Bluesky
             </div>
@@ -212,8 +216,8 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
               className="w-full h-56 rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)]"
               loading="lazy"
             />
-          </div>
-        </div>
+          </Card>
+        </Card>
       </div>
     </div>
   );
