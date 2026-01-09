@@ -17,6 +17,8 @@ export const CreateServerModal = ({ onClose, onCreated }: CreateServerModalProps
   const [iconFile, setIconFile] = useState<File | null>(null);
   const [iconPreview, setIconPreview] = useState<string | null>(null);
   const [iconError, setIconError] = useState<string | null>(null);
+  const labelClassName = 'text-xs font-semibold uppercase tracking-wide text-[color:var(--color-text-muted)]';
+  const helperClassName = 'text-xs text-[color:var(--color-text-muted)]';
 
   const handleIconChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -77,7 +79,7 @@ export const CreateServerModal = ({ onClose, onCreated }: CreateServerModalProps
       description="Erschaffe einen neuen Ort für deine Community."
       onClose={onClose}
       footer={
-        <p className="text-[11px] text-[color:var(--color-text-muted)]">
+        <p className={helperClassName}>
           Durch das Erstellen stimmst du den <span className="text-[color:var(--color-accent)] cursor-pointer hover:underline">Community Guidelines</span> zu.
         </p>
       }
@@ -105,14 +107,14 @@ export const CreateServerModal = ({ onClose, onCreated }: CreateServerModalProps
             {iconFile && (
               <Button
                 type="button"
-                variant="ghost"
+                variant="danger"
                 size="sm"
                 onClick={() => {
                   setIconFile(null);
                   setIconPreview(null);
                   setIconError(null);
                 }}
-                className="inline-flex items-center gap-1 text-red-300 hover:text-red-200"
+                className="inline-flex items-center gap-1"
               >
                 <Icon icon={Trash2} size="sm" tone="default" className="text-inherit" />
                 Entfernen
@@ -128,14 +130,15 @@ export const CreateServerModal = ({ onClose, onCreated }: CreateServerModalProps
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs font-bold text-[color:var(--color-text-muted)] uppercase ml-1">Server Name</label>
+          <label className={labelClassName}>Server Name</label>
           <Input
             autoFocus
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Mein epischer Server"
-            className="bg-[color:var(--color-surface)]/60 text-text p-3 placeholder:text-[color:var(--color-text-muted)] font-medium"
+            inputSize="lg"
+            className="font-medium"
           />
         </div>
 

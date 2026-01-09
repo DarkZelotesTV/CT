@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, ty
 import { AlertTriangle, Image as ImageIcon, Loader2, Shield, Trash2 } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { ModalLayout } from './ModalLayout';
-import { ErrorCard, Icon, Input, Select, Spinner } from '../ui';
+import { ErrorCard, Icon, Input, Select, Spinner, Toggle } from '../ui';
 import { Button } from '../ui/Button';
 import { getServerUrl } from '../../utils/apiConfig';
 
@@ -49,6 +49,8 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
   const [actionError, setActionError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [dragAndDropEnabled, setDragAndDropEnabled] = useState(true);
+  const labelClassName = 'text-xs font-semibold uppercase tracking-wide text-[color:var(--color-text-muted)]';
+  const helperClassName = 'text-xs text-[color:var(--color-text-muted)]';
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -249,22 +251,25 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
             </div>
             <div className="flex-1 space-y-3 min-w-[240px]">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-[color:var(--color-text-muted)] uppercase ml-1">Server Name</label>
+                <label className={labelClassName}>Server Name</label>
                 <Input
                   autoFocus
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Mein Server"
-                  className="bg-[color:var(--color-surface)]/60 text-text p-3 placeholder:text-[color:var(--color-text-muted)] font-medium"
+                  inputSize="lg"
+                  className="font-medium"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold text-[color:var(--color-text-muted)] uppercase ml-1">Server Icon</label>
+                <label className={labelClassName}>Server Icon</label>
                 <div className="flex flex-wrap gap-2 items-center">
                   <Button
                     type="button"
-                    className="cursor-pointer inline-flex items-center gap-2 bg-[color:var(--color-surface-hover)] border border-[color:var(--color-border)] px-3 py-2 rounded-[var(--radius-3)] text-sm font-semibold hover:border-[var(--color-accent-hover)] hover:text-[var(--color-accent-hover)] transition-colors"
+                    variant="secondary"
+                    size="sm"
+                    className="inline-flex items-center gap-2 font-semibold"
                     onClick={() => iconInputRef.current?.click()}
                   >
                     <Icon icon={ImageIcon} size="md" tone="default" className="text-inherit" />
@@ -277,7 +282,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
                     disabled={isSaving || isUploadingIcon || (!iconUrl && !iconFile)}
                     variant="ghost"
                     size="sm"
-                    className="inline-flex items-center gap-2 px-3 py-2 rounded-[var(--radius-3)] text-sm font-semibold border border-[color:var(--color-border)] text-text-muted hover:text-text hover:border-red-400 hover:text-red-200 disabled:opacity-50"
+                    className="inline-flex items-center gap-2 font-semibold"
                   >
                     <Icon icon={Trash2} size="md" tone="default" className="text-inherit" />
                     Icon entfernen
@@ -288,7 +293,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] text-[color:var(--color-text-muted)]">
+                <p className={helperClassName}>
                   Unterstützt PNG, JPG oder WebP bis 2 MB. Die Datei wird direkt auf den Server hochgeladen und sicher gespeichert.
                 </p>
                 {iconError && (
@@ -299,7 +304,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-[color:var(--color-text-muted)] uppercase ml-1 flex items-center gap-2">
+            <label className={`flex items-center gap-2 ${labelClassName}`}>
               <Icon icon={Shield} size="sm" tone="muted" className="text-inherit" />
               Fallback-Kanal
             </label>
@@ -311,7 +316,8 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
               <Select
                 value={fallbackChannelId ?? ''}
                 onChange={(e) => setFallbackChannelId(e.target.value ? Number(e.target.value) : null)}
-                className="w-full bg-[color:var(--color-surface)]/60 text-text p-3"
+                selectSize="lg"
+                className="w-full bg-[color:var(--color-surface)]/60"
               >
                 <option value="">Kein Fallback</option>
                 {channelOptions.map((channel) => (
@@ -321,7 +327,7 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
                 ))}
               </Select>
             )}
-            <p className="text-[11px] text-[color:var(--color-text-muted)]">
+            <p className={helperClassName}>
               Der Fallback-Kanal wird geöffnet, wenn kein spezifischer Kanal ausgewählt ist.
             </p>
           </div>
@@ -329,29 +335,16 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
           <div className="rounded-[var(--radius-4)] border border-[color:var(--color-border)] bg-white/[0.02] p-4 flex items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="text-sm font-semibold text-text">Drag & Drop zum Sortieren</div>
-              <p className="text-xs text-[color:var(--color-text-muted)]">
+              <p className={helperClassName}>
                 Wenn deaktiviert, können nur Administratoren die Reihenfolge von Kategorien und Kanälen anpassen.
               </p>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer select-none">
-              <Input
-                type="checkbox"
-                className="sr-only"
-                checked={dragAndDropEnabled}
-                onChange={(e) => setDragAndDropEnabled(e.target.checked)}
-              />
-              <span
-                className={`h-6 w-11 rounded-full transition-colors ${
-                  dragAndDropEnabled ? 'bg-[var(--color-accent)]' : 'bg-[color:var(--color-surface-hover)]/80'
-                }`}
-              >
-                <span
-                  className={`absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${
-                    dragAndDropEnabled ? 'translate-x-5' : 'translate-x-0'
-                  }`}
-                />
-              </span>
-            </label>
+            <Toggle
+              size="lg"
+              checked={dragAndDropEnabled}
+              onChange={(e) => setDragAndDropEnabled(e.target.checked)}
+              aria-label="Drag & Drop zum Sortieren aktivieren"
+            />
           </div>
 
           {actionError && (
@@ -376,7 +369,9 @@ export const ServerSettingsModal = ({ serverId, onClose, onUpdated, onDeleted }:
               type="button"
               onClick={handleDelete}
               disabled={isDeleting}
-              className="inline-flex items-center gap-2 bg-red-600/90 hover:bg-red-600 text-[color:var(--color-on-accent)] px-4 py-2 rounded-[var(--radius-3)] font-semibold shadow-lg shadow-red-900/30 disabled:opacity-60"
+              variant="danger"
+              size="md"
+              className="inline-flex items-center gap-2 font-semibold shadow-lg disabled:opacity-60"
             >
               {isDeleting && <Icon icon={Loader2} size="md" tone="default" className="text-inherit animate-spin" />}
               Server löschen

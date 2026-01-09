@@ -20,6 +20,8 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
   const [error, setError] = useState<string | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const replaceInputRef = useRef<HTMLInputElement | null>(null);
+  const labelClassName = 'text-xs font-semibold uppercase tracking-wide text-[color:var(--color-text-muted)]';
+  const helperClassName = 'text-xs text-[color:var(--color-text-muted)]';
 
   const fingerprint = useMemo(() => (identity ? computeFingerprint(identity) : null), [identity]);
 
@@ -96,18 +98,18 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
       bodyClassName="p-6 space-y-4"
     >
       <div>
-        <label className="text-xs uppercase font-bold text-[color:var(--color-text-muted)] block mb-1">Anzeigename (optional)</label>
+        <label className={`block mb-1 ${labelClassName}`}>Anzeigename (optional)</label>
         <Input
           type="text"
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           placeholder="z.B. jusbe"
-          className="bg-[color:var(--color-surface)]/70 text-text p-3"
+          inputSize="lg"
         />
         <Button
           variant="ghost"
           size="sm"
-          className="mt-2 text-sm text-[color:var(--color-accent)] hover:text-[color:var(--color-accent-hover)]"
+          className="mt-2 text-xs text-[color:var(--color-accent)] hover:text-[color:var(--color-accent-hover)]"
           onClick={handleSaveDisplayName}
           disabled={!identity}
         >
@@ -119,7 +121,8 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Button
             variant="primary"
-            className="px-4 py-3 font-medium"
+            size="lg"
+            className="font-semibold"
             onClick={handleCreate}
           >
             Identity erstellen
@@ -128,7 +131,9 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
           <div>
             <Button
               type="button"
-              className="w-full px-4 py-3 bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-text font-medium"
+              variant="secondary"
+              size="lg"
+              className="w-full font-semibold"
               onClick={() => importInputRef.current?.click()}
             >
               <Icon icon={Upload} size="lg" tone="default" className="text-inherit" />
@@ -166,20 +171,22 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
           </div>
 
           <div>
-            <label className="text-xs uppercase font-bold text-[color:var(--color-text-muted)] block mb-1">Backup-Passphrase (optional)</label>
+            <label className={`block mb-1 ${labelClassName}`}>Backup-Passphrase (optional)</label>
             <Input
               type="password"
               value={backupPassphrase}
               onChange={(e) => setBackupPassphrase(e.target.value)}
               placeholder="Leer lassen für Klartext-Export"
-              className="bg-[color:var(--color-surface)]/70 text-text p-3"
+              inputSize="lg"
             />
-            <p className="text-[11px] text-[color:var(--color-text-muted)] mt-1">Wenn gesetzt, wird dein Backup AES-GCM verschlüsselt (PBKDF2).</p>
+            <p className={`${helperClassName} mt-1`}>Wenn gesetzt, wird dein Backup AES-GCM verschlüsselt (PBKDF2).</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Button
-              className="px-4 py-3 bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-text font-medium flex items-center justify-center gap-2"
+              variant="secondary"
+              size="lg"
+              className="font-semibold flex items-center justify-center gap-2"
               onClick={handleExport}
             >
               <Icon icon={Download} size="lg" tone="default" className="text-inherit" />
@@ -189,7 +196,9 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
             <div>
               <Button
                 type="button"
-                className="w-full px-4 py-3 bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition text-text font-medium"
+                variant="secondary"
+                size="lg"
+                className="w-full font-semibold"
                 onClick={() => replaceInputRef.current?.click()}
               >
                 <Icon icon={Upload} size="lg" tone="default" className="text-inherit" />
@@ -208,7 +217,9 @@ export const IdentityModal = ({ onClose, onIdentityChanged }: IdentityModalProps
             </div>
 
             <Button
-              className="px-4 py-3 bg-red-500/20 hover:bg-red-500/30 transition text-red-100 font-medium flex items-center justify-center gap-2 sm:col-span-2"
+              variant="danger"
+              size="lg"
+              className="flex items-center justify-center gap-2 sm:col-span-2"
               onClick={handleReset}
             >
               <Icon icon={ShieldAlert} size="lg" tone="default" className="text-inherit" />

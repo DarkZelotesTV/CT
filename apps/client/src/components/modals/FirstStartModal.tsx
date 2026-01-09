@@ -19,6 +19,8 @@ export function FirstStartModal({ onComplete }: Props) {
   const [step, setStep] = useState<"identity" | "backup">(identity ? "backup" : "identity");
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const labelClassName = "text-xs font-semibold uppercase tracking-wide text-[color:var(--color-text-muted)]";
+  const helperClassName = "text-xs text-[color:var(--color-text-muted)]";
 
   const fp = useMemo(() => (identity ? computeFingerprint(identity) : null), [identity]);
 
@@ -104,25 +106,28 @@ export function FirstStartModal({ onComplete }: Props) {
           </div>
         </div>
 
-        <label className="text-xs uppercase font-semibold text-[color:var(--color-text-muted)] block">Anzeigename (optional)</label>
+        <label className={`block ${labelClassName}`}>Anzeigename (optional)</label>
         <Input
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           placeholder="z.B. jusbe"
-          className="bg-[color:var(--color-surface)]/70 p-3 text-text"
+          inputSize="lg"
         />
 
         <div className="flex flex-wrap gap-3">
           <Button
             onClick={handleCreate}
             variant="primary"
-            className="px-4 py-3 transition flex items-center gap-2"
+            size="lg"
+            className="flex items-center gap-2"
           >
             <Icon icon={ArrowRight} size="lg" tone="default" className="text-inherit" /> Identity erstellen
           </Button>
           <Button
             onClick={triggerFileSelect}
-            className="px-4 py-3 bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 transition flex items-center gap-2"
+            variant="secondary"
+            size="lg"
+            className="flex items-center gap-2"
           >
             <Icon icon={Upload} size="lg" tone="default" className="text-inherit" /> Identity importieren
           </Button>
@@ -144,9 +149,9 @@ export function FirstStartModal({ onComplete }: Props) {
           {identity ? (
             <div className="mt-2 font-mono break-all text-[color:var(--color-accent)]">{formatFingerprint(fp!)}</div>
           ) : (
-            <div className="mt-2 text-yellow-300">Noch keine Identity vorhanden.</div>
+            <div className="mt-2 text-[color:var(--color-text-muted)]">Noch keine Identity vorhanden.</div>
           )}
-          <p className="mt-2 text-[color:var(--color-text-muted)] text-xs">
+          <p className={`mt-2 ${helperClassName}`}>
             Identitäten bleiben lokal. Du kannst sie jederzeit neu exportieren oder später in den Einstellungen verwalten.
           </p>
         </div>
@@ -163,18 +168,20 @@ export function FirstStartModal({ onComplete }: Props) {
           </div>
         </div>
 
-        <label className="text-xs uppercase font-semibold text-[color:var(--color-text-muted)] block">Passphrase fürs Backup (optional)</label>
+        <label className={`block ${labelClassName}`}>Passphrase fürs Backup (optional)</label>
         <Input
           value={backupPassphrase}
           onChange={(e) => setBackupPassphrase(e.target.value)}
           placeholder="Leer lassen für unverschlüsselt"
-          className="bg-[color:var(--color-surface)]/70 p-3 text-text"
+          inputSize="lg"
         />
 
         <Button
           onClick={handleExport}
           disabled={!identity}
-          className="px-4 py-3 bg-[color:var(--color-surface-hover)]/80 hover:bg-[color:var(--color-surface-hover)]/90 disabled:opacity-50 transition flex items-center gap-2"
+          variant="secondary"
+          size="lg"
+          className="flex items-center gap-2"
         >
           <Icon icon={Download} size="lg" tone="default" className="text-inherit" /> Backup herunterladen
         </Button>
@@ -188,7 +195,9 @@ export function FirstStartModal({ onComplete }: Props) {
 
         <Button
           onClick={finish}
-          className="w-full py-3 bg-green-600 hover:bg-green-500 transition text-[color:var(--color-on-accent)] font-semibold text-center"
+          variant="primary"
+          size="lg"
+          className="w-full font-semibold"
         >
           Weiter zum Login
         </Button>

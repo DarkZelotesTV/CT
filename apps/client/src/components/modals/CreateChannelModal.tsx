@@ -31,6 +31,7 @@ export const CreateChannelModal = ({
   const [joinPassword, setJoinPassword] = useState('');
 
   const palette = useMemo(() => resolveServerTheme(theme ?? defaultServerTheme), [theme]);
+  const labelClassName = 'text-xs font-semibold uppercase tracking-wide text-[color:var(--color-text-muted)]';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,7 +65,7 @@ export const CreateChannelModal = ({
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Typ Auswahl - Responsive Grid: Mobile 1 Spalte, Tablet+ 2 Spalten */}
         <div className="space-y-2">
-          <label className="flex items-center gap-2 text-xs font-bold uppercase text-[color:var(--color-text-muted)]">
+          <label className={`flex items-center gap-2 ${labelClassName}`}>
             Kanaltyp
             <Badge variant="accent">Neu</Badge>
           </label>
@@ -85,7 +86,7 @@ export const CreateChannelModal = ({
                   type="button"
                   onClick={() => setType(key)}
                   className={classNames(
-                    'flex items-center p-3 rounded-[var(--radius-3)] cursor-pointer border transition-all bg-[color:var(--color-surface-hover)] border-[color:var(--color-border)] hover:border-[var(--color-accent-hover)] hover:bg-white/[0.08] text-text',
+                    'flex items-center p-3 rounded-[var(--radius-3)] cursor-pointer border transition-all bg-[color:var(--color-surface-hover)] border-[color:var(--color-border)] hover:border-[var(--color-accent-hover)] hover:bg-[color:var(--color-surface-hover)] text-text',
                     isActive
                       && 'border-[var(--color-accent)] bg-[color:var(--color-accent)]/10 shadow-[0_0_15px_color-mix(in_srgb,var(--color-accent)_20%,transparent)]'
                   )}
@@ -114,7 +115,7 @@ export const CreateChannelModal = ({
 
         {/* Name Input */}
         <div>
-          <label className="text-xs font-bold uppercase mb-2 block text-[color:var(--color-text-muted)]">Kanalname</label>
+          <label className={`mb-2 block ${labelClassName}`}>Kanalname</label>
           <div className="flex items-center px-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 focus-within:border-[var(--color-focus)] focus-within:ring-2 focus-within:ring-[color:var(--color-focus)] focus-within:ring-offset-2 focus-within:ring-offset-background text-text transition-colors">
             {type === 'text' ? (
               <Icon icon={Hash} size="md" tone="muted" className="mr-2" />
@@ -135,7 +136,7 @@ export const CreateChannelModal = ({
               value={name}
               onChange={(e) => setName(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
               placeholder="neuer-kanal"
-              className="w-full border-0 bg-transparent py-2.5 font-medium no-drag placeholder:text-[color:var(--color-text-muted)] focus-visible:ring-0 focus-visible:border-transparent focus-visible:ring-offset-0"
+              className="w-full border-0 bg-transparent py-2.5 font-medium no-drag focus-visible:ring-0 focus-visible:border-transparent focus-visible:ring-offset-0"
             />
           </div>
         </div>
@@ -143,23 +144,23 @@ export const CreateChannelModal = ({
         {/* Passwort Felder - Responsive Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-bold uppercase mb-2 block text-[color:var(--color-text-muted)]">Standard Passwort</label>
+            <label className={`mb-2 block ${labelClassName}`}>Standard Passwort</label>
             <Input
               type="text"
               value={defaultPassword}
               onChange={(e) => setDefaultPassword(e.target.value)}
-              className="bg-[color:var(--color-surface)]/60 text-text"
+              inputSize="md"
               placeholder={type === 'spacer' ? 'Nicht nötig' : 'Optional'}
               disabled={type === 'spacer'}
             />
           </div>
           <div>
-            <label className="text-xs font-bold uppercase mb-2 block text-[color:var(--color-text-muted)]">Beitritts Passwort</label>
+            <label className={`mb-2 block ${labelClassName}`}>Beitritts Passwort</label>
             <Input
               type="text"
               value={joinPassword}
               onChange={(e) => setJoinPassword(e.target.value)}
-              className="bg-[color:var(--color-surface)]/60 text-text"
+              inputSize="md"
               placeholder={type === 'spacer' ? 'Nicht nötig' : 'Optional'}
               disabled={type === 'spacer'}
             />
@@ -172,7 +173,8 @@ export const CreateChannelModal = ({
             type="button"
             onClick={onClose}
             variant="ghost"
-            className="text-sm font-medium px-4 py-2 rounded hover:bg-[color:var(--color-surface-hover)] transition-colors text-[color:var(--color-text)] hover:text-text"
+            size="sm"
+            className="font-medium"
           >
             Abbrechen
           </Button>
@@ -180,7 +182,8 @@ export const CreateChannelModal = ({
             type="submit"
             disabled={loading || !name}
             variant="primary"
-            className="px-6 py-2 font-bold shadow-lg disabled:opacity-50 flex items-center gap-2 transition-all active:scale-95 text-sm"
+            size="md"
+            className="font-semibold shadow-lg disabled:opacity-50 flex items-center gap-2 transition-all active:scale-95"
             style={
               {
                 '--color-accent': palette.accent,
