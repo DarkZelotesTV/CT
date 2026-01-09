@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, MessageSquare, MoreVertical, Search, UserPlus, Check, X, Loader2, Ban } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { useSocket } from '../../context/SocketContext';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
-import { Button, StatusBadge } from '../ui';
+import { Button, Popover, PopoverContent, PopoverTrigger, StatusBadge } from '../ui';
 
 interface FriendListStageProps {
   onBackToHome?: () => void;
@@ -41,6 +41,8 @@ export const FriendListStage = ({ onBackToHome }: FriendListStageProps) => {
   // Für das Hinzufügen
   const [addUsername, setAddUsername] = useState('');
   const [addStatus, setAddStatus] = useState('');
+  const [isAddPopoverOpen, setIsAddPopoverOpen] = useState(false);
+  const addInputRef = useRef<HTMLInputElement | null>(null);
 
   // Daten laden
   const fetchFriends = async () => {
@@ -173,22 +175,29 @@ export const FriendListStage = ({ onBackToHome }: FriendListStageProps) => {
            <button onClick={() => setActiveTab('pending')} className={`hover:bg-surface-3 px-2 py-1 rounded text-sm font-medium ${activeTab === 'pending' ? 'text-text bg-surface-3' : 'text-[color:var(--color-text-muted)]'}`}>Ausstehend</button>
            <button onClick={() => setActiveTab('blocked')} className={`hover:bg-surface-3 px-2 py-1 rounded text-sm font-medium ${activeTab === 'blocked' ? 'text-text bg-surface-3' : 'text-[color:var(--color-text-muted)]'}`}>Blockiert</button>
 
-           <div className="ml-auto relative group">
-             <Button variant="success" size="sm">
-               <UserPlus size={16} /> Freund hinzufügen
-             </Button>
-             {/* Kleines Popover zum Adden */}
-             <div className="absolute right-0 top-full mt-2 w-64 bg-surface-2 border border-border p-3 rounded-lg shadow-xl invisible group-focus-within:visible opacity-0 group-focus-within:opacity-100 transition-all z-50">
-                <form onSubmit={handleAddFriend}>
-                  <input
-                    className="w-full bg-surface/60 border border-border rounded p-2 text-text text-sm outline-none focus:border-[color:var(--color-focus)]"
-                    placeholder="Nutzername eingeben..."
-                    value={addUsername}
-                    onChange={e => setAddUsername(e.target.value)}
-                  />
-                  <div className="text-[10px] mt-1 text-[color:var(--color-text-muted)] text-right">{addStatus}</div>
-                </form>
-             </div>
+           <div className="ml-auto relative">
+             <Popover open={isAddPopoverOpen} onOpenChange={setIsAddPopoverOpen}>
+               <PopoverTrigger>
+                 <Button variant="success" size="sm">
+                   <UserPlus size={16} /> Freund hinzufügen
+                 </Button>
+               </PopoverTrigger>
+               <PopoverContent
+                 className="absolute right-0 top-full mt-2 w-64 bg-surface-2 border border-border p-3 rounded-lg shadow-xl z-50"
+                 initialFocusRef={addInputRef}
+               >
+                 <form onSubmit={handleAddFriend}>
+                   <input
+                     ref={addInputRef}
+                     className="w-full bg-surface/60 border border-border rounded p-2 text-text text-sm outline-none focus:border-[color:var(--color-focus)]"
+                     placeholder="Nutzername eingeben..."
+                     value={addUsername}
+                     onChange={e => setAddUsername(e.target.value)}
+                   />
+                   <div className="text-[10px] mt-1 text-[color:var(--color-text-muted)] text-right">{addStatus}</div>
+                 </form>
+               </PopoverContent>
+             </Popover>
            </div>
         </div>
       </div>
