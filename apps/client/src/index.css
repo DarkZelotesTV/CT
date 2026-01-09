@@ -181,6 +181,10 @@
   --color-text-danger-muted: color-mix(in srgb, var(--status-dnd) 60%, var(--color-text-muted) 40%);
   --color-text-muted-strong: color-mix(in srgb, var(--color-text-muted) 85%, var(--color-text) 15%);
   --layout-border: var(--border-glass);
+
+  --color-scrollbar-track: var(--color-surface);
+  --color-scrollbar-thumb: var(--color-text-muted);
+  --color-scrollbar-thumb-hover: var(--color-text);
 }
 
 @layer base {
@@ -191,35 +195,9 @@
   }
 
   ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--color-text-muted); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--color-text); }
-}
-
-/* Custom themed scrollbar opt-in */
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-text-muted) var(--color-surface);
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: var(--color-text-muted);
-  border-radius: 999px;
-  border: 2px solid var(--color-surface);
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-ghost);
+  ::-webkit-scrollbar-track { background: var(--color-scrollbar-track); }
+  ::-webkit-scrollbar-thumb { background: var(--color-scrollbar-thumb); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-scrollbar-thumb-hover); }
 }
 
 /* Glass Utility Class */
@@ -238,7 +216,7 @@
 .scroll-y {
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: var(--color-text-muted) transparent;
+  scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
 }
 
 .no-scrollbar {
