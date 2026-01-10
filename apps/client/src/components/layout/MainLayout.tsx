@@ -10,6 +10,7 @@ import { ChannelSidebar } from './ChannelSidebar';
 import { TitleBar } from '../window/TitleBar';
 import { TopBarProvider } from '../window/TopBarContext';
 import { DecorationLayer } from './DecorationLayer';
+import { SidebarResizer } from './SidebarResizer';
 import './LayoutShell.css';
 
 // Web & Voice Views
@@ -144,8 +145,6 @@ export const MainLayout = () => {
   // Resizable Widths (Desktop)
   const [leftSidebarWidth, setLeftSidebarWidth] = useState(() => storage.get('layoutLeftWidth') ?? defaultChannelWidth);
   const [rightSidebarWidth, setRightSidebarWidth] = useState(() => storage.get('layoutRightWidth') ?? defaultMemberWidth);
-  const [isDraggingLeft, setIsDraggingLeft] = useState(false);
-  const [isDraggingRight, setIsDraggingRight] = useState(false);
   const [showLeftSidebar, setShowLeftSidebar] = useState(true);
   const [showLogPanel, setShowLogPanel] = useState(true);
   const [logInput, setLogInput] = useState('');
@@ -158,7 +157,6 @@ export const MainLayout = () => {
   const mobileNavButtonRef = useRef<HTMLButtonElement>(null);
   const mainContentRef = useRef<HTMLDivElement>(null);
   const logBodyRef = useRef<HTMLDivElement>(null);
-  const dragState = useRef<{ startX: number; startWidth: number }>({ startX: 0, startWidth: 0 });
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const lastSocketConnectedRef = useRef<boolean | null>(null);
@@ -747,44 +745,6 @@ export const MainLayout = () => {
 
   useDesktopNotifications(handleNotificationNavigate);
 
-  // --- Dragging Handlers ---
-  const startDragLeft = (event: React.MouseEvent) => {
-    setIsDraggingLeft(true);
-    dragState.current = { startX: event.clientX, startWidth: leftSidebarWidth };
-  };
-
-  const startDragRight = (event: React.MouseEvent) => {
-    setIsDraggingRight(true);
-    dragState.current = { startX: event.clientX, startWidth: rightSidebarWidth };
-  };
-
-  useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      if (isDraggingLeft) {
-        const delta = event.clientX - dragState.current.startX;
-        setLeftSidebarWidth(clampSidebarWidth(dragState.current.startWidth + delta));
-      }
-      if (isDraggingRight) {
-        const delta = event.clientX - dragState.current.startX;
-        setRightSidebarWidth(clampSidebarWidth(dragState.current.startWidth - delta));
-      }
-    };
-    const stopDragging = () => {
-      setIsDraggingLeft(false);
-      setIsDraggingRight(false);
-    };
-    if (isDraggingLeft || isDraggingRight) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', stopDragging);
-      document.body.classList.add('select-none');
-    }
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', stopDragging);
-      document.body.classList.remove('select-none');
-    };
-  }, [isDraggingLeft, isDraggingRight, clampSidebarWidth]);
-
   // --- Render Content Logic ---
   const renderContent = () => {
     if (!selectedServerId) {
@@ -1181,7 +1141,16 @@ export const MainLayout = () => {
                 onResolveFallback={handleResolveFallback}
                 refreshKey={serverRefreshKey}
               />
-              {!isMobileLayout && showLeftSidebar && <div className="absolute top-0 right-0 w-1 h-full cursor-col-resize z-20 hover:bg-[color:var(--color-surface-hover)]/80" onMouseDown={startDragLeft} />}
+              {!isMobileLayout && showLeftSidebar && (
+                <SidebarResizer
+                  side="left"
+                  value={effectiveLeftSidebarWidth}
+                  min={minSidebarWidth}
+                  max={computedMaxSidebarWidth}
+                  onChange={(nextValue) => setLeftSidebarWidth(clampSidebarWidth(nextValue))}
+                  onReset={() => setLeftSidebarWidth(clampSidebarWidth(defaultChannelWidth))}
+                />
+              )}
             </div>
           </aside>
         )}
@@ -1230,7 +1199,16 @@ export const MainLayout = () => {
           >
             <div className="info-content custom-scrollbar h-full overflow-y-auto">
               <MemberSidebar serverId={selectedServerId} />
-              {!isMobileLayout && showRightSidebar && <div className="absolute top-0 left-0 w-1 h-full cursor-col-resize z-20 hover:bg-[color:var(--color-surface-hover)]/80" onMouseDown={startDragRight} />}
+              {!isMobileLayout && showRightSidebar && (
+                <SidebarResizer
+                  side="right"
+                  value={effectiveRightSidebarWidth}
+                  min={minSidebarWidth}
+                  max={computedMaxSidebarWidth}
+                  onChange={(nextValue) => setRightSidebarWidth(clampSidebarWidth(nextValue))}
+                  onReset={() => setRightSidebarWidth(clampSidebarWidth(defaultMemberWidth))}
+                />
+              )}
             </div>
           </aside>
         )}
