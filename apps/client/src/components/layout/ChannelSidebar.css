@@ -9,7 +9,7 @@
   flex-direction: column;
   overflow: hidden;
   min-width: 0;
-  backdrop-filter: blur(30px);
+  backdrop-filter: blur(var(--panel-blur-tree));
   position: relative;
 }
 
