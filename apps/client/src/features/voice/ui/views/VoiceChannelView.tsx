@@ -178,42 +178,42 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
   }];
 
   return (
-    <div className="voice-channel-view">
-      <div className="voice-topbar">
+    <div className="ct-voice-channel">
+      <div className="ct-voice-channel__topbar">
         <StatusBadge status={streamStatusVariant} withDot size="md">
           {streamLabel}
         </StatusBadge>
 
-        <div className="voice-topbar__meta">
-          <div className="streamer-pill inline">
-            <div className="streamer-av">
+        <div className="ct-voice-channel__topbar-meta">
+          <div className="ct-voice-channel__streamer-pill ct-voice-channel__streamer-pill--inline">
+            <div className="ct-voice-channel__streamer-avatar">
               {(localParticipant?.name || channelName || 'S').slice(0, 1).toUpperCase()}
             </div>
-            <div className="streamer-meta">
-              <span className="streamer-name">{localParticipant?.name || channelName || 'Unbekannt'}</span>
-              <span className="streamer-status">{streamDetail}</span>
+            <div className="ct-voice-channel__streamer-meta">
+              <span className="ct-voice-channel__streamer-name">{localParticipant?.name || channelName || 'Unbekannt'}</span>
+              <span className="ct-voice-channel__streamer-status">{streamDetail}</span>
             </div>
           </div>
 
-          <div className="voice-topbar__channel">
+          <div className="ct-voice-channel__topbar-channel">
             <Monitor size={14} />
             <span>{channelName || 'Unbenannter Stream'}</span>
           </div>
         </div>
 
-        <div className="voice-topbar__actions">
-          <button className={`sp-btn ${layout === 'grid' ? 'active' : ''}`} onClick={() => setLayout('grid')} title="Gitter">
+        <div className="ct-voice-channel__topbar-actions">
+          <button className={`ct-voice-channel__control-button ${layout === 'grid' ? 'ct-voice-channel__control-button--active' : ''}`} onClick={() => setLayout('grid')} title="Gitter">
             <Grid size={16} />
           </button>
-          <button className={`sp-btn ${layout === 'speaker' ? 'active' : ''}`} onClick={() => setLayout('speaker')} title="Speaker">
+          <button className={`ct-voice-channel__control-button ${layout === 'speaker' ? 'ct-voice-channel__control-button--active' : ''}`} onClick={() => setLayout('speaker')} title="Speaker">
             <LayoutList size={16} />
           </button>
         </div>
       </div>
 
-      <div className="stream-stage">
-        <div className="stream-view">
-          <div className="stream-view__content">
+      <div className="ct-voice-channel__stream-stage">
+        <div className="ct-voice-channel__stream-view">
+          <div className="ct-voice-channel__stream-view-content">
             {canRenderStage && MediaStage ? (
               <MediaStage
                 layout={layout}
@@ -223,36 +223,36 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
                 nativeHandle={nativeHandle}
               />
             ) : (
-              <div className="stream-fallback">
+              <div className="ct-voice-channel__stream-fallback">
                 {connectionState === 'connected' ? 'Voice-Provider wird initialisiert...' : 'Verbinde...'}
               </div>
             )}
           </div>
 
-          <div className="stream-overlay-top">
-            <div className={`live-tag ${streamStatusVariant}`}>
+          <div className="ct-voice-channel__stream-overlay">
+            <div className={`ct-voice-channel__live-tag ct-voice-channel__live-tag--${streamStatusVariant}`}>
               {streamingActive ? <Play size={12} /> : streamPaused ? <Pause size={12} /> : <Square size={12} />}
               <span>{streamLabel}</span>
             </div>
-            <div className="streamer-pill">
-              <div className="streamer-av">
+            <div className="ct-voice-channel__streamer-pill">
+              <div className="ct-voice-channel__streamer-avatar">
                 {(localParticipant?.name || channelName || 'S').slice(0, 1).toUpperCase()}
               </div>
-              <div className="streamer-meta">
-                <span className="streamer-name">{localParticipant?.name || channelName || 'Unbekannt'}</span>
-                <span className="streamer-status">{streamDetail}</span>
+              <div className="ct-voice-channel__streamer-meta">
+                <span className="ct-voice-channel__streamer-name">{localParticipant?.name || channelName || 'Unbekannt'}</span>
+                <span className="ct-voice-channel__streamer-status">{streamDetail}</span>
               </div>
             </div>
           </div>
 
           {error && (
-            <div className="stream-error">
+            <div className="ct-voice-channel__stream-error">
               <XCircle size={14} /> {error}
             </div>
           )}
         </div>
 
-        <div className="stream-gallery">
+        <div className="ct-voice-channel__stream-gallery">
           {galleryParticipants.map((p) => {
             const isSpeaking = activeSpeakerIds.includes(p.id);
             const hasMedia = p.isScreenShareEnabled || p.isCameraEnabled;
@@ -260,69 +260,69 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
             return (
               <div
                 key={p.id}
-                className={`stream-thumb ${isSpeaking ? 'active' : ''} ${hasMedia ? 'live' : ''} ${p.id === 'placeholder' ? 'placeholder' : ''}`}
+                className={`ct-voice-channel__stream-thumb ${isSpeaking ? 'ct-voice-channel__stream-thumb--active' : ''} ${hasMedia ? 'ct-voice-channel__stream-thumb--live' : ''} ${p.id === 'placeholder' ? 'ct-voice-channel__stream-thumb--placeholder' : ''}`}
               >
-                <div className="thumb-avatar">
+                <div className="ct-voice-channel__thumb-avatar">
                   {(p.name || 'Gast').slice(0, 1).toUpperCase()}
                 </div>
-                <div className="thumb-info">
-                  <div className="thumb-name">
+                <div className="ct-voice-channel__thumb-info">
+                  <div className="ct-voice-channel__thumb-name">
                     <span>{p.name || 'Gast'}</span>
-                    {p.isLocal && <span className="thumb-chip">Du</span>}
+                    {p.isLocal && <span className="ct-voice-channel__thumb-chip">Du</span>}
                   </div>
-                  <div className="thumb-meta">
+                  <div className="ct-voice-channel__thumb-meta">
                     {p.isMicrophoneEnabled ? <Mic size={14} /> : <MicOff size={14} />}
                     {p.isCameraEnabled ? <Video size={14} /> : <VideoOff size={14} />}
                     {p.isScreenShareEnabled && <Monitor size={14} />}
                   </div>
                 </div>
-                {hasMedia && <div className="thumb-live-dot" />}
+                {hasMedia && <div className="ct-voice-channel__thumb-live-dot" />}
               </div>
             );
           })}
         </div>
 
-        <div className="stream-panel">
-          <div className="sp-left">
-            <div className="sp-info">
-              <div className="sp-title">{channelName || 'Voice Stream'}</div>
-              <div className="sp-sub">{participantCountLabel} • {connectionState === 'connected' ? 'Verbunden' : 'Getrennt'} • {streamDetail}</div>
+        <div className="ct-voice-channel__panel">
+          <div className="ct-voice-channel__panel-left">
+            <div className="ct-voice-channel__panel-info">
+              <div className="ct-voice-channel__panel-title">{channelName || 'Voice Stream'}</div>
+              <div className="ct-voice-channel__panel-sub">{participantCountLabel} • {connectionState === 'connected' ? 'Verbunden' : 'Getrennt'} • {streamDetail}</div>
             </div>
-            <div className="sp-actions">
+            <div className="ct-voice-channel__panel-actions">
               <button
                 onClick={handleStartStream}
                 disabled={streamAction === 'start' || !canStartStream}
-                className={`sp-btn ${streamingActive ? 'active' : ''}`}
+                className={`ct-voice-channel__control-button ${streamingActive ? 'ct-voice-channel__control-button--active' : ''}`}
               >
                 <Play size={16} /> {streamPaused ? 'Fortsetzen' : 'Stream starten'}
               </button>
               <button
                 onClick={handlePauseStream}
                 disabled={streamAction === 'pause' || streamState === 'idle'}
-                className={`sp-btn ${streamPaused ? 'warning' : ''}`}
+                className={`ct-voice-channel__control-button ${streamPaused ? 'ct-voice-channel__control-button--warning' : ''}`}
               >
                 <Pause size={16} /> Pause
               </button>
               <button
                 onClick={handleStopStream}
                 disabled={streamAction === 'stop' || streamState === 'idle'}
-                className="sp-btn danger"
+                className="ct-voice-channel__control-button ct-voice-channel__control-button--danger"
               >
                 <Square size={16} /> Stop
               </button>
             </div>
           </div>
 
-          <div className="sp-right">
-            <div className="sp-group">
-              <div className="control-with-menu">
+          <div className="ct-voice-channel__panel-right">
+            <div className="ct-voice-channel__panel-group">
+              <div className="ct-voice-channel__control-with-menu">
                 <button
-                  className={`sp-btn ${!micMuted ? 'active' : 'muted'}`}
+                  className={`ct-voice-channel__control-button ${!micMuted ? 'ct-voice-channel__control-button--active' : 'ct-voice-channel__control-button--muted'}`}
                   onClick={() => setMicMuted(!micMuted)}
                 >
                   {micMuted ? <MicOff size={16} /> : <Mic size={16} />}
                 </button>
-                <button className="sp-btn" onClick={() => setMenuOpen(menuOpen === 'mic' ? null : 'mic')}>
+                <button className="ct-voice-channel__control-button" onClick={() => setMenuOpen(menuOpen === 'mic' ? null : 'mic')}>
                   <ChevronUp size={14} />
                 </button>
                 {menuOpen === 'mic' && (
@@ -338,36 +338,36 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
                 )}
               </div>
               <button
-                className={`sp-btn ${!muted ? 'active' : 'muted'}`}
+                className={`ct-voice-channel__control-button ${!muted ? 'ct-voice-channel__control-button--active' : 'ct-voice-channel__control-button--muted'}`}
                 onClick={() => setMuted(!muted)}
               >
                 <Headphones size={16} />
               </button>
             </div>
 
-            <div className="sp-group">
+            <div className="ct-voice-channel__panel-group">
               <button
-                className={`sp-btn ${isCameraEnabled ? 'active' : ''}`}
+                className={`ct-voice-channel__control-button ${isCameraEnabled ? 'ct-voice-channel__control-button--active' : ''}`}
                 onClick={toggleCamera}
               >
                 {isCameraEnabled ? <Video size={16} /> : <VideoOff size={16} />}
               </button>
               <button
-                className={`sp-btn ${isScreenSharing ? 'active' : ''}`}
+                className={`ct-voice-channel__control-button ${isScreenSharing ? 'ct-voice-channel__control-button--active' : ''}`}
                 onClick={() => isScreenSharing ? stopScreenShare() : toggleScreenShare()}
               >
                 <Monitor size={16} />
               </button>
             </div>
 
-            <div className="sp-group">
-              <button className="sp-btn" onClick={() => setShowSettings(true)}>
+            <div className="ct-voice-channel__panel-group">
+              <button className="ct-voice-channel__control-button" onClick={() => setShowSettings(true)}>
                 <Settings size={16} />
               </button>
-              <button className="sp-btn" onClick={handleOpenExternal}>
+              <button className="ct-voice-channel__control-button" onClick={handleOpenExternal}>
                 <ExternalLink size={16} />
               </button>
-              <button className="sp-btn danger" onClick={handleDisconnect}>
+              <button className="ct-voice-channel__control-button ct-voice-channel__control-button--danger" onClick={handleDisconnect}>
                 <Power size={16} />
               </button>
             </div>

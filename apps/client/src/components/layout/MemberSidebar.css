@@ -1,5 +1,6 @@
 /* apps/client/src/components/layout/MemberSidebar.css */
 
+.ct-member-sidebar,
 .member-sidebar {
   display: flex;
   flex-direction: column;
@@ -7,12 +8,14 @@
   background: transparent;
 }
 
+.ct-member-sidebar__header,
 .member-sidebar__header {
   padding: var(--space-2-5) var(--space-4) var(--space-1-5);
   border-bottom: 1px solid color-mix(in srgb, var(--color-surface-tint) 5%, transparent);
   background: linear-gradient(180deg, color-mix(in srgb, var(--color-surface-tint) 3%, transparent), transparent);
 }
 
+.ct-member-sidebar__search,
 .member-sidebar__search {
   width: 100%;
   padding: var(--space-2-25) var(--space-3);
@@ -25,16 +28,19 @@
   transition: 0.2s ease;
 }
 
+.ct-member-sidebar__search::placeholder,
 .member-sidebar__search::placeholder {
   color: var(--color-text-placeholder);
 }
 
+.ct-member-sidebar__search:focus,
 .member-sidebar__search:focus {
   outline: none;
   border-color: color-mix(in srgb, var(--color-accent) 45%, transparent);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 15%, transparent);
 }
 
+.ct-member-sidebar__list,
 .member-sidebar__list {
   flex: 1;
   overflow-y: auto;
@@ -44,6 +50,7 @@
   flex-direction: column;
 }
 
+.ct-member-sidebar__group-header,
 .grp-head {
   display: flex;
   align-items: center;
@@ -60,24 +67,28 @@
   border-bottom: 1px solid color-mix(in srgb, var(--color-surface-tint) 6%, transparent);
 }
 
+.ct-member-sidebar__group-header--connected,
 .grp-head.accent-connected {
   background: linear-gradient(90deg, color-mix(in srgb, var(--color-accent) 8%, transparent), transparent);
   border-bottom-color: color-mix(in srgb, var(--color-accent) 30%, transparent);
   color: var(--color-text-accent-soft);
 }
 
+.ct-member-sidebar__group-header--afk,
 .grp-head.accent-afk {
   background: linear-gradient(90deg, color-mix(in srgb, var(--color-text-warning) 8%, transparent), transparent);
   border-bottom-color: color-mix(in srgb, var(--color-text-warning) 30%, transparent);
   color: var(--color-text-warning-soft);
 }
 
+.ct-member-sidebar__group-header--offline,
 .grp-head.accent-offline {
   background: linear-gradient(90deg, color-mix(in srgb, var(--color-text-muted-strong) 8%, transparent), transparent);
   border-bottom-color: color-mix(in srgb, var(--color-text-muted-strong) 26%, transparent);
   color: var(--color-text-secondary);
 }
 
+.ct-member-sidebar__group-count,
 .grp-count {
   font-size: var(--font-size-xs);
   line-height: var(--line-height-sm);
@@ -89,6 +100,7 @@
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-surface-tint) 12%, transparent);
 }
 
+.ct-member-sidebar__row,
 .m-row {
   position: relative;
   display: flex;
@@ -102,24 +114,28 @@
   transition: 0.18s ease;
 }
 
+.ct-member-sidebar__row--accent-connected,
 .m-row.accent-connected {
   background: linear-gradient(135deg, color-mix(in srgb, var(--color-accent) 14%, transparent), color-mix(in srgb, var(--color-accent) 6%, transparent));
   border-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
   box-shadow: 0 14px 34px color-mix(in srgb, var(--color-accent) 26%, transparent), inset 0 1px 0 color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
 }
 
+.ct-member-sidebar__row--accent-afk,
 .m-row.accent-afk {
   background: linear-gradient(135deg, color-mix(in srgb, var(--color-text-warning) 14%, transparent), color-mix(in srgb, var(--color-text-warning) 6%, transparent));
   border-color: color-mix(in srgb, var(--color-text-warning) 36%, transparent);
   box-shadow: 0 14px 34px color-mix(in srgb, var(--color-text-warning) 22%, transparent), inset 0 1px 0 color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
 }
 
+.ct-member-sidebar__row--accent-offline,
 .m-row.accent-offline {
   background: linear-gradient(135deg, color-mix(in srgb, var(--color-text-muted-strong) 14%, transparent), color-mix(in srgb, var(--color-text-muted-strong) 6%, transparent));
   border-color: color-mix(in srgb, var(--color-text-muted-strong) 28%, transparent);
   box-shadow: 0 12px 30px color-mix(in srgb, var(--color-shadow) 30%, transparent), inset 0 1px 0 color-mix(in srgb, var(--color-surface-tint) 6%, transparent);
 }
 
+.ct-member-sidebar__row:hover,
 .m-row:hover {
   transform: translateY(-1px);
   border-color: color-mix(in srgb, var(--color-surface-tint) 12%, transparent);
@@ -127,26 +143,31 @@
   box-shadow: 0 14px 36px color-mix(in srgb, var(--color-shadow) 32%, transparent), 0 0 0 1px color-mix(in srgb, var(--color-surface-tint) 2%, transparent);
 }
 
+.ct-member-sidebar__row--status-online,
 .m-row.online {
   border-color: color-mix(in srgb, var(--status-online) 26%, transparent);
   box-shadow: 0 12px 32px color-mix(in srgb, var(--color-accent) 22%, transparent), inset 0 1px 0 color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
 }
 
+.ct-member-sidebar__row--status-idle,
 .m-row.idle {
   border-color: color-mix(in srgb, var(--status-idle) 26%, transparent);
   box-shadow: 0 12px 32px color-mix(in srgb, var(--status-idle) 18%, transparent), inset 0 1px 0 color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
 }
 
+.ct-member-sidebar__row--status-dnd,
 .m-row.dnd {
   border-color: color-mix(in srgb, var(--role-admin) 28%, transparent);
   box-shadow: 0 12px 32px color-mix(in srgb, var(--role-admin) 20%, transparent), inset 0 1px 0 color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
 }
 
+.ct-member-sidebar__row--status-offline,
 .m-row.offline {
   border-color: color-mix(in srgb, var(--color-text-muted-strong) 18%, transparent);
   box-shadow: 0 12px 28px color-mix(in srgb, var(--color-shadow) 28%, transparent);
 }
 
+.ct-member-sidebar__avatar,
 .m-av-lg {
   position: relative;
   width: var(--space-9);
@@ -161,6 +182,7 @@
   justify-content: center;
 }
 
+.ct-member-sidebar__avatar img,
 .m-av-lg img {
   width: 100%;
   height: 100%;
@@ -168,6 +190,7 @@
   display: block;
 }
 
+.ct-member-sidebar__avatar-initial,
 .m-av-initial {
   font-size: var(--font-size-base);
   line-height: var(--line-height-base);
@@ -176,6 +199,7 @@
   letter-spacing: 0.2px;
 }
 
+.ct-member-sidebar__status-ring,
 .m-status-ring {
   position: absolute;
   inset: calc(-1 * var(--space-1));
@@ -185,26 +209,31 @@
   pointer-events: none;
 }
 
+.ct-member-sidebar__status-ring--online,
 .m-status-ring.online {
   border-color: color-mix(in srgb, var(--status-online) 70%, transparent);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--status-online) 26%, transparent), 0 12px 26px color-mix(in srgb, var(--color-accent) 25%, transparent);
 }
 
+.ct-member-sidebar__status-ring--idle,
 .m-status-ring.idle {
   border-color: color-mix(in srgb, var(--status-idle) 70%, transparent);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--status-idle) 26%, transparent), 0 12px 26px color-mix(in srgb, var(--status-idle) 22%, transparent);
 }
 
+.ct-member-sidebar__status-ring--dnd,
 .m-status-ring.dnd {
   border-color: color-mix(in srgb, var(--role-admin) 75%, transparent);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--role-admin) 28%, transparent), 0 12px 26px color-mix(in srgb, var(--role-admin) 25%, transparent);
 }
 
+.ct-member-sidebar__status-ring--offline,
 .m-status-ring.offline {
   border-color: color-mix(in srgb, var(--color-text-muted-strong) 50%, transparent);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-text-muted-strong) 22%, transparent), 0 12px 22px color-mix(in srgb, var(--color-shadow) 32%, transparent);
 }
 
+.ct-member-sidebar__body,
 .m-body {
   flex: 1;
   min-width: 0;
@@ -213,12 +242,14 @@
   gap: var(--space-1-5);
 }
 
+.ct-member-sidebar__title-row,
 .m-title-row {
   display: flex;
   align-items: center;
   gap: var(--space-2);
 }
 
+.ct-member-sidebar__name,
 .m-name {
   font-size: var(--font-size-base);
   line-height: var(--line-height-sm);
@@ -229,6 +260,7 @@
   text-overflow: ellipsis;
 }
 
+.ct-member-sidebar__stat,
 .m-stat {
   font-size: var(--font-size-xs);
   line-height: var(--line-height-sm);
@@ -240,11 +272,16 @@
   gap: var(--space-1-5);
 }
 
+.ct-member-sidebar__stat--online,
 .m-stat.online { color: var(--status-online); }
+.ct-member-sidebar__stat--idle,
 .m-stat.idle { color: var(--status-idle); }
+.ct-member-sidebar__stat--dnd,
 .m-stat.dnd { color: var(--status-dnd); }
+.ct-member-sidebar__stat--offline,
 .m-stat.offline { color: var(--color-text-subtle); }
 
+.ct-member-sidebar__roles,
 .m-roles {
   display: flex;
   align-items: center;
@@ -252,6 +289,8 @@
   gap: var(--space-1-5);
 }
 
+.ct-member-sidebar__roles .role-tag,
+.ct-member-sidebar__roles .status-pill,
 .m-roles .role-tag,
 .m-roles .status-pill {
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-surface-tint) 8%, transparent), 0 10px 26px color-mix(in srgb, var(--color-shadow) 24%, transparent);

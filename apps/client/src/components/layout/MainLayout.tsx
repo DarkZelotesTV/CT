@@ -1162,10 +1162,10 @@ export const MainLayout = () => {
         {selectedServerId && (
           <aside
             ref={leftSidebarRef}
-            className="tree-panel no-drag relative"
+            className="ct-channel-sidebar__panel no-drag relative"
             aria-hidden={isMobileLayout ? !showMobileNav : !showLeftSidebar}
           >
-            <div className="tree-content custom-scrollbar flex-1 overflow-hidden">
+            <div className="ct-channel-sidebar__content custom-scrollbar flex-1 overflow-hidden">
               <ChannelSidebar
                 serverId={selectedServerId}
                 activeChannelId={activeChannel?.id || null}
