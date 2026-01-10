@@ -7,6 +7,7 @@ import { ErrorCard, Icon, Input, RoleTag, Select, Skeleton, Spinner } from '../u
 import { Button } from '../ui/Button';
 import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
+import './MemberSidebar.css';
 
 type PresenceStatus = 'online' | 'idle' | 'offline' | 'dnd' | 'away';
 type RowVariant = 'default' | 'connected' | 'afk' | 'offline';

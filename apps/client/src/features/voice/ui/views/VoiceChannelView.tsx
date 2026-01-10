@@ -25,6 +25,7 @@ import { useVoice } from '../..';
 import { useSettings } from '../../../../context/SettingsContext';
 import { UserSettingsModal } from '../../../../components/modals/UserSettingsModal';
 import { StatusBadge, type StatusTone } from '../../../../components/ui';
+import './VoiceView.css';
 
 const ContextMenu = ({ onClose, children }: { onClose: () => void, children: React.ReactNode }) => {
     const ref = useRef<HTMLDivElement>(null);

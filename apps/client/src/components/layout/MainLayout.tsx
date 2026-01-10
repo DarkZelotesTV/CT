@@ -10,7 +10,7 @@ import { ChannelSidebar } from './ChannelSidebar';
 import { TitleBar } from '../window/TitleBar';
 import { TopBarProvider } from '../window/TopBarContext';
 import { DecorationLayer } from './DecorationLayer';
-import './MainLayout.css';
+import './LayoutShell.css';
 
 // Web & Voice Views
 import { WebChannelView } from '../server/WebChannelView';

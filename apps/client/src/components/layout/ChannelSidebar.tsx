@@ -16,6 +16,7 @@ import { defaultServerTheme, deriveServerThemeFromSettings, type ServerTheme } f
 import { storage } from '../../shared/config/storage';
 import { Badge, ErrorCard, Icon, RoleTag, Skeleton, Spinner, StatusBadge, type StatusTone } from '../ui';
 import { Button, IconButton } from '../ui/Button';
+import './ChannelSidebar.css';
 
 interface Channel { id: number; name: string; type: 'text' | 'voice' | 'web' | 'data-transfer' | 'spacer' | 'list'; custom_icon?: string; }
 interface Category { id: number; name: string; channels: Channel[]; }

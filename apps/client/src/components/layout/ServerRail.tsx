@@ -9,6 +9,7 @@ import { storage } from '../../shared/config/storage';
 import { ErrorCard, Icon, Spinner, Menu, MenuItem, Popover, PopoverContent, PopoverTrigger } from '../ui';
 import { Button, IconButton } from '../ui/Button';
 import { useSocket } from '../../context/SocketContext';
+import './ServerRail.css';
 
 // Props erweitert: onCreateServer und onJoinServer hinzugefügt
 interface ServerRailProps {
