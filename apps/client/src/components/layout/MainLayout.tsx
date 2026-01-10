@@ -124,20 +124,6 @@ export const MainLayout = () => {
   // UI State
   const [showMobileNav, setShowMobileNav] = useState(false);
 
-  useEffect(() => {
-    if (showMobileNav) return;
-
-    const active = document.activeElement;
-    if (!(active instanceof HTMLElement)) return;
-
-    const navContainers = [leftSidebarRef.current, railRef.current];
-    if (navContainers.some((node) => node && node.contains(active))) {
-      active.blur();
-      mobileNavButtonRef.current?.focus({ preventScroll: true });
-    }
-  }, [showMobileNav]);
-
-
   const [showRightSidebar, setShowRightSidebar] = useState(true);
   const [containerWidth, setContainerWidth] = useState(() => (typeof window === 'undefined' ? 0 : window.innerWidth));
   const isMobileLayout = containerWidth < MOBILE_BREAKPOINT;
@@ -155,10 +141,13 @@ export const MainLayout = () => {
   const rightSidebarRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef<HTMLDivElement>(null);
   const mobileNavButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileInfoButtonRef = useRef<HTMLButtonElement>(null);
   const mainContentRef = useRef<HTMLDivElement>(null);
   const logBodyRef = useRef<HTMLDivElement>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const lastOverlayFocusRef = useRef<'nav' | 'info' | null>(null);
+  const previousOverlayStateRef = useRef(false);
   const lastSocketConnectedRef = useRef<boolean | null>(null);
   const scrollLockPositionRef = useRef<number | null>(null);
 
@@ -374,6 +363,46 @@ export const MainLayout = () => {
       previousFocusRef.current = active;
     }
   }, []);
+
+  useEffect(() => {
+    if (!isMobileLayout) return;
+    if (showMobileNav) {
+      lastOverlayFocusRef.current = 'nav';
+    } else if (showRightSidebar) {
+      lastOverlayFocusRef.current = 'info';
+    }
+  }, [isMobileLayout, showMobileNav, showRightSidebar]);
+
+  useEffect(() => {
+    if (!isMobileLayout) return;
+    if (!showMobileNav && !showRightSidebar) return;
+    recordPreviousFocus();
+  }, [isMobileLayout, recordPreviousFocus, showMobileNav, showRightSidebar]);
+
+  useEffect(() => {
+    if (!isMobileLayout || !showMobileNav) return;
+    if (typeof window === 'undefined') return;
+
+    const focusNav = () => {
+      const containers = [railRef.current, leftSidebarRef.current];
+      for (const container of containers) {
+        if (!container) continue;
+        const focusable = getFocusableElements(container);
+        if (focusable.length > 0) {
+          focusable[0].focus({ preventScroll: true });
+          return;
+        }
+      }
+      if (railRef.current) {
+        focusContainer(railRef.current);
+        return;
+      }
+      focusContainer(leftSidebarRef.current);
+    };
+
+    const frame = window.requestAnimationFrame(focusNav);
+    return () => window.cancelAnimationFrame(frame);
+  }, [focusContainer, isMobileLayout, showMobileNav]);
 
   const handleTouchStart = useCallback((event: React.TouchEvent) => {
     const touch = event.touches[0];
@@ -893,6 +922,37 @@ export const MainLayout = () => {
     };
   }, [isMobileOverlayActive]);
 
+  useEffect(() => {
+    if (!isMobileLayout) return;
+    if (!isMobileOverlayActive) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      setShowMobileNav(false);
+      setShowRightSidebar(false);
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isMobileLayout, isMobileOverlayActive]);
+
+  useEffect(() => {
+    if (!isMobileLayout) return;
+    const isOpen = showMobileNav || showRightSidebar;
+    const wasOpen = previousOverlayStateRef.current;
+    if (wasOpen && !isOpen) {
+      if (lastOverlayFocusRef.current === 'nav' && mobileNavButtonRef.current) {
+        mobileNavButtonRef.current.focus({ preventScroll: true });
+      } else if (lastOverlayFocusRef.current === 'info' && mobileInfoButtonRef.current) {
+        mobileInfoButtonRef.current.focus({ preventScroll: true });
+      } else if (previousFocusRef.current) {
+        previousFocusRef.current.focus({ preventScroll: true });
+      }
+    }
+    previousOverlayStateRef.current = isOpen;
+  }, [isMobileLayout, showMobileNav, showRightSidebar]);
+
   // Dynamische CSS Variablen für Grid-Spalten
   const gridStyle = {
     '--curr-tree': !selectedServerId
@@ -1108,6 +1168,7 @@ export const MainLayout = () => {
                     aria-expanded={showRightSidebar}
                     aria-controls="member-drawer"
                     title={showRightSidebar ? t('layout.hideMembers') : t('layout.showMembers')}
+                    ref={mobileInfoButtonRef}
                   >
                     <Icon icon={Users} size="sm" tone="default" className="text-inherit" />
                     <span className="mobile-info-label">{t('layout.showMembers', { defaultValue: 'Mitglieder' })}</span>
