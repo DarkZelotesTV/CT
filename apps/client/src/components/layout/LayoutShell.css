@@ -1,0 +1,625 @@
+/* apps/client/src/components/layout/LayoutShell.css */
+/*
+  Z-index scale:
+  - base: 0
+  - content: 10
+  - overlay: 50
+  - modal: 100
+*/
+
+/* --- GRID LAYOUT --- */
+.main-layout {
+  --safe-area-top: env(safe-area-inset-top);
+  --safe-area-bottom: env(safe-area-inset-bottom);
+  --safe-area-left: env(safe-area-inset-left);
+  --safe-area-right: env(safe-area-inset-right);
+  --h-header: calc(var(--layout-header-height) + var(--safe-area-top));
+  --h-log: calc(var(--layout-log-height) + var(--safe-area-bottom));
+  height: 100vh;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100vw;
+  display: grid;
+  /* Dynamische Spalten basierend auf React State (inline styles) */
+  grid-template-columns: var(--w-rail) var(--curr-tree, var(--w-tree)) 1fr var(--curr-info, var(--w-info));
+  grid-template-rows: var(--h-header) 1fr var(--curr-log, var(--h-log));
+  grid-template-areas:
+      "rail header header header"
+      "rail tree   main   info"
+      "rail log    log    log";
+  transition: grid-template-columns var(--layout-transition), grid-template-rows var(--layout-transition);
+  position: relative;
+  z-index: 10;
+  overflow: hidden;
+}
+
+.main-layout.home-layout {
+  grid-template-columns: var(--w-rail) 0 1fr 0;
+  grid-template-rows: var(--h-header) 1fr 0;
+  --h-header: 0;
+}
+
+.main-layout.home-layout .header-panel {
+  display: none;
+}
+
+body.mobile-scroll-lock {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.mobile-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--state-overlay);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 50;
+  transition: opacity 0.2s ease;
+}
+
+.main-layout.mobile-nav-open {
+  overflow: hidden;
+}
+
+.main-layout.mobile-nav-open .mobile-overlay,
+.main-layout.mobile-info-open .mobile-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+.main-layout.mobile-info-open,
+.main-layout.mobile-nav-open {
+  touch-action: none;
+}
+
+/* --- PANELS --- */
+
+/* 2. HEADER */
+.header-panel {
+  grid-area: header;
+  background: var(--surface-header);
+  border-bottom: 1px solid var(--color-border-glass);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--safe-area-top) calc(var(--space-6) + var(--safe-area-right)) 0 calc(var(--space-6) + var(--safe-area-left));
+  z-index: 10;
+  backdrop-filter: blur(20px);
+  -webkit-app-region: drag; /* Electron Drag */
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-panel);
+}
+.header-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 12% 50%, color-mix(in srgb, var(--color-accent) 12%, transparent), transparent 32%),
+    radial-gradient(circle at 82% 30%, color-mix(in srgb, var(--role-mod) 10%, transparent), transparent 28%);
+  opacity: 0.8;
+}
+
+/* 4. MAIN STAGE */
+.main-panel {
+  grid-area: main;
+  background: var(--surface-main);
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.edge-toggle {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: var(--space-8-5);
+  height: var(--space-11);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--color-shadow) 60%, transparent);
+  border: 1px solid var(--color-border-glass);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  z-index: 50;
+  border-radius: var(--radius-0);
+  backdrop-filter: blur(5px);
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.edge-toggle:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+  border-color: color-mix(in srgb, var(--color-surface-tint) 20%, transparent);
+}
+.edge-toggle:focus-visible {
+  outline: 2px solid var(--state-focus);
+  outline-offset: var(--space-0-5);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--state-focus) 35%, transparent);
+}
+.edge-left {
+  left: var(--space-1);
+}
+.edge-right {
+  right: var(--space-1);
+}
+
+/* 5. INFO (Right Sidebar) */
+.info-panel {
+  grid-area: info;
+  background: var(--surface-info);
+  border-left: 1px solid var(--color-border-glass);
+  overflow: hidden;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(30px);
+  position: relative;
+}
+
+/* 6. LOG (Bottom) */
+.log-panel {
+  grid-area: log;
+  background: var(--surface-log);
+  border-top: 1px solid var(--color-border-glass);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-panel-strong);
+  z-index: 10;
+  backdrop-filter: blur(40px);
+  overflow: hidden;
+  padding-bottom: var(--safe-area-bottom);
+  padding-left: var(--safe-area-left);
+  padding-right: var(--safe-area-right);
+}
+
+/* --- COMPONENTS Styles from HTML --- */
+
+/* Header Components */
+.h-path {
+  font-size: var(--font-size-xl);
+  line-height: var(--line-height-lg);
+  font-weight: 600;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5);
+}
+.h-server-icon {
+  width: var(--space-6);
+  height: var(--space-6);
+  border-radius: var(--radius-1);
+  object-fit: cover;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+
+.telemetry-bar {
+  display: flex;
+  gap: var(--space-3);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-surface-tint) 5%, transparent), color-mix(in srgb, var(--color-surface-tint) 2%, transparent));
+  border: 1px solid color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
+  border-radius: var(--radius-pill);
+  padding: var(--space-1-5) var(--space-2);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-surface-tint) 6%, transparent), 0 12px 40px color-mix(in srgb, var(--color-shadow) 35%, transparent);
+  backdrop-filter: blur(10px);
+}
+.t-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1-5) var(--space-3-5);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-surface-tint) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-surface-tint) 6%, transparent);
+}
+.t-label {
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-sm);
+  font-weight: 800;
+  color: var(--color-text-quiet);
+  letter-spacing: 1px;
+}
+.t-val {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  color: var(--color-text);
+  font-weight: 700;
+  text-shadow: 0 0 12px color-mix(in srgb, var(--color-surface-tint) 16%, transparent);
+}
+
+/* Log Components */
+.log-head {
+  height: var(--space-7-5);
+  background: color-mix(in srgb, var(--color-surface-tint) 2%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-surface-tint) 5%, transparent);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-2-5);
+  gap: var(--space-2);
+}
+.pill {
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-sm);
+  padding: var(--space-1) var(--space-4);
+  border-radius: var(--radius-pill);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: 0.2s;
+  border: 1px solid transparent;
+}
+.icon-button {
+  min-width: var(--space-8-5);
+  min-height: var(--space-8-5);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-2-5);
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+.mobile-info-toggle {
+  min-height: var(--space-8-5);
+  min-width: var(--space-8-5);
+  padding: var(--space-2) var(--space-3-5);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+.pill:hover {
+  color: var(--color-text);
+  background: var(--color-surface-hover);
+}
+.pill.active {
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  border-color: color-mix(in srgb, var(--color-surface-tint) 10%, transparent);
+}
+.pill:focus-visible {
+  outline: 2px solid var(--state-focus);
+  outline-offset: var(--space-0-5);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--state-focus) 35%, transparent);
+}
+
+.log-body {
+  flex: 1;
+  padding: var(--space-2-5) var(--space-4);
+  overflow-y: auto;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-log);
+  line-height: var(--line-height-base);
+}
+.ln {
+  margin-bottom: var(--space-0-5);
+}
+.ts {
+  color: var(--color-text-dim);
+  margin-right: var(--space-2);
+}
+.sys {
+  color: var(--color-accent);
+}
+
+.log-cmd {
+  padding: var(--space-2) var(--space-4);
+  background: color-mix(in srgb, var(--color-shadow) 20%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--color-surface-tint) 5%, transparent);
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+.log-cmd input {
+  background: transparent;
+  border: none;
+  color: var(--color-text);
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-base);
+}
+.log-cmd span {
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+/* Resizers */
+.resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: var(--space-1-5);
+  cursor: col-resize;
+  z-index: 50;
+}
+.resizer:hover {
+  background: color-mix(in srgb, var(--color-surface) 85%, transparent);
+}
+.resizer-left {
+  right: 0;
+}
+.resizer-right {
+  left: 0;
+}
+
+@media (max-width: 1024px) {
+  .main-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: var(--h-header) 1fr var(--curr-log, var(--h-log));
+    grid-template-areas:
+      "header"
+      "main"
+      "log";
+  }
+
+  .rail-panel,
+  .tree-panel {
+    position: fixed;
+    top: var(--h-header);
+    bottom: 0;
+    height: auto;
+    box-shadow: 0 24px 60px color-mix(in srgb, var(--color-shadow) 50%, transparent), 0 0 0 1px color-mix(in srgb, var(--color-surface-tint) 4%, transparent);
+    transform: translateX(-100%);
+    transition: transform 0.25s ease, opacity 0.25s ease;
+    opacity: 0;
+    pointer-events: none;
+    backdrop-filter: blur(16px);
+  }
+
+  .rail-panel {
+    left: 0;
+    width: var(--w-rail);
+    background: var(--surface-rail);
+    z-index: 100;
+  }
+
+  .tree-panel {
+    left: var(--w-rail);
+    width: var(--mobile-tree-width, min(80vw, var(--space-15)));
+    max-width: 90vw;
+    background: var(--surface-tree);
+    z-index: 100;
+    transform: translateX(calc(-100% - var(--w-rail)));
+  }
+
+  .mobile-nav-open .rail-panel,
+  .mobile-nav-open .tree-panel {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .mobile-nav-open .main-panel,
+  .mobile-nav-open .log-panel,
+  .mobile-nav-open .header-panel {
+    pointer-events: none;
+  }
+
+  .mobile-nav-open .header-panel {
+    pointer-events: auto;
+  }
+
+  .mobile-info-label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1-5);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .info-panel {
+    position: fixed;
+    top: var(--h-header);
+    right: 0;
+    bottom: 0;
+    width: var(--curr-info, var(--mobile-info-width, min(75vw, var(--space-15))));
+    max-width: 90vw;
+    transform: translateX(100%);
+    transition: transform 0.28s ease, opacity 0.28s ease;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 100;
+    box-shadow: -12px 0 40px color-mix(in srgb, var(--color-shadow) 55%, transparent);
+    border-left: 1px solid var(--color-border-glass);
+    border-top: none;
+    border-bottom: none;
+  }
+
+  .mobile-info-open .info-panel {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .mobile-info-open .main-panel,
+  .mobile-info-open .log-panel,
+  .mobile-info-open .header-panel {
+    pointer-events: none;
+  }
+
+  .mobile-info-open .header-panel {
+    pointer-events: auto;
+  }
+}
+
+@media (max-width: 1024px) and (max-height: 640px) {
+  .info-panel {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: none;
+    height: min(70vh, var(--space-16));
+    transform: translateY(100%);
+    border-left: none;
+    border-top: 1px solid var(--color-border-glass);
+    border-radius: var(--radius-4-5) var(--radius-4-5) 0 0;
+    box-shadow: var(--shadow-panel-strong);
+    background: var(--surface-info);
+  }
+
+  .mobile-info-open .info-panel {
+    transform: translateY(0);
+  }
+}
+
+/* --- ROLE & STATUS BADGES --- */
+.role-tag,
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  padding: var(--space-1) var(--space-2-5);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-sm);
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--color-text);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-surface-tint) 6%, transparent), color-mix(in srgb, var(--color-surface-tint) 2%, transparent));
+  border: 1px solid color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-surface-tint) 8%, transparent),
+    0 10px 28px color-mix(in srgb, var(--color-shadow) 35%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.role-tag {
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-sm);
+  padding: var(--space-1-25) var(--space-3);
+}
+
+.tag.adm,
+.role-tag.admin {
+  color: var(--role-admin);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--role-admin) 18%, transparent), color-mix(in srgb, var(--role-admin) 6%, transparent));
+  border-color: color-mix(in srgb, var(--role-admin) 30%, transparent);
+  box-shadow:
+    0 8px 26px color-mix(in srgb, var(--role-admin) 25%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
+}
+
+.tag.mod,
+.role-tag.mod {
+  color: var(--role-mod);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--role-mod) 18%, transparent), color-mix(in srgb, var(--role-mod) 6%, transparent));
+  border-color: color-mix(in srgb, var(--role-mod) 28%, transparent);
+  box-shadow:
+    0 8px 26px color-mix(in srgb, var(--role-mod) 22%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
+}
+
+.tag.bot,
+.role-tag.bot {
+  color: var(--role-bot);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--role-bot) 20%, transparent), color-mix(in srgb, var(--role-bot) 6%, transparent));
+  border-color: color-mix(in srgb, var(--role-bot) 28%, transparent);
+  box-shadow:
+    0 8px 26px color-mix(in srgb, var(--role-bot) 25%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
+}
+
+.role-tag.neutral {
+  color: var(--color-text-secondary);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-surface-tint) 8%, transparent), color-mix(in srgb, var(--color-surface-tint) 3%, transparent));
+  border-color: color-mix(in srgb, var(--color-surface-tint) 12%, transparent);
+  box-shadow:
+    0 8px 24px color-mix(in srgb, var(--color-shadow) 28%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
+}
+
+.status-dot {
+  position: absolute;
+  right: calc(-1 * var(--space-0-5));
+  bottom: calc(-1 * var(--space-0-5));
+  width: var(--space-3);
+  height: var(--space-3);
+  border-radius: 50%;
+  border: 2px solid #0b0f16;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--color-surface-tint) 5%, transparent),
+    0 8px 18px color-mix(in srgb, var(--color-shadow) 45%, transparent);
+}
+
+.status-dot.online {
+  background: var(--status-online);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--status-online) 30%, transparent), 0 0 14px color-mix(in srgb, var(--status-online) 40%, transparent);
+}
+.status-dot.idle {
+  background: var(--status-idle);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--status-idle) 32%, transparent), 0 0 14px color-mix(in srgb, var(--status-idle) 40%, transparent);
+}
+.status-dot.dnd {
+  background: var(--status-dnd);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--role-admin) 35%, transparent), 0 0 14px color-mix(in srgb, var(--role-admin) 45%, transparent);
+}
+.status-dot.offline {
+  background: var(--status-offline);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--status-offline) 30%, transparent), 0 0 10px color-mix(in srgb, var(--status-offline) 35%, transparent);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  padding: var(--space-1) var(--space-2-5);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-sm);
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--color-text);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-surface-tint) 5%, transparent), color-mix(in srgb, var(--color-surface-tint) 2%, transparent));
+  border: 1px solid color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-surface-tint) 8%, transparent),
+    0 12px 30px color-mix(in srgb, var(--color-shadow) 35%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.status-pill.online {
+  color: var(--status-online);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--status-online) 20%, transparent), color-mix(in srgb, var(--status-online) 7%, transparent));
+  border-color: color-mix(in srgb, var(--status-online) 35%, transparent);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--status-online) 22%, transparent);
+}
+
+.status-pill.idle {
+  color: var(--status-idle);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--status-idle) 20%, transparent), color-mix(in srgb, var(--status-idle) 7%, transparent));
+  border-color: color-mix(in srgb, var(--status-idle) 32%, transparent);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--status-idle) 22%, transparent);
+}
+
+.status-pill.dnd {
+  color: var(--status-dnd);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--role-admin) 22%, transparent), color-mix(in srgb, var(--role-admin) 8%, transparent));
+  border-color: color-mix(in srgb, var(--role-admin) 32%, transparent);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--role-admin) 24%, transparent);
+}
+
+.status-pill.offline {
+  color: var(--color-text-subtle);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-text-muted-strong) 15%, transparent), color-mix(in srgb, var(--color-text-muted-strong) 5%, transparent));
+  border-color: color-mix(in srgb, var(--color-text-muted-strong) 25%, transparent);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--color-text-muted-strong) 18%, transparent);
+}
+
+.status-pill:focus-visible,
+.role-tag:focus-visible,
+.tag:focus-visible,
+.thumb-chip:focus-visible {
+  outline: 2px solid var(--state-focus);
+  outline-offset: var(--space-0-5);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--state-focus) 35%, transparent);
+}

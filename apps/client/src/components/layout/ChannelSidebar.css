@@ -1,0 +1,228 @@
+/* apps/client/src/components/layout/ChannelSidebar.css */
+
+.tree-panel {
+  grid-area: tree;
+  background: var(--surface-tree);
+  border-right: 1px solid var(--color-border-glass);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  backdrop-filter: blur(30px);
+  position: relative;
+}
+
+.tree-content {
+  flex: 1;
+  padding: var(--space-2-5) var(--space-3) var(--space-3-5);
+  overflow-y: auto;
+}
+
+.t-cat {
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-sm);
+  font-weight: 800;
+  color: var(--color-text-ghost);
+  text-transform: uppercase;
+  margin: var(--space-4) var(--space-2) var(--space-1-5);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  letter-spacing: 1px;
+}
+
+.t-chan {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  padding: var(--space-2) var(--space-2-5);
+  margin: var(--space-0-5) var(--space-1) var(--space-1);
+  border-radius: var(--radius-2-5);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: 0.15s ease;
+  background: transparent;
+  border: 1px solid transparent;
+  position: relative;
+}
+
+.t-chan.nested {
+  margin-left: var(--space-3-5);
+}
+
+.t-chan .chan-icon {
+  font-size: var(--font-size-base);
+  width: var(--space-5);
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-tertiary);
+}
+
+.t-chan .chan-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: var(--space-0-5);
+  flex: 1;
+}
+
+.t-chan .chan-name {
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-sm);
+  font-weight: 700;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.t-chan .chan-sub {
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-sm);
+  color: var(--color-text-subtle);
+}
+
+.t-chan:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.t-chan:hover .chan-icon {
+  color: var(--color-text);
+}
+
+.t-chan:focus-visible {
+  outline: 2px solid var(--state-focus);
+  outline-offset: var(--space-0-5);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--state-focus) 35%, transparent);
+}
+
+.t-chan.active {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--color-surface) 92%, transparent), transparent);
+  border-left: 3px solid var(--color-accent);
+  color: var(--color-text);
+}
+
+.t-chan.active .chan-icon {
+  color: var(--color-text);
+}
+
+.t-chan.live {
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--color-accent) 20%, transparent);
+  border-color: color-mix(in srgb, var(--color-accent) 20%, transparent);
+}
+
+.t-user {
+  position: relative;
+  padding: var(--space-1-5) var(--space-2-5) var(--space-1-5) calc(var(--space-7) + var(--space-1-5));
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  border-radius: var(--radius-2-5);
+  margin: 0 var(--space-1-5) var(--space-1);
+  color: var(--color-text);
+  transition: 0.15s ease;
+}
+
+.t-user:hover {
+  background: var(--color-surface-hover);
+}
+
+.t-user:focus-visible {
+  outline: 2px solid var(--state-focus);
+  outline-offset: var(--space-0-5);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--state-focus) 35%, transparent);
+}
+
+.t-user::before {
+  content: '';
+  position: absolute;
+  left: var(--space-5-5);
+  top: calc(-1 * var(--space-2));
+  bottom: 50%;
+  width: var(--space-2-5);
+  border-left: 1px solid color-mix(in srgb, var(--color-surface-tint) 12%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-surface-tint) 12%, transparent);
+  border-bottom-left-radius: var(--radius-1);
+  pointer-events: none;
+}
+
+.t-user .u-av-sm {
+  width: var(--space-5-5);
+  height: var(--space-5-5);
+  border-radius: 50%;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-sm);
+  font-weight: 700;
+}
+
+.t-user .u-name {
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-sm);
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.t-user.speaking {
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--color-accent) 18%, transparent);
+}
+
+/* Voice Controls */
+.call-ctrl {
+  margin: 0 var(--space-2-5) var(--space-3) var(--space-2-5);
+  padding: var(--space-2);
+  background: color-mix(in srgb, var(--color-accent) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 20%, transparent);
+  border-radius: var(--radius-2-5);
+  display: flex;
+  gap: var(--space-2);
+}
+
+.cc-btn {
+  flex: 1;
+  height: var(--space-7-5);
+  border-radius: var(--radius-2);
+  border: none;
+  background: color-mix(in srgb, var(--color-surface-tint) 5%, transparent);
+  color: var(--color-text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s ease;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+}
+
+.cc-btn:hover {
+  background: var(--color-surface-hover);
+}
+
+.cc-btn.danger {
+  background: color-mix(in srgb, var(--role-admin) 20%, transparent);
+  color: var(--color-text-danger-soft);
+  border: 1px solid color-mix(in srgb, var(--role-admin) 30%, transparent);
+}
+
+.cc-btn.danger:hover {
+  background: color-mix(in srgb, var(--role-admin) 35%, transparent);
+  color: var(--color-text);
+}
+
+.cc-btn.active {
+  background: var(--color-accent);
+  color: var(--color-text);
+  box-shadow: var(--state-accent-glow);
+}
