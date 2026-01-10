@@ -278,7 +278,12 @@ export const ChannelSidebar = ({
             ? t('channelSidebar.listChannel', { defaultValue: 'List' })
             : t('channelSidebar.textChannel', { defaultValue: 'Text' });
 
-    const channelClasses = ['t-chan', isInside ? 'nested' : '', isHighlighted ? 'active' : '', isVoiceActive ? 'live' : '']
+    const channelClasses = [
+      'ct-channel-sidebar__channel',
+      isInside ? 'ct-channel-sidebar__channel--nested' : '',
+      isHighlighted ? 'ct-channel-sidebar__channel--active' : '',
+      isVoiceActive ? 'ct-channel-sidebar__channel--live' : '',
+    ]
       .filter(Boolean)
       .join(' ');
 
@@ -291,13 +296,13 @@ export const ChannelSidebar = ({
           }}
           className={channelClasses}
         >
-          <span className="chan-icon">
+          <span className="ct-channel-sidebar__channel-icon">
             <Icon icon={ChannelIcon} size="md" className="text-inherit" hoverTone="none" />
           </span>
 
-          <div className="chan-meta">
-            <span className="chan-name">{c.name}</span>
-            <span className="chan-sub">{channelSubLabel}</span>
+          <div className="ct-channel-sidebar__channel-meta">
+            <span className="ct-channel-sidebar__channel-name">{c.name}</span>
+            <span className="ct-channel-sidebar__channel-sub">{channelSubLabel}</span>
           </div>
 
           {isVoiceActive && <Badge variant="danger">LIVE</Badge>}
@@ -320,10 +325,10 @@ export const ChannelSidebar = ({
               return (
                 <div
                   key={`${c.id}-${user.id}`}
-                  className={`t-user ${speaking ? 'speaking' : ''}`}
+                  className={`ct-channel-sidebar__user ${speaking ? 'ct-channel-sidebar__user--speaking' : ''}`}
                 >
                   <div className="relative">
-                    <div className="u-av-sm text-[color:var(--color-text)]">
+                    <div className="ct-channel-sidebar__user-avatar text-[color:var(--color-text)]">
                       {avatar ? <img src={avatar} alt={user.username} className="h-full w-full object-cover" /> : initials}
                     </div>
                     <StatusBadge variant="dot" status={statusCls} size="md" className="absolute -right-0.5 -bottom-0.5" />
@@ -333,7 +338,7 @@ export const ChannelSidebar = ({
                       <Icon icon={tag.Icon} size="sm" className="text-inherit" hoverTone="none" /> {tag.label}
                     </RoleTag>
                   )}
-                  <span className="u-name">{user.username}</span>
+                  <span className="ct-channel-sidebar__user-name">{user.username}</span>
                   {speaking && <div className="w-1.5 h-4 rounded-full bg-emerald-400 animate-pulse" />}
                 </div>
               );
@@ -347,7 +352,7 @@ export const ChannelSidebar = ({
   const toggleCategory = (id: number) => setCollapsed(prev => ({ ...prev, [id]: !prev[id] }));
 
   return (
-    <div className="flex flex-col h-full bg-transparent relative">
+    <div className="ct-channel-sidebar flex flex-col h-full bg-transparent relative">
       {/* --- SERVER INFO HEADER --- */}
       {serverId && (
         <div className="relative z-20" ref={serverMenuRef}>
@@ -418,7 +423,7 @@ export const ChannelSidebar = ({
       )}
 
       {/* Liste */}
-      <div className="tree-content custom-scrollbar relative z-0">
+      <div className="ct-channel-sidebar__content custom-scrollbar relative z-0">
           {isLoading && <Spinner label={t('channelSidebar.loading')} />}
           {error && <ErrorCard className="mx-2 mb-3" message={error} onRetry={() => fetchData()} />}
 
@@ -436,7 +441,7 @@ export const ChannelSidebar = ({
                   <SortableWrapper key={cat.id} item={cat} id={categoryKey(cat.id)} data={{ type: 'category', categoryId: cat.id }} disabled={dragDisabled}>
                     {(dragMeta) => (
                         <div className={dragMeta.isDragging ? 'opacity-80' : ''} ref={dragMeta.setNodeRef} style={dragMeta.style}>
-                           <div className="t-cat group justify-between pr-2 no-drag">
+                           <div className="ct-channel-sidebar__category group justify-between pr-2 no-drag">
                                <div className="flex items-center gap-2">
                                   <IconButton
                                     {...(dragMeta.isDisabled ? {} : dragMeta.handleProps)}
@@ -492,23 +497,23 @@ export const ChannelSidebar = ({
             type="button"
             onClick={handleJumpToVoice}
             variant="ghost"
-            className="t-chan active w-full bg-transparent justify-start"
+            className="ct-channel-sidebar__channel ct-channel-sidebar__channel--active w-full bg-transparent justify-start"
             title={activeChannelName || t('channelSidebar.inChannel')}
           >
-            <span className="chan-icon">
+            <span className="ct-channel-sidebar__channel-icon">
               <Icon icon={Volume2} size="md" className="text-inherit" hoverTone="none" />
             </span>
-            <div className="chan-meta">
-              <span className="chan-name">{activeChannelName || t('channelSidebar.inChannel')}</span>
-              <span className="chan-sub">{t('channelSidebar.connected')}</span>
+            <div className="ct-channel-sidebar__channel-meta">
+              <span className="ct-channel-sidebar__channel-name">{activeChannelName || t('channelSidebar.inChannel')}</span>
+              <span className="ct-channel-sidebar__channel-sub">{t('channelSidebar.connected')}</span>
             </div>
           </Button>
-          <div className="call-ctrl">
+          <div className="ct-channel-sidebar__call-controls">
             <IconButton
               type="button"
               onClick={() => disconnect()}
               variant="ghost"
-              className="cc-btn danger"
+              className="ct-channel-sidebar__call-button ct-channel-sidebar__call-button--danger"
               aria-label={t('channelSidebar.leaveVoice', { defaultValue: 'Voice verlassen' })}
             >
               <Icon icon={PhoneOff} size="md" className="text-inherit" hoverTone="none" />
@@ -517,7 +522,7 @@ export const ChannelSidebar = ({
               type="button"
               onClick={() => toggleCamera()}
               variant="ghost"
-              className={`cc-btn ${isCameraEnabled ? 'active' : ''}`}
+              className={`ct-channel-sidebar__call-button ${isCameraEnabled ? 'ct-channel-sidebar__call-button--active' : ''}`}
               aria-pressed={isCameraEnabled}
               aria-label={t('channelSidebar.toggleCamera', { defaultValue: 'Kamera umschalten' })}
             >
@@ -527,7 +532,7 @@ export const ChannelSidebar = ({
               type="button"
               onClick={() => toggleScreenShare()}
               variant="ghost"
-              className={`cc-btn ${isScreenSharing ? 'active' : ''}`}
+              className={`ct-channel-sidebar__call-button ${isScreenSharing ? 'ct-channel-sidebar__call-button--active' : ''}`}
               aria-pressed={isScreenSharing}
               aria-label={t('channelSidebar.toggleScreenShare', { defaultValue: 'Bildschirm teilen' })}
             >

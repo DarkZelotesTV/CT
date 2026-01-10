@@ -358,6 +358,7 @@ body.mobile-scroll-lock {
   }
 
   .rail-panel,
+  .ct-channel-sidebar__panel,
   .tree-panel {
     position: fixed;
     top: var(--h-header);
@@ -378,6 +379,7 @@ body.mobile-scroll-lock {
     z-index: 100;
   }
 
+  .ct-channel-sidebar__panel,
   .tree-panel {
     left: var(--w-rail);
     width: var(--mobile-tree-width, min(80vw, var(--space-15)));
@@ -388,6 +390,7 @@ body.mobile-scroll-lock {
   }
 
   .mobile-nav-open .rail-panel,
+  .mobile-nav-open .ct-channel-sidebar__panel,
   .mobile-nav-open .tree-panel {
     transform: translateX(0);
     opacity: 1;

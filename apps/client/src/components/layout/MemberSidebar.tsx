@@ -51,12 +51,12 @@ export const MemberAvatar = ({
   })();
 
   return (
-    <div className="m-av-lg" aria-label={finalStatusLabel}>
-      <span className={`m-status-ring ${statusClass}`} aria-hidden />
+    <div className="ct-member-sidebar__avatar" aria-label={finalStatusLabel}>
+      <span className={`ct-member-sidebar__status-ring ct-member-sidebar__status-ring--${statusClass}`} aria-hidden />
       {member.avatarUrl ? (
         <img src={resolveServerAssetUrl(member.avatarUrl)} alt={finalAvatarAlt} />
       ) : (
-        <span className="m-av-initial" aria-label={initialsLabel}>
+        <span className="ct-member-sidebar__avatar-initial" aria-label={initialsLabel}>
           {avatarInitial}
         </span>
       )}
@@ -522,15 +522,21 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
     const statusClass = m.status === 'idle' || m.status === 'away' ? 'idle' : m.status;
     const statusTone =
       statusClass === 'online'
-        ? { row: 'm-row online' }
+        ? { row: 'ct-member-sidebar__row ct-member-sidebar__row--status-online' }
         : statusClass === 'idle'
-          ? { row: 'm-row idle' }
+          ? { row: 'ct-member-sidebar__row ct-member-sidebar__row--status-idle' }
           : statusClass === 'dnd'
-            ? { row: 'm-row dnd' }
-            : { row: 'm-row offline' };
+            ? { row: 'ct-member-sidebar__row ct-member-sidebar__row--status-dnd' }
+            : { row: 'ct-member-sidebar__row ct-member-sidebar__row--status-offline' };
 
     const variantClass =
-      variant === 'connected' ? 'accent-connected' : variant === 'afk' ? 'accent-afk' : variant === 'offline' ? 'accent-offline' : '';
+      variant === 'connected'
+        ? 'ct-member-sidebar__row--accent-connected'
+        : variant === 'afk'
+          ? 'ct-member-sidebar__row--accent-afk'
+          : variant === 'offline'
+            ? 'ct-member-sidebar__row--accent-offline'
+            : '';
 
     const roleTags = (m.roles || [])
       .map((role: any) => (typeof role === 'string' ? role : role?.name))
@@ -578,14 +584,14 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
           statusLabel={(status) => t('memberSidebar.statusLabel', { status }) ?? `Status: ${status}`}
         />
 
-        <div className="m-body">
-          <div className="m-title-row">
-            <span className="m-name">{m.username}</span>
+        <div className="ct-member-sidebar__body">
+          <div className="ct-member-sidebar__title-row">
+            <span className="ct-member-sidebar__name">{m.username}</span>
           </div>
           <div className="m-stat-row flex items-center gap-2 flex-wrap">
-            <span className={`m-stat ${statusClass}`}>{statusText}</span>
+            <span className={`ct-member-sidebar__stat ct-member-sidebar__stat--${statusClass}`}>{statusText}</span>
           </div>
-          <div className="m-roles">
+          <div className="ct-member-sidebar__roles">
             {roleBadges.length === 0 && (
               <RoleTag variant="neutral">
                 <Icon icon={UserX} size="sm" tone="default" className="text-inherit" />{' '}
@@ -607,26 +613,26 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
   };
 
   return (
-    <div className="member-sidebar overflow-hidden">
-      <div className="member-sidebar__header">
+    <div className="ct-member-sidebar overflow-hidden">
+      <div className="ct-member-sidebar__header">
         <Input
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder={t('memberSidebar.searchPlaceholder') ?? ''}
-          className="member-sidebar__search"
+          className="ct-member-sidebar__search"
         />
       </div>
 
-      <div ref={listParentRef} className="member-sidebar__list custom-scrollbar">
+      <div ref={listParentRef} className="ct-member-sidebar__list custom-scrollbar">
         {loading && (
           <div className="space-y-3">
             <Spinner label={t('memberSidebar.loading')} />
             <div className="space-y-3">
               {[0, 1, 2, 3].map((index) => (
-                <div key={`member-skeleton-${index}`} className="m-row">
+                <div key={`member-skeleton-${index}`} className="ct-member-sidebar__row">
                   <Skeleton className="h-[46px] w-[46px] rounded-[var(--radius-3)] bg-[var(--color-surface-hover)]" />
-                  <div className="m-body">
+                  <div className="ct-member-sidebar__body">
                     <Skeleton className="h-3 w-1/3 bg-[var(--color-surface-hover)]" />
                     <Skeleton className="h-2.5 w-1/2 bg-[var(--color-surface-hover)]" />
                   </div>
@@ -665,10 +671,10 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
                   <div
                     key={row.key}
                     style={style}
-                    className={`grp-head ${row.variant ? `accent-${row.variant}` : ''}`}
+                    className={`ct-member-sidebar__group-header ${row.variant ? `ct-member-sidebar__group-header--${row.variant}` : ''}`}
                   >
                     <span>{row.label}</span>
-                    <span className="grp-count">{row.count}</span>
+                    <span className="ct-member-sidebar__group-count">{row.count}</span>
                   </div>
                 );
               }
