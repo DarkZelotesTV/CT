@@ -381,6 +381,43 @@ const parsePayload = <S extends ZodTypeAny>(schema: S, payload: unknown) => {
   return result.data;
 };
 
+const requiredTables = [
+  'users',
+  'servers',
+  'categories',
+  'channels',
+  'server_members',
+  'friendships',
+  'roles',
+  'server_member_roles',
+  'channel_permission_overrides',
+  'server_bans',
+];
+
+const ensureDatabaseSchema = async () => {
+  const queryInterface = sequelize.getQueryInterface();
+  const tables = await queryInterface.showAllTables();
+  const normalizedTables = new Set(
+    (Array.isArray(tables) ? tables : [])
+      .map((table) => {
+        if (typeof table === 'string') return table;
+        if (table && typeof table === 'object') {
+          return (table as { tableName?: string; name?: string }).tableName || (table as { name?: string }).name || '';
+        }
+        return '';
+      })
+      .filter(Boolean)
+      .map((name) => name.toLowerCase()),
+  );
+  const missingTables = requiredTables.filter((table) => !normalizedTables.has(table));
+  if (!missingTables.length) return;
+
+  console.error('❌ Datenbankschema unvollständig. Bitte Migrationen ausführen, bevor der Server startet.');
+  console.error(`   Fehlende Tabellen: ${missingTables.join(', ')}`);
+  console.error('   Befehl: npm run db:migrate --workspace apps/server');
+  process.exit(1);
+};
+
 const consumeTokenOrThrow = (socket: any) => {
   const limiter: TokenBucket = (socket.data as any).rateLimiter || createDefaultTokenBucket();
   (socket.data as any).rateLimiter = limiter;
@@ -1366,17 +1403,28 @@ io.on('connection', async (socket) => {
 // ==========================================
 // 5. SERVER STARTEN
 // ==========================================
-console.log('------------------------------------------------');
-console.log('ℹ️ Starte Server ohne automatisches sequelize.sync(). Bitte führe Migrations aus.');
-console.log('------------------------------------------------');
+const startServer = async () => {
+  console.log('------------------------------------------------');
+  console.log('ℹ️ Starte Server ohne automatisches sequelize.sync(). Bitte führe Migrationen aus.');
+  console.log('------------------------------------------------');
 
-httpServer.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 [Server] Läuft auf:`);
-  console.log(`   - Local:   ${serverProtocol}://localhost:${PORT}`);
-  console.log(`   - Network: ${serverProtocol}://127.0.0.1:${PORT}`);
-  console.log(`   - Socket:  ${websocketProtocol}://localhost:${PORT}`);
-  if (!tlsCredentials) {
-    console.warn('⚠️ TLS assets not provided. HTTP/WebSocket insecure endpoints are active. Configure TLS_CERT_PATH and TLS_KEY_PATH for HTTPS/WSS.');
+  try {
+    await ensureDatabaseSchema();
+  } catch (err) {
+    console.error('❌ Fehler beim Prüfen des Datenbankschemas:', err);
+    process.exit(1);
   }
-  console.log("------------------------------------------------");
-});
+
+  httpServer.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 [Server] Läuft auf:`);
+    console.log(`   - Local:   ${serverProtocol}://localhost:${PORT}`);
+    console.log(`   - Network: ${serverProtocol}://127.0.0.1:${PORT}`);
+    console.log(`   - Socket:  ${websocketProtocol}://localhost:${PORT}`);
+    if (!tlsCredentials) {
+      console.warn('⚠️ TLS assets not provided. HTTP/WebSocket insecure endpoints are active. Configure TLS_CERT_PATH and TLS_KEY_PATH for HTTPS/WSS.');
+    }
+    console.log("------------------------------------------------");
+  });
+};
+
+void startServer();
