@@ -745,9 +745,10 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
                   ) : isPreviewEmpty ? (
                     <div className="flex items-center justify-center bg-surface-3/40 border border-border rounded-lg p-4">
                       <EmptyState
-                        icon={<Icon icon={Globe} size="lg" tone="muted" />}
+                        icon={<Icon icon={Globe} size="lg" className="text-inherit" hoverTone="none" />}
                         title="Vorschau"
-                        body="Hier erscheint eine Live-Vorschau, sobald Inhalte hinzugefügt wurden."
+                        description="Hier erscheint eine Live-Vorschau, sobald Inhalte hinzugefügt wurden."
+                        tone="muted"
                         variant="surface"
                         className="max-w-md w-full"
                       />
@@ -763,9 +764,10 @@ export const WebChannelView = ({ channelId, channelName }: WebChannelViewProps) 
             ) : isContentEmpty && layoutMode !== 'codenames' ? (
               <div className="flex items-center justify-center p-8">
                 <EmptyState
-                  icon={<Icon icon={Globe} size="lg" tone="muted" />}
+                  icon={<Icon icon={Globe} size="lg" className="text-inherit" hoverTone="none" />}
                   title="Willkommen"
-                  body="Diese Seite ist noch leer. Füge Inhalte hinzu, um deinen Web-Channel zu gestalten."
+                  description="Diese Seite ist noch leer. Füge Inhalte hinzu, um deinen Web-Channel zu gestalten."
+                  tone="muted"
                   variant="surface"
                   className="max-w-lg w-full"
                 />

@@ -6,13 +6,29 @@ import { Card, type CardVariant } from './Card';
 export type EmptyStateProps = {
   icon?: React.ReactNode;
   title: React.ReactNode;
-  body?: React.ReactNode;
-  action?: React.ReactNode;
+  description?: React.ReactNode;
+  actions?: React.ReactNode;
+  tone?: 'muted' | 'default' | 'accent';
   className?: string;
   variant?: CardVariant;
 };
 
-export const EmptyState = ({ icon, title, body, action, className, variant = 'surface' }: EmptyStateProps) => {
+const toneClasses: Record<NonNullable<EmptyStateProps['tone']>, string> = {
+  muted:
+    'bg-[color:var(--color-surface-hover)] text-[color:var(--color-text-muted)] border border-[color:var(--color-border)]/60',
+  default: 'bg-[color:var(--color-surface)] text-[color:var(--color-text)] border border-[color:var(--color-border)]/60',
+  accent: 'bg-[color:var(--color-accent)]/10 text-[color:var(--color-accent)] border border-[color:var(--color-accent)]/30',
+};
+
+export const EmptyState = ({
+  icon,
+  title,
+  description,
+  actions,
+  tone = 'muted',
+  className,
+  variant = 'surface',
+}: EmptyStateProps) => {
   return (
     <Card
       variant={variant}
@@ -22,15 +38,22 @@ export const EmptyState = ({ icon, title, body, action, className, variant = 'su
       )}
     >
       {icon ? (
-        <div className="flex items-center justify-center rounded-full bg-[color:var(--color-surface-hover)] p-3 text-[color:var(--color-text-muted)] shadow-[var(--shadow-1)]">
+        <div
+          className={classNames(
+            'flex h-12 w-12 items-center justify-center rounded-full shadow-[var(--shadow-1)]',
+            toneClasses[tone]
+          )}
+        >
           {icon}
         </div>
       ) : null}
       <div className="space-y-2">
         <h2 className="text-xl font-semibold text-text">{title}</h2>
-        {body ? <p className="text-sm text-[color:var(--color-text-muted)] max-w-md">{body}</p> : null}
+        {description ? (
+          <p className="text-sm text-[color:var(--color-text-muted)] max-w-md leading-relaxed">{description}</p>
+        ) : null}
       </div>
-      {action ? <div className="pt-2">{action}</div> : null}
+      {actions ? <div className="flex flex-wrap items-center justify-center gap-3 pt-2">{actions}</div> : null}
     </Card>
   );
 };
