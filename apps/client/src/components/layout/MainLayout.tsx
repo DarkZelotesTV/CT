@@ -796,9 +796,10 @@ export const MainLayout = () => {
         <div className="flex-1 flex items-center justify-center relative h-full">
           <EmptyState
             variant="glass"
-            icon={<Icon icon={MessageSquare} size="lg" tone="muted" />}
+            icon={<Icon icon={MessageSquare} size="lg" className="text-inherit" hoverTone="none" />}
             title={t('layout.textChannelSelected')}
-            body={t('layout.textChannelUnsupported')}
+            description={t('layout.textChannelUnsupported')}
+            tone="muted"
             className="max-w-lg"
           />
         </div>
@@ -829,9 +830,10 @@ export const MainLayout = () => {
       <div className="flex-1 flex items-center justify-center relative h-full">
         <EmptyState
           variant="glass"
-          icon={<Icon icon={Sparkles} size="lg" tone="muted" />}
+          icon={<Icon icon={Sparkles} size="lg" className="text-inherit" hoverTone="none" />}
           title={t('layout.stageAreaTitle')}
-          body={t('layout.stageAreaDescription')}
+          description={t('layout.stageAreaDescription')}
+          tone="muted"
           className="max-w-lg"
         />
       </div>

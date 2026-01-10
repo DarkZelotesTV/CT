@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, MessageSquare, MoreVertical, Search, UserPlus, Check, X, Loader2, Ban } from 'lucide-react';
+import { Activity, ArrowLeft, Ban, Check, Loader2, MessageSquare, MoreVertical, Search, UserPlus, Users, X } from 'lucide-react';
 import { apiFetch } from '../../api/http';
 import { useSocket } from '../../context/SocketContext';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
-import { Button, Input, Popover, PopoverContent, PopoverTrigger, StatusBadge } from '../ui';
+import { Button, EmptyState, Icon, Input, Popover, PopoverContent, PopoverTrigger, StatusBadge } from '../ui';
 import { IconButton } from '../ui/Button';
 
 interface FriendListStageProps {
@@ -342,23 +342,53 @@ export const FriendListStage = ({ onBackToHome }: FriendListStageProps) => {
                ))}
 
                {!loading && activeTab === 'pending' && filteredPending.length === 0 && (
-                 <div className="text-[color:var(--color-text-muted)]">Keine ausstehenden Anfragen.</div>
+                 <div className="flex justify-center py-8">
+                   <EmptyState
+                     icon={<Icon icon={UserPlus} size="lg" className="text-inherit" hoverTone="none" />}
+                     title="Keine Anfragen"
+                     description="Aktuell gibt es keine ausstehenden Freundschaftsanfragen."
+                     tone="muted"
+                     className="max-w-md w-full"
+                   />
+                 </div>
                )}
 
                {!loading && activeTab === 'blocked' && filteredBlocked.length === 0 && (
-                 <div className="text-[color:var(--color-text-muted)]">Keine blockierten Nutzer.</div>
+                 <div className="flex justify-center py-8">
+                   <EmptyState
+                     icon={<Icon icon={Ban} size="lg" className="text-inherit" hoverTone="none" />}
+                     title="Niemand blockiert"
+                     description="Du hast derzeit keine Nutzer blockiert."
+                     tone="muted"
+                     className="max-w-md w-full"
+                   />
+                 </div>
                )}
 
                {!loading && activeTab !== 'pending' && activeTab !== 'blocked' && filteredFriends.length === 0 && (
-                 <div className="text-[color:var(--color-text-muted)]">Keine Freunde gefunden.</div>
+                 <div className="flex justify-center py-8">
+                   <EmptyState
+                     icon={<Icon icon={Users} size="lg" className="text-inherit" hoverTone="none" />}
+                     title="Keine Freunde gefunden"
+                     description="Füge neue Freunde hinzu, um hier ihre Aktivität zu sehen."
+                     tone="muted"
+                     className="max-w-md w-full"
+                   />
+                 </div>
                )}
             </div>
          </div>
          {/* Rechte Seite: "Jetzt aktiv" */}
          <div className="w-80 border-l border-border p-4 hidden xl:block">
             <h3 className="text-xl font-bold text-text mb-4">Jetzt aktiv</h3>
-            <div className="text-center mt-10 text-[color:var(--color-text-muted)]">
-               <div className="font-bold">Momentan ist alles ruhig.</div>
+            <div className="mt-6 flex justify-center">
+              <EmptyState
+                icon={<Icon icon={Activity} size="lg" className="text-inherit" hoverTone="none" />}
+                title="Momentan ruhig"
+                description="Sobald Freunde aktiv sind, erscheinen sie hier."
+                tone="muted"
+                className="w-full"
+              />
             </div>
          </div>
       </div>
