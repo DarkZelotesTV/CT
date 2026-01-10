@@ -6,7 +6,7 @@ import { apiFetch } from '../../api/http';
 import { getServerUrl, setServerUrl } from '../../utils/apiConfig';
 import { readPinnedServers, removePinnedServer, normalizeInstanceUrl } from '../../utils/pinnedServers';
 import { storage } from '../../shared/config/storage';
-import { ErrorCard, Icon, Spinner, Menu, MenuItem, Popover, PopoverContent, PopoverTrigger } from '../ui';
+import { Avatar, ErrorCard, Icon, Spinner, Menu, MenuItem, Popover, PopoverContent, PopoverTrigger } from '../ui';
 import { Button, IconButton } from '../ui/Button';
 import { useSocket } from '../../context/SocketContext';
 import './ServerRail.css';
@@ -427,17 +427,14 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                   </div>
                 )}
 
-                {server.icon_url ? (
-                  <img
-                    src={resolveIconUrl(server.icon_url)}
-                    alt={name}
-                    className={`w-full h-full object-cover transition-all ${selectedServerId === server.id ? 'rounded-[var(--radius-3)]' : 'rounded-full group-hover:rounded-[var(--radius-3)]'}`}
-                  />
-                ) : (
-                  <span className={`font-bold text-sm transition-colors ${selectedServerId === server.id ? 'text-accent' : 'text-text-muted group-hover:text-accent'}`}>
-                    {name.substring(0, 2).toUpperCase()}
-                  </span>
-                )}
+                <Avatar
+                  size="xl"
+                  shape="inherit"
+                  src={server.icon_url ? resolveIconUrl(server.icon_url) : undefined}
+                  alt={name}
+                  fallback={name.substring(0, 2).toUpperCase()}
+                  className={`transition-all ${selectedServerId === server.id ? 'text-accent' : 'text-text-muted group-hover:text-accent'}`}
+                />
               </Button>
             );
           })}
@@ -484,17 +481,14 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                     <Icon icon={X} size="sm" className="text-inherit" hoverTone="none" />
                   </IconButton>
 
-                  {p.iconUrl ? (
-                    <img
-                      src={resolveIconUrl(p.iconUrl, p.instanceUrl)}
-                      alt={p.name ?? 'Remote'}
-                      className="w-full h-full object-cover transition-all rounded-full group-hover:rounded-[var(--radius-3)]"
-                    />
-                  ) : (
-                    <span className="text-text-muted font-bold text-sm group-hover:text-accent transition-colors">
-                      {(p.name ?? `S${p.serverId}`).substring(0, 2).toUpperCase()}
-                    </span>
-                  )}
+                  <Avatar
+                    size="xl"
+                    shape="inherit"
+                    src={p.iconUrl ? resolveIconUrl(p.iconUrl, p.instanceUrl) : undefined}
+                    alt={p.name ?? 'Remote'}
+                    fallback={(p.name ?? `S${p.serverId}`).substring(0, 2).toUpperCase()}
+                    className="group-hover:text-accent text-text-muted"
+                  />
                 </div>
               ))}
             </>
