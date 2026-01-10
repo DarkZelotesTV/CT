@@ -277,18 +277,17 @@
 }
 
 /* Utilities */
-.scroll-y {
-  overflow-y: auto;
+.scroll-area {
   scrollbar-width: thin;
   scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
 }
 
-.no-scrollbar {
+.scroll-area--hidden {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
 
-.no-scrollbar::-webkit-scrollbar {
+.scroll-area--hidden::-webkit-scrollbar {
   width: 0;
   height: 0;
 }

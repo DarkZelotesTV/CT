@@ -1,10 +1,11 @@
 /* apps/client/src/components/modals/ModalLayout.tsx */
 import { ReactNode, useEffect, useMemo, useRef } from 'react';
+import classNames from 'classnames';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { getModalRoot } from './modalRoot';
 import { useTopBar } from '../window/TopBarContext';
-import { Card, Icon } from '../ui';
+import { Card, Icon, ScrollArea } from '../ui';
 import { IconButton } from '../ui/Button';
 
 interface ModalLayoutProps {
@@ -154,9 +155,9 @@ export const ModalLayout = ({
         </div>
 
         {/* Body */}
-        <div className={`ct-modal-body custom-scrollbar ${bodyClassName ?? ''}`}>
+        <ScrollArea className={classNames('ct-modal-body', bodyClassName)}>
           {children}
-        </div>
+        </ScrollArea>
 
         {/* Footer */}
         {footer && (

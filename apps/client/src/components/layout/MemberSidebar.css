@@ -43,7 +43,6 @@
 .ct-member-sidebar__list,
 .member-sidebar__list {
   flex: 1;
-  overflow-y: auto;
   padding: var(--space-3-5) var(--space-4) var(--space-4);
   gap: var(--space-3-5);
   display: flex;

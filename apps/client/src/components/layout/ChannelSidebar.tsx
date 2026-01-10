@@ -14,7 +14,7 @@ import { useSettings } from '../../context/SettingsContext';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
 import { defaultServerTheme, deriveServerThemeFromSettings, type ServerTheme } from '../../theme/serverTheme';
 import { storage } from '../../shared/config/storage';
-import { Badge, ErrorCard, Icon, RoleTag, Skeleton, Spinner, StatusBadge, type StatusTone } from '../ui';
+import { Badge, ErrorCard, Icon, RoleTag, ScrollArea, Skeleton, Spinner, StatusBadge, type StatusTone } from '../ui';
 import { Button, IconButton } from '../ui/Button';
 import './ChannelSidebar.css';
 
@@ -423,7 +423,7 @@ export const ChannelSidebar = ({
       )}
 
       {/* Liste */}
-      <div className="ct-channel-sidebar__content custom-scrollbar relative z-0">
+      <ScrollArea className="ct-channel-sidebar__content relative z-0">
           {isLoading && <Spinner label={t('channelSidebar.loading')} />}
           {error && <ErrorCard className="mx-2 mb-3" message={error} onRetry={() => fetchData()} />}
 
@@ -487,7 +487,7 @@ export const ChannelSidebar = ({
               ))}
             </SortableContext>
           </DndContext>
-      </div>
+      </ScrollArea>
 
       {shouldShowVoiceParticipants && <div className="relative z-10"><VoiceParticipantsPanel /></div>}
 

@@ -17,7 +17,6 @@
 .tree-content {
   flex: 1;
   padding: var(--space-2-5) var(--space-3) var(--space-3-5);
-  overflow-y: auto;
 }
 
 .ct-channel-sidebar__category,

@@ -16,6 +16,7 @@ export { ContextMenu, ContextMenuContent, ContextMenuTrigger } from './ContextMe
 export { Popover, PopoverTrigger, PopoverContent } from './Popover';
 export { Menu } from './Menu';
 export { MenuItem } from './MenuItem';
+export { ScrollArea } from './ScrollArea';
 export type { AvatarProps, AvatarShape, AvatarSize, AvatarStatus } from './Avatar';
 export type { RoleTagVariant } from './RoleTag';
 export type { StatusBadgeProps, StatusBadgeSize, StatusBadgeVariant, StatusTone } from './StatusBadge';
