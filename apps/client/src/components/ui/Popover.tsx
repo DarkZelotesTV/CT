@@ -138,7 +138,7 @@ export const PopoverTrigger = forwardRef<HTMLElement, PopoverTriggerProps>(({ ch
 
 PopoverTrigger.displayName = 'PopoverTrigger';
 
-interface PopoverContentProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface PopoverContentProps extends React.HTMLAttributes<HTMLDivElement> {
   initialFocusRef?: React.RefObject<HTMLElement>;
   autoFocus?: boolean;
 }

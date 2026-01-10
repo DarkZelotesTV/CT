@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ChevronUp,
   ExternalLink,
@@ -24,22 +24,8 @@ import { useVoice } from '../..';
 // 3. Settings und Modals (vier Ebenen hoch bis src/)
 import { useSettings } from '../../../../context/SettingsContext';
 import { UserSettingsModal } from '../../../../components/modals/UserSettingsModal';
-import { StatusBadge, type StatusTone } from '../../../../components/ui';
+import { ContextMenu, ContextMenuContent, ContextMenuTrigger, Menu, MenuItem, StatusBadge, type StatusTone } from '../../../../components/ui';
 import './VoiceView.css';
-
-const ContextMenu = ({ onClose, children }: { onClose: () => void, children: React.ReactNode }) => {
-    const ref = useRef<HTMLDivElement>(null);
-    useEffect(() => {
-        const h = (e: MouseEvent) => { if(ref.current && !ref.current.contains(e.target as Node)) onClose(); };
-        document.addEventListener('mousedown', h);
-        return () => document.removeEventListener('mousedown', h);
-    }, [onClose]);
-    return (
-        <div ref={ref} className="absolute bottom-[115%] left-0 w-64 bg-surface border border-border rounded-2xl shadow-glass p-1.5 z-50 text-text animate-in slide-in-from-bottom-2 duration-150">
-            {children}
-        </div>
-    );
-};
 
 export const VoiceChannelView = ({ channelName }: { channelName: string | null }) => {
   const {
@@ -322,20 +308,31 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
                 >
                   {micMuted ? <MicOff size={16} /> : <Mic size={16} />}
                 </button>
-                <button className="ct-voice-channel__control-button" onClick={() => setMenuOpen(menuOpen === 'mic' ? null : 'mic')}>
-                  <ChevronUp size={14} />
-                </button>
-                {menuOpen === 'mic' && (
-                  <ContextMenu onClose={() => setMenuOpen(null)}>
-                    <div className="text-[10px] uppercase font-bold text-text-muted px-3 py-2">Eingabe</div>
-                    {devices.audio.map(d => (
-                      <button key={d.deviceId} onClick={() => handleDeviceSwitch('audio', d.deviceId)} className="w-full text-left px-3 py-2 text-sm hover:bg-accent/10 rounded-xl flex justify-between items-center text-text transition-colors">
-                        <span className="truncate">{d.label || 'Mikrofon'}</span>
-                        {settings.devices.audioInputId === d.deviceId && <Check size={14} className="text-accent"/>}
-                      </button>
-                    ))}
-                  </ContextMenu>
-                )}
+                <ContextMenu
+                  open={menuOpen === 'mic'}
+                  onOpenChange={(open) => setMenuOpen(open ? 'mic' : null)}
+                >
+                  <ContextMenuTrigger>
+                    <button className="ct-voice-channel__control-button" type="button">
+                      <ChevronUp size={14} />
+                    </button>
+                  </ContextMenuTrigger>
+                  <ContextMenuContent className="absolute bottom-[115%] left-0 w-64 bg-surface border border-border rounded-2xl shadow-glass p-1.5 z-50 text-text animate-in slide-in-from-bottom-2 duration-150">
+                    <Menu className="flex flex-col gap-1" aria-label="Eingabegeräte">
+                      <div className="text-[10px] uppercase font-bold text-text-muted px-3 py-2">Eingabe</div>
+                      {devices.audio.map((d) => (
+                        <MenuItem
+                          key={d.deviceId}
+                          onClick={() => handleDeviceSwitch('audio', d.deviceId)}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-accent/10 rounded-xl flex justify-between items-center text-text transition-colors"
+                        >
+                          <span className="truncate">{d.label || 'Mikrofon'}</span>
+                          {settings.devices.audioInputId === d.deviceId && <Check size={14} className="text-accent" />}
+                        </MenuItem>
+                      ))}
+                    </Menu>
+                  </ContextMenuContent>
+                </ContextMenu>
               </div>
               <button
                 className={`ct-voice-channel__control-button ${!muted ? 'ct-voice-channel__control-button--active' : 'ct-voice-channel__control-button--muted'}`}
