@@ -11,6 +11,7 @@ import { TitleBar } from '../window/TitleBar';
 import { TopBarProvider } from '../window/TopBarContext';
 import { DecorationLayer } from './DecorationLayer';
 import { SidebarResizer } from './SidebarResizer';
+import { NetworkStatusPills } from './NetworkStatusPills';
 import './LayoutShell.css';
 
 // Web & Voice Views
@@ -1127,22 +1128,12 @@ export const MainLayout = () => {
           
           {/* Mittlerer Bereich: Telemetry Bar (Neu) */}
           {selectedServerId && (
-            <div className="telemetry-bar no-drag hidden md:flex gap-3">
-              <div className="t-item">
-                <span className="t-label">PING</span>
-                <span className="t-val text-emerald-200">{pingDisplay}ms</span>
-              </div>
-              <div className="t-item">
-                <span className="t-label">LOSS</span>
-                <span className={classNames('t-val', lossTone)}>{lossDisplay}</span>
-              </div>
-              <div className="t-item">
-                <span className="t-label">UPTIME</span>
-                <span className="t-val text-text" id="time">
-                  {uptimeDisplay}
-                </span>
-              </div>
-            </div>
+            <NetworkStatusPills
+              pingDisplay={pingDisplay}
+              lossDisplay={lossDisplay}
+              lossTone={lossTone}
+              uptimeDisplay={uptimeDisplay}
+            />
           )}
 
           {/* Rechter Bereich: Actions */}
