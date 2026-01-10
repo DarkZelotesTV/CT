@@ -463,7 +463,7 @@ app.use(
           ...allowedSocketOrigins,
         ],
         // WICHTIG: Hier erlauben wir die Codenames-Seite im Iframe
-        'frame-src': ["'self'", "https://codenames.game/"],
+        'frame-src': ["'self'", "https://codenames.game/", "https://bsky.app/"],
       },
     },
     // Deaktiviert COEP, falls es Probleme beim Laden von Ressourcen gibt
