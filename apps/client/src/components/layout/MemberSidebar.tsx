@@ -3,7 +3,7 @@ import { Shield, Crown, UserCheck, UserX } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../../api/http';
 import { useSocket } from '../../context/SocketContext';
-import { ErrorCard, Icon, Input, RoleTag, Select, Skeleton, Spinner } from '../ui';
+import { Avatar, ErrorCard, Icon, Input, RoleTag, Select, Skeleton, Spinner } from '../ui';
 import { Button } from '../ui/Button';
 import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
@@ -26,42 +26,6 @@ const normalizeStatus = (rawStatus: any): PresenceStatus => {
   if (['idle', 'away'].includes(normalized)) return 'idle';
   if (['dnd', 'busy'].includes(normalized)) return 'dnd';
   return 'offline';
-};
-
-export const MemberAvatar = ({
-  member,
-  avatarAlt,
-  initialsLabel,
-  statusLabel,
-}: {
-  member: Member;
-  avatarAlt?: string;
-  initialsLabel?: string;
-  statusLabel?: (status: Member['status']) => string;
-}) => {
-  const avatarInitial = member.username?.[0]?.toUpperCase() ?? '?';
-  const finalAvatarAlt = avatarAlt ?? `${member.username} avatar`;
-  const finalStatusLabel = statusLabel?.(member.status) ?? `Status: ${member.status}`;
-
-  const statusClass = (() => {
-    if (member.status === 'online') return 'online';
-    if (member.status === 'idle' || member.status === 'away') return 'idle';
-    if (member.status === 'dnd') return 'dnd';
-    return 'offline';
-  })();
-
-  return (
-    <div className="ct-member-sidebar__avatar" aria-label={finalStatusLabel}>
-      <span className={`ct-member-sidebar__status-ring ct-member-sidebar__status-ring--${statusClass}`} aria-hidden />
-      {member.avatarUrl ? (
-        <img src={resolveServerAssetUrl(member.avatarUrl)} alt={finalAvatarAlt} />
-      ) : (
-        <span className="ct-member-sidebar__avatar-initial" aria-label={initialsLabel}>
-          {avatarInitial}
-        </span>
-      )}
-    </div>
-  );
 };
 
 export const getAvatarUrl = (avatarPayload: any): string | undefined => {
@@ -558,6 +522,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
           : m.status === 'dnd'
             ? t('memberSidebar.busyStatus', { defaultValue: 'Beschäftigt' })
             : t('memberSidebar.offlineStatus');
+    const avatarStatus = statusClass === 'idle' ? 'idle' : statusClass === 'dnd' ? 'dnd' : statusClass === 'online' ? 'online' : 'offline';
 
     return (
       <div
@@ -577,11 +542,14 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
         onTouchEnd={cancelLongPress}
         onTouchMove={cancelLongPress}
       >
-        <MemberAvatar
-          member={m}
-          avatarAlt={t('memberSidebar.avatarAlt', { username: m.username }) ?? `${m.username} avatar`}
-          initialsLabel={t('memberSidebar.initialsAvatar') ?? undefined}
-          statusLabel={(status) => t('memberSidebar.statusLabel', { status }) ?? `Status: ${status}`}
+        <Avatar
+          size="lg"
+          shape="rounded"
+          status={avatarStatus}
+          src={m.avatarUrl ? resolveServerAssetUrl(m.avatarUrl) : undefined}
+          alt={t('memberSidebar.avatarAlt', { username: m.username }) ?? `${m.username} avatar`}
+          fallback={(m.username?.[0] ?? '?').toUpperCase()}
+          aria-label={t('memberSidebar.statusLabel', { status: m.status }) ?? `Status: ${m.status}`}
         />
 
         <div className="ct-member-sidebar__body">

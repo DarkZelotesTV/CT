@@ -1,0 +1,99 @@
+.ct-avatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: var(--avatar-radius, var(--radius-4));
+  border: 2px solid color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
+  background: color-mix(in srgb, var(--color-surface-tint) 5%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-surface-tint) 8%, transparent), 0 10px 26px color-mix(in srgb, var(--color-shadow) 35%, transparent);
+  font-weight: 800;
+  transition: border-radius 0.2s ease;
+}
+
+.ct-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ct-avatar__fallback {
+  font-size: inherit;
+  line-height: 1;
+  letter-spacing: 0.2px;
+}
+
+.ct-avatar--size-sm {
+  width: var(--space-7);
+  height: var(--space-7);
+  font-size: var(--font-size-xs);
+}
+
+.ct-avatar--size-md {
+  width: var(--space-8);
+  height: var(--space-8);
+  font-size: var(--font-size-sm);
+}
+
+.ct-avatar--size-lg {
+  width: var(--space-9);
+  height: var(--space-9);
+  font-size: var(--font-size-base);
+}
+
+.ct-avatar--size-xl {
+  width: var(--space-12);
+  height: var(--space-12);
+  font-size: var(--font-size-base);
+}
+
+.ct-avatar--shape-circle {
+  --avatar-radius: 9999px;
+  --avatar-ring-radius: 9999px;
+}
+
+.ct-avatar--shape-rounded {
+  --avatar-radius: var(--radius-4);
+  --avatar-ring-radius: var(--radius-4);
+}
+
+.ct-avatar--shape-square {
+  --avatar-radius: var(--radius-2);
+  --avatar-ring-radius: var(--radius-2);
+}
+
+.ct-avatar--shape-inherit {
+  --avatar-radius: inherit;
+  --avatar-ring-radius: inherit;
+}
+
+.ct-avatar__status-ring {
+  position: absolute;
+  inset: calc(-1 * var(--space-1));
+  border-radius: var(--avatar-ring-radius, var(--radius-4));
+  border: 2px solid transparent;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-surface-tint) 4%, transparent);
+  pointer-events: none;
+}
+
+.ct-avatar__status-ring--online {
+  border-color: color-mix(in srgb, var(--status-online) 70%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--status-online) 26%, transparent), 0 12px 26px color-mix(in srgb, var(--color-accent) 25%, transparent);
+}
+
+.ct-avatar__status-ring--idle {
+  border-color: color-mix(in srgb, var(--status-idle) 70%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--status-idle) 26%, transparent), 0 12px 26px color-mix(in srgb, var(--status-idle) 22%, transparent);
+}
+
+.ct-avatar__status-ring--dnd {
+  border-color: color-mix(in srgb, var(--role-admin) 75%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--role-admin) 28%, transparent), 0 12px 26px color-mix(in srgb, var(--role-admin) 25%, transparent);
+}
+
+.ct-avatar__status-ring--offline {
+  border-color: color-mix(in srgb, var(--color-text-muted-strong) 50%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-text-muted-strong) 22%, transparent), 0 12px 22px color-mix(in srgb, var(--color-shadow) 32%, transparent);
+}
