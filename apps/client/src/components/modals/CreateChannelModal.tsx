@@ -116,7 +116,7 @@ export const CreateChannelModal = ({
         {/* Name Input */}
         <div>
           <label className={`mb-2 block ${labelClassName}`}>Kanalname</label>
-          <div className="flex items-center px-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 focus-within:border-[var(--color-focus)] focus-within:ring-2 focus-within:ring-[color:var(--color-focus)] focus-within:ring-offset-2 focus-within:ring-offset-background text-text transition-colors">
+          <div className="flex items-center px-3 rounded-[var(--radius-3)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 focus-within:border-[var(--state-focus)] focus-within:ring-2 focus-within:ring-[color:var(--state-focus)] focus-within:ring-offset-2 focus-within:ring-offset-background text-text transition-colors">
             {type === 'text' ? (
               <Icon icon={Hash} size="md" tone="muted" className="mr-2" />
             ) : type === 'voice' ? (

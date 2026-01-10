@@ -21,23 +21,13 @@ const applyPreloadTheme = () => {
   const theme = buildAppTheme(mode, accentColor);
   const root = document.documentElement;
   const entries: Record<string, string> = {
-    '--color-background': theme.background,
-    '--color-surface': theme.surface,
-    '--color-surface-alt': theme.surfaceAlt,
-    '--color-surface-hover': theme.surfaceHover,
-    '--color-surface-tint': theme.surfaceTint,
-    '--color-border': theme.border,
-    '--color-border-strong': theme.borderStrong,
-    '--color-border-subtle': theme.borderSubtle,
-    '--color-text': theme.text,
-    '--color-text-muted': theme.textMuted,
     '--color-accent': theme.accent,
     '--color-accent-hover': theme.accentHover,
-    '--color-focus': theme.focus,
-    '--color-overlay': theme.overlay,
+    '--color-on-accent': theme.onAccent,
   };
 
   Object.entries(entries).forEach(([key, value]) => root.style.setProperty(key, value));
+  root.dataset.themeMode = mode;
 };
 
 applyPreloadTheme();

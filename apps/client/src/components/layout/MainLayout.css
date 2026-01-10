@@ -51,7 +51,7 @@ body.mobile-scroll-lock {
 .mobile-overlay {
   position: fixed;
   inset: 0;
-  background: var(--color-overlay);
+  background: var(--state-overlay);
   opacity: 0;
   pointer-events: none;
   z-index: 50;
@@ -100,7 +100,7 @@ body.mobile-scroll-lock {
 /* 2. HEADER */
 .header-panel {
   grid-area: header; 
-  background: var(--color-surface-header);
+  background: var(--surface-header);
   border-bottom: 1px solid var(--color-border-glass); 
   display: flex; align-items: center; justify-content: space-between;
   padding: var(--safe-area-top) calc(24px + var(--safe-area-right)) 0 calc(24px + var(--safe-area-left));
@@ -125,7 +125,7 @@ body.mobile-scroll-lock {
 /* 3. TREE (Left Sidebar) */
 .tree-panel {
   grid-area: tree; 
-  background: var(--color-surface-tree); 
+  background: var(--surface-tree); 
   border-right: 1px solid var(--color-border-glass);
   display: flex; flex-direction: column; overflow: hidden; min-width: 0; 
   backdrop-filter: blur(30px);
@@ -214,9 +214,9 @@ body.mobile-scroll-lock {
 }
 
 .t-chan:focus-visible {
-  outline: 2px solid var(--color-focus);
+  outline: 2px solid var(--state-focus);
   outline-offset: 2px;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus) 35%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--state-focus) 35%, transparent);
 }
 
 .t-chan.active {
@@ -252,9 +252,9 @@ body.mobile-scroll-lock {
 }
 
 .t-user:focus-visible {
-  outline: 2px solid var(--color-focus);
+  outline: 2px solid var(--state-focus);
   outline-offset: 2px;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus) 35%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--state-focus) 35%, transparent);
 }
 
 .t-user::before {
@@ -302,7 +302,7 @@ body.mobile-scroll-lock {
 /* 4. MAIN STAGE */
 .main-panel {
   grid-area: main; 
-  background: var(--color-surface-main); 
+  background: var(--surface-main); 
   position: relative;
   overflow-x: hidden;
   overflow-y: auto;
@@ -333,9 +333,9 @@ body.mobile-scroll-lock {
   border-color: color-mix(in srgb, var(--color-surface-tint) 20%, transparent);
 }
 .edge-toggle:focus-visible {
-  outline: 2px solid var(--color-focus);
+  outline: 2px solid var(--state-focus);
   outline-offset: 2px;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus) 35%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--state-focus) 35%, transparent);
 }
 .edge-left {
   left: 4px;
@@ -347,7 +347,7 @@ body.mobile-scroll-lock {
 /* 5. INFO (Right Sidebar) */
 .info-panel {
   grid-area: info; 
-  background: var(--color-surface-info); 
+  background: var(--surface-info); 
   border-left: 1px solid var(--color-border-glass);
   overflow: hidden; min-width: 0; display: flex; flex-direction: column;
   backdrop-filter: blur(30px);
@@ -357,7 +357,7 @@ body.mobile-scroll-lock {
 /* 6. LOG (Bottom) */
 .log-panel {
   grid-area: log; 
-  background: var(--color-surface-log); 
+  background: var(--surface-log); 
   border-top: 1px solid var(--color-border-glass);
   display: flex; flex-direction: column; 
   box-shadow: var(--shadow-panel-strong); z-index: 10;
@@ -420,9 +420,9 @@ body.mobile-scroll-lock {
 .pill:hover { color: var(--color-text); background: var(--color-surface-hover); }
 .pill.active { color: var(--color-text); background: color-mix(in srgb, var(--color-surface) 88%, transparent); border-color: color-mix(in srgb, var(--color-surface-tint) 10%, transparent); }
 .pill:focus-visible {
-  outline: 2px solid var(--color-focus);
+  outline: 2px solid var(--state-focus);
   outline-offset: 2px;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus) 35%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--state-focus) 35%, transparent);
 }
 
 .log-body {
@@ -477,7 +477,7 @@ body.mobile-scroll-lock {
   .rail-panel {
     left: 0;
     width: var(--w-rail);
-    background: var(--color-surface-rail);
+    background: var(--surface-rail);
     z-index: 100;
   }
 
@@ -485,7 +485,7 @@ body.mobile-scroll-lock {
     left: var(--w-rail);
     width: var(--mobile-tree-width, min(80vw, 320px));
     max-width: 90vw;
-    background: var(--color-surface-tree);
+    background: var(--surface-tree);
     z-index: 100;
     transform: translateX(calc(-100% - var(--w-rail)));
   }
@@ -565,7 +565,7 @@ body.mobile-scroll-lock {
     border-top: 1px solid var(--color-border-glass);
     border-radius: 18px 18px 0 0;
     box-shadow: var(--shadow-panel-strong);
-    background: var(--color-surface-info);
+    background: var(--surface-info);
   }
 
   .mobile-info-open .info-panel {
@@ -710,9 +710,9 @@ body.mobile-scroll-lock {
 .role-tag:focus-visible,
 .tag:focus-visible,
 .thumb-chip:focus-visible {
-  outline: 2px solid var(--color-focus);
+  outline: 2px solid var(--state-focus);
   outline-offset: 2px;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus) 35%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--state-focus) 35%, transparent);
 }
 
 /* Voice Controls */
@@ -760,7 +760,7 @@ body.mobile-scroll-lock {
 .cc-btn.active {
   background: var(--color-accent);
   color: var(--color-text);
-  box-shadow: var(--accent-glow);
+  box-shadow: var(--state-accent-glow);
 }
 
 /* --- MEMBER LIST (Info Panel) --- */
@@ -1028,7 +1028,7 @@ body.mobile-scroll-lock {
   gap: 16px;
   height: 100%;
   padding: 16px;
-  background: var(--color-surface-main);
+  background: var(--surface-main);
 }
 
 .voice-topbar {

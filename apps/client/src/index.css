@@ -5,56 +5,54 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Token hierarchy
+   - --color-* : base palette tokens (static per mode in CSS)
+   - --surface-* : derived layout surfaces from the palette
+   - --state-* : interactive/derived tokens; JS only updates accent contrast tokens
+   - --status-* : semantic status colors */
 :root {
-  /* --- PALETTE (aus index.html) --- */
+  /* --- CORE PALETTE (dark default) --- */
   --color-background: #0b1021;
   --color-surface: #111827;
   --color-surface-alt: #0f1625;
   --color-surface-hover: #1f2937;
-  --color-surface-2: var(--color-surface-alt);
-  --color-surface-3: var(--color-surface-hover);
-  --color-surface-body: color-mix(in srgb, var(--color-background) 75%, var(--color-surface) 25%);
-  --color-surface-rail: color-mix(in srgb, var(--color-surface) 92%, var(--color-background) 8%);
-  --color-surface-tree: color-mix(in srgb, var(--color-surface) 84%, var(--color-background) 16%);
-  --color-surface-main: color-mix(in srgb, var(--color-surface) 70%, var(--color-background) 30%);
-  --color-surface-info: color-mix(in srgb, var(--color-surface) 86%, var(--color-background) 14%);
-  --color-surface-log: color-mix(in srgb, var(--color-surface) 94%, var(--color-background) 6%);
-  --color-surface-header: color-mix(in srgb, var(--color-surface) 88%, var(--color-background) 12%);
   --color-surface-tint: #ffffff;
   --color-border: #1f2a3a;
   --color-border-strong: #303a4e;
   --color-border-subtle: rgba(255, 255, 255, 0.08);
+  --color-border-glass: rgba(255, 255, 255, 0.08);
+  --color-border-shine: rgba(255, 255, 255, 0.15);
+  --color-text: #e5e7eb;
+  --color-text-muted: #cbd5e1;
   --color-accent: #10b981;
   --color-accent-hover: #059669;
   --color-on-accent: #0b1021;
-  --color-focus: var(--color-accent);
-  --color-overlay: rgba(6, 8, 16, 0.78);
   --color-shadow: #000000;
+
+  /* --- SURFACE ROLES --- */
+  --surface-2: var(--color-surface-alt);
+  --surface-3: var(--color-surface-hover);
+  --surface-body: color-mix(in srgb, var(--color-background) 75%, var(--color-surface) 25%);
+  --surface-rail: color-mix(in srgb, var(--color-surface) 92%, var(--color-background) 8%);
+  --surface-tree: color-mix(in srgb, var(--color-surface) 84%, var(--color-background) 16%);
+  --surface-main: color-mix(in srgb, var(--color-surface) 70%, var(--color-background) 30%);
+  --surface-info: color-mix(in srgb, var(--color-surface) 86%, var(--color-background) 14%);
+  --surface-log: color-mix(in srgb, var(--color-surface) 94%, var(--color-background) 6%);
+  --surface-header: color-mix(in srgb, var(--color-surface) 88%, var(--color-background) 12%);
+
+  /* --- STATE TOKENS --- */
+  --state-focus: var(--color-accent);
+  --state-overlay: rgba(6, 8, 16, 0.78);
+  --state-accent-dim: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  --state-accent-glow: 0 0 15px color-mix(in srgb, var(--color-accent) 40%, transparent);
+
+  /* --- SHADOWS --- */
   --shadow-panel-inset: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
   --shadow-panel: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.02);
   --shadow-panel-strong: 0 -10px 40px rgba(0, 0, 0, 0.5);
   --shadow-1: 0 24px 70px rgba(0, 0, 0, 0.6);
   --shadow-2: 0 12px 32px rgba(0, 0, 0, 0.5);
-  --layout-bg-body: var(--color-surface-body);
-  --layout-bg-rail: var(--color-surface-rail);
-  --layout-bg-tree: var(--color-surface-tree);
-  --layout-bg-main: var(--color-surface-main);
-  --layout-bg-info: var(--color-surface-info);
-  --layout-bg-log: var(--color-surface-log);
-  --bg-body: var(--color-surface-body);
-  --bg-rail: var(--color-surface-rail);
-  --bg-tree: var(--color-surface-tree);
-  --bg-main: var(--color-surface-main);
-  --bg-info: var(--color-surface-info);
-  --bg-log: var(--color-surface-log);
-  
-  --accent: var(--color-accent);
-  --accent-hover: var(--color-accent-hover);
-  --layout-accent-dim: color-mix(in srgb, var(--color-accent) 15%, transparent); /* maps to --accent-dim */
-  --layout-accent-glow: 0 0 15px color-mix(in srgb, var(--color-accent) 40%, transparent); /* maps to --accent-glow */
-  --accent-dim: var(--layout-accent-dim);
-  --accent-glow: var(--layout-accent-glow);
-  
+
   --status-online: #22c55e;
   --status-idle: #eab308;
   --status-dnd: #ef4444;
@@ -65,11 +63,17 @@
   --role-mod: #60a5fa;
   --role-bot: #a78bfa;
 
-  --color-border-glass: rgba(255, 255, 255, 0.08);
-  --color-border-shine: rgba(255, 255, 255, 0.15);
-  --border-glass: 1px solid var(--color-border-glass);
-  --border-shine: 1px solid var(--color-border-shine);
-  
+  --decor-grid-size: 24px;
+  --decor-grid-color: #ffffff;
+  --decor-grid-opacity: 0.04;
+  --decor-noise-opacity: 0.05;
+  --decor-orb-1-color: var(--color-accent);
+  --decor-orb-2-color: #60a5fa;
+  --decor-orb-1-opacity: 0.5;
+  --decor-orb-2-opacity: 0.4;
+  --decor-orb-1-rgb: 16 185 129;
+  --decor-orb-2-rgb: 96 165 250;
+
   --font-ui: "Segoe UI Variable", "Inter", sans-serif;
   --font-mono: "JetBrains Mono", "Consolas", monospace;
 
@@ -142,20 +146,6 @@
   --space-8: calc(var(--space-8-base) * var(--density-scale));
   --layout-transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 
-  --decor-grid-size: 24px;
-  --decor-grid-color: #ffffff;
-  --decor-grid-opacity: 0.04;
-  --decor-noise-opacity: 0.05;
-  --decor-orb-1-color: var(--color-accent);
-  --decor-orb-2-color: #60a5fa;
-  --decor-orb-1-opacity: 0.5;
-  --decor-orb-2-opacity: 0.4;
-  --decor-orb-1-rgb: 16 185 129;
-  --decor-orb-2-rgb: 96 165 250;
-
-  --color-text: #e5e7eb;
-  --color-text-muted: #cbd5e1;
-  
   /* Helper for existing components relying on old vars */
   --color-text-base: var(--color-text);
   --color-text-ghost: color-mix(in srgb, var(--color-text-muted) 60%, transparent);
@@ -181,16 +171,44 @@
   --color-text-inverse: color-mix(in srgb, var(--color-text) 10%, var(--color-surface) 90%);
   --color-text-danger-muted: color-mix(in srgb, var(--status-dnd) 60%, var(--color-text-muted) 40%);
   --color-text-muted-strong: color-mix(in srgb, var(--color-text-muted) 85%, var(--color-text) 15%);
-  --layout-border: var(--border-glass);
 
   --color-scrollbar-track: var(--color-surface);
   --color-scrollbar-thumb: var(--color-text-muted);
   --color-scrollbar-thumb-hover: var(--color-text);
 }
 
+:root[data-theme-mode='light'] {
+  --color-background: #f5f7fb;
+  --color-surface: #ffffff;
+  --color-surface-alt: #eef2ff;
+  --color-surface-hover: #e2e8f0;
+  --color-border: #cbd5e1;
+  --color-border-strong: #94a3b8;
+  --color-border-subtle: rgba(203, 213, 225, 0.6);
+  --color-border-glass: rgba(15, 23, 42, 0.12);
+  --color-border-shine: rgba(15, 23, 42, 0.2);
+  --color-text: #0f172a;
+  --color-text-muted: #475569;
+  --color-on-accent: #0f172a;
+  --color-shadow: #0f172a;
+  --state-overlay: rgba(15, 23, 42, 0.28);
+  --shadow-panel-inset: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+  --shadow-panel: 0 10px 28px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(15, 23, 42, 0.08);
+  --shadow-panel-strong: 0 -12px 30px rgba(15, 23, 42, 0.18);
+  --shadow-1: 0 24px 70px rgba(15, 23, 42, 0.2);
+  --shadow-2: 0 12px 32px rgba(15, 23, 42, 0.16);
+  --decor-grid-color: #0f172a;
+  --decor-grid-opacity: 0.025;
+  --decor-noise-opacity: 0.035;
+  --decor-orb-1-opacity: 0.25;
+  --decor-orb-2-opacity: 0.2;
+  --decor-orb-2-color: #2563eb;
+  --decor-orb-2-rgb: 37 99 235;
+}
+
 @layer base {
   body {
-    background-color: var(--color-surface-body);
+    background-color: var(--surface-body);
     color: var(--color-text-base);
     font-family: var(--font-ui);
   }
