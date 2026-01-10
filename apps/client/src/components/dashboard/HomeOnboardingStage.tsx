@@ -237,12 +237,19 @@ export const HomeOnboardingStage = ({ onCreateServer, onJoinServer, onOpenSettin
             <div className="text-[length:var(--font-size-xs)] leading-[var(--line-height-sm)] font-semibold uppercase tracking-wide text-text-muted mb-2">
               Bluesky
             </div>
-            <iframe
-              title="Bluesky Embed"
-              src="https://bsky.app/profile/bsky.app/post/3l6nqav7jv22k"
-              className="w-full h-56 rounded-[var(--radius-4)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)]"
-              loading="lazy"
-            />
+            <div className="flex h-56 flex-col items-center justify-center gap-3 rounded-[var(--radius-4)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-4 text-center">
+              <p className="text-[length:var(--font-size-sm)] leading-[var(--line-height-sm)] text-text-muted">
+                Neuigkeiten von Bluesky ansehen
+              </p>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="gap-2"
+                onClick={() => window.open('https://bsky.app/profile/bsky.app/post/3l6nqav7jv22k', '_blank', 'noreferrer')}
+              >
+                Beitrag öffnen
+              </Button>
+            </div>
           </Card>
         </Card>
       </div>
