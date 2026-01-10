@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Mail, Lock, User, Loader2, ArrowRight, Clover, Server, CheckCircle2, RefreshCw } from 'lucide-react';
 import { getAllowInsecureHttp, getDefaultServerUrl, getServerPassword, getServerUrl, normalizeServerUrlString, resetServerSettings, setAllowInsecureHttp, setServerPassword, setServerUrl } from '../../utils/apiConfig';
+import { DecorationLayer } from '../layout/DecorationLayer';
 import { Button, IconButton } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Toggle } from '../ui/Toggle';
@@ -107,11 +108,8 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
   };
 
   return (
-    <div className="min-h-screen w-screen bg-[color:var(--color-background)] flex items-center justify-center p-4 relative overflow-hidden font-sans">
-      
-      {/* Background Blobs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-green-500/20 rounded-full blur-[100px] animate-pulse"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[100px] animate-pulse delay-1000"></div>
+    <div className="min-h-screen w-screen bg-[color:var(--color-background)] flex items-center justify-center p-4 relative overflow-hidden font-sans [--decor-orb-1-color:var(--color-accent)] [--decor-orb-2-color:var(--color-text-info)] [--decor-orb-1-opacity:0.3] [--decor-orb-2-opacity:0.25]">
+      <DecorationLayer />
 
       {/* Glass Card */}
       <div className="relative z-10 w-full max-w-md bg-[color:var(--color-surface-hover)] backdrop-blur-xl border border-[color:var(--color-border)] rounded-2xl shadow-2xl p-8 animate-in fade-in zoom-in duration-500 transition-all">
@@ -123,12 +121,12 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
             className="absolute top-4 right-4 p-2 text-[color:var(--color-text-muted)] hover:text-text hover:bg-[color:var(--color-surface-hover)]/80 rounded-lg transition-colors"
             title="Server Einstellungen"
         >
-            <Server size={20} className={connectionStatus === 'error' ? 'text-red-500' : ''} />
+            <Server size={20} className={connectionStatus === 'error' ? 'text-[color:var(--color-text-danger)]' : ''} />
         </IconButton>
 
         {/* Header */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-green-400 to-emerald-600 shadow-lg mb-4 transform rotate-3 hover:rotate-6 transition-transform">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[color:var(--color-accent)] to-[color:var(--color-accent-hover)] shadow-lg mb-4 transform rotate-3 hover:rotate-6 transition-transform">
             <Clover className="text-text" size={32} />
           </div>
           <h1 className="text-3xl font-bold text-text tracking-tight">CloverTalk</h1>
@@ -146,8 +144,8 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
                     <div className="text-[10px] text-[color:var(--color-text-muted)] font-normal normal-case mt-1">Hoste deinen eigenen CloverTalk Server und verbinde dich hier.</div>
                   </label>
                   <div className="flex items-center gap-2 text-xs">
-                    {connectionStatus === 'ok' && <span className="text-green-400 flex items-center gap-1"><CheckCircle2 size={12}/> Online</span>}
-                    {connectionStatus === 'error' && <span className="text-red-400">Offline</span>}
+                    {connectionStatus === 'ok' && <span className="text-[color:var(--color-text-success)] flex items-center gap-1"><CheckCircle2 size={12}/> Online</span>}
+                    {connectionStatus === 'error' && <span className="text-[color:var(--color-text-danger)]">Offline</span>}
                     <Button
                       type="button"
                       onClick={handleRestoreServerSettings}
@@ -210,7 +208,7 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-500/10 border border-red-500/50 text-red-200 text-sm p-3 rounded-lg mb-6 text-center animate-in slide-in-from-top-2">
+          <div className="bg-[color:color-mix(in_srgb,var(--color-text-danger)_12%,transparent)] border border-[color:color-mix(in_srgb,var(--color-text-danger)_45%,transparent)] text-[color:var(--color-text-danger-light)] text-sm p-3 rounded-lg mb-6 text-center animate-in slide-in-from-top-2">
             {error}
           </div>
         )}
@@ -274,7 +272,7 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
           <Button 
             type="submit" 
             disabled={loading}
-            className="w-full relative overflow-hidden group bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-text font-bold py-3.5 rounded-xl shadow-lg shadow-green-900/20 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full relative overflow-hidden group bg-gradient-to-r from-[color:var(--color-accent)] to-[color:var(--color-accent-hover)] hover:from-[color:var(--color-accent-hover)] hover:to-[color:var(--color-accent)] text-text font-bold py-3.5 rounded-xl shadow-lg shadow-[0_18px_40px_color-mix(in_srgb,var(--color-accent)_25%,transparent)] transition-all transform hover:scale-[1.02] active:scale-[0.98]"
           >
             <div className="relative z-10 flex items-center justify-center gap-2">
                {loading ? <Loader2 className="animate-spin" /> : (isRegistering ? 'Starten' : 'Anmelden')}
@@ -292,7 +290,7 @@ export const AuthScreen = ({ onLoginSuccess }: AuthScreenProps) => {
             onClick={() => { setIsRegistering(!isRegistering); setError(''); }}
             variant="ghost"
             size="sm"
-            className="mt-2 text-green-400 hover:text-green-300 font-medium text-sm transition-colors hover:underline"
+            className="mt-2 text-[color:var(--color-text-info)] hover:text-[color:var(--color-text-accent-soft)] font-medium text-sm transition-colors hover:underline"
           >
             {isRegistering ? 'Hier anmelden' : 'Kostenlos registrieren'}
           </Button>
