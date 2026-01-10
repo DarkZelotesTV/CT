@@ -6,7 +6,7 @@ import { apiFetch } from '../../api/http';
 import { getServerUrl, setServerUrl } from '../../utils/apiConfig';
 import { readPinnedServers, removePinnedServer, normalizeInstanceUrl } from '../../utils/pinnedServers';
 import { storage } from '../../shared/config/storage';
-import { Avatar, ErrorCard, Icon, Spinner, Menu, MenuItem, Popover, PopoverContent, PopoverTrigger } from '../ui';
+import { Avatar, ContextMenu, ContextMenuContent, ErrorCard, Icon, Spinner, Menu, MenuItem, Popover, PopoverContent, PopoverTrigger } from '../ui';
 import { Button, IconButton } from '../ui/Button';
 import { useSocket } from '../../context/SocketContext';
 import './ServerRail.css';
@@ -541,14 +541,14 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
       </div>
 
       {contextMenu && (
-        <Popover
+        <ContextMenu
           open={Boolean(contextMenu)}
           onOpenChange={(open) => {
             if (!open) setContextMenu(null);
           }}
           triggerRef={contextTriggerRef}
         >
-          <PopoverContent
+          <ContextMenuContent
             className="fixed z-50 min-w-[180px] bg-[color:var(--color-surface)] border border-[color:var(--color-border)] rounded-[var(--radius-3)] shadow-2xl p-2 text-sm text-text"
             style={{ left: contextMenu.x, top: contextMenu.y }}
           >
@@ -585,8 +585,8 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                 </MenuItem>
               )}
             </Menu>
-          </PopoverContent>
-        </Popover>
+          </ContextMenuContent>
+        </ContextMenu>
       )}
 
       {/* Modals wurden hier entfernt und befinden sich nun in MainLayout */}

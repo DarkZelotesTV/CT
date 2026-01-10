@@ -3,8 +3,7 @@ import { Shield, Crown, UserCheck, UserX } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../../api/http';
 import { useSocket } from '../../context/SocketContext';
-import { Avatar, ErrorCard, Icon, Input, RoleTag, Select, Skeleton, Spinner } from '../ui';
-import { Button } from '../ui/Button';
+import { Avatar, ContextMenu, ContextMenuContent, ErrorCard, Icon, Input, Menu, MenuItem, RoleTag, Skeleton, Spinner } from '../ui';
 import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
 import './MemberSidebar.css';
@@ -105,9 +104,8 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
     channelName?: string;
     x: number;
     y: number;
-    target?: HTMLElement | null;
-    moveTargetId?: number | null;
   } | null>(null);
+  const contextTriggerRef = useRef<HTMLElement | null>(null);
   const { socket, presenceSnapshot, channelPresence } = useSocket();
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
@@ -169,6 +167,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
     member: Member
   ) => {
     const active = findActiveVoiceChannel(member.userId);
+    contextTriggerRef.current = origin.target ?? null;
     setContextMenu({
       userId: member.userId,
       username: member.username,
@@ -176,8 +175,6 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
       ...(active?.channelName ? { channelName: active.channelName } : {}),
       x: origin.x,
       y: origin.y,
-      target: origin.target ?? null,
-      moveTargetId: active?.channelId ?? null,
     });
   };
 
@@ -332,20 +329,6 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
     );
   }, [presenceSnapshot]);
 
-  useEffect(() => {
-    if (!contextMenu) return;
-    const handleGlobal = (e: MouseEvent) => {
-      if (!contextMenu.target) return closeContextMenu();
-      if (!(contextMenu.target as HTMLElement).contains(e.target as HTMLElement)) closeContextMenu();
-    };
-    window.addEventListener('click', handleGlobal);
-    window.addEventListener('contextmenu', handleGlobal);
-    return () => {
-      window.removeEventListener('click', handleGlobal);
-      window.removeEventListener('contextmenu', handleGlobal);
-    };
-  }, [contextMenu]);
-
   const targetMember = useMemo(
     () => (contextMenu ? members.find((m) => m.userId === contextMenu.userId) ?? null : null),
     [contextMenu, members]
@@ -354,13 +337,6 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
   const canActOnVoice = Boolean(contextMenu?.channelId) && canMoveMembers && !targetIsProtected;
   const canModerateMember = canKickMembers && !targetIsProtected;
   const hasContextActions = canActOnVoice || canModerateMember;
-
-  useEffect(() => {
-    if (!contextMenu?.channelId) return;
-    const nextOption = voiceChannels.find((vc) => vc.id !== contextMenu.channelId);
-    if (!nextOption) return;
-    setContextMenu((prev) => (prev ? { ...prev, moveTargetId: prev.moveTargetId || nextOption.id } : prev));
-  }, [contextMenu?.channelId, voiceChannels]);
 
   const normalizedSearch = debouncedSearch.toLowerCase();
   const matchesSearch = useCallback((member: Member) => {
@@ -654,90 +630,80 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
       </div>
 
       {contextMenu && (
-        <div className="fixed left-0 right-0 bottom-0 top-[var(--ct-titlebar-height)] z-50" onClick={closeContextMenu}>
-          <div
-            className="absolute min-w-[240px] rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] shadow-xl p-2 space-y-1"
+        <ContextMenu
+          open={Boolean(contextMenu)}
+          onOpenChange={(open) => {
+            if (!open) closeContextMenu();
+          }}
+          triggerRef={contextTriggerRef}
+        >
+          <ContextMenuContent
+            className="fixed z-50 min-w-[240px] rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] shadow-xl p-2 space-y-1"
             style={{ top: contextMenu.y, left: contextMenu.x }}
-            onClick={(e) => e.stopPropagation()}
           >
             <div className="text-[11px] text-[color:var(--color-text-muted)] uppercase tracking-wide px-2 pb-1">{contextMenu.username}</div>
-            {canActOnVoice ? (
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)]"
-                onClick={() => performModeration('mute', { userId: contextMenu.userId, channelId: contextMenu.channelId })}
-              >
-                {t('memberSidebar.mute')}
-              </Button>
-            ) : null}
-            {canActOnVoice ? (
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)]"
-                onClick={() => performModeration('remove', { userId: contextMenu.userId, channelId: contextMenu.channelId })}
-              >
-                {t('memberSidebar.removeFromTalk')}
-              </Button>
-            ) : null}
-            {canActOnVoice && voiceChannels.length > 1 ? (
-              <div className="px-2 py-1 space-y-1">
-                <div className="text-[11px] text-[color:var(--color-text-muted)]">{t('memberSidebar.moveToTalk')}</div>
-                <div className="flex items-center gap-2">
-                  <Select
-                    className="flex-1 bg-[var(--color-surface-alt)] text-sm text-[color:var(--color-text)]"
-                    value={contextMenu.moveTargetId || ''}
-                    onChange={(e) => setContextMenu((prev) => (prev ? { ...prev, moveTargetId: Number(e.target.value) } : prev))}
+            {hasContextActions ? (
+              <Menu className="flex flex-col gap-1" aria-label={t('memberSidebar.contextMenu') ?? 'Member Aktionen'}>
+                {canActOnVoice ? (
+                  <MenuItem
+                    className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)]"
+                    onClick={() => performModeration('mute', { userId: contextMenu.userId, channelId: contextMenu.channelId })}
                   >
+                    {t('memberSidebar.mute')}
+                  </MenuItem>
+                ) : null}
+                {canActOnVoice ? (
+                  <MenuItem
+                    className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)]"
+                    onClick={() => performModeration('remove', { userId: contextMenu.userId, channelId: contextMenu.channelId })}
+                  >
+                    {t('memberSidebar.removeFromTalk')}
+                  </MenuItem>
+                ) : null}
+                {canActOnVoice && voiceChannels.length > 1 ? (
+                  <>
+                    <div className="text-[11px] text-[color:var(--color-text-muted)] px-2 pt-2">{t('memberSidebar.moveToTalk')}</div>
                     {voiceChannels
                       .filter((vc) => vc.id !== contextMenu.channelId)
                       .map((vc) => (
-                        <option key={vc.id} value={vc.id}>{vc.name}</option>
+                        <MenuItem
+                          key={vc.id}
+                          className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)]"
+                          onClick={() =>
+                            performModeration('move', {
+                              userId: contextMenu.userId,
+                              channelId: contextMenu.channelId!,
+                              targetChannelId: vc.id,
+                            })
+                          }
+                        >
+                          {vc.name}
+                        </MenuItem>
                       ))}
-                  </Select>
-                  <Button
-                    type="button"
-                    className="px-2 py-1 rounded bg-[var(--color-accent)]/15 text-[color:var(--color-text)] text-sm hover:bg-[var(--color-accent)]/25"
-                    disabled={!contextMenu.moveTargetId}
-                    onClick={() =>
-                      performModeration('move', {
-                        userId: contextMenu.userId,
-                        channelId: contextMenu.channelId!,
-                        targetChannelId: contextMenu.moveTargetId ?? null,
-                      })
-                    }
-                  >
-                    {t('memberSidebar.move')}
-                  </Button>
-                </div>
-              </div>
-            ) : null}
-            {canModerateMember ? (
-              <>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)]"
-                  onClick={() => performModeration('ban', { userId: contextMenu.userId })}
-                >
-                  {t('memberSidebar.ban')}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)]"
-                  onClick={() => performModeration('kick', { userId: contextMenu.userId })}
-                >
-                  {t('memberSidebar.kick')}
-                </Button>
-              </>
-            ) : null}
-            {!hasContextActions && (
+                  </>
+                ) : null}
+                {canModerateMember ? (
+                  <>
+                    <MenuItem
+                      className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)]"
+                      onClick={() => performModeration('ban', { userId: contextMenu.userId })}
+                    >
+                      {t('memberSidebar.ban')}
+                    </MenuItem>
+                    <MenuItem
+                      className="w-full text-left px-2 py-1 rounded hover:bg-[var(--color-surface-hover)] text-sm text-[color:var(--color-text)]"
+                      onClick={() => performModeration('kick', { userId: contextMenu.userId })}
+                    >
+                      {t('memberSidebar.kick')}
+                    </MenuItem>
+                  </>
+                ) : null}
+              </Menu>
+            ) : (
               <div className="text-xs text-[color:var(--color-text-muted)] px-2 py-1">{t('memberSidebar.noActions')}</div>
             )}
-          </div>
-        </div>
+          </ContextMenuContent>
+        </ContextMenu>
       )}
   </div>
 );

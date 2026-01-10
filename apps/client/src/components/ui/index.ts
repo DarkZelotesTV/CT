@@ -12,6 +12,7 @@ export { Select } from './Select';
 export { Toggle } from './Toggle';
 export { RoleTag } from './RoleTag';
 export { StatusBadge } from './StatusBadge';
+export { ContextMenu, ContextMenuContent, ContextMenuTrigger } from './ContextMenu';
 export { Popover, PopoverTrigger, PopoverContent } from './Popover';
 export { Menu } from './Menu';
 export { MenuItem } from './MenuItem';
