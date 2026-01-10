@@ -56,6 +56,17 @@
   --shadow-1: 0 24px 70px rgba(0, 0, 0, 0.6);
   --shadow-2: 0 12px 32px rgba(0, 0, 0, 0.5);
 
+  --panel-blur-rail: 30px;
+  --panel-blur-tree: 30px;
+  --panel-blur-header: 20px;
+  --panel-blur-info: 30px;
+  --panel-blur-log: 40px;
+  --panel-blur-mobile: 16px;
+  --panel-blur-glass: 30px;
+  --panel-shadow-mobile: 0 24px 60px color-mix(in srgb, var(--color-shadow) 50%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--color-surface-tint) 4%, transparent);
+  --panel-shadow-info-mobile: -12px 0 40px color-mix(in srgb, var(--color-shadow) 55%, transparent);
+
   --status-online: #22c55e;
   --status-idle: #eab308;
   --status-dnd: #ef4444;
@@ -222,6 +233,24 @@
   --color-scrollbar-thumb-hover: var(--color-text);
 }
 
+:root[data-decoration-performance='low'] {
+  --shadow-panel: 0 4px 14px color-mix(in srgb, var(--color-shadow) 32%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--color-surface-tint) 3%, transparent);
+  --shadow-panel-strong: 0 -6px 18px color-mix(in srgb, var(--color-shadow) 38%, transparent);
+  --shadow-1: 0 14px 36px color-mix(in srgb, var(--color-shadow) 45%, transparent);
+  --shadow-2: 0 8px 22px color-mix(in srgb, var(--color-shadow) 36%, transparent);
+  --panel-blur-rail: 18px;
+  --panel-blur-tree: 18px;
+  --panel-blur-header: 12px;
+  --panel-blur-info: 18px;
+  --panel-blur-log: 22px;
+  --panel-blur-mobile: 10px;
+  --panel-blur-glass: 16px;
+  --panel-shadow-mobile: 0 16px 36px color-mix(in srgb, var(--color-shadow) 40%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--color-surface-tint) 3%, transparent);
+  --panel-shadow-info-mobile: -8px 0 24px color-mix(in srgb, var(--color-shadow) 45%, transparent);
+}
+
 :root[data-theme-mode='light'] {
   --color-background: #f5f7fb;
   --color-surface: #ffffff;
@@ -266,7 +295,7 @@
 
 /* Glass Utility Class */
 .glass { 
-  backdrop-filter: blur(30px); 
+  backdrop-filter: blur(var(--panel-blur-glass)); 
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03); 
 }
 

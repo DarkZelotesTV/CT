@@ -96,6 +96,11 @@
   }
 }
 
+.decoration-layer[data-decoration-performance="low"] {
+  --decor-grid-opacity: 0.02;
+  --decor-noise-opacity: 0.03;
+}
+
 .decoration-layer[data-decoration-performance="low"] .decoration-orb {
   animation: none;
   filter: blur(40px);

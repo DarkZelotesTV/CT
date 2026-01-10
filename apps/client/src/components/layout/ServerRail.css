@@ -10,7 +10,7 @@
   padding: var(--space-4) 0;
   gap: var(--space-3-5);
   z-index: 10;
-  backdrop-filter: blur(30px);
+  backdrop-filter: blur(var(--panel-blur-rail));
   box-shadow: var(--shadow-panel-inset), inset -1px 0 0 rgba(255, 255, 255, 0.04);
   position: relative;
   overflow: hidden;
