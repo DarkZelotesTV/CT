@@ -55,7 +55,7 @@ body.mobile-scroll-lock {
   opacity: 0;
   pointer-events: none;
   z-index: 50;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--layout-transition);
 }
 
 .main-layout.mobile-nav-open {
@@ -128,7 +128,7 @@ body.mobile-scroll-lock {
   z-index: 50;
   border-radius: var(--radius-0);
   backdrop-filter: blur(5px);
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition: background var(--layout-transition), color var(--layout-transition), border-color var(--layout-transition);
 }
 .edge-toggle:hover {
   background: var(--color-surface-hover);
@@ -248,7 +248,7 @@ body.mobile-scroll-lock {
   border-radius: var(--radius-pill);
   color: var(--color-text-muted);
   cursor: pointer;
-  transition: 0.2s;
+  transition: color var(--layout-transition), background var(--layout-transition), border-color var(--layout-transition);
   border: 1px solid transparent;
 }
 .icon-button {
@@ -366,7 +366,7 @@ body.mobile-scroll-lock {
     height: auto;
     box-shadow: 0 24px 60px color-mix(in srgb, var(--color-shadow) 50%, transparent), 0 0 0 1px color-mix(in srgb, var(--color-surface-tint) 4%, transparent);
     transform: translateX(-100%);
-    transition: transform 0.25s ease, opacity 0.25s ease;
+    transition: transform var(--layout-transition), opacity var(--layout-transition);
     opacity: 0;
     pointer-events: none;
     backdrop-filter: blur(16px);
@@ -424,7 +424,7 @@ body.mobile-scroll-lock {
     width: var(--curr-info, var(--mobile-info-width, min(75vw, var(--space-15))));
     max-width: 90vw;
     transform: translateX(100%);
-    transition: transform 0.28s ease, opacity 0.28s ease;
+    transition: transform var(--layout-transition), opacity var(--layout-transition);
     opacity: 0;
     pointer-events: none;
     z-index: 100;
