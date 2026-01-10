@@ -36,7 +36,7 @@
 .main-layout.home-layout {
   grid-template-columns: var(--w-rail) 0 1fr 0;
   grid-template-rows: var(--h-header) 1fr 0;
-  --h-header: 0px;
+  --h-header: 0;
 }
 
 .main-layout.home-layout .header-panel {
@@ -80,7 +80,7 @@ body.mobile-scroll-lock {
   background: linear-gradient(180deg, rgba(13, 18, 28, 0.98) 0%, rgba(9, 13, 20, 0.94) 45%, rgba(8, 12, 18, 0.98) 100%);
   border-right: 1px solid color-mix(in srgb, var(--color-border-glass) 80%, transparent);
   display: flex; flex-direction: column; align-items: center;
-  padding: 16px 0; gap: 14px; z-index: 10;
+  padding: var(--space-4) 0; gap: var(--space-3-5); z-index: 10;
   backdrop-filter: blur(30px);
   box-shadow: var(--shadow-panel-inset), inset -1px 0 0 rgba(255, 255, 255, 0.04);
   position: relative;
@@ -103,7 +103,7 @@ body.mobile-scroll-lock {
   background: var(--surface-header);
   border-bottom: 1px solid var(--color-border-glass); 
   display: flex; align-items: center; justify-content: space-between;
-  padding: var(--safe-area-top) calc(24px + var(--safe-area-right)) 0 calc(24px + var(--safe-area-left));
+  padding: var(--safe-area-top) calc(var(--space-6) + var(--safe-area-right)) 0 calc(var(--space-6) + var(--safe-area-left));
   z-index: 10; 
   backdrop-filter: blur(20px);
   -webkit-app-region: drag; /* Electron Drag */
@@ -134,7 +134,7 @@ body.mobile-scroll-lock {
 
 .tree-content {
   flex: 1;
-  padding: 10px 12px 14px;
+  padding: var(--space-2-5) var(--space-3) var(--space-3-5);
   overflow-y: auto;
 }
 
@@ -144,20 +144,20 @@ body.mobile-scroll-lock {
   font-weight: 800;
   color: var(--color-text-ghost);
   text-transform: uppercase;
-  margin: 16px 8px 6px;
+  margin: var(--space-4) var(--space-2) var(--space-1-5);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   letter-spacing: 1px;
 }
 
 .t-chan {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  margin: 2px 4px 4px;
-  border-radius: 10px;
+  gap: var(--space-2-5);
+  padding: var(--space-2) var(--space-2-5);
+  margin: var(--space-0-5) var(--space-1) var(--space-1);
+  border-radius: var(--radius-2-5);
   color: var(--color-text-secondary);
   cursor: pointer;
   transition: 0.15s ease;
@@ -167,12 +167,12 @@ body.mobile-scroll-lock {
 }
 
 .t-chan.nested {
-  margin-left: 14px;
+  margin-left: var(--space-3-5);
 }
 
 .t-chan .chan-icon {
   font-size: var(--font-size-base);
-  width: 20px;
+  width: var(--space-5);
   text-align: center;
   display: inline-flex;
   align-items: center;
@@ -184,7 +184,7 @@ body.mobile-scroll-lock {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  gap: 2px;
+  gap: var(--space-0-5);
   flex: 1;
 }
 
@@ -215,7 +215,7 @@ body.mobile-scroll-lock {
 
 .t-chan:focus-visible {
   outline: 2px solid var(--state-focus);
-  outline-offset: 2px;
+  outline-offset: var(--space-0-5);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--state-focus) 35%, transparent);
 }
 
@@ -236,13 +236,13 @@ body.mobile-scroll-lock {
 
 .t-user {
   position: relative;
-  padding: 6px 10px 6px 38px;
+  padding: var(--space-1-5) var(--space-2-5) var(--space-1-5) calc(var(--space-7) + var(--space-1-5));
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   cursor: pointer;
-  border-radius: 10px;
-  margin: 0 6px 4px;
+  border-radius: var(--radius-2-5);
+  margin: 0 var(--space-1-5) var(--space-1);
   color: var(--color-text);
   transition: 0.15s ease;
 }
@@ -253,26 +253,26 @@ body.mobile-scroll-lock {
 
 .t-user:focus-visible {
   outline: 2px solid var(--state-focus);
-  outline-offset: 2px;
+  outline-offset: var(--space-0-5);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--state-focus) 35%, transparent);
 }
 
 .t-user::before {
   content: '';
   position: absolute;
-  left: 22px;
-  top: -8px;
+  left: var(--space-5-5);
+  top: calc(-1 * var(--space-2));
   bottom: 50%;
-  width: 10px;
+  width: var(--space-2-5);
   border-left: 1px solid color-mix(in srgb, var(--color-surface-tint) 12%, transparent);
   border-bottom: 1px solid color-mix(in srgb, var(--color-surface-tint) 12%, transparent);
-  border-bottom-left-radius: 6px;
+  border-bottom-left-radius: var(--radius-1);
   pointer-events: none;
 }
 
 .t-user .u-av-sm {
-  width: 22px;
-  height: 22px;
+  width: var(--space-5-5);
+  height: var(--space-5-5);
   border-radius: 50%;
   overflow: hidden;
   background: color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
@@ -313,8 +313,8 @@ body.mobile-scroll-lock {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 44px;
-  height: 64px;
+  width: var(--space-8-5);
+  height: var(--space-11);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -323,7 +323,7 @@ body.mobile-scroll-lock {
   color: var(--color-text-muted);
   cursor: pointer;
   z-index: 50;
-  border-radius: 4px;
+  border-radius: var(--radius-0);
   backdrop-filter: blur(5px);
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
@@ -334,14 +334,14 @@ body.mobile-scroll-lock {
 }
 .edge-toggle:focus-visible {
   outline: 2px solid var(--state-focus);
-  outline-offset: 2px;
+  outline-offset: var(--space-0-5);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--state-focus) 35%, transparent);
 }
 .edge-left {
-  left: 4px;
+  left: var(--space-1);
 }
 .edge-right {
-  right: 4px;
+  right: var(--space-1);
 }
 
 /* 5. INFO (Right Sidebar) */
@@ -371,71 +371,71 @@ body.mobile-scroll-lock {
 /* --- COMPONENTS Styles from HTML --- */
 
 /* Header Components */
-.h-path { font-size: var(--font-size-xl); line-height: var(--line-height-lg); font-weight: 600; color: var(--color-text); display: flex; align-items: center; gap: 10px; }
+.h-path { font-size: var(--font-size-xl); line-height: var(--line-height-lg); font-weight: 600; color: var(--color-text); display: flex; align-items: center; gap: var(--space-2-5); }
 .h-server-icon {
-  width: 24px; height: 24px; border-radius: 6px; object-fit: cover;
+  width: var(--space-6); height: var(--space-6); border-radius: var(--radius-1); object-fit: cover;
   box-shadow: 0 0 10px color-mix(in srgb, var(--color-accent) 30%, transparent);
 }
 
 .telemetry-bar {
-  display: flex; gap: 12px;
+  display: flex; gap: var(--space-3);
   background: linear-gradient(135deg, color-mix(in srgb, var(--color-surface-tint) 5%, transparent), color-mix(in srgb, var(--color-surface-tint) 2%, transparent));
   border: 1px solid color-mix(in srgb, var(--color-surface-tint) 8%, transparent); 
-  border-radius: 999px; padding: 6px 8px;
+  border-radius: var(--radius-pill); padding: var(--space-1-5) var(--space-2);
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-surface-tint) 6%, transparent), 0 12px 40px color-mix(in srgb, var(--color-shadow) 35%, transparent);
   backdrop-filter: blur(10px);
 }
-.t-item { display: flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 99px; background: color-mix(in srgb, var(--color-surface-tint) 5%, transparent); border: 1px solid color-mix(in srgb, var(--color-surface-tint) 6%, transparent); }
+.t-item { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1-5) var(--space-3-5); border-radius: var(--radius-pill); background: color-mix(in srgb, var(--color-surface-tint) 5%, transparent); border: 1px solid color-mix(in srgb, var(--color-surface-tint) 6%, transparent); }
 .t-label { font-size: var(--font-size-xs); line-height: var(--line-height-sm); font-weight: 800; color: var(--color-text-quiet); letter-spacing: 1px; }
 .t-val { font-family: var(--font-mono); font-size: var(--font-size-base); line-height: var(--line-height-base); color: var(--color-text); font-weight: 700; text-shadow: 0 0 12px color-mix(in srgb, var(--color-surface-tint) 16%, transparent); }
 
 /* Log Components */
 .log-head {
-  height: 36px; background: color-mix(in srgb, var(--color-surface-tint) 2%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--color-surface-tint) 5%, transparent);
-  display: flex; align-items: center; padding: 0 10px; gap: 8px;
+  height: var(--space-7-5); background: color-mix(in srgb, var(--color-surface-tint) 2%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--color-surface-tint) 5%, transparent);
+  display: flex; align-items: center; padding: 0 var(--space-2-5); gap: var(--space-2);
 }
 .pill { 
-  font-size: var(--font-size-sm); line-height: var(--line-height-sm); padding: 4px 16px; border-radius: 99px; color: var(--color-text-muted); cursor: pointer; transition: 0.2s; border: 1px solid transparent; 
+  font-size: var(--font-size-sm); line-height: var(--line-height-sm); padding: var(--space-1) var(--space-4); border-radius: var(--radius-pill); color: var(--color-text-muted); cursor: pointer; transition: 0.2s; border: 1px solid transparent; 
 }
 .icon-button {
-  min-width: 44px;
-  min-height: 44px;
+  min-width: var(--space-8-5);
+  min-height: var(--space-8-5);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: var(--radius-2-5);
   background: transparent;
   border: 1px solid transparent;
 }
 
 .mobile-info-toggle {
-  min-height: 44px;
-  min-width: 44px;
-  padding: 8px 14px;
+  min-height: var(--space-8-5);
+  min-width: var(--space-8-5);
+  padding: var(--space-2) var(--space-3-5);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 .pill:hover { color: var(--color-text); background: var(--color-surface-hover); }
 .pill.active { color: var(--color-text); background: color-mix(in srgb, var(--color-surface) 88%, transparent); border-color: color-mix(in srgb, var(--color-surface-tint) 10%, transparent); }
 .pill:focus-visible {
   outline: 2px solid var(--state-focus);
-  outline-offset: 2px;
+  outline-offset: var(--space-0-5);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--state-focus) 35%, transparent);
 }
 
 .log-body {
-  flex: 1; padding: 10px 16px; overflow-y: auto;
+  flex: 1; padding: var(--space-2-5) var(--space-4); overflow-y: auto;
   font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--color-text-log); line-height: var(--line-height-base);
 }
-.ln { margin-bottom: 2px; }
-.ts { color: var(--color-text-dim); margin-right: 8px; }
+.ln { margin-bottom: var(--space-0-5); }
+.ts { color: var(--color-text-dim); margin-right: var(--space-2); }
 .sys { color: var(--color-accent); }
 
 .log-cmd {
-  padding: 8px 16px; background: color-mix(in srgb, var(--color-shadow) 20%, transparent); border-top: 1px solid color-mix(in srgb, var(--color-surface-tint) 5%, transparent);
-  display: flex; gap: 8px; align-items: center;
+  padding: var(--space-2) var(--space-4); background: color-mix(in srgb, var(--color-shadow) 20%, transparent); border-top: 1px solid color-mix(in srgb, var(--color-surface-tint) 5%, transparent);
+  display: flex; gap: var(--space-2); align-items: center;
 }
 .log-cmd input { 
   background: transparent; border: none; color: var(--color-text); width: 100%; font-family: var(--font-mono); font-size: var(--font-size-sm); line-height: var(--line-height-base); 
@@ -444,7 +444,7 @@ body.mobile-scroll-lock {
 
 /* Resizers */
 .resizer {
-  position: absolute; top: 0; bottom: 0; width: 6px; cursor: col-resize; z-index: 50;
+  position: absolute; top: 0; bottom: 0; width: var(--space-1-5); cursor: col-resize; z-index: 50;
 }
 .resizer:hover { background: color-mix(in srgb, var(--color-surface) 85%, transparent); }
 .resizer-left { right: 0; }
@@ -483,7 +483,7 @@ body.mobile-scroll-lock {
 
   .tree-panel {
     left: var(--w-rail);
-    width: var(--mobile-tree-width, min(80vw, 320px));
+    width: var(--mobile-tree-width, min(80vw, var(--space-15)));
     max-width: 90vw;
     background: var(--surface-tree);
     z-index: 100;
@@ -510,7 +510,7 @@ body.mobile-scroll-lock {
   .mobile-info-label {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--space-1-5);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -521,7 +521,7 @@ body.mobile-scroll-lock {
     top: var(--h-header);
     right: 0;
     bottom: 0;
-    width: var(--curr-info, var(--mobile-info-width, min(75vw, 320px)));
+    width: var(--curr-info, var(--mobile-info-width, min(75vw, var(--space-15))));
     max-width: 90vw;
     transform: translateX(100%);
     transition: transform 0.28s ease, opacity 0.28s ease;
@@ -559,11 +559,11 @@ body.mobile-scroll-lock {
     bottom: 0;
     width: 100%;
     max-width: none;
-    height: min(70vh, 520px);
+    height: min(70vh, var(--space-16));
     transform: translateY(100%);
     border-left: none;
     border-top: 1px solid var(--color-border-glass);
-    border-radius: 18px 18px 0 0;
+    border-radius: var(--radius-4-5) var(--radius-4-5) 0 0;
     box-shadow: var(--shadow-panel-strong);
     background: var(--surface-info);
   }
@@ -578,9 +578,9 @@ body.mobile-scroll-lock {
 .tag {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 999px;
+  gap: var(--space-1-5);
+  padding: var(--space-1) var(--space-2-5);
+  border-radius: var(--radius-pill);
   font-size: var(--font-size-xs);
   line-height: var(--line-height-sm);
   font-weight: 800;
@@ -598,7 +598,7 @@ body.mobile-scroll-lock {
 .role-tag {
   font-size: var(--font-size-xs);
   line-height: var(--line-height-sm);
-  padding: 5px 12px;
+  padding: var(--space-1-25) var(--space-3);
 }
 
 .tag.adm,
@@ -642,10 +642,10 @@ body.mobile-scroll-lock {
 
 .status-dot {
   position: absolute;
-  right: -2px;
-  bottom: -2px;
-  width: 12px;
-  height: 12px;
+  right: calc(-1 * var(--space-0-5));
+  bottom: calc(-1 * var(--space-0-5));
+  width: var(--space-3);
+  height: var(--space-3);
   border-radius: 50%;
   border: 2px solid #0b0f16;
   box-shadow:
@@ -661,9 +661,9 @@ body.mobile-scroll-lock {
 .status-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 999px;
+  gap: var(--space-1-5);
+  padding: var(--space-1) var(--space-2-5);
+  border-radius: var(--radius-pill);
   font-size: var(--font-size-xs);
   line-height: var(--line-height-sm);
   font-weight: 800;
@@ -711,25 +711,25 @@ body.mobile-scroll-lock {
 .tag:focus-visible,
 .thumb-chip:focus-visible {
   outline: 2px solid var(--state-focus);
-  outline-offset: 2px;
+  outline-offset: var(--space-0-5);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--state-focus) 35%, transparent);
 }
 
 /* Voice Controls */
 .call-ctrl {
-  margin: 0 10px 12px 10px;
-  padding: 8px;
+  margin: 0 var(--space-2-5) var(--space-3) var(--space-2-5);
+  padding: var(--space-2);
   background: color-mix(in srgb, var(--color-accent) 5%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-accent) 20%, transparent);
-  border-radius: 10px;
+  border-radius: var(--radius-2-5);
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .cc-btn {
   flex: 1;
-  height: 36px;
-  border-radius: 8px;
+  height: var(--space-7-5);
+  border-radius: var(--radius-2);
   border: none;
   background: color-mix(in srgb, var(--color-surface-tint) 5%, transparent);
   color: var(--color-text);
@@ -772,15 +772,15 @@ body.mobile-scroll-lock {
 }
 
 .member-sidebar__header {
-  padding: 10px 16px 6px;
+  padding: var(--space-2-5) var(--space-4) var(--space-1-5);
   border-bottom: 1px solid color-mix(in srgb, var(--color-surface-tint) 5%, transparent);
   background: linear-gradient(180deg, color-mix(in srgb, var(--color-surface-tint) 3%, transparent), transparent);
 }
 
 .member-sidebar__search {
   width: 100%;
-  padding: 9px 12px;
-  border-radius: 12px;
+  padding: var(--space-2-25) var(--space-3);
+  border-radius: var(--radius-3);
   background: color-mix(in srgb, var(--color-surface-tint) 4%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
   color: var(--color-text);
@@ -802,8 +802,8 @@ body.mobile-scroll-lock {
 .member-sidebar__list {
   flex: 1;
   overflow-y: auto;
-  padding: 14px 16px 16px;
-  gap: 14px;
+  padding: var(--space-3-5) var(--space-4) var(--space-4);
+  gap: var(--space-3-5);
   display: flex;
   flex-direction: column;
 }
@@ -812,15 +812,15 @@ body.mobile-scroll-lock {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--space-2-5);
   font-size: var(--font-size-xs);
   line-height: var(--line-height-sm);
   font-weight: 800;
   color: var(--color-text-section);
   text-transform: uppercase;
   letter-spacing: 1px;
-  padding: 8px 4px;
-  margin: 4px 0 10px;
+  padding: var(--space-2) var(--space-1);
+  margin: var(--space-1) 0 var(--space-2-5);
   border-bottom: 1px solid color-mix(in srgb, var(--color-surface-tint) 6%, transparent);
 }
 
@@ -845,8 +845,8 @@ body.mobile-scroll-lock {
 .grp-count {
   font-size: var(--font-size-xs);
   line-height: var(--line-height-sm);
-  padding: 3px 8px;
-  border-radius: 999px;
+  padding: calc(var(--space-1) - var(--space-0-5)) var(--space-2);
+  border-radius: var(--radius-pill);
   background: color-mix(in srgb, var(--color-surface-tint) 6%, transparent);
   color: var(--color-text-secondary);
   border: 1px solid color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
@@ -857,9 +857,9 @@ body.mobile-scroll-lock {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 14px;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-3-5);
   background: linear-gradient(145deg, color-mix(in srgb, var(--color-surface-tint) 4%, transparent), color-mix(in srgb, var(--color-surface-tint) 2%, transparent));
   border: 1px solid color-mix(in srgb, var(--color-surface-tint) 6%, transparent);
   box-shadow: 0 12px 30px color-mix(in srgb, var(--color-shadow) 28%, transparent);
@@ -913,9 +913,9 @@ body.mobile-scroll-lock {
 
 .m-av-lg {
   position: relative;
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
+  width: var(--space-9);
+  height: var(--space-9);
+  border-radius: var(--radius-3-5);
   overflow: hidden;
   border: 2px solid color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
   background: color-mix(in srgb, var(--color-surface-tint) 5%, transparent);
@@ -942,8 +942,8 @@ body.mobile-scroll-lock {
 
 .m-status-ring {
   position: absolute;
-  inset: -3px;
-  border-radius: 16px;
+  inset: calc(-1 * var(--space-1));
+  border-radius: var(--radius-4);
   border: 2px solid transparent;
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-surface-tint) 4%, transparent);
   pointer-events: none;
@@ -974,13 +974,13 @@ body.mobile-scroll-lock {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .m-title-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .m-name {
@@ -1001,7 +1001,7 @@ body.mobile-scroll-lock {
   text-transform: uppercase;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .m-stat.online { color: var(--status-online); }
@@ -1013,7 +1013,7 @@ body.mobile-scroll-lock {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .m-roles .role-tag,
@@ -1025,9 +1025,9 @@ body.mobile-scroll-lock {
 .voice-channel-view {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-4);
   height: 100%;
-  padding: 16px;
+  padding: var(--space-4);
   background: var(--surface-main);
 }
 
@@ -1035,9 +1035,9 @@ body.mobile-scroll-lock {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 14px;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-3-5);
   border: 1px solid color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
   background: linear-gradient(120deg, color-mix(in srgb, var(--color-surface-alt) 60%, transparent), color-mix(in srgb, var(--color-background) 70%, transparent));
   box-shadow: 0 12px 32px color-mix(in srgb, var(--color-shadow) 35%, transparent), inset 0 1px 0 color-mix(in srgb, var(--color-surface-tint) 5%, transparent);
@@ -1047,7 +1047,7 @@ body.mobile-scroll-lock {
 .voice-topbar__meta {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   min-width: 0;
   flex: 1;
 }
@@ -1055,9 +1055,9 @@ body.mobile-scroll-lock {
 .voice-topbar__channel {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 12px;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-3);
   border: 1px solid color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
   background: color-mix(in srgb, var(--color-surface-tint) 4%, transparent);
   color: var(--color-text);
@@ -1068,15 +1068,15 @@ body.mobile-scroll-lock {
 .voice-topbar__actions {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .voice-topbar .status-pill {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 12px;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-3);
   text-transform: uppercase;
   font-size: var(--font-size-xs);
   line-height: var(--line-height-sm);
@@ -1088,9 +1088,9 @@ body.mobile-scroll-lock {
 }
 
 .voice-topbar .status-pill .status-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
+  width: var(--space-2-5);
+  height: var(--space-2-5);
+  border-radius: var(--radius-pill);
   background: currentColor;
   box-shadow: 0 0 12px currentColor;
 }
@@ -1103,7 +1103,7 @@ body.mobile-scroll-lock {
 .stream-stage {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--space-3-5);
   flex: 1;
   min-height: 0;
 }
@@ -1111,7 +1111,7 @@ body.mobile-scroll-lock {
 .stream-view {
   flex: 1;
   position: relative;
-  border-radius: 16px;
+  border-radius: var(--radius-4);
   border: 1px solid color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
   background: radial-gradient(circle at center, color-mix(in srgb, var(--color-surface) 90%, transparent) 0%, color-mix(in srgb, var(--color-shadow) 94%, transparent) 100%);
   overflow: hidden;
@@ -1137,7 +1137,7 @@ body.mobile-scroll-lock {
 .stream-overlay-top {
   position: absolute;
   inset: 0;
-  padding: 14px;
+  padding: var(--space-3-5);
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -1147,9 +1147,9 @@ body.mobile-scroll-lock {
 .live-tag {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  border-radius: 10px;
+  gap: var(--space-2);
+  padding: var(--space-1-5) var(--space-3);
+  border-radius: var(--radius-2-5);
   font-size: var(--font-size-xs);
   line-height: var(--line-height-sm);
   font-weight: 800;
@@ -1169,9 +1169,9 @@ body.mobile-scroll-lock {
 .streamer-pill {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  border-radius: 999px;
+  gap: var(--space-2-5);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-pill);
   border: 1px solid color-mix(in srgb, var(--color-surface-tint) 10%, transparent);
   background: color-mix(in srgb, var(--color-shadow) 55%, transparent);
   backdrop-filter: blur(12px);
@@ -1185,9 +1185,9 @@ body.mobile-scroll-lock {
 }
 
 .streamer-av {
-  width: 28px;
-  height: 28px;
-  border-radius: 10px;
+  width: var(--space-6-5);
+  height: var(--space-6-5);
+  border-radius: var(--radius-2-5);
   background: color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
   display: inline-flex;
   align-items: center;
@@ -1200,7 +1200,7 @@ body.mobile-scroll-lock {
 .streamer-meta {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-0-5);
 }
 
 .streamer-name {
@@ -1218,31 +1218,31 @@ body.mobile-scroll-lock {
 
 .stream-error {
   position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: 14px;
-  padding: 10px 12px;
-  border-radius: 12px;
+  left: var(--space-3-5);
+  right: var(--space-3-5);
+  bottom: var(--space-3-5);
+  padding: var(--space-2-5) var(--space-3);
+  border-radius: var(--radius-3);
   border: 1px solid color-mix(in srgb, var(--role-admin) 35%, transparent);
   background: color-mix(in srgb, var(--role-admin) 12%, transparent);
   color: var(--color-text-danger-light);
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   backdrop-filter: blur(10px);
 }
 
 .stream-gallery {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
   overflow-x: auto;
-  padding: 6px 4px 10px;
+  padding: var(--space-1-5) var(--space-1) var(--space-2-5);
 }
 
 .stream-thumb {
-  width: 220px;
-  min-height: 110px;
-  border-radius: 12px;
+  width: var(--space-14);
+  min-height: var(--space-13);
+  border-radius: var(--radius-3);
   border: 1px solid color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
   background: linear-gradient(145deg, color-mix(in srgb, var(--color-surface) 75%, transparent), color-mix(in srgb, var(--color-surface-alt) 85%, transparent));
   position: relative;
@@ -1252,7 +1252,7 @@ body.mobile-scroll-lock {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px;
+  padding: var(--space-2-5);
   color: var(--color-text);
 }
 
@@ -1277,9 +1277,9 @@ body.mobile-scroll-lock {
 }
 
 .thumb-avatar {
-  width: 54px;
-  height: 54px;
-  border-radius: 16px;
+  width: var(--space-10);
+  height: var(--space-10);
+  border-radius: var(--radius-4);
   background: color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
   display: inline-flex;
   align-items: center;
@@ -1294,25 +1294,25 @@ body.mobile-scroll-lock {
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 8px 10px;
+  padding: var(--space-2) var(--space-2-5);
   background: linear-gradient(to top, color-mix(in srgb, var(--color-shadow) 70%, transparent), transparent);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .thumb-name {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1-5);
   font-weight: 700;
   font-size: 0.9rem;
 }
 
 .thumb-chip {
-  padding: 2px 8px;
-  border-radius: 8px;
+  padding: var(--space-0-5) var(--space-2);
+  border-radius: var(--radius-2);
   background: color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
   font-size: 0.72rem;
   font-weight: 800;
@@ -1322,40 +1322,40 @@ body.mobile-scroll-lock {
 .thumb-meta {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1-5);
   color: var(--color-text);
   opacity: 0.85;
 }
 
 .thumb-live-dot {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
+  top: var(--space-2-5);
+  right: var(--space-2-5);
+  width: var(--space-2-5);
+  height: var(--space-2-5);
+  border-radius: var(--radius-pill);
   background: #ef4444;
   box-shadow: 0 0 10px color-mix(in srgb, var(--role-admin) 50%, transparent);
 }
 
 .stream-panel {
-  height: 68px;
+  height: var(--space-12);
   background: color-mix(in srgb, var(--color-surface) 65%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
-  border-radius: 14px;
+  border-radius: var(--radius-3-5);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 0 var(--space-4);
   box-shadow: 0 12px 30px color-mix(in srgb, var(--color-shadow) 32%, transparent);
   backdrop-filter: blur(16px);
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .sp-left, .sp-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .sp-right {
@@ -1365,7 +1365,7 @@ body.mobile-scroll-lock {
 .sp-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-0-5);
   line-height: 1.3;
 }
 
@@ -1384,28 +1384,28 @@ body.mobile-scroll-lock {
 .sp-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .sp-group {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   background: color-mix(in srgb, var(--color-surface-tint) 2%, transparent);
-  padding: 4px;
-  border-radius: 12px;
+  padding: var(--space-1);
+  border-radius: var(--radius-3);
   border: 1px solid color-mix(in srgb, var(--color-surface-tint) 6%, transparent);
 }
 
 .sp-btn {
-  min-width: 38px;
-  height: 38px;
-  border-radius: 10px;
+  min-width: calc(var(--space-7) + var(--space-1-5));
+  height: calc(var(--space-7) + var(--space-1-5));
+  border-radius: var(--radius-2-5);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 0 10px;
+  gap: var(--space-1-5);
+  padding: 0 var(--space-2-5);
   color: var(--color-text-secondary);
   background: color-mix(in srgb, var(--color-surface-tint) 5%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-surface-tint) 6%, transparent);
