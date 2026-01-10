@@ -3,7 +3,7 @@ import { Shield, Crown, UserCheck, UserX } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../../api/http';
 import { useSocket } from '../../context/SocketContext';
-import { Avatar, ContextMenu, ContextMenuContent, ErrorCard, Icon, Input, Menu, MenuItem, RoleTag, Skeleton, Spinner } from '../ui';
+import { Avatar, ContextMenu, ContextMenuContent, ErrorCard, Icon, Input, Menu, MenuItem, RoleTag, ScrollArea, Skeleton, Spinner } from '../ui';
 import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
 import './MemberSidebar.css';
@@ -568,7 +568,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
         />
       </div>
 
-      <div ref={listParentRef} className="ct-member-sidebar__list custom-scrollbar">
+      <ScrollArea ref={listParentRef} className="ct-member-sidebar__list">
         {loading && (
           <div className="space-y-3">
             <Spinner label={t('memberSidebar.loading')} />
@@ -627,7 +627,7 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
             })}
           </div>
         )}
-      </div>
+      </ScrollArea>
 
       {contextMenu && (
         <ContextMenu

@@ -6,7 +6,7 @@ import { apiFetch } from '../../api/http';
 import { getServerUrl, setServerUrl } from '../../utils/apiConfig';
 import { readPinnedServers, removePinnedServer, normalizeInstanceUrl } from '../../utils/pinnedServers';
 import { storage } from '../../shared/config/storage';
-import { Avatar, ContextMenu, ContextMenuContent, ErrorCard, Icon, Spinner, Menu, MenuItem, Popover, PopoverContent, PopoverTrigger } from '../ui';
+import { Avatar, ContextMenu, ContextMenuContent, ErrorCard, Icon, Spinner, Menu, MenuItem, Popover, PopoverContent, PopoverTrigger, ScrollArea } from '../ui';
 import { Button, IconButton } from '../ui/Button';
 import { useSocket } from '../../context/SocketContext';
 import './ServerRail.css';
@@ -338,7 +338,10 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
       <div className="w-full h-full flex flex-col relative no-drag">
         
         {/* 1. SCROLLABLE BEREICH: Server Liste */}
-        <div className="flex-1 w-full flex flex-col items-center gap-3.5 py-4 px-2 overflow-y-auto no-scrollbar">
+        <ScrollArea
+          className="flex-1 w-full flex flex-col items-center gap-3.5 py-4 px-2"
+          hideScrollbar
+        >
           {/* HOME BUTTON */}
           <IconButton
             type="button"
@@ -493,7 +496,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
               ))}
             </>
           )}
-        </div>
+        </ScrollArea>
 
         {/* 2. FIXIERTER FOOTER: Add Button + Menü */}
         <div className="flex-shrink-0 w-full flex flex-col items-center pb-4 relative z-50">
