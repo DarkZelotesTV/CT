@@ -17,7 +17,7 @@ export const Toggle = React.forwardRef<HTMLInputElement, ToggleProps>(
           'accent-[color:var(--color-accent)]',
           'transition-colors',
           'focus-visible:outline-none',
-          'focus-visible:ring-2 focus-visible:ring-[color:var(--color-focus)]',
+          'focus-visible:ring-2 focus-visible:ring-[color:var(--state-focus)]',
           'focus-visible:ring-offset-2 focus-visible:ring-offset-background',
           'disabled:cursor-not-allowed disabled:opacity-60',
           size === 'sm' && 'h-3 w-3',

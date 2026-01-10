@@ -136,7 +136,7 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
           <textarea
             id="feedback-message"
             ref={textareaRef}
-            className="w-full min-h-[140px] rounded-[var(--radius-3)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 px-3 py-2 text-sm text-[color:var(--color-text)] focus-visible:border-[color:var(--color-focus)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="w-full min-h-[140px] rounded-[var(--radius-3)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 px-3 py-2 text-sm text-[color:var(--color-text)] focus-visible:border-[color:var(--state-focus)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--state-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             placeholder={t('feedbackModal.messagePlaceholder')}
             value={message}
             onChange={(event) => setMessage(event.target.value)}
@@ -152,7 +152,7 @@ export const FeedbackModal = ({ onClose }: FeedbackModalProps) => {
           <div className="flex items-center gap-2">
             <label
               htmlFor="feedback-screenshot"
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-[var(--radius-3)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 text-sm text-[color:var(--color-text)] cursor-pointer hover:border-[color:var(--color-border-strong)] focus-within:border-[color:var(--color-focus)] focus-within:ring-2 focus-within:ring-[color:var(--color-focus)] focus-within:ring-offset-2 focus-within:ring-offset-background"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-[var(--radius-3)] border border-[color:var(--color-border)] bg-[color:var(--color-surface)]/60 text-sm text-[color:var(--color-text)] cursor-pointer hover:border-[color:var(--color-border-strong)] focus-within:border-[color:var(--state-focus)] focus-within:ring-2 focus-within:ring-[color:var(--state-focus)] focus-within:ring-offset-2 focus-within:ring-offset-background"
             >
               <Icon icon={ImagePlus} size="md" tone="default" className="text-inherit" />
               <span className="truncate">{screenshotLabel}</span>

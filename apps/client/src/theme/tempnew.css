@@ -21,7 +21,7 @@
 
   /* Desktop: respect the titlebar height var if present */
   padding: var(--space-4);
-  background: var(--color-overlay);
+  background: var(--state-overlay);
   backdrop-filter: blur(18px);
 }
 

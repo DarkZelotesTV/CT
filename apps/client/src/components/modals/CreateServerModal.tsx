@@ -86,7 +86,7 @@ export const CreateServerModal = ({ onClose, onCreated }: CreateServerModalProps
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="flex flex-col items-center gap-2">
-          <label className="w-24 h-24 rounded-full bg-[color:var(--color-surface-hover)] border-2 border-dashed border-[color:var(--color-border-strong)] flex flex-col items-center justify-center text-[color:var(--color-text-muted)] hover:border-[var(--color-accent-hover)] hover:text-[var(--color-accent)] cursor-pointer transition-all group overflow-hidden focus-within:ring-2 focus-within:ring-[color:var(--color-focus)] focus-within:ring-offset-2 focus-within:ring-offset-background">
+          <label className="w-24 h-24 rounded-full bg-[color:var(--color-surface-hover)] border-2 border-dashed border-[color:var(--color-border-strong)] flex flex-col items-center justify-center text-[color:var(--color-text-muted)] hover:border-[var(--color-accent-hover)] hover:text-[var(--color-accent)] cursor-pointer transition-all group overflow-hidden focus-within:ring-2 focus-within:ring-[color:var(--state-focus)] focus-within:ring-offset-2 focus-within:ring-offset-background">
             <Input type="file" accept="image/*" className="hidden" onChange={handleIconChange} />
             {iconPreview ? (
               <img src={iconPreview} alt="Server Icon" className="w-full h-full object-cover" />

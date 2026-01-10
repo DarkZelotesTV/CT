@@ -23,7 +23,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           // base
           'inline-flex items-center justify-center gap-2 font-semibold',
           'rounded-[var(--radius-3)] transition active:scale-[0.98]',
-          'focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--state-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-background',
           'disabled:pointer-events-none disabled:opacity-50',
           // sizing
           size === 'sm' && 'h-9 px-3 text-sm',
