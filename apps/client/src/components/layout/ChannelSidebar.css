@@ -95,7 +95,7 @@
 
 .ct-channel-sidebar__channel:hover,
 .t-chan:hover {
-  background: var(--color-surface-hover);
+  background: var(--state-hover-bg);
   color: var(--color-text);
 }
 
@@ -108,12 +108,12 @@
 .t-chan:focus-visible {
   outline: 2px solid var(--state-focus);
   outline-offset: var(--space-0-5);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--state-focus) 35%, transparent);
+  box-shadow: var(--state-focus-ring);
 }
 
 .ct-channel-sidebar__channel--active,
 .t-chan.active {
-  background: linear-gradient(90deg, color-mix(in srgb, var(--color-surface) 92%, transparent), transparent);
+  background: var(--state-active-bg);
   border-left: 3px solid var(--color-accent);
   color: var(--color-text);
 }
@@ -152,7 +152,7 @@
 .t-user:focus-visible {
   outline: 2px solid var(--state-focus);
   outline-offset: var(--space-0-5);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--state-focus) 35%, transparent);
+  box-shadow: var(--state-focus-ring);
 }
 
 .ct-channel-sidebar__user::before,

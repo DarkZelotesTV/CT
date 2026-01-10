@@ -42,9 +42,12 @@
 
   /* --- STATE TOKENS --- */
   --state-focus: var(--color-accent);
+  --state-hover-bg: var(--color-surface-hover);
+  --state-active-bg: linear-gradient(90deg, color-mix(in srgb, var(--color-surface) 92%, transparent), transparent);
   --state-overlay: rgba(6, 8, 16, 0.78);
   --state-accent-dim: color-mix(in srgb, var(--color-accent) 15%, transparent);
   --state-accent-glow: 0 0 15px color-mix(in srgb, var(--color-accent) 40%, transparent);
+  --state-focus-ring: 0 0 0 3px color-mix(in srgb, var(--state-focus) 35%, transparent);
 
   /* --- SHADOWS --- */
   --shadow-panel-inset: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
