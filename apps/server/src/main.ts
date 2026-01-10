@@ -4,6 +4,7 @@ import helmet from 'helmet'; // <--- WICHTIG: Import hinzugefügt
 import { createServer as createHttpServer } from 'http';
 import { createServer as createHttpsServer } from 'https';
 import type { ServerOptions as HttpsServerOptions } from 'https';
+import type { SecureVersion } from 'tls';
 import { Server } from 'socket.io';
 import { sequelize } from './config/database';
 import path from 'path';
@@ -65,7 +66,7 @@ const TLS_CA_PATH = process.env.TLS_CA_PATH;
 const TLS_PASSPHRASE = process.env.TLS_PASSPHRASE;
 const TLS_DHPARAM_PATH = process.env.TLS_DHPARAM_PATH;
 const TLS_CIPHERS = process.env.TLS_CIPHERS;
-const TLS_MIN_VERSION = process.env.TLS_MIN_VERSION || 'TLSv1.2';
+const TLS_MIN_VERSION = (process.env.TLS_MIN_VERSION || 'TLSv1.2') as SecureVersion;
 const TLS_REDIRECT_HTTP = process.env.TLS_REDIRECT_HTTP === '1';
 const ALLOW_EXPIRED_TLS = process.env.ALLOW_EXPIRED_TLS === '1';
 const PUBLIC_ORIGIN = process.env.PUBLIC_ORIGIN?.trim();
