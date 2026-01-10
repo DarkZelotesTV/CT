@@ -33,11 +33,11 @@
   color: var(--color-text-placeholder);
 }
 
-.ct-member-sidebar__search:focus,
-.member-sidebar__search:focus {
+.ct-member-sidebar__search:focus-visible,
+.member-sidebar__search:focus-visible {
   outline: none;
   border-color: color-mix(in srgb, var(--color-accent) 45%, transparent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 15%, transparent);
+  box-shadow: var(--state-focus-ring);
 }
 
 .ct-member-sidebar__list,
@@ -139,8 +139,15 @@
 .m-row:hover {
   transform: translateY(-1px);
   border-color: color-mix(in srgb, var(--color-surface-tint) 12%, transparent);
-  background: linear-gradient(145deg, color-mix(in srgb, var(--color-surface) 92%, transparent), color-mix(in srgb, var(--color-surface) 85%, transparent));
+  background: linear-gradient(145deg, color-mix(in srgb, var(--state-hover-bg) 92%, transparent), color-mix(in srgb, var(--state-hover-bg) 70%, transparent));
   box-shadow: 0 14px 36px color-mix(in srgb, var(--color-shadow) 32%, transparent), 0 0 0 1px color-mix(in srgb, var(--color-surface-tint) 2%, transparent);
+}
+
+.ct-member-sidebar__row:focus-visible,
+.m-row:focus-visible {
+  outline: 2px solid var(--state-focus);
+  outline-offset: var(--space-0-5);
+  box-shadow: var(--state-focus-ring);
 }
 
 .ct-member-sidebar__row--status-online,

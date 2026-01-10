@@ -350,7 +350,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
               w-12 h-12 flex-shrink-0 cursor-pointer transition-all duration-300 group relative no-drag border border-[color:var(--color-border)]
               ${selectedServerId === null
                 ? 'bg-[color:var(--color-accent)] text-accent rounded-[var(--radius-3)] shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-accent)_16%,transparent)]'
-                : 'bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 text-text-muted hover:text-accent rounded-full hover:rounded-[var(--radius-3)] hover:shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-accent-hover)_6%,transparent)]'}
+                : 'bg-[color:var(--state-hover-bg)] hover:bg-[color:var(--state-hover-bg)]/80 text-text-muted hover:text-accent rounded-full hover:rounded-[var(--radius-3)] hover:shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-accent-hover)_6%,transparent)]'}
             `
             }
             aria-label="Home"
@@ -358,7 +358,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
             <Icon icon={Home} size="lg" className="text-inherit" hoverTone="none" />
           </IconButton>
 
-          <div className="w-10 h-px bg-[color:var(--color-surface-hover)]/80 rounded-full flex-shrink-0" />
+          <div className="w-10 h-px bg-[color:var(--state-hover-bg)]/80 rounded-full flex-shrink-0" />
 
           {/* LOCAL SERVERS */}
           {loading && <Spinner label={t('serverRail.loading')} className="text-[color:var(--color-text-muted)]" />}
@@ -391,7 +391,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                   `
                 w-12 h-12 flex-shrink-0 cursor-pointer transition-all duration-300 relative group no-drag border border-[color:var(--color-border)]
                 ${selectedServerId === server.id ? 'rounded-[var(--radius-3)]' : 'rounded-full hover:rounded-[var(--radius-3)]'}
-                bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 hover:shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-accent-hover)_5%,transparent)] ${selectedServerId === server.id ? 'shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-accent)_16%,transparent)]' : ''}
+                bg-[color:var(--state-hover-bg)] hover:bg-[color:var(--state-hover-bg)]/80 hover:shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-accent-hover)_5%,transparent)] ${selectedServerId === server.id ? 'shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-accent)_16%,transparent)]' : ''}
               `
                 }
                 title={tooltip}
@@ -442,7 +442,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
           {/* REMOTE / PINNED SERVERS */}
           {pinnedRemote.length > 0 && (
             <>
-              <div className="w-8 h-[2px] bg-[color:var(--color-surface-hover)] rounded-full flex-shrink-0" />
+              <div className="w-8 h-[2px] bg-[color:var(--state-hover-bg)] rounded-full flex-shrink-0" />
               {pinnedRemote.map((p) => (
                 <div
                   key={`remote-${p.instanceUrl}-${p.serverId}`}
@@ -457,7 +457,7 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
                     }
                     handleKeyboardContext(e, p.serverId, 'remote', p.instanceUrl);
                   }}
-                  className="no-drag w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 relative group no-drag rounded-full hover:rounded-[var(--radius-3)] bg-[color:var(--color-surface-hover)] hover:bg-[color:var(--color-surface-hover)]/80 outline-none border border-[color:var(--color-border)] hover:shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-accent-hover)_6%,transparent)]"
+                  className="no-drag w-12 h-12 flex-shrink-0 flex items-center justify-center cursor-pointer transition-all duration-300 relative group no-drag rounded-full hover:rounded-[var(--radius-3)] bg-[color:var(--state-hover-bg)] hover:bg-[color:var(--state-hover-bg)]/80 outline-none border border-[color:var(--color-border)] hover:shadow-[0_0_0_6px_color-mix(in_srgb,var(--color-accent-hover)_6%,transparent)]"
                   title={`${p.name ?? `Server ${p.serverId}`} (${p.instanceUrl})`}
                   onContextMenu={(e) => handleContextMenu(e, p.serverId, 'remote', p.instanceUrl)}
                 >
