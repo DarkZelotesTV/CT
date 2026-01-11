@@ -7,6 +7,19 @@ const run = (command) => {
   execSync(command, { stdio: 'inherit', shell: true });
 };
 
+const cleanReleaseOutput = () => {
+  const releaseDir = path.join(process.cwd(), 'release');
+
+  try {
+    rmSync(releaseDir, { recursive: true, force: true });
+  } catch (error) {
+    console.warn(
+      `Unable to clear previous release output at ${releaseDir}. Packaging may fail if files are locked.`
+    );
+    console.warn(`Reason: ${error?.message ?? error}`);
+  }
+};
+
 const canCreateSymlinks = () => {
   if (process.platform !== 'win32') return true;
 
@@ -36,5 +49,6 @@ run('npx vite build');
 if (process.env.SKIP_ELECTRON_BUILDER === 'true') {
   console.log('Skipping electron-builder because SKIP_ELECTRON_BUILDER=true');
 } else if (canCreateSymlinks()) {
+  cleanReleaseOutput();
   run('npx electron-builder');
 }
