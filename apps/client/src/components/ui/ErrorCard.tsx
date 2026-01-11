@@ -1,6 +1,7 @@
 import classNames from 'classnames';
 import { AlertTriangle, RefreshCcw } from 'lucide-react';
 import { Button } from './Button';
+import { Icon } from './Icon';
 
 interface ErrorCardProps {
   title?: string;
@@ -25,7 +26,7 @@ export const ErrorCard = ({ title, message, onRetry, retryLabel = 'Retry', class
     >
       <div className={classNames('flex', isCompact ? 'gap-2' : 'gap-3')}>
         <div className={classNames('flex items-start text-[color:var(--color-text-danger)]', isCompact ? 'pt-0' : 'pt-0.5')}>
-          <AlertTriangle size={isCompact ? 14 : 18} aria-hidden />
+          <Icon icon={AlertTriangle} size={isCompact ? 'sm' : 'md'} aria-hidden />
         </div>
         <div className={classNames('flex-1', isCompact ? 'space-y-0.5' : 'space-y-1')}>
           {title ? <div className={classNames('font-semibold text-[color:var(--color-text-danger)]', isCompact ? 'text-sm' : undefined)}>{title}</div> : null}
@@ -41,7 +42,7 @@ export const ErrorCard = ({ title, message, onRetry, retryLabel = 'Retry', class
               )}
               onClick={onRetry}
             >
-              <RefreshCcw size={isCompact ? 12 : 14} aria-hidden />
+              <Icon icon={RefreshCcw} size="sm" aria-hidden />
               <span>{retryLabel}</span>
             </Button>
           ) : null}
