@@ -1,5 +1,6 @@
 import * as React from 'react';
 import classNames from 'classnames';
+import { Pill } from './Pill';
 
 export type BadgeVariant = 'neutral' | 'accent' | 'success' | 'warning' | 'danger' | 'info';
 
@@ -9,10 +10,9 @@ export type BadgeProps = React.HTMLAttributes<HTMLSpanElement> & {
 
 export const Badge = ({ className, variant = 'neutral', ...props }: BadgeProps) => {
   return (
-    <span
+    <Pill
       className={classNames(
-        'inline-flex items-center gap-1 border text-xs font-semibold',
-        'rounded-[var(--radius-pill)] px-2.5 py-1',
+        'gap-1 font-semibold',
         variant === 'neutral' && 'border-[color:var(--color-border)] bg-[color:var(--color-surface)]/70 text-[color:var(--color-text)]',
         variant === 'accent' && 'border-[color:var(--color-accent)]/40 bg-[color:var(--color-accent)]/10 text-[color:var(--color-accent)]',
         variant === 'success' && 'border-[color:var(--color-text-success)]/40 bg-[color:var(--color-text-success)]/10 text-[color:var(--color-text-success)]',

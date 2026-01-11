@@ -1,5 +1,6 @@
 import * as React from 'react';
 import classNames from 'classnames';
+import { Pill } from './Pill';
 
 export type RoleTagVariant = 'admin' | 'mod' | 'bot' | 'neutral';
 
@@ -20,7 +21,7 @@ const buildRoleStyle = (accent: string, text: string = accent): RoleStyle => ({
   textColor: text,
   background: `linear-gradient(135deg, ${mix(accent, 18)}, ${mix(accent, 6)})`,
   borderColor: mix(accent, 28),
-  boxShadow: `0 8px 26px ${mix(accent, 24)}, inset 0 1px 0 ${mix('var(--color-surface-tint)', 8)}`,
+  boxShadow: `0 8px 26px ${mix(accent, 24)}, var(--pill-shadow-inset)`,
 });
 
 const ROLE_STYLES: Record<RoleTagVariant, RoleStyle> = {
@@ -31,7 +32,7 @@ const ROLE_STYLES: Record<RoleTagVariant, RoleStyle> = {
     textColor: 'var(--color-text-secondary)',
     background: `linear-gradient(135deg, ${mix('var(--color-surface-tint)', 8)}, ${mix('var(--color-surface-tint)', 3)})`,
     borderColor: mix('var(--color-surface-tint)', 12),
-    boxShadow: `0 8px 24px ${mix('var(--color-shadow)', 28)}, inset 0 1px 0 ${mix('var(--color-surface-tint)', 8)}`,
+    boxShadow: `0 8px 24px ${mix('var(--color-shadow)', 28)}, var(--pill-shadow-inset)`,
   },
 };
 
@@ -39,10 +40,9 @@ export const RoleTag = ({ variant = 'neutral', className, style, ...props }: Rol
   const roleStyle = ROLE_STYLES[variant] ?? ROLE_STYLES.neutral;
 
   return (
-    <span
+    <Pill
       className={classNames(
-        'inline-flex items-center gap-2 rounded-[var(--radius-pill)] border',
-        'px-3 py-1 text-[length:var(--font-size-xs)] leading-[var(--line-height-sm)] font-extrabold uppercase tracking-[0.08em]',
+        'gap-2 font-extrabold uppercase tracking-[0.08em]',
         className,
       )}
       style={{
