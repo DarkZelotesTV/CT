@@ -1,7 +1,7 @@
 export { ErrorCard } from './ErrorCard';
 export { Card } from './Card';
 export { EmptyState } from './EmptyState';
-export { Skeleton } from './Skeleton';
+export { Skeleton, SkeletonChannelRow, SkeletonMemberRow, SkeletonRailItem } from './Skeleton';
 export { Spinner } from './Spinner';
 export { Icon } from './Icon';
 export { Badge } from './Badge';

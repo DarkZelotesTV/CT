@@ -6,7 +6,7 @@ import { apiFetch } from '../../api/http';
 import { getServerUrl, setServerUrl } from '../../utils/apiConfig';
 import { readPinnedServers, removePinnedServer, normalizeInstanceUrl } from '../../utils/pinnedServers';
 import { storage } from '../../shared/config/storage';
-import { Avatar, ContextMenu, ContextMenuContent, ErrorCard, Icon, Spinner, Menu, MenuItem, Popover, PopoverContent, PopoverTrigger, ScrollArea } from '../ui';
+import { Avatar, ContextMenu, ContextMenuContent, ErrorCard, Icon, Menu, MenuItem, Popover, PopoverContent, PopoverTrigger, ScrollArea, SkeletonRailItem } from '../ui';
 import { Button, IconButton } from '../ui/Button';
 import { useSocket } from '../../context/SocketContext';
 import './ServerRail.css';
@@ -364,7 +364,13 @@ export const ServerRail = ({ selectedServerId, onSelectServer, onCreateServer, o
           <div className="w-10 h-px bg-[color:var(--state-hover-bg)]/80 rounded-full flex-shrink-0" />
 
           {/* LOCAL SERVERS */}
-          {loading && <Spinner label={t('serverRail.loading')} className="text-[color:var(--color-text-muted)]" />}
+          {loading && (
+            <div className="flex w-full flex-col items-center gap-3">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <SkeletonRailItem key={`server-rail-skeleton-${index}`} />
+              ))}
+            </div>
+          )}
           {lastError && (
             <ErrorCard
               size="compact"

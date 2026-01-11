@@ -3,7 +3,7 @@ import { Shield, Crown, UserCheck, UserX } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../../api/http';
 import { useSocket } from '../../context/SocketContext';
-import { Avatar, ContextMenu, ContextMenuContent, ErrorCard, Icon, Input, Menu, MenuItem, RoleTag, ScrollArea, Skeleton, Spinner } from '../ui';
+import { Avatar, ContextMenu, ContextMenuContent, ErrorCard, Icon, Input, Menu, MenuItem, RoleTag, ScrollArea, SkeletonMemberRow } from '../ui';
 import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
 import './MemberSidebar.css';
@@ -571,18 +571,9 @@ export const MemberSidebar = ({ serverId }: { serverId: number }) => {
       <ScrollArea ref={listParentRef} className="ct-member-sidebar__list">
         {loading && (
           <div className="space-y-3">
-            <Spinner label={t('memberSidebar.loading')} />
-            <div className="space-y-3">
-              {[0, 1, 2, 3].map((index) => (
-                <div key={`member-skeleton-${index}`} className="ct-member-sidebar__row">
-                  <Skeleton className="h-[46px] w-[46px] rounded-[var(--radius-3)] bg-[var(--color-surface-hover)]" />
-                  <div className="ct-member-sidebar__body">
-                    <Skeleton className="h-3 w-1/3 bg-[var(--color-surface-hover)]" />
-                    <Skeleton className="h-2.5 w-1/2 bg-[var(--color-surface-hover)]" />
-                  </div>
-                </div>
-              ))}
-            </div>
+            {Array.from({ length: 4 }).map((_, index) => (
+              <SkeletonMemberRow key={`member-skeleton-${index}`} />
+            ))}
           </div>
         )}
 
