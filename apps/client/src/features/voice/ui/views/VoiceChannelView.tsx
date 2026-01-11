@@ -25,6 +25,7 @@ import { useVoice } from '../..';
 import { useSettings } from '../../../../context/SettingsContext';
 import { UserSettingsModal } from '../../../../components/modals/UserSettingsModal';
 import { ContextMenu, ContextMenuContent, ContextMenuTrigger, Menu, MenuItem, StatusBadge, type StatusTone } from '../../../../components/ui';
+import { IconButton, ToggleIconButton } from '../../../../components/ui/Button';
 import './VoiceView.css';
 
 export const VoiceChannelView = ({ channelName }: { channelName: string | null }) => {
@@ -188,12 +189,22 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
         </div>
 
         <div className="ct-voice-channel__topbar-actions">
-          <button className={`ct-voice-channel__control-button ${layout === 'grid' ? 'ct-voice-channel__control-button--active' : ''}`} onClick={() => setLayout('grid')} title="Gitter">
+          <ToggleIconButton
+            className="ct-voice-channel__toolbar-button"
+            pressed={layout === 'grid'}
+            onClick={() => setLayout('grid')}
+            title="Gitter"
+          >
             <Grid size={16} />
-          </button>
-          <button className={`ct-voice-channel__control-button ${layout === 'speaker' ? 'ct-voice-channel__control-button--active' : ''}`} onClick={() => setLayout('speaker')} title="Speaker">
+          </ToggleIconButton>
+          <ToggleIconButton
+            className="ct-voice-channel__toolbar-button"
+            pressed={layout === 'speaker'}
+            onClick={() => setLayout('speaker')}
+            title="Speaker"
+          >
             <LayoutList size={16} />
-          </button>
+          </ToggleIconButton>
         </div>
       </div>
 
@@ -275,47 +286,48 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
               <div className="ct-voice-channel__panel-sub">{participantCountLabel} • {connectionState === 'connected' ? 'Verbunden' : 'Getrennt'} • {streamDetail}</div>
             </div>
             <div className="ct-voice-channel__panel-actions">
-              <button
+              <IconButton
                 onClick={handleStartStream}
                 disabled={streamAction === 'start' || !canStartStream}
-                className={`ct-voice-channel__control-button ${streamingActive ? 'ct-voice-channel__control-button--active' : ''}`}
+                className={`ct-voice-channel__toolbar-button ct-voice-channel__toolbar-button--wide ${streamingActive ? 'ct-voice-channel__toolbar-button--active' : ''}`}
               >
                 <Play size={16} /> {streamPaused ? 'Fortsetzen' : 'Stream starten'}
-              </button>
-              <button
+              </IconButton>
+              <IconButton
                 onClick={handlePauseStream}
                 disabled={streamAction === 'pause' || streamState === 'idle'}
-                className={`ct-voice-channel__control-button ${streamPaused ? 'ct-voice-channel__control-button--warning' : ''}`}
+                className={`ct-voice-channel__toolbar-button ct-voice-channel__toolbar-button--wide ${streamPaused ? 'ct-voice-channel__toolbar-button--warning' : ''}`}
               >
                 <Pause size={16} /> Pause
-              </button>
-              <button
+              </IconButton>
+              <IconButton
                 onClick={handleStopStream}
                 disabled={streamAction === 'stop' || streamState === 'idle'}
-                className="ct-voice-channel__control-button ct-voice-channel__control-button--danger"
+                className="ct-voice-channel__toolbar-button ct-voice-channel__toolbar-button--wide ct-voice-channel__toolbar-button--danger"
               >
                 <Square size={16} /> Stop
-              </button>
+              </IconButton>
             </div>
           </div>
 
           <div className="ct-voice-channel__panel-right">
             <div className="ct-voice-channel__panel-group">
               <div className="ct-voice-channel__control-with-menu">
-                <button
-                  className={`ct-voice-channel__control-button ${!micMuted ? 'ct-voice-channel__control-button--active' : 'ct-voice-channel__control-button--muted'}`}
+                <ToggleIconButton
+                  className={`ct-voice-channel__toolbar-button ${micMuted ? 'ct-voice-channel__toolbar-button--muted' : ''}`}
+                  pressed={!micMuted}
                   onClick={() => setMicMuted(!micMuted)}
                 >
                   {micMuted ? <MicOff size={16} /> : <Mic size={16} />}
-                </button>
+                </ToggleIconButton>
                 <ContextMenu
                   open={menuOpen === 'mic'}
                   onOpenChange={(open) => setMenuOpen(open ? 'mic' : null)}
                 >
                   <ContextMenuTrigger>
-                    <button className="ct-voice-channel__control-button" type="button">
+                    <IconButton className="ct-voice-channel__toolbar-button" type="button">
                       <ChevronUp size={14} />
-                    </button>
+                    </IconButton>
                   </ContextMenuTrigger>
                   <ContextMenuContent className="absolute bottom-[115%] left-0 w-64 bg-surface border border-border rounded-2xl shadow-glass p-1.5 z-50 text-text animate-in slide-in-from-bottom-2 duration-150">
                     <Menu className="flex flex-col gap-1" aria-label="Eingabegeräte">
@@ -334,39 +346,42 @@ export const VoiceChannelView = ({ channelName }: { channelName: string | null }
                   </ContextMenuContent>
                 </ContextMenu>
               </div>
-              <button
-                className={`ct-voice-channel__control-button ${!muted ? 'ct-voice-channel__control-button--active' : 'ct-voice-channel__control-button--muted'}`}
+              <ToggleIconButton
+                className={`ct-voice-channel__toolbar-button ${muted ? 'ct-voice-channel__toolbar-button--muted' : ''}`}
+                pressed={!muted}
                 onClick={() => setMuted(!muted)}
               >
                 <Headphones size={16} />
-              </button>
+              </ToggleIconButton>
             </div>
 
             <div className="ct-voice-channel__panel-group">
-              <button
-                className={`ct-voice-channel__control-button ${isCameraEnabled ? 'ct-voice-channel__control-button--active' : ''}`}
+              <ToggleIconButton
+                className="ct-voice-channel__toolbar-button"
+                pressed={isCameraEnabled}
                 onClick={toggleCamera}
               >
                 {isCameraEnabled ? <Video size={16} /> : <VideoOff size={16} />}
-              </button>
-              <button
-                className={`ct-voice-channel__control-button ${isScreenSharing ? 'ct-voice-channel__control-button--active' : ''}`}
+              </ToggleIconButton>
+              <ToggleIconButton
+                className="ct-voice-channel__toolbar-button"
+                pressed={isScreenSharing}
                 onClick={() => isScreenSharing ? stopScreenShare() : toggleScreenShare()}
               >
                 <Monitor size={16} />
-              </button>
+              </ToggleIconButton>
             </div>
 
             <div className="ct-voice-channel__panel-group">
-              <button className="ct-voice-channel__control-button" onClick={() => setShowSettings(true)}>
+              <IconButton className="ct-voice-channel__toolbar-button" onClick={() => setShowSettings(true)}>
                 <Settings size={16} />
-              </button>
-              <button className="ct-voice-channel__control-button" onClick={handleOpenExternal}>
+              </IconButton>
+              <IconButton className="ct-voice-channel__toolbar-button" onClick={handleOpenExternal}>
                 <ExternalLink size={16} />
-              </button>
-              <button className="ct-voice-channel__control-button ct-voice-channel__control-button--danger" onClick={handleDisconnect}>
+              </IconButton>
+              <IconButton className="ct-voice-channel__toolbar-button ct-voice-channel__toolbar-button--danger" onClick={handleDisconnect}>
                 <Power size={16} />
-              </button>
+              </IconButton>
             </div>
           </div>
         </div>
