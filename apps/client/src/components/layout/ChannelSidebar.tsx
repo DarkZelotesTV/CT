@@ -14,7 +14,7 @@ import { useSettings } from '../../context/SettingsContext';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
 import { defaultServerTheme, deriveServerThemeFromSettings, type ServerTheme } from '../../theme/serverTheme';
 import { storage } from '../../shared/config/storage';
-import { Badge, ErrorCard, Icon, RoleTag, ScrollArea, Skeleton, Spinner, StatusBadge, type StatusTone } from '../ui';
+import { Badge, ErrorCard, Icon, RoleTag, ScrollArea, SkeletonChannelRow, StatusBadge, type StatusTone } from '../ui';
 import { Button, IconButton } from '../ui/Button';
 import './ChannelSidebar.css';
 
@@ -424,7 +424,13 @@ export const ChannelSidebar = ({
 
       {/* Liste */}
       <ScrollArea className="ct-channel-sidebar__content relative z-0">
-          {isLoading && <Spinner label={t('channelSidebar.loading')} />}
+          {isLoading && (
+            <div className="space-y-2">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <SkeletonChannelRow key={`channel-skeleton-${index}`} />
+              ))}
+            </div>
+          )}
           {error && <ErrorCard className="mx-2 mb-3" message={error} onRetry={() => fetchData()} />}
 
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
