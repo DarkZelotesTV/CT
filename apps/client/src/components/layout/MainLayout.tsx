@@ -389,8 +389,9 @@ export const MainLayout = () => {
       for (const container of containers) {
         if (!container) continue;
         const focusable = getFocusableElements(container);
-        if (focusable.length > 0) {
-          focusable[0].focus({ preventScroll: true });
+        const firstFocusable = focusable[0];
+        if (firstFocusable) {
+          firstFocusable.focus({ preventScroll: true });
           return;
         }
       }
