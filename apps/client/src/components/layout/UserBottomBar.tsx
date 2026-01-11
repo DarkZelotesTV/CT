@@ -6,7 +6,7 @@ import { UserSettingsModal } from '../modals/UserSettingsModal';
 import { resolveServerAssetUrl } from '../../utils/assetUrl';
 import { useVoice } from '../../features/voice';
 import { storage } from '../../shared/config/storage';
-import { Avatar, Icon, StatusBadge, type StatusTone } from '../ui';
+import { Avatar, Icon, StatusBadge, type AvatarStatus, type StatusTone } from '../ui';
 import { IconButton } from '../ui/Button';
 
 export const UserBottomBar = ({ onOpenUserSettings }: { onOpenUserSettings?: () => void }) => {
@@ -24,6 +24,12 @@ export const UserBottomBar = ({ onOpenUserSettings }: { onOpenUserSettings?: () 
     if (normalizedStatus === 'dnd' || normalizedStatus === 'busy') return 'dnd';
     return 'offline';
   })() as StatusTone;
+  const avatarStatus = (() => {
+    if (normalizedStatus === 'online' || normalizedStatus === 'live' || normalizedStatus === 'ready') return 'online';
+    if (normalizedStatus === 'idle' || normalizedStatus === 'away' || normalizedStatus === 'paused') return 'idle';
+    if (normalizedStatus === 'dnd' || normalizedStatus === 'busy') return 'dnd';
+    return 'offline';
+  })() as AvatarStatus;
   const statusLabelMap: Record<string, string> = {
     online: t('userBottomBar.online', { defaultValue: 'Online' }),
     idle: t('userBottomBar.idle', { defaultValue: 'Idle' }),
@@ -56,7 +62,7 @@ export const UserBottomBar = ({ onOpenUserSettings }: { onOpenUserSettings?: () 
           <Avatar
             size="xl"
             shape="rounded"
-            status={statusTone}
+            status={avatarStatus}
             src={avatarSrc || undefined}
             alt={`${displayName} Avatar`}
             fallback={(displayName?.[0] ?? 'U').toUpperCase()}
