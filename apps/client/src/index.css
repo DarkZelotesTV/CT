@@ -146,6 +146,15 @@
   --radius-modal: var(--radius-4);
   --radius-input: var(--radius-3);
 
+  --pill-height-sm: 24px;
+  --pill-height-md: 28px;
+  --pill-padding-x-sm: 10px;
+  --pill-padding-x-md: 12px;
+  --pill-padding-y-sm: 4px;
+  --pill-padding-y-md: 6px;
+  --pill-border-width: 1px;
+  --pill-shadow-inset: inset 0 1px 0 color-mix(in srgb, var(--color-surface-tint) 8%, transparent);
+
   --space-0-5-base: 2px;
   --space-1-base: 4px;
   --space-1-25-base: 5px;

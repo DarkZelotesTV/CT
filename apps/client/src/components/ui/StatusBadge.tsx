@@ -1,5 +1,6 @@
 import * as React from 'react';
 import classNames from 'classnames';
+import { Pill } from './Pill';
 
 export type StatusTone = 'online' | 'idle' | 'dnd' | 'offline' | 'live' | 'paused' | 'ready';
 export type StatusBadgeVariant = 'pill' | 'dot';
@@ -28,7 +29,7 @@ const buildTone = (accent: string, text: string = accent, shadowAccent: string =
   accentColor: accent,
   background: `linear-gradient(135deg, ${mix(accent, 20)}, ${mix(accent, 7)})`,
   borderColor: mix(accent, 32),
-  boxShadow: `0 10px 28px ${mix(shadowAccent, 22)}, inset 0 1px 0 ${mix('var(--color-surface-tint)', 8)}`,
+  boxShadow: `0 10px 28px ${mix(shadowAccent, 22)}, var(--pill-shadow-inset)`,
   dotShadow: `0 0 0 1px ${mix(accent, 30)}, 0 0 12px ${mix(accent, 40)}`,
 });
 
@@ -41,7 +42,7 @@ const STATUS_TONES: Record<StatusTone, StatusToneStyle> = {
     accentColor: 'var(--status-offline)',
     background: `linear-gradient(135deg, ${mix('var(--color-text-muted-strong)', 15)}, ${mix('var(--color-text-muted-strong)', 5)})`,
     borderColor: mix('var(--color-text-muted-strong)', 25),
-    boxShadow: `0 10px 24px ${mix('var(--color-text-muted-strong)', 18)}, inset 0 1px 0 ${mix('var(--color-surface-tint)', 8)}`,
+    boxShadow: `0 10px 24px ${mix('var(--color-text-muted-strong)', 18)}, var(--pill-shadow-inset)`,
     dotShadow: `0 0 0 1px ${mix('var(--status-offline)', 30)}, 0 0 10px ${mix('var(--status-offline)', 35)}`,
   },
   live: buildTone('var(--color-text-danger)'),
@@ -63,7 +64,6 @@ export const StatusBadge = ({
 }: StatusBadgeProps) => {
   const tone = getTone(status);
   const dotSizeClass = size === 'md' ? 'h-3 w-3' : 'h-2.5 w-2.5';
-  const pillPaddingClass = size === 'md' ? 'px-3 py-1.5' : 'px-2.5 py-1';
 
   if (variant === 'dot') {
     return (
@@ -80,13 +80,9 @@ export const StatusBadge = ({
   }
 
   return (
-    <span
-      className={classNames(
-        'inline-flex items-center gap-2 rounded-[var(--radius-pill)] border',
-        'text-[length:var(--font-size-xs)] leading-[var(--line-height-sm)] font-extrabold uppercase tracking-[0.08em]',
-        pillPaddingClass,
-        className,
-      )}
+    <Pill
+      size={size}
+      className={classNames('gap-2 font-extrabold uppercase tracking-[0.08em]', className)}
       style={{
         color: tone.textColor,
         background: tone.background,
@@ -107,6 +103,6 @@ export const StatusBadge = ({
         />
       )}
       {children}
-    </span>
+    </Pill>
   );
 };
