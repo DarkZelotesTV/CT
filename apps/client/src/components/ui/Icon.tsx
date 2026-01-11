@@ -5,9 +5,10 @@ const sizePresets = {
   sm: 14,
   md: 16,
   lg: 20,
+  xl: 24,
 } as const;
 
-type IconSize = keyof typeof sizePresets;
+export type IconSize = keyof typeof sizePresets;
 type IconTone = 'muted' | 'default' | 'accent';
 type HoverTone = 'text' | IconTone | 'none';
 
