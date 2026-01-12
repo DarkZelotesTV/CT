@@ -197,7 +197,7 @@ const CodenamesStage = ({ initialUrl, channelId, isEditing }: { initialUrl: stri
                 />
                  {url === 'https://codenames.game/' && (
                     <div className="absolute bottom-6 left-6 max-w-sm bg-surface-2/95 backdrop-blur border border-border p-4 rounded-xl shadow-2xl pointer-events-none">
-                         <h4 className="font-bold text-[color:var(--color-text)] mb-1 flex items-center gap-2"><Play size={16} className="text-blue-500"/> Los geht's</h4>
+                        <h4 className="font-bold text-[color:var(--color-text)] mb-1 flex items-center gap-2"><Play size={16} className="text-green-500/60"/> Los geht's</h4>
                          <p className="text-xs text-[color:var(--color-text)]">Erstelle einen Raum im Spiel, kopiere den Link oben in die Leiste und klicke auf Sync, damit deine Freunde beitreten können.</p>
                     </div>
                  )}
