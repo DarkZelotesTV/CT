@@ -1314,7 +1314,7 @@ export const MainLayout = () => {
                       <span className="ts text-[color:var(--color-text-muted)] mr-2">[{formatLogTime(entry.createdAt)}]</span>
                       <span className={classNames("font-bold mr-2", {
                           "text-emerald-400": entry.category === 'system',
-                          "text-blue-400": entry.category === 'voice',
+                          "text-green-400/60": entry.category === 'voice',
                           "text-pink-400": entry.category === 'chat'
                       })}>
                         {entry.category === 'system' ? '' : `[${entry.category.toUpperCase()}] `}
