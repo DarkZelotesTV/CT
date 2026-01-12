@@ -20,7 +20,7 @@ const progressColors: Record<StepKey, string> = {
   identity: 'from-indigo-500 to-sky-400',
   servers: 'from-emerald-400 to-cyan-400',
   voice: 'from-sky-400 to-fuchsia-400',
-  settings: 'from-fuchsia-500 to-blue-500',
+  settings: 'from-fuchsia-500 to-green-500/60',
 };
 
 const visuals: Record<StepKey, string> = {
